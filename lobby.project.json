@@ -1,0 +1,21 @@
+{
+  "name": "Lobby",
+  "servePort": 34873,
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Lobby": { "$path": "src/lobby/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "LobbyClient": { "$path": "src/lobby/client" }
+      }
+    },
+    "Lighting": {
+      "$properties": { "Technology": "Future", "ClockTime": 14.5, "Brightness": 2.5 }
+    }
+  }
+}

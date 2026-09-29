@@ -1,0 +1,25 @@
+{
+  "name": "Adventure",
+  "servePort": 34872,
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Server": { "$path": "src/adventure/server" }
+    },
+    "StarterPlayer": {
+      "$properties": { "EnableMouseLockOption": false },
+      "StarterPlayerScripts": {
+        "Client": { "$path": "src/adventure/client" }
+      }
+    },
+    "Workspace": {
+      "$properties": { "StreamingEnabled": true, "FallenPartsDestroyHeight": -1000 }
+    },
+    "Lighting": {
+      "$properties": { "Technology": "Future" }
+    }
+  }
+}

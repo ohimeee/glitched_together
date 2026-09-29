@@ -1,0 +1,8 @@
+build/
+sourcemap.json
+*.rbxl.lock
+*.rbxlx.lock
+roblox.d.luau
+lobby.sourcemap.json
+*.blend1
+*.blend@
