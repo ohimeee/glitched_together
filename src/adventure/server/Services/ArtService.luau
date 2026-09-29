@@ -5,11 +5,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
-local NAVY = Color3.fromRGB(20, 24, 58)
+local NAVY = Palette.Prologue.Navy
 local SLATE = Color3.fromRGB(46, 54, 112) -- panel bodies: lighter than NAVY so they read against the night sky
-local WHITE = Color3.fromRGB(240, 240, 250)
-local PINK = Color3.fromRGB(255, 80, 170)
+local WHITE = Palette.Prologue.White
+local GLITCH = Palette.Glitch
 local SMOOTH = Enum.Material.SmoothPlastic
 
 type Skin = { Design: Vector3, Meshes: { [string]: MeshAssets.MeshInfo } }
@@ -76,7 +77,7 @@ local Skins: { [string]: Skin } = {
 				Offset = Vector3.new(-0.6, 0.65, 0),
 				Size = Vector3.new(33.53, 13.43, 1.33),
 				Material = Enum.Material.Neon,
-				Color = PINK,
+				Color = GLITCH,
 			},
 		},
 	},
@@ -131,7 +132,7 @@ local PipMeshes: { [string]: MeshAssets.MeshInfo } = {
 		Offset = Vector3.new(0, -0.5, 0.26),
 		Size = Vector3.new(3.5, 1, 0.25),
 		Material = SMOOTH,
-		Color = PINK,
+		Color = Palette.Prologue.Pink, -- Pip's own color, not the Glitch
 	},
 	Pip_Star = {
 		Id = "rbxassetid://99816899660790",

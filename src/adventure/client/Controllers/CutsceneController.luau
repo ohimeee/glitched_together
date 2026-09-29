@@ -2,6 +2,7 @@
 -- dialogue lines, and a skip vote (both players must press Skip).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local TweenService = game:GetService("TweenService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
@@ -19,7 +20,7 @@ local token = 0
 
 local SPEAKER_COLORS = {
 	Pip = Color3.fromRGB(255, 220, 90),
-	["???"] = Color3.fromRGB(255, 80, 170),
+	["???"] = Palette.Glitch,
 }
 
 local function speakerColor(name: string): Color3

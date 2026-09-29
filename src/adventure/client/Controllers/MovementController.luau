@@ -365,8 +365,9 @@ local function onCharacter(character: Model)
 		if blocked() or player:GetAttribute("Downed") or swing or grind then
 			return
 		end
-		if player:GetAttribute("Kit") == "FireMage" then
-			return -- Kai blinks instead in the castle (FireMage client handles Dash)
+		local kit = player:GetAttribute("Kit")
+		if kit == "FireMage" or kit == "ShieldKnight" then
+			return -- castle: Kai blinks, Miko shield-charges (their kit clients handle Dash)
 		end
 		local airborne = inAir()
 		if airborne and airDashes >= 1 then
@@ -496,6 +497,12 @@ local function onCharacter(character: Model)
 		end
 		if player:GetAttribute("Blocking") then
 			speed *= Tuning.Castle.ShieldSpeedMult
+		end
+		if ((player:GetAttribute("SlowUntil") or 0) :: number) > workspace:GetServerTimeNow() then
+			speed *= 0.5 -- Static Mage slow orb
+		end
+		if player:GetAttribute("Picking") then
+			speed = 0 -- level-up picker pauses the duo
 		end
 		humanoid.WalkSpeed = speed
 		humanoid.JumpHeight = if player:GetAttribute("NoJump") or blocked() then 0 else Tuning.JumpHeight

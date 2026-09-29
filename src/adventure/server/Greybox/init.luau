@@ -5,6 +5,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local Greybox = {}
 
@@ -22,13 +23,16 @@ type Opts = {
 
 local rgb = Color3.fromRGB
 local GREY = rgb(163, 162, 165)
-local WHITE = rgb(240, 240, 250)
-local PINK = rgb(255, 80, 170)
-local NAVY = rgb(40, 46, 96)
-local ORANGE = rgb(255, 150, 40)
-local YELLOW = rgb(255, 210, 60)
-local BLUE = rgb(90, 170, 255)
-local GREEN = rgb(60, 255, 120)
+local WHITE = Palette.Prologue.White
+local NAVY = rgb(40, 46, 96) -- lighter than Palette.Prologue.Navy so grey-box panels read against the night sky
+local STONE = rgb(232, 228, 216) -- neutral moving blocks
+local WOOD = rgb(200, 150, 75)
+-- Reserved gameplay colors (art-direction.md §6): owner of the target, never decoration.
+local KAI = Palette.Kai -- Kai's targets: Freezable, Copyable, Burnable
+local MIKO = Palette.Miko -- Miko's targets: GrappleRing, Pullable, CodeLayer
+local DUO = Palette.Duo -- needs both: DuoGate, DuoPound, HeavyLever, BouncePad, WorldExit
+local NEUTRAL = Palette.Neutral -- anyone: plates, swing points, checkpoints, buttons
+local GLITCH = Palette.Glitch
 
 local function block(parent: Instance, size: Vector3, cf: CFrame, opts: Opts?): Part
 	local o: Opts = opts or {}
@@ -99,7 +103,7 @@ local function checkpoint(
 	end
 	local cp = platform(parent, Vector3.new(10, 0.6, 10), x, top + 0.6, z, {
 		name = `Checkpoint{order}`,
-		color = WHITE,
+		color = NEUTRAL,
 		material = Enum.Material.Neon,
 		tags = { "Checkpoint" },
 		attrs = attrs,
@@ -134,7 +138,7 @@ end
 local function gate(parent: Instance, group: string, size: Vector3, cf: CFrame, latch: boolean?)
 	block(parent, size, cf, {
 		name = `Gate_{group}`,
-		color = PINK,
+		color = DUO,
 		material = Enum.Material.Neon,
 		tags = { "DuoGate" },
 		attrs = { Group = group, Latch = if latch == nil then true else latch },
@@ -201,7 +205,7 @@ local function buildPrologue(world: Model)
 		0,
 		11.6,
 		85,
-		{ color = PINK, material = Enum.Material.Neon, collide = false }
+		{ color = Palette.Prologue.Pink, material = Enum.Material.Neon, collide = false }
 	)
 	sign(world, "OPTIONS", CFrame.new(0, 17, 94), Vector3.new(14, 3, 0.4))
 	checkpoint(
@@ -218,7 +222,7 @@ local function buildPrologue(world: Model)
 	platform(world, Vector3.new(12, 4, 12), 0, 11, 101, { color = NAVY, name = "ChimneyBase" })
 	for _, x in { -5.5, 5.5 } do
 		block(world, Vector3.new(1, 28, 10), CFrame.new(x, 25, 102), {
-			color = ORANGE,
+			color = rgb(140, 100, 70), -- rough, not a reserved color
 			material = Enum.Material.Slate,
 			tags = { "Clingable" },
 			name = "ClingWall",
@@ -237,7 +241,7 @@ local function buildPrologue(world: Model)
 
 	-- Swing point over a pit → D
 	block(world, Vector3.new(2.5, 2.5, 2.5), CFrame.new(0, 48, 139), {
-		color = ORANGE,
+		color = NEUTRAL,
 		material = Enum.Material.Neon,
 		shape = Enum.PartType.Ball,
 		tags = { "SwingPoint" },
@@ -253,7 +257,7 @@ local function buildPrologue(world: Model)
 		Vector3.new(1, 1, (railEnd - railStart).Magnitude),
 		CFrame.lookAt((railStart + railEnd) / 2, railEnd),
 		{
-			color = WHITE,
+			color = rgb(170, 175, 190),
 			material = Enum.Material.Metal,
 			tags = { "GrindRail" },
 			name = "GrindRail",
@@ -275,7 +279,7 @@ local function buildPrologue(world: Model)
 		-8,
 		18.6,
 		256,
-		{ color = GREEN, material = Enum.Material.Neon, tags = { "BouncePad" }, name = "BouncePad" }
+		{ color = DUO, material = Enum.Material.Neon, tags = { "BouncePad" }, name = "BouncePad" }
 	)
 	platform(world, Vector3.new(14, 4, 14), -8, 40, 282, { color = NAVY, name = "HighLedge" })
 	platform(
@@ -284,7 +288,7 @@ local function buildPrologue(world: Model)
 		-8,
 		40.6,
 		284,
-		{ color = YELLOW, tags = { "PressurePlate" }, attrs = { Group = "G1" }, name = "PlateHigh" }
+		{ color = NEUTRAL, tags = { "PressurePlate" }, attrs = { Group = "G1" }, name = "PlateHigh" }
 	)
 	platform(
 		world,
@@ -292,7 +296,7 @@ local function buildPrologue(world: Model)
 		9,
 		18.6,
 		262,
-		{ color = YELLOW, tags = { "PressurePlate" }, attrs = { Group = "G1" }, name = "PlateLow" }
+		{ color = NEUTRAL, tags = { "PressurePlate" }, attrs = { Group = "G1" }, name = "PlateLow" }
 	)
 	gate(world, "G1", Vector3.new(30, 16, 2), CFrame.new(0, 26, 271))
 
@@ -313,7 +317,7 @@ local function buildPrologue(world: Model)
 		-8,
 		18.8,
 		300,
-		{ color = rgb(255, 60, 60), tags = { "VentButton" }, name = "VentButton" }
+		{ color = NEUTRAL, tags = { "VentButton" }, name = "VentButton" }
 	)
 	local link = Instance.new("ObjectValue")
 	link.Name = "Vent"
@@ -340,7 +344,7 @@ local function buildPrologue(world: Model)
 		0,
 		31,
 		362,
-		{ color = rgb(255, 60, 60), tags = { "DuoPound" }, attrs = { Group = "G2" }, name = "DuoPound" }
+		{ color = DUO, tags = { "DuoPound" }, attrs = { Group = "G2" }, name = "DuoPound" }
 	)
 	gate(world, "G2", Vector3.new(30, 16, 2), CFrame.new(0, 38, 379))
 
@@ -350,7 +354,7 @@ local function buildPrologue(world: Model)
 		world,
 		Vector3.new(1, 5, 1),
 		CFrame.new(-8, 32.5, 396),
-		{ color = YELLOW, tags = { "HeavyLever" }, attrs = { Group = "G3" }, name = "HeavyLever" }
+		{ color = DUO, tags = { "HeavyLever" }, attrs = { Group = "G3" }, name = "HeavyLever" }
 	)
 	lever.CFrame *= CFrame.Angles(math.rad(20), 0, 0)
 	gate(world, "G3", Vector3.new(30, 16, 2), CFrame.new(0, 38, 410))
@@ -358,7 +362,7 @@ local function buildPrologue(world: Model)
 	platform(world, Vector3.new(30, 4, 30), 0, 30, 426, { color = NAVY, name = "NewGame" })
 	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 36, 436), {
 		name = "WorldExit",
-		color = PINK,
+		color = DUO,
 		material = Enum.Material.Neon,
 		transparency = 0.4,
 		collide = false,
@@ -372,8 +376,8 @@ local function buildPixelPlains(world: Model)
 	local W = "PixelPlains"
 	killFloor(world, -40)
 	workspace:SetAttribute("KillY", -60)
-	local GRASS = rgb(88, 200, 72)
-	local DIRT = rgb(150, 100, 60)
+	local GRASS = Palette.PixelPlains.Grass
+	local DIRT = Palette.PixelPlains.Dirt
 
 	platform(world, Vector3.new(40, 6, 40), 0, 0, 0, { color = GRASS, name = "StarterMeadow" })
 	spawnAt(world, 0, 0, -8)
@@ -385,7 +389,7 @@ local function buildPixelPlains(world: Model)
 	-- 1. Freeze a moving platform over a pit
 	local mover = block(world, Vector3.new(10, 2, 10), CFrame.new(0, -1, 30), {
 		name = "MovingPlatform",
-		color = BLUE,
+		color = STONE,
 		tags = { "Mover", "Freezable" },
 		attrs = { Period = 5 },
 	})
@@ -415,16 +419,16 @@ local function buildPixelPlains(world: Model)
 	waypoints(crusher, { CFrame.new(0, 17, 104), CFrame.new(0, 4, 104) })
 
 	-- 3. Grapple ring + a slow ferry for Kai
-	block(world, Vector3.new(1, 6, 6), CFrame.new(0, 22, 135), {
+	block(world, Vector3.new(1, 3, 3), CFrame.new(0, 22, 135), { -- 2–3 studs (art-direction.md §17)
 		name = "GrappleRing",
-		color = ORANGE,
+		color = MIKO,
 		material = Enum.Material.Neon,
 		shape = Enum.PartType.Cylinder,
 		tags = { "GrappleRing" },
 	})
 	local ferry = block(world, Vector3.new(8, 2, 8), CFrame.new(10, -1, 130), {
 		name = "Ferry",
-		color = BLUE,
+		color = STONE,
 		tags = { "Mover", "Freezable" },
 		attrs = { Period = 8 },
 	})
@@ -438,7 +442,7 @@ local function buildPixelPlains(world: Model)
 	-- 4. Pull a crate onto a plate → door stays open while it's held
 	block(world, Vector3.new(4, 4, 4), CFrame.new(-10, 2, 172), {
 		name = "Crate",
-		color = YELLOW,
+		color = WOOD,
 		material = Enum.Material.WoodPlanks,
 		anchored = false,
 		tags = { "Pullable" },
@@ -450,14 +454,14 @@ local function buildPixelPlains(world: Model)
 		10,
 		0.6,
 		176,
-		{ color = YELLOW, tags = { "PressurePlate" }, attrs = { Group = "W1A" }, name = "Plate" }
+		{ color = NEUTRAL, tags = { "PressurePlate" }, attrs = { Group = "W1A" }, name = "Plate" }
 	)
 	gate(world, "W1A", Vector3.new(34, 14, 2), CFrame.new(0, 7, 185), false)
 
 	-- A glitch blob to stomp
 	block(world, Vector3.new(4, 3, 4), CFrame.new(0, 1.5, 164), {
 		name = "GlitchBlob",
-		color = PINK,
+		color = GLITCH,
 		material = Enum.Material.Neon,
 		tags = { "Enemy", "Freezable" },
 		attrs = { Type = "GlitchBlob", PatrolDistance = 16, Speed = 5 },
@@ -466,7 +470,7 @@ local function buildPixelPlains(world: Model)
 	platform(world, Vector3.new(30, 6, 30), 0, 0, 202, { color = GRASS, name = "Exit" })
 	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 6, 212), {
 		name = "WorldExit",
-		color = PINK,
+		color = DUO,
 		material = Enum.Material.Neon,
 		transparency = 0.4,
 		collide = false,
@@ -480,7 +484,7 @@ local function buildGlitchedCore(world: Model)
 	local W = "GlitchedCore"
 	killFloor(world, -40)
 	workspace:SetAttribute("KillY", -60)
-	local DARK = rgb(40, 40, 46)
+	local DARK = Palette.Core.Dark
 	platform(world, Vector3.new(40, 4, 40), 0, 0, 0, { color = DARK, name = "MissingTextures" })
 	spawnAt(world, 0, 0, -8)
 	checkpoint(world, 1, 0, 0, 0, W, {
@@ -491,24 +495,245 @@ local function buildGlitchedCore(world: Model)
 	-- Hidden bridge piece only Miko sees until pulled out.
 	block(world, Vector3.new(10, 1, 14), CFrame.new(0, -0.5, 28), {
 		name = "HiddenBridge",
-		color = GREEN,
+		color = MIKO,
 		tags = { "CodeLayer" },
 	})
-	block(
-		world,
-		Vector3.new(4, 4, 4),
-		CFrame.new(12, 2, 8),
-		{ name = "CopyCrate", color = WHITE, tags = { "Copyable" } }
-	)
+	block(world, Vector3.new(4, 4, 4), CFrame.new(12, 2, 8), { name = "CopyCrate", color = KAI, tags = { "Copyable" } })
 	platform(world, Vector3.new(30, 4, 30), 0, 0, 60, { color = DARK, name = "WireMaze" })
 	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 6, 70), {
 		name = "WorldExit",
-		color = PINK,
+		color = DUO,
 		material = Enum.Material.Neon,
 		transparency = 0.4,
 		collide = false,
 		tags = { "WorldExit" },
 	})
+end
+
+-- Starfall Castle, section 2-1 "Castle Gates" (Story Line, mechanics.md §4 World 2): top-down combat. Floors carry
+-- the design (a rug path shows the way), walls are 6 studs so they never hide players (art-direction.md §8, §17).
+local function enemy(parent: Instance, kind: string, x: number, z: number)
+	local looks: { [string]: { Vector3 | Color3 } } = {
+		Skeleton = { Vector3.new(3, 5, 2), rgb(230, 225, 210) },
+		SplitSlime = { Vector3.new(4, 3, 4), rgb(120, 200, 90) },
+		StaticArcher = { Vector3.new(3, 5, 2), rgb(170, 165, 200) },
+		ShieldGuard = { Vector3.new(4, 6, 3), rgb(140, 145, 160) },
+		StaticMage = { Vector3.new(3, 6, 3), Palette.Castle.Royal },
+	}
+	local look = looks[kind]
+	local size = look[1] :: Vector3
+	local body = block(parent, size, CFrame.new(x, size.Y / 2, z), {
+		name = kind,
+		color = look[2] :: Color3,
+		tags = { "Enemy" },
+		attrs = { Type = kind },
+	})
+	if kind == "ShieldGuard" then
+		local shield =
+			block(body, Vector3.new(size.X + 1, size.Y - 1, 0.6), body.CFrame * CFrame.new(0, 0, -size.Z / 2 - 0.4), {
+				name = "Shield",
+				color = Palette.Castle.Gold,
+				material = Enum.Material.Metal,
+				anchored = false,
+				collide = false,
+			})
+		shield.Massless = true
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = body
+		weld.Part1 = shield
+		weld.Parent = shield
+	end
+	return body
+end
+
+local function buildStarfallCastle(world: Model)
+	local W = "StarfallCastle"
+	killFloor(world, -40)
+	workspace:SetAttribute("KillY", -60)
+	local P = Palette.Castle
+	local WALL_H = 6
+
+	local function floor(x0: number, z0: number, x1: number, z1: number, name: string)
+		platform(world, Vector3.new(x1 - x0, 2, z1 - z0), (x0 + x1) / 2, 0, (z0 + z1) / 2, {
+			color = P.Stone,
+			material = Enum.Material.Cobblestone,
+			name = name,
+		})
+	end
+	local function wall(x0: number, z0: number, x1: number, z1: number)
+		local sx, sz = math.max(math.abs(x1 - x0), 1), math.max(math.abs(z1 - z0), 1)
+		platform(world, Vector3.new(sx, WALL_H, sz), (x0 + x1) / 2, WALL_H, (z0 + z1) / 2, {
+			color = P.NightPurple,
+			material = Enum.Material.Slate,
+			name = "Wall",
+		})
+	end
+	-- warm wall torch: every room gets pools of warm light to aim for (art-direction.md §2 pillar 6, §8)
+	local function torch(x: number, z: number)
+		local holder = block(world, Vector3.new(1, 2, 1), CFrame.new(x, WALL_H + 1, z), {
+			name = "Torch",
+			color = P.Gold,
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		local flame = block(holder, Vector3.new(0.9, 1.2, 0.9), CFrame.new(x, WALL_H + 2.6, z), {
+			name = "Flame",
+			color = P.Torch,
+			material = Enum.Material.Neon,
+			collide = false,
+		})
+		flame.CanQuery = false
+		local light = Instance.new("PointLight")
+		light.Color = P.Torch
+		light.Range = 30
+		light.Brightness = 2.5
+		light.Shadows = true
+		light.Parent = flame
+	end
+	local function flatSign(text: string, x: number, z: number, w: number)
+		sign(world, text, CFrame.new(x, 0.35, z) * CFrame.Angles(math.rad(-90), 0, 0), Vector3.new(w, 4, 0.4), P.Royal)
+	end
+
+	-- floors + the rug path that leads the way
+	floor(-20, -20, 20, 20, "Gatehouse")
+	floor(-7, 20, 7, 40, "Corridor")
+	floor(-25, 40, 25, 90, "Barracks")
+	floor(-25, 90, 25, 150, "Hall")
+	floor(-10, 150, 10, 176, "CastleExit")
+	platform(world, Vector3.new(6, 0.2, 170), 0, 0.1, 76, {
+		color = P.Banner,
+		material = Enum.Material.Fabric,
+		collide = false,
+		name = "Rug",
+	})
+
+	-- A: Gatehouse (start). Two skeletons to learn on.
+	spawnAt(world, 0, 0, -12)
+	checkpoint(world, 1, 0, 0, -6, W, {
+		"Kai: hold left click to throw fireballs. Miko: left click swings your sword.",
+		"Miko: hold right click to raise your shield. Enemies go for a raised shield.",
+	})
+	flatSign("STARFALL CASTLE", 0, 4, 22)
+	wall(-20, -20, 20, -20)
+	wall(-20, -20, -20, 20)
+	wall(20, -20, 20, 20)
+	wall(-20, 20, -7, 20)
+	wall(7, 20, 20, 20)
+	enemy(world, "Skeleton", -6, 15) -- > Combat.Aggro from the spawn: they wait until you walk up
+	enemy(world, "Skeleton", 6, 16)
+	for _, spot in { { -20, -8 }, { 20, -8 }, { -20, 10 }, { 20, 10 } } do
+		torch(spot[1], spot[2])
+	end
+
+	-- B: Corridor. Braziers to practice Ignite, then a wooden door only fire opens.
+	wall(-7, 20, -7, 40)
+	wall(7, 20, 7, 40)
+	for _, x in { -5, 5 } do
+		block(world, Vector3.new(2, 3, 2), CFrame.new(x, 1.5, 26), {
+			name = "Brazier",
+			color = P.Gold,
+			material = Enum.Material.Metal,
+			tags = { "Brazier" },
+		})
+	end
+	checkpoint(world, 2, 0, 0, 24, W, {
+		"Kai: press E near a brazier or the wooden door.",
+		"Burn the wooden door with Kai's Ignite (E).",
+	})
+	block(world, Vector3.new(12, WALL_H, 1), CFrame.new(0, WALL_H / 2, 37), {
+		name = "WoodenDoor",
+		color = rgb(150, 100, 60),
+		material = Enum.Material.WoodPlanks,
+		tags = { "Burnable" },
+	})
+
+	-- C: Barracks. A mixed wave.
+	wall(-25, 40, -7, 40)
+	wall(7, 40, 25, 40)
+	wall(-25, 40, -25, 90)
+	wall(25, 40, 25, 90)
+	enemy(world, "Skeleton", -10, 55)
+	enemy(world, "Skeleton", 10, 58)
+	enemy(world, "Skeleton", 0, 66)
+	enemy(world, "SplitSlime", -14, 70)
+	enemy(world, "ShieldGuard", 4, 74)
+	enemy(world, "StaticArcher", -16, 84)
+	enemy(world, "StaticArcher", 16, 84)
+	for _, spot in { { -25, 50 }, { 25, 50 }, { -25, 66 }, { 25, 66 }, { -25, 82 }, { 25, 82 } } do
+		torch(spot[1], spot[2])
+	end
+
+	-- D: the split. Left: a cracked wall Miko charges through. Right: iron bars only Kai can blink through,
+	-- with plate A behind them (the gate further on needs plate A and plate B at once).
+	wall(-25, 90, -20, 90)
+	block(world, Vector3.new(10, WALL_H, 2), CFrame.new(-15, WALL_H / 2, 90), {
+		name = "CrackedWall",
+		color = rgb(120, 110, 130),
+		material = Enum.Material.Slate,
+		tags = { "CrackedWall" },
+	})
+	wall(-10, 90, 10, 90)
+	local bars = Instance.new("Model")
+	bars.Name = "IronBars"
+	for i = 0, 8 do
+		block(bars, Vector3.new(0.4, WALL_H, 0.4), CFrame.new(10.6 + i * 1.1, WALL_H / 2, 90), {
+			name = "Bar",
+			color = rgb(90, 90, 100),
+			material = Enum.Material.Metal,
+		})
+	end
+	bars.Parent = world
+	CollectionService:AddTag(bars, "IronBars")
+	wall(20, 90, 25, 90)
+	-- the alcove behind the bars (closed on every other side)
+	wall(10, 90, 10, 100)
+	wall(10, 100, 25, 100)
+	platform(world, Vector3.new(4, 0.6, 4), 17, 0.6, 95, {
+		color = NEUTRAL,
+		tags = { "PressurePlate" },
+		attrs = { Group = "C1" },
+		name = "PlateA",
+	})
+	flatSign("SHIFT = BLINK", 15, 86, 10)
+
+	-- E: Hall. The Static Mage and friends; gate C1 needs plate A (alcove) + plate B (here) held together.
+	checkpoint(world, 3, -15, 0, 104, W, {
+		"Kai: Shift blinks through the iron bars. Stand on the plate behind them.",
+		"Both plates at once: one behind the bars, one in front of the gate.",
+	})
+	wall(-25, 90, -25, 150)
+	wall(25, 100, 25, 150)
+	wall(-25, 150, -7, 150)
+	wall(7, 150, 25, 150)
+	enemy(world, "StaticMage", 0, 130)
+	enemy(world, "Skeleton", -12, 120)
+	enemy(world, "Skeleton", 12, 124)
+	enemy(world, "SplitSlime", 0, 118)
+	for _, spot in
+		{ { -25, 110 }, { 25, 112 }, { -25, 128 }, { 25, 128 }, { -25, 144 }, { 25, 144 }, { -10, 164 }, { 10, 164 } }
+	do
+		torch(spot[1], spot[2])
+	end
+	platform(world, Vector3.new(4, 0.6, 4), -12, 0.6, 144, {
+		color = NEUTRAL,
+		tags = { "PressurePlate" },
+		attrs = { Group = "C1" },
+		name = "PlateB",
+	})
+	gate(world, "C1", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 150))
+
+	-- F: exit
+	wall(-10, 150, -10, 176)
+	wall(10, 150, 10, 176)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 170), {
+		name = "WorldExit",
+		color = DUO,
+		material = Enum.Material.Neon,
+		transparency = 0.4,
+		collide = false,
+		tags = { "WorldExit" },
+	})
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 160, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.
@@ -527,7 +752,7 @@ local function buildPlaceholder(world: Model, name: string)
 	)
 	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 6, 36), {
 		name = "WorldExit",
-		color = PINK,
+		color = DUO,
 		material = Enum.Material.Neon,
 		transparency = 0.4,
 		collide = false,
@@ -542,6 +767,8 @@ function Greybox.Build(worldName: string): Model
 		buildPrologue(world)
 	elseif worldName == "PixelPlains" then
 		buildPixelPlains(world)
+	elseif worldName == "StarfallCastle" then
+		buildStarfallCastle(world)
 	elseif worldName == "GlitchedCore" then
 		buildGlitchedCore(world)
 	else

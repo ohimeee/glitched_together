@@ -1,13 +1,15 @@
--- Readable targets (design.md §5): Frozen objects glow blue with a PAUSE ⏸ timer; Grapple Rings stay orange,
--- Pullables yellow, Copyables white. Every client draws these from server-set tags/attributes.
+-- Readable targets (art-direction.md §6): every target glows in its OWNER's color: Kai's (Freezable, Copyable,
+-- Burnable) orange, Miko's (GrappleRing, Pullable) teal. Frozen objects get a blue-white pause look + ⏸ timer (§12).
+-- Every client draws these from server-set tags/attributes.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local EffectsController = {}
 
-local FROZEN_BLUE = Color3.fromRGB(90, 170, 255)
+local FROZEN_BLUE = Color3.fromRGB(190, 225, 255) -- the pause ripple, not an owner color
 
 local frozenGuis: { [Instance]: TextLabel } = {}
 
@@ -61,12 +63,12 @@ local function onFreezable(inst: Instance)
 	inst:GetAttributeChangedSignal("Frozen"):Connect(refresh)
 	refresh()
 
-	-- Freezable = blue frame, always.
+	-- Freezable = Kai's target: orange frame, always.
 	if not inst:FindFirstChild("FreezableFrame") then
 		local sel = Instance.new("SelectionBox")
 		sel.Name = "FreezableFrame"
 		sel.Adornee = inst :: any
-		sel.Color3 = FROZEN_BLUE
+		sel.Color3 = Palette.Kai
 		sel.LineThickness = 0.06
 		sel.SurfaceTransparency = 1
 		sel.Parent = inst
@@ -89,9 +91,10 @@ end
 
 function EffectsController.Init()
 	Tags.each("Freezable", onFreezable)
-	outline("GrappleRing", Color3.fromRGB(255, 150, 40))
-	outline("Pullable", Color3.fromRGB(255, 220, 60))
-	outline("Copyable", Color3.new(1, 1, 1))
+	outline("GrappleRing", Palette.Miko)
+	outline("Pullable", Palette.Miko)
+	outline("Copyable", Palette.Kai)
+	outline("Burnable", Palette.Kai)
 
 	RunService.RenderStepped:Connect(function()
 		local now = workspace:GetServerTimeNow()

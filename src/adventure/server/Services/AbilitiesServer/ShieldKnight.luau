@@ -1,24 +1,84 @@
--- Miko, Starfall Castle (mechanics.md §4, World 2). Milestone M3, alongside FireMage.
---
--- Plan:
---   useIndex 1  Sword combo 8 / 8 / 14 (GetPartBoundsInBox arc in front, Enemy-tagged models).
---   useIndex 2  Shield Block (hold): sets Blocking attribute; server enables a welded ShieldHitbox;
---               projectiles hitting it reflect with newDir = dir - 2 * dir:Dot(n) * n, become friendly, x1.5 damage.
---   useIndex 3  Shield Charge (dash): 16-stud rush, 12 dmg + knockback, breaks CrackedWall.
---   useIndex 4  Rally when charged (250 blocked): 14-stud shockwave, 15 dmg, 2 s stun.
-local Tuning = require(game:GetService("ReplicatedStorage").Shared.Config.Tuning)
+-- Miko, Starfall Castle (mechanics.md §4 World 2). Aim = a point on the floor (top-down), sent by the client.
+--   1 Sword        3-hit chain 8 / 8 / 14 in a box in front (chain resets after Combat.SwordCombo.Window)
+--   2 Block (hold) `Blocking` attribute: 120° shield (Wider Block 160°), taunts enemies, reflects shots
+--                  (the reflection itself lives in CombatService). Movement slows on the client.
+--   3 Charge       client rushes 16 studs (Longer Charge 22); server damages + shoves along the line, breaks
+--                  CrackedWall, knocks Shield Guards' shields aside
+--   4 Rally        when Ultimate is full: 14-stud shockwave, 15 dmg, 2 s stun (Second Wind: heals 20)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local CombatService = require(script.Parent.Parent.CombatService)
+local HealthService = require(script.Parent.Parent.HealthService)
+
+local T = Tuning.ShieldKnight
+local C = Tuning.Combat
 
 local ShieldKnight = {
 	BlockedBy = { "Downed", "InCutscene", "Picking" },
-	Cooldowns = { [3] = Tuning.ShieldKnight.Charge.Cooldown },
+	Cooldowns = { [1] = C.SwordCombo.Swing, [3] = T.Charge.Cooldown },
 }
 
-function ShieldKnight.Use(player: Player, useIndex: number, _target: Instance?, aim: any)
-	if useIndex == 2 then
-		-- Block state is already useful to EnemyService targeting (Taunt) before combat lands.
-		player:SetAttribute("Blocking", aim == true or nil)
+local combo: { [Player]: { step: number, last: number } } = {}
+
+local function rootOf(p: Player): BasePart?
+	return p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+end
+
+local function flatDir(from: Vector3, to: Vector3, fallback: Vector3): Vector3
+	local v = Vector3.new(to.X - from.X, 0, to.Z - from.Z)
+	return if v.Magnitude > 0.1 then v.Unit else fallback
+end
+
+local function sword(p: Player, root: BasePart, aim: Vector3)
+	local c = combo[p] or { step = 0, last = 0 }
+	combo[p] = c
+	local now = os.clock()
+	c.step = if now - c.last > C.SwordCombo.Window then 1 else (c.step % #T.Sword.Damage) + 1
+	c.last = now
+	local dir = flatDir(root.Position, aim, root.CFrame.LookVector)
+	local reach = C.SwordCombo.Reach
+	local cf = CFrame.lookAt(root.Position, root.Position + dir) * CFrame.new(0, 0, -reach / 2 - 0.5)
+	CombatService.MeleeBox(cf, Vector3.new(C.SwordCombo.Width, 5, reach), T.Sword.Damage[c.step], p)
+end
+
+function ShieldKnight.Use(p: Player, useIndex: number, _target: Instance?, aim: any)
+	local root = rootOf(p)
+	if not root then
+		return
 	end
-	-- TODO(M3): sword, charge, rally, reflect.
+	if useIndex == 2 then
+		p:SetAttribute("Blocking", aim == true or nil)
+		return
+	end
+	local point = if typeof(aim) == "Vector3" then aim else root.Position + root.CFrame.LookVector * 10
+	if useIndex == 1 then
+		sword(p, root, point)
+	elseif useIndex == 3 then
+		-- aim = where the charge started (the client already moved Miko); the line runs from there to her now
+		local from = if typeof(aim) == "Vector3" then aim else root.Position
+		local length = if p:GetAttribute("Up_LongerCharge") then C.LongerCharge else T.Charge.Distance
+		local travelled = Vector3.new(root.Position.X - from.X, 0, root.Position.Z - from.Z)
+		if travelled.Magnitude > length + 6 then
+			from = root.Position - root.CFrame.LookVector * length -- implausible start: trust the server's view
+		end
+		local dir = flatDir(from, root.Position, root.CFrame.LookVector)
+		CombatService.ChargeLine(from, dir, math.max(travelled.Magnitude, 4) + 2, T.Charge.Damage, p)
+	elseif useIndex == 4 then
+		if CombatService.SpendUltimate(p) then
+			CombatService.Rally(root.Position, p)
+			if p:GetAttribute("Up_SecondWind") then
+				local hp = (p:GetAttribute("Health") or 0) :: number
+				HealthService.Restore(p, hp + C.SecondWind.RallyHeal)
+			end
+		end
+	end
+end
+
+function ShieldKnight.Init()
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		combo[p] = nil
+	end)
 end
 
 return ShieldKnight

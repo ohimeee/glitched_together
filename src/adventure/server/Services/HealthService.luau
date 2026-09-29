@@ -37,7 +37,8 @@ end
 
 local function maxHealth(p: Player): number
 	if useHP then
-		return (Tuning.CastleHP :: any)[p:GetAttribute("Role") or "Kai"] or 100
+		local base = (Tuning.CastleHP :: any)[p:GetAttribute("Role") or "Kai"] or 100
+		return base + (p:GetAttribute("BonusHP") or 0) -- Second Wind upgrade
 	end
 	return Tuning.Hearts
 end

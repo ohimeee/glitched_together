@@ -98,39 +98,14 @@ The user allows searching anything for reference. Their browser is **Brave** (no
 
 ## 4. Art direction rules
 
-From research.md (Hazelight: "Pixar-esque", scale and shape first, stylized but believable) and design.md §5/§8.
+**The spec is [art-direction.md](art-direction.md)** (theme, color script, shape language, reserved gameplay colors §6, exact palette §16, Blender asset guide §17, reference search §18). Colors in code come from `src/shared/Config/Palette.luau`, which mirrors §16. Short version:
 
-**Shape language**
-- Big, chunky, readable silhouettes. Oversized everyday things (giant title-menu buttons, huge pixel blocks). Players are small against the world.
-- Bevel everything a little (Bevel modifier, 1–2 segments). No razor edges except on "glitch" objects.
-- Few, large details over many small ones. Detail must read from a third-person camera 20+ studs away.
-- Pixel/voxel look is the game's signature: the Glitch, Pip and Pixel Plains lean voxel. Castle leans hand-built fantasy. Glitched Core mixes both plus wireframes.
-
-**Player identity (never break)**
-| Role | Color | Shape motif |
-| --- | --- | --- |
-| Kai | Orange `#FF8C28` | Triangle ▲ |
-| Miko | Teal `#28D2C8` | Circle ● |
-
-**Readable targets (same everywhere)**
-| Interactable | Look |
-| --- | --- |
-| Freezable | Blue frame `#5AAAFF` |
-| Grapple point | Orange ring `#FF9628` |
-| Pullable | Yellow handle `#FFD23C` |
-| Burnable | Cracked wood |
-| Copyable | White outline |
-| Code Layer | Green scanlines/wireframe `#3CFF78` (Miko only) |
-| Glitch (danger) | Flickering static, RGB split, magenta/black "missing texture" checker |
-
-**World palettes** (match `src/shared/Config/Worlds.luau`)
-| World | Colors | Materials feel |
-| --- | --- | --- |
-| Prologue (Title Screen) | Navy `#14183A`, UI white `#F0F0FA`, glitch pink `#FF50AA` | Floating UI panels, glossy plastic |
-| Pixel Plains | Green `#58C848`, sky `#6EBEFF`, coin gold `#FFCD28` | Chunky voxel blocks, flat colors, pixel clouds |
-| Starfall Castle | Purple `#46286E`, torch orange `#FF8C28`, gold `#E6BE46` | Stone, banners, stained glass, torches |
-| Glitched Core | Grey `#828287`, black `#0F0F12`, green `#3CFF78`, magenta `#FF28C8` | Untextured grey, wireframes, static |
-| Epilogue | Night blue `#1E2D5F`, warm `#FFE196`, star `#A0BEFF` | Bedroom real-world, then starry kingdom |
+- *A game two kids made, seen from the inside.* Chunky, soft, bevelled, handmade; kid details (doodles, stickers, misspelled signs). Only The Glitch looks wrong (flat, sharp, magenta, static).
+- **Reserved gameplay colors, never decoration:** Kai's targets **orange** `#FF8A2B` (freeze, burn, copy) · Miko's **teal** `#1FC7B6` (grapple, pull, Code Layer) · both players **white** `#F5F7FA` · neutral **yellow** `#FFD23F` (plates, checkpoints) · danger **red** `#E5383B` · Glitch **magenta** `#FF2BD6` (+ cyan `#2BF2FF` fringe, black `#0B0B10` checker). Every target also gets an icon.
+- **Shapes:** friendly = round and soft, enemies = round body + one sharp feature and googly/dot eyes, Glitch = jagged and flat. Kai = stars, straight lines; Miko = circles, blocks, springs.
+- **Pixel Plains** voxels are 1-stud cubes with a small bevel (plastic toys). **Castle** floors carry the design (top-down camera), walls 6 studs. **Core** is deliberately flat grey.
+- **Names:** `<World>_<Type>_<Name>` with `PR_ PP_ SC_ GC_ FL_ RW_ SH_` and `Kit / Prop / Char / Boss / FX` (e.g. `PP_Prop_CoinBlock`). Pieces split per material get a suffix (`PP_Prop_CoinBlock_Mark`).
+- **Budgets:** small prop 300–1,500 tris, medium 1,500–5,000, kit piece 200–2,000, character 5–10k.
 
 **Materials**
 - Default: Principled BSDF, roughness 0.5–0.7, metallic 0. Flat color first; texture only when it adds readability.

@@ -95,6 +95,40 @@ return {
 		Rally = { Damage = 15, Charge = 250, Radius = 14, Stun = 2 },
 	},
 	XpLevels = { 100, 250 },
+	Combat = {
+		Aggro = 24, -- enemies wake up when a player is this close
+		OrbSpeed = 40, -- XP orbs fly to the nearest player
+		OrbPickup = 3,
+		SwordCombo = { Window = 0.8, Swing = 0.35, Width = 7, Reach = 6 },
+		Knockback = 12, -- studs, Shield Charge
+		ChargedWindow = 1.5, -- enemies shoved by a charge take double Flame Wall damage for this long
+		ShieldDown = 3, -- a charged Shield Guard drops its shield for this long
+		ShieldHitRadius = 3.5, -- projectiles this close to a blocking Miko hit the shield
+		MeteorAim = 60, -- max range from Kai
+		ReflectBoost = 2, -- Reflect Boost upgrade multiplier
+		SecondWind = { HP = 40, RallyHeal = 20 },
+		WiderBlock = 160,
+		LongerCharge = 22,
+		BiggerFireball = 1.5,
+		FasterCast = 0.25,
+		EmberTrail = { Damage = 4, Life = 3 },
+	},
+	Enemies = {
+		Skeleton = { HP = 30, Speed = 10, Reach = 4.5, Windup = 0.7, Damage = 8, Recover = 1, XP = 10 },
+		SplitSlime = { HP = 40, Speed = 8, Reach = 3.5, Windup = 0.3, Damage = 8, Recover = 1, XP = 12, SplitHP = 15 },
+		StaticArcher = {
+			HP = 25,
+			Speed = 9,
+			Range = 30,
+			KeepAway = 18,
+			Every = 2,
+			ArrowSpeed = 60,
+			Damage = 10,
+			XP = 10,
+		},
+		ShieldGuard = { HP = 60, Speed = 7, Reach = 5, Windup = 0.7, Damage = 15, Recover = 1, XP = 20, Arc = 120 },
+		StaticMage = { HP = 35, Speed = 0, Every = 3, Teleport = 5, OrbSpeed = 30, Damage = 12, XP = 15, Range = 40 },
+	},
 
 	-- World 3
 	CopyPaste = { CopyRange = 50, PasteRange = 40, MaxPastes = 2 },

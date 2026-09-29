@@ -34,7 +34,7 @@ function AbilityService.Init()
 	end
 
 	Net.event("ToolUse").OnServerEvent:Connect(function(p: Player, useIndex: any, target: any, aim: any)
-		if type(useIndex) ~= "number" or useIndex < 1 or useIndex > 4 then
+		if type(useIndex) ~= "number" or useIndex < 1 or useIndex > 5 then
 			return
 		end
 		if target ~= nil and typeof(target) ~= "Instance" then

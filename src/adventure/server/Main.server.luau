@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Services = script.Parent.Services
 local Net = require(ReplicatedStorage.Shared.Net)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 -- Create every remote up front so clients never wait on a missing one.
 for _, name in
@@ -19,6 +20,8 @@ for _, name in
 		"Launch",
 		"GameOver",
 		"RespawnMash",
+		"LevelUp",
+		"LevelPick",
 	}
 do
 	Net.event(name)
@@ -38,6 +41,8 @@ local HintService = require(Services.HintService)
 local CutsceneService = require(Services.CutsceneService)
 local AbilityService = require(Services.AbilityService)
 local EnemyService = require(Services.EnemyService)
+local XpService = require(Services.XpService)
+local CombatService = require(Services.CombatService)
 local BossService = require(Services.BossService)
 local ArtService = require(Services.ArtService)
 
@@ -56,6 +61,8 @@ HintService.Init()
 CutsceneService.Init()
 AbilityService.Init()
 EnemyService.Init()
+XpService.Init()
+CombatService.Init()
 BossService.Init()
 ArtService.Init()
 
@@ -66,6 +73,22 @@ WorldService.Loaded:Connect(function(worldName: string)
 	HintService.Progress()
 	HealthService.SetMode(worldName)
 	HealthService.ResetSafe()
+	CombatService.Clear()
+	for _, p in DuoService.Players() do
+		p:SetAttribute("Ultimate", 0)
+	end
+	if worldName == "StarfallCastle" then
+		XpService.Reset() -- leveling starts fresh each time the castle loads
+	end
+end)
+
+-- Second Wind (Miko, castle level 3): +40 max HP right away.
+XpService.UpgradeApplied:Connect(function(p: Player, name: string)
+	if name == "SecondWind" then
+		local bonus = Tuning.Combat.SecondWind.HP
+		p:SetAttribute("BonusHP", bonus)
+		HealthService.Restore(p, ((p:GetAttribute("Health") or 0) :: number) + bonus)
+	end
 end)
 
 -- Wait for the duo (in Studio, a solo tester starts after 3 s), then load their save.

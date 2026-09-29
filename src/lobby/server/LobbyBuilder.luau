@@ -5,6 +5,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local CapsuleMeshes = require(script.Parent.CapsuleMeshes)
 
@@ -230,7 +231,7 @@ function LobbyBuilder.Build()
 		Shape = Enum.PartType.Cylinder,
 		Size = Vector3.new(0.4, 152, 152),
 		CFrame = CFrame.new(0, -0.25, 0) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Color3.fromRGB(255, 80, 170),
+		Color = Palette.Prologue.Pink,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
 		Parent = lobby,

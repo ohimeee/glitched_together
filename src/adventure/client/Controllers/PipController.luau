@@ -1,5 +1,6 @@
 -- Pip in the world: floats between the duo facing the camera ("hovers between them", Story Line), and flies
--- to your shoulder when a hint arrives. Local-only copy of ReplicatedStorage.PipModel (published by ArtService);
+-- to your shoulder when a hint arrives. Its glow takes the color of whoever it talks to (art-direction.md §5):
+-- white while floating between you, your role color while it talks to you. Local-only copy of ReplicatedStorage.PipModel (published by ArtService);
 -- if the meshes never load, the hint bubble still works on its own.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -7,6 +8,8 @@ local RunService = game:GetService("RunService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Roles = require(ReplicatedStorage.Shared.Config.Roles)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -48,9 +51,19 @@ function PipController.Init()
 		end
 		pip.Parent = workspace
 
+		local glow = pip:FindFirstChildWhichIsA("PointLight", true)
 		local hintUntil = 0
 		Net.event("Hint").OnClientEvent:Connect(function()
 			hintUntil = os.clock() + T.HintTime
+			local role = (Roles :: any)[player:GetAttribute("Role") or ""]
+			if glow then
+				glow.Color = if role then role.Color else Palette.Duo
+			end
+			task.delay(T.HintTime, function()
+				if glow and os.clock() >= hintUntil then
+					glow.Color = Palette.Duo
+				end
+			end)
 		end)
 
 		local pos: Vector3? = nil

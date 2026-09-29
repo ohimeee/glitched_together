@@ -1,6 +1,6 @@
 # Glitched Together (Roblox, Luau, Rojo)
 
-- Docs: `design.md` (why), `mechanics.md` (numbers), `implementation.md` (how), `Glitched Together — Story Line.md`, `research.md` (It Takes Two art/feel research).
+- Docs: `design.md` (why), `mechanics.md` (numbers), `implementation.md` (how), `art-direction.md` (**the art spec**: reserved owner colors, palette, shapes, Blender guide), `Glitched Together — Story Line.md`, `research.md` (It Takes Two art/feel research).
 - **Any 3D / Blender / art task: read `BLENDER_PLAYBOOK.md` first** (tools, reference search, art rules, Roblox limits, Blender → Studio pipeline, asset backlog).
 - Blender files (.blend sources, .fbx exports) live in `blender_assets/`; design briefs in `blender_assets/briefs/`.
 - Every tuning number lives in `src/shared/Config/Tuning.luau`; don't hardcode numbers elsewhere.
@@ -15,7 +15,8 @@
 
 ## Status (Sep 30, 2026)
 
-- **Code:** M0–M2 (setup, moveset, duo core) + World 1 and World 3 tools implemented; grey-box levels built from code (`src/adventure/server/Greybox`). Verified in a solo Studio playtest: Prologue loads, roles/kit/cutscene work, Pause Beam freezes a mover. **Not yet tested with 2 players** (Test → Clients and Servers → 2). Castle combat (M3) and bosses (M6) are stubs.
+- **Code:** M0–M2 (setup, moveset, duo core) + World 1 and World 3 tools implemented; grey-box levels built from code (`src/adventure/server/Greybox`). Verified in a solo Studio playtest: Prologue loads, roles/kit/cutscene work, Pause Beam freezes a mover. **Not yet tested with 2 players** (Test → Clients and Servers → 2). **M3 castle combat implemented** (CombatService: 5 enemy types, projectiles + shield reflect, flame walls, meteor, rally; XpService: shared XP, level-up picker; Fire Mage + Shield Knight kits; grey-box 2-1 Castle Gates) and verified solo in Studio. Bosses (M6) are stubs.
+- **Colors:** `src/shared/Config/Palette.luau` (art-direction.md §16). Gameplay targets use owner colors (§6), never decoration.
 - **Studio debug:** during play, `workspace:SetAttribute("DebugWorld", "PixelPlains")` jumps worlds (Studio only).
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
 - **Art:** Lobby capsule done and in the Lobby place (mesh ids in `src/lobby/server/CapsuleMeshes.luau`, spawned at runtime by `LobbyBuilder`; verified in a solo Studio playtest). Prologue title-screen set (panels, giant buttons, title card) and Pip (floating companion) in the Adventure place via `ArtService` skins. Next art: backlog in `BLENDER_PLAYBOOK.md` §8.

@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
@@ -27,8 +28,8 @@ end
 function GrappleLine:Start()
 	local swingLook = trove:Add(Instance.new("Highlight"))
 	swingLook.FillTransparency = 0.6
-	swingLook.FillColor = Color3.fromRGB(255, 150, 40)
-	swingLook.OutlineColor = Color3.fromRGB(255, 150, 40)
+	swingLook.FillColor = Palette.Miko
+	swingLook.OutlineColor = Palette.Miko
 	swingLook.Enabled = false
 	swingLook.Parent = workspace
 

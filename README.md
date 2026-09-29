@@ -1,6 +1,6 @@
 # [2 PLAYER] Glitched Together 👾
 
-Two-player co-op Roblox adventure. Design docs: [design.md](design.md) (why), [mechanics.md](mechanics.md) (numbers), [implementation.md](implementation.md) (how), [Story Line](Glitched%20Together%20—%20Story%20Line.md), [research.md](research.md) (It Takes Two art/feel notes).
+Two-player co-op Roblox adventure. Design docs: [design.md](design.md) (why), [art-direction.md](art-direction.md) (look), [mechanics.md](mechanics.md) (numbers), [implementation.md](implementation.md) (how), [Story Line](Glitched%20Together%20—%20Story%20Line.md), [research.md](research.md) (It Takes Two art/feel notes).
 
 ## Layout
 
@@ -34,4 +34,5 @@ Before publishing: create one experience with both places, then fill in the ids 
 - M0 Setup, M1 Moveset, M2 Duo core: implemented, grey-boxed in the Prologue test course.
 - M4 Pixel Plains tools (Pause Beam, Grapple Line, MoverService): implemented + grey-box playground.
 - M5 Glitched Core tools (Copy/Paste, Layer Shift, Code Layer): implemented + small demo.
-- M3 castle combat (Fire Mage, Shield Knight, enemies, XP), M6 bosses, M7 story content: stubs/TODO.
+- M3 Starfall Castle: Fire Mage / Shield Knight kits, 5 enemy types, projectiles + shield reflect, XP and level-up upgrades, grey-box 2-1 Castle Gates. Implemented, tested solo.
+- M6 bosses, M7 story content: stubs/TODO.

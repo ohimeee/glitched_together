@@ -8,6 +8,8 @@ local UserInputService = game:GetService("UserInputService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Input = require(script.Parent.Parent.Input)
 
 local player = Players.LocalPlayer
@@ -19,8 +21,8 @@ local FONT = Enum.Font.FredokaOne
 local TOOL_TEXT: { [string]: { string } } = {
 	PauseBeam = { "PAUSE BEAM", "LMB  Freeze", "RMB  Release" },
 	GrappleLine = { "GRAPPLE LINE", "LMB  Swing", "RMB  Pull" },
-	FireMage = { "FIRE MAGE", "LMB  Fireball", "RMB  Flame Wall" },
-	ShieldKnight = { "SHIELD KNIGHT", "LMB  Sword", "RMB  Block" },
+	FireMage = { "FIRE MAGE", "LMB  Fireball   E  Ignite", "RMB  Flame Wall   Shift  Blink" },
+	ShieldKnight = { "SHIELD KNIGHT", "LMB  Sword", "RMB  Block   Shift  Charge" },
 	CopyPaste = { "COPY / PASTE", "LMB  Copy", "RMB  Paste (R rotate)" },
 	LayerShift = { "LAYER SHIFT", "LMB  Shift", "RMB  Pull Out" },
 }
@@ -185,7 +187,7 @@ local function buildOverlays()
 		Text = "GAME OVER?",
 		TextScaled = false,
 		TextSize = 96,
-		TextColor3 = Color3.fromRGB(255, 80, 170),
+		TextColor3 = Palette.Glitch,
 		Visible = false,
 		ZIndex = 60,
 	}, gui)
@@ -232,9 +234,7 @@ local function buildOverlays()
 		gameOver.Visible = true
 		for _ = 1, 8 do -- glitch flicker
 			gameOver.Position = UDim2.fromOffset(math.random(-12, 12), math.random(-8, 8))
-			gameOver.TextColor3 = if math.random() < 0.5
-				then Color3.fromRGB(255, 80, 170)
-				else Color3.fromRGB(60, 255, 120)
+			gameOver.TextColor3 = if math.random() < 0.5 then Palette.Glitch else Color3.fromRGB(60, 255, 120)
 			task.wait(0.08)
 		end
 		gameOver.Position = UDim2.fromOffset(0, 0)
@@ -296,6 +296,220 @@ local function buildTouch()
 	end
 end
 
+-- Castle: XP bar, ultimate meter, level-up picker, HP bars over heads (mechanics.md §6) ---------------------
+local UPGRADE_TEXT: { [string]: { string } } = {
+	BiggerFireball = { "BIGGER FIREBALL", "Fireballs are 50% bigger" },
+	FasterCast = { "FASTER CAST", "A fireball every 0.25 s" },
+	DoubleFlameWall = { "DOUBLE FLAME WALL", "Two walls at once" },
+	EmberTrail = { "EMBER TRAIL", "Blink leaves fire behind" },
+	WiderBlock = { "WIDER BLOCK", "Shield covers 160°" },
+	LongerCharge = { "LONGER CHARGE", "Charge 22 studs" },
+	ReflectBoost = { "REFLECT BOOST", "Reflected shots deal x2" },
+	SecondWind = { "SECOND WIND", "+40 HP, Rally heals 20" },
+}
+
+local function isCastle(): boolean
+	local kit = player:GetAttribute("Kit")
+	return kit == "FireMage" or kit == "ShieldKnight"
+end
+
+local function roleColor(p: Player): Color3
+	local info = (Roles :: any)[p:GetAttribute("Role") or ""]
+	return if info then info.Color else Palette.Duo
+end
+
+local function buildXpAndUltimate()
+	local xpBack = new("Frame", {
+		Name = "XP",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -18),
+		Size = UDim2.fromOffset(360, 14),
+		BackgroundColor3 = Color3.fromRGB(20, 20, 35),
+		Visible = false,
+	}, gui)
+	corner(xpBack, 7)
+	local xpFill =
+		new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(60, 255, 120) }, xpBack)
+	corner(xpFill, 7)
+	local levelLabel = text({
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 0, -2),
+		Size = UDim2.fromOffset(240, 22),
+		TextSize = 20,
+	}, xpBack)
+
+	local ultBack = new("Frame", {
+		Name = "Ultimate",
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -18, 1, -120),
+		Size = UDim2.fromOffset(240, 18),
+		BackgroundColor3 = Color3.fromRGB(20, 20, 35),
+		Visible = false,
+	}, gui)
+	corner(ultBack, 9)
+	local ultFill = new("Frame", { Size = UDim2.fromScale(0, 1) }, ultBack)
+	corner(ultFill, 9)
+	local ultLabel = text({
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, 0, 0, -2),
+		Size = UDim2.fromOffset(240, 22),
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Right,
+	}, ultBack)
+
+	local function refresh()
+		local show = isCastle()
+		xpBack.Visible = show
+		ultBack.Visible = show
+		if not show then
+			return
+		end
+		local xp = (player:GetAttribute("XP") or 0) :: number
+		local level = (player:GetAttribute("Level") or 1) :: number
+		local levels = Tuning.XpLevels
+		local lo = if level > 1 then levels[level - 1] else 0
+		local hi = levels[level]
+		xpFill.Size = UDim2.fromScale(if hi then math.clamp((xp - lo) / (hi - lo), 0, 1) else 1, 1)
+		levelLabel.Text = if hi then `LV {level}   {xp} / {hi} XP` else `LV {level}  MAX`
+		local ult = (player:GetAttribute("Ultimate") or 0) :: number
+		ultFill.Size = UDim2.fromScale(math.clamp(ult, 0, 1), 1)
+		ultFill.BackgroundColor3 = roleColor(player)
+		local name = if player:GetAttribute("Kit") == "FireMage" then "METEOR" else "RALLY"
+		ultLabel.Text = if ult >= 1 then `{name} READY!  LMB + RMB` else name
+	end
+	for _, attr in { "Kit", "XP", "Level", "Ultimate", "Role" } do
+		player:GetAttributeChangedSignal(attr):Connect(refresh)
+	end
+	refresh()
+end
+
+local function buildPicker()
+	local picker = new("Frame", {
+		Name = "LevelUp",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(560, 250),
+		BackgroundColor3 = Palette.Castle.NightPurple,
+		Visible = false,
+		ZIndex = 30,
+	}, gui)
+	corner(picker, 18)
+	new("UIStroke", { Thickness = 4, Color = Palette.Castle.Gold }, picker)
+	local title =
+		text({ Size = UDim2.new(1, 0, 0, 60), TextSize = 40, ZIndex = 31, TextColor3 = Palette.Castle.Gold }, picker)
+	local waiting = text({
+		Name = "PickWaiting",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 110),
+		Size = UDim2.fromOffset(500, 40),
+		TextSize = 26,
+		Text = "Waiting for your partner to pick...",
+		Visible = false,
+		ZIndex = 30,
+	}, gui)
+	local buttons: { TextButton } = {}
+	for i = 1, 2 do
+		local b = new("TextButton", {
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(if i == 1 then 0.27 else 0.73, 0, 0, 72),
+			Size = UDim2.fromOffset(240, 150),
+			BackgroundColor3 = Palette.Castle.Royal,
+			Font = FONT,
+			TextWrapped = true,
+			TextSize = 22,
+			TextColor3 = Color3.new(1, 1, 1),
+			ZIndex = 31,
+		}, picker)
+		corner(b, 14)
+		buttons[i] = b
+	end
+
+	local function refreshWaiting()
+		waiting.Visible = player:GetAttribute("Picking") == true and not picker.Visible
+	end
+	local pickEvent = Net.event("LevelPick")
+	Net.event("LevelUp").OnClientEvent:Connect(function(level: number, options: { string })
+		title.Text = `LEVEL {level}!  PICK ONE`
+		for i, b in buttons do
+			local name = options[i]
+			local info = UPGRADE_TEXT[name] or { name, "" }
+			b.Text = info[1] .. "\n\n" .. info[2]
+			b:SetAttribute("Choice", name)
+		end
+		picker.Visible = true
+		refreshWaiting()
+	end)
+	for _, b in buttons do
+		b.Activated:Connect(function()
+			local choice = b:GetAttribute("Choice")
+			if picker.Visible and choice then
+				picker.Visible = false
+				pickEvent:FireServer(choice)
+				refreshWaiting()
+			end
+		end)
+	end
+	player:GetAttributeChangedSignal("Picking"):Connect(function()
+		if not player:GetAttribute("Picking") then
+			picker.Visible = false
+		end
+		refreshWaiting()
+	end)
+end
+
+local function buildOverheadBars()
+	local bars: { [Player]: BillboardGui } = {}
+	local function barFor(p: Player)
+		local bill = new("BillboardGui", {
+			Name = "HPOver",
+			Size = UDim2.fromOffset(70, 9),
+			StudsOffsetWorldSpace = Vector3.new(0, 2.6, 0),
+			AlwaysOnTop = true,
+			LightInfluence = 0,
+			Enabled = false,
+		}, gui)
+		local back = new(
+			"Frame",
+			{ Name = "Back", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(20, 20, 35) },
+			bill
+		)
+		corner(back, 4)
+		local fill = new("Frame", { Name = "Fill", Size = UDim2.fromScale(1, 1) }, back)
+		corner(fill, 4)
+		bars[p] = bill
+	end
+	for _, p in Players:GetPlayers() do
+		barFor(p)
+	end
+	Players.PlayerAdded:Connect(barFor)
+	Players.PlayerRemoving:Connect(function(p)
+		if bars[p] then
+			bars[p]:Destroy()
+			bars[p] = nil
+		end
+	end)
+	RunService.RenderStepped:Connect(function()
+		for p, bill in bars do
+			local head = p.Character and p.Character:FindFirstChild("Head")
+			bill.Enabled = p:GetAttribute("HealthKind") == "HP" and head ~= nil and not p:GetAttribute("Downed")
+			if bill.Enabled then
+				bill.Adornee = head :: BasePart
+				local health = (p:GetAttribute("Health") or 0) :: number
+				local max = math.max(1, (p:GetAttribute("MaxHealth") or 100) :: number)
+				local fill = (bill :: any).Back.Fill :: Frame
+				fill.Size = UDim2.fromScale(math.clamp(health / max, 0, 1), 1)
+				fill.BackgroundColor3 = roleColor(p)
+			end
+		end
+	end)
+end
+
+local function buildCastle()
+	buildXpAndUltimate()
+	buildPicker()
+	buildOverheadBars()
+end
+
 function HUDController.Init()
 	gui = new(
 		"ScreenGui",
@@ -308,6 +522,7 @@ function HUDController.Init()
 	buildOverlays()
 	hideOwnRevivePrompt()
 	buildTouch()
+	buildCastle()
 end
 
 function HUDController.Gui(): ScreenGui

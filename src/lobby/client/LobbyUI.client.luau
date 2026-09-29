@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SocialService = game:GetService("SocialService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local player = Players.LocalPlayer
 
@@ -34,7 +35,7 @@ local function button(text: string, color: Color3, position: UDim2): TextButton
 	return b
 end
 
-local invite = button("INVITE A FRIEND", Color3.fromRGB(255, 80, 170), UDim2.new(1, -16, 1, -16))
+local invite = button("INVITE A FRIEND", Palette.Prologue.Pink, UDim2.new(1, -16, 1, -16))
 invite.Activated:Connect(function()
 	local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, player)
 	if ok and canInvite then

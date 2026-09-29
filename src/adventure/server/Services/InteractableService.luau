@@ -23,7 +23,7 @@ InteractableService.Pounded = pounded.Event -- (player, position)
 local launchEvent = Net.event("Launch")
 local poundEvent = Net.event("GroundPound")
 
-local TRIGGER_TAGS = { "PressurePlate", "DuoPound", "HeavyLever", "LeverPull" }
+local TRIGGER_TAGS = { "PressurePlate", "DuoPound", "HeavyLever", "LeverPull", "FireSwitch" } -- FireSwitch: hit by a fireball (CombatService)
 
 local function isActive(inst: Instance): boolean
 	return inst:GetAttribute("Active") == true

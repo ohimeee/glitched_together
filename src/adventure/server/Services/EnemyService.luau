@@ -39,6 +39,9 @@ function EnemyService.Stun(pos: Vector3, radius: number, duration: number)
 end
 
 local function register(inst: Instance)
+	if (Tuning.Enemies :: any)[inst:GetAttribute("Type") or ""] then
+		return -- castle enemies (HP, AI, attacks) belong to CombatService
+	end
 	local root = rootOf(inst)
 	if not root then
 		return

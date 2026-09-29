@@ -121,7 +121,7 @@ Each tool is taught in three rooms: (1) a room where only that tool works, (2) a
 
 ## 5. Level design rules
 
-- **Readable targets:** every object a tool can affect has a consistent look everywhere in the world. Freezable = blue frame. Grapple points = orange rings. Pullable = yellow handles. Burnable = cracked wood texture. Copyable = white outline. Code Layer = green scanlines (Miko only).
+- **Readable targets:** every object a tool can affect glows in its **owner's color** plus an icon: Kai's targets orange, Miko's teal, both-player objects white, neutral interactables yellow. Full color language and icons: `art-direction.md` §6.
 - **Both players always have something to do.** No "wait here while I do the puzzle" moments longer than 10 seconds.
 - **Checkpoints every 60–90 seconds of play**, always right after a sync gate and right before any hard jump sequence.
 - **Death is cheap.** Falls respawn in under 2 seconds. Frustration kills co-op faster than difficulty.

@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
@@ -17,8 +18,8 @@ local trove = Trove.new()
 function PauseBeam:Start()
 	local lockHighlight = trove:Add(Instance.new("Highlight"))
 	lockHighlight.FillTransparency = 0.7
-	lockHighlight.FillColor = Color3.fromRGB(90, 170, 255)
-	lockHighlight.OutlineColor = Color3.fromRGB(90, 170, 255)
+	lockHighlight.FillColor = Palette.Kai
+	lockHighlight.OutlineColor = Palette.Kai
 	lockHighlight.Enabled = false
 	lockHighlight.Parent = workspace
 
