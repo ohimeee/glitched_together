@@ -14,6 +14,7 @@ local order = {
 	"CutsceneController",
 	"CodeLayerController",
 	"EffectsController",
+	"PipController",
 }
 
 for _, name in order do

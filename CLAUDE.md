@@ -18,6 +18,6 @@
 - **Code:** M0–M2 (setup, moveset, duo core) + World 1 and World 3 tools implemented; grey-box levels built from code (`src/adventure/server/Greybox`). Verified in a solo Studio playtest: Prologue loads, roles/kit/cutscene work, Pause Beam freezes a mover. **Not yet tested with 2 players** (Test → Clients and Servers → 2). Castle combat (M3) and bosses (M6) are stubs.
 - **Studio debug:** during play, `workspace:SetAttribute("DebugWorld", "PixelPlains")` jumps worlds (Studio only).
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
-- **Art:** Pip done (`blender_assets/Pip.fbx`, not yet imported to Studio). Lobby capsule done and in the Lobby place (mesh ids in `src/lobby/server/CapsuleMeshes.luau`, spawned at runtime by `LobbyBuilder`; verified in a solo Studio playtest). Next art: backlog in `BLENDER_PLAYBOOK.md` §8.
+- **Art:** Lobby capsule done and in the Lobby place (mesh ids in `src/lobby/server/CapsuleMeshes.luau`, spawned at runtime by `LobbyBuilder`; verified in a solo Studio playtest). Prologue title-screen set (panels, giant buttons, title card) and Pip (floating companion) in the Adventure place via `ArtService` skins. Next art: backlog in `BLENDER_PLAYBOOK.md` §8.
 - **Studio UI clicks** (e.g. Import 3D) need the user: Claude can't drive Studio's UI while VS Code is foreground. Everything else goes through Studio MCP.
 - Git remote: https://github.com/ohimeee/glitched_together (private), branch `main`. Commit/push only when the user asks. `.gitattributes` forces LF endings (StyLua expects LF).

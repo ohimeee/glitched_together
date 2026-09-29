@@ -39,6 +39,7 @@ local CutsceneService = require(Services.CutsceneService)
 local AbilityService = require(Services.AbilityService)
 local EnemyService = require(Services.EnemyService)
 local BossService = require(Services.BossService)
+local ArtService = require(Services.ArtService)
 
 Players.CharacterAutoLoads = true
 
@@ -56,6 +57,7 @@ CutsceneService.Init()
 AbilityService.Init()
 EnemyService.Init()
 BossService.Init()
+ArtService.Init()
 
 -- Hints reset on any progress.
 InteractableService.Progress:Connect(HintService.Progress)

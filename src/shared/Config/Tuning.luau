@@ -99,4 +99,15 @@ return {
 	-- World 3
 	CopyPaste = { CopyRange = 50, PasteRange = 40, MaxPastes = 2 },
 	LayerShift = { Transition = 0.3, PullRange = 35 },
+
+	-- Pip, the floating companion (client-side)
+	Pip = {
+		Scale = 0.75,
+		Height = 6, -- studs above the duo's midpoint
+		Sharpness = 3, -- follow smoothing (higher = snappier)
+		BobHeight = 0.4,
+		BobSpeed = 2,
+		Leash = 40, -- partner farther than this: Pip stays with you
+		HintTime = 6, -- seconds Pip hangs at your shoulder after a hint
+	},
 }

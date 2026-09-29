@@ -1,11 +1,11 @@
 -- Builds the lobby (platform + 6 capsule pairs) if the place doesn't already have one.
 -- Capsules use the Blender meshes (CapsuleMeshes); if they can't load, it falls back to grey-box parts.
 -- Once you build a real lobby in Studio (same names and the CapsulePair tag), this does nothing.
-local AssetService = game:GetService("AssetService")
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
+local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local CapsuleMeshes = require(script.Parent.CapsuleMeshes)
 
 local PAIRS = 6
@@ -147,50 +147,6 @@ local function zone(parent: Instance, cf: CFrame)
 	})
 end
 
-local function createMeshPart(id: string, collision: Enum.CollisionFidelity): MeshPart
-	local options = { CollisionFidelity = collision, RenderFidelity = Enum.RenderFidelity.Precise }
-	local ok, result = pcall(function()
-		return AssetService:CreateMeshPartAsync(Content.fromUri(id), options)
-	end)
-	if ok then
-		return result
-	end
-	return AssetService:CreateMeshPartAsync(id :: any, options) -- older signature took the id string
-end
-
--- Loads every capsule mesh once (in parallel). Returns nil if any fails, so the grey-box capsules are used.
-local function loadMeshTemplates(): { [string]: MeshPart }?
-	local templates: { [string]: MeshPart } = {}
-	local pending, failed = 0, false
-	for name, info in CapsuleMeshes.Meshes do
-		pending += 1
-		task.spawn(function()
-			local ok, result = pcall(createMeshPart, info.Id, info.Collision or Enum.CollisionFidelity.Box)
-			if ok then
-				local p = result :: MeshPart
-				p.Name = name
-				p.Size = info.Size
-				p.Anchored = true
-				p.Material = info.Material
-				p.Color = info.Color or Color3.new(1, 1, 1)
-				p.Transparency = info.Transparency or 0
-				p.CanCollide = info.Collision ~= nil
-				p.CanTouch = false
-				p.CastShadow = info.Material ~= Enum.Material.Neon and info.Material ~= Enum.Material.Glass
-				templates[name] = p
-			else
-				warn(`LobbyBuilder: couldn't load mesh {name} ({result}); using grey-box capsules`)
-				failed = true
-			end
-			pending -= 1
-		end)
-	end
-	while pending > 0 do
-		task.wait()
-	end
-	return if failed then nil else templates
-end
-
 local function meshPart(templates: { [string]: MeshPart }, name: string, cf: CFrame, parent: Instance): MeshPart
 	local p = templates[name]:Clone()
 	p.CFrame = cf * CFrame.new(CapsuleMeshes.Meshes[name].Offset)
@@ -305,7 +261,7 @@ function LobbyBuilder.Build()
 	pairsFolder.Name = "CapsulePairs"
 	pairsFolder.Parent = lobby
 
-	local templates = loadMeshTemplates()
+	local templates = MeshAssets.Load(CapsuleMeshes.Meshes, "Lobby capsule")
 
 	for i = 1, PAIRS do
 		local angle = (i - 1) / PAIRS * math.pi * 2

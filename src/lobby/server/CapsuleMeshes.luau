@@ -4,21 +4,15 @@
 --   Emblems   : Tri sits on Kai's dome, Circle on Miko's (same offset idea).
 --   Marquee_* : from the pair's center on the ground (between the two capsules).
 -- Knob: as imported it sits on +X; LobbyBuilder turns it 180° for the capsule on the pair's -X side so it always faces out.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
+
 local NAVY = Color3.fromRGB(20, 24, 58)
 local WHITE = Color3.fromRGB(240, 240, 250)
 local PINK = Color3.fromRGB(255, 80, 170)
 
-export type MeshInfo = {
-	Id: string,
-	Offset: Vector3,
-	Size: Vector3,
-	Material: Enum.Material,
-	Color: Color3?, -- nil = the role's color
-	Transparency: number?,
-	Collision: Enum.CollisionFidelity?, -- nil = CanCollide false
-}
-
-local Meshes: { [string]: MeshInfo } = {
+-- Color nil = the role's color.
+local Meshes: { [string]: MeshAssets.MeshInfo } = {
 	Capsule_Base = {
 		Id = "rbxassetid://108644351274377",
 		Offset = Vector3.new(0, 0.275, 0),

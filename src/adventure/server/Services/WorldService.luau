@@ -9,6 +9,7 @@ local DuoService = require(script.Parent.DuoService)
 local SaveService = require(script.Parent.SaveService)
 local CheckpointService = require(script.Parent.CheckpointService)
 local Greybox = require(script.Parent.Parent.Greybox)
+local ArtService = require(script.Parent.ArtService)
 
 local WorldService = {}
 WorldService.Current = "Prologue"
@@ -63,6 +64,9 @@ function WorldService.Load(worldName: string, checkpoint: number?)
 	end
 	model.Name = "World"
 	model.Parent = workspace
+	if not source then
+		ArtService.Dress(model, worldName)
+	end
 
 	local info = Worlds.ByName[worldName]
 	if info then

@@ -61,7 +61,7 @@ local function platform(parent: Instance, size: Vector3, x: number, top: number,
 	return block(parent, size, CFrame.new(x, top - size.Y / 2, z), opts)
 end
 
-local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, color: Color3?)
+local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, color: Color3?): Part
 	local s =
 		block(parent, size or Vector3.new(24, 6, 0.6), cf, { color = color or NAVY, name = "Sign", collide = false })
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
@@ -80,6 +80,7 @@ local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, 
 		label.Text = text
 		label.Parent = gui
 	end
+	return s
 end
 
 local function checkpoint(
@@ -175,7 +176,8 @@ local function buildPrologue(world: Model)
 		W,
 		{ "Space to jump, Space again in the air to double jump!", "Shift dashes. Ctrl in the air is a ground pound." }
 	)
-	sign(world, "STARFALL KINGDOM\n▶ CONTINUE?", CFrame.new(0, 14, 20), Vector3.new(30, 10, 1), NAVY)
+	sign(world, "STARFALL KINGDOM\n▶ CONTINUE?", CFrame.new(0, 14, 20), Vector3.new(30, 10, 1), NAVY).Name =
+		"TitleCard"
 	platform(
 		world,
 		Vector3.new(8, 1, 8),
@@ -213,7 +215,7 @@ local function buildPrologue(world: Model)
 	)
 
 	-- Chimney of Clingable walls → C
-	platform(world, Vector3.new(12, 4, 12), 0, 11, 101, { color = NAVY })
+	platform(world, Vector3.new(12, 4, 12), 0, 11, 101, { color = NAVY, name = "ChimneyBase" })
 	for _, x in { -5.5, 5.5 } do
 		block(world, Vector3.new(1, 28, 10), CFrame.new(x, 25, 102), {
 			color = ORANGE,
@@ -261,18 +263,10 @@ local function buildPrologue(world: Model)
 	sign(world, "F to grind", CFrame.new(6, 36, 168), Vector3.new(8, 2.5, 0.4))
 
 	platform(world, Vector3.new(30, 4, 34), 0, 18, 253, { color = NAVY, name = "Credits" })
-	checkpoint(
-		world,
-		4,
-		0,
-		18,
-		244,
-		W,
-		{
-			"One of you stands on the pad, the other ground-pounds it.",
-			"The high plate and the low plate must be held at the same time.",
-		}
-	)
+	checkpoint(world, 4, 0, 18, 244, W, {
+		"One of you stands on the pad, the other ground-pounds it.",
+		"The high plate and the low plate must be held at the same time.",
+	})
 
 	-- Bounce pad + high ledge plate + low plate → Duo Gate G1
 	platform(
@@ -383,18 +377,10 @@ local function buildPixelPlains(world: Model)
 
 	platform(world, Vector3.new(40, 6, 40), 0, 0, 0, { color = GRASS, name = "StarterMeadow" })
 	spawnAt(world, 0, 0, -8)
-	checkpoint(
-		world,
-		1,
-		0,
-		0,
-		0,
-		W,
-		{
-			"Kai: freeze the moving platform (left click) when it's close.",
-			"Miko: grapple rings glow orange. Left click near one.",
-		}
-	)
+	checkpoint(world, 1, 0, 0, 0, W, {
+		"Kai: freeze the moving platform (left click) when it's close.",
+		"Miko: grapple rings glow orange. Left click near one.",
+	})
 
 	-- 1. Freeze a moving platform over a pit
 	local mover = block(world, Vector3.new(10, 2, 10), CFrame.new(0, -1, 30), {
@@ -444,18 +430,10 @@ local function buildPixelPlains(world: Model)
 	})
 	waypoints(ferry, { CFrame.new(10, -1, 124), CFrame.new(10, -1, 146) })
 	platform(world, Vector3.new(34, 6, 36), 0, 0, 168, { color = GRASS, name = "CoinFactory" })
-	checkpoint(
-		world,
-		3,
-		0,
-		0,
-		156,
-		W,
-		{
-			"Miko: right click pulls yellow things.",
-			"Pull the crate onto the plate, the door stays open while it's there.",
-		}
-	)
+	checkpoint(world, 3, 0, 0, 156, W, {
+		"Miko: right click pulls yellow things.",
+		"Pull the crate onto the plate, the door stays open while it's there.",
+	})
 
 	-- 4. Pull a crate onto a plate → door stays open while it's held
 	block(world, Vector3.new(4, 4, 4), CFrame.new(-10, 2, 172), {
@@ -505,18 +483,10 @@ local function buildGlitchedCore(world: Model)
 	local DARK = rgb(40, 40, 46)
 	platform(world, Vector3.new(40, 4, 40), 0, 0, 0, { color = DARK, name = "MissingTextures" })
 	spawnAt(world, 0, 0, -8)
-	checkpoint(
-		world,
-		1,
-		0,
-		0,
-		0,
-		W,
-		{
-			"Miko: left click to see the Code Layer.",
-			"Miko pulls the hidden bridge out (right click). Kai copies and pastes it.",
-		}
-	)
+	checkpoint(world, 1, 0, 0, 0, W, {
+		"Miko: left click to see the Code Layer.",
+		"Miko pulls the hidden bridge out (right click). Kai copies and pastes it.",
+	})
 
 	-- Hidden bridge piece only Miko sees until pulled out.
 	block(world, Vector3.new(10, 1, 14), CFrame.new(0, -0.5, 28), {

@@ -12,7 +12,7 @@ Two-player co-op Roblox adventure. Design docs: [design.md](design.md) (why), [m
 | `src/lobby` | LobbyBuilder (lobby + capsule pairs from Blender meshes, grey-box fallback), CapsuleMeshes (mesh ids), Capsules, Lobby UI |
 | `src/adventure/server` | `Main` + Services (Duo, Save, World, Checkpoint, Health, Interactable, Mover, Ability, Relay, Hint, Cutscene, Enemy, Boss, Collision) + `Greybox` level builder |
 | `src/adventure/client` | Input (Input Action System with fallback), Aim, Controllers, AbilitiesClient |
-| `blender_assets/` | Blender sources (.blend) and FBX exports for Studio (Pip, LobbyCapsule); `briefs/` = design briefs |
+| `blender_assets/` | Blender sources (.blend) and FBX exports for Studio (Pip, LobbyCapsule, PrologueUI); `briefs/` = design briefs. Imported mesh ids live in `src/lobby/server/CapsuleMeshes.luau` and `src/adventure/server/Services/ArtService.luau` |
 
 ## Run it
 
