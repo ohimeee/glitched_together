@@ -20,4 +20,4 @@
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
 - **Art:** Pip done (`blender_assets/Pip.fbx`, not yet imported to Studio). Lobby capsule first pass modeled (`blender_assets/LobbyCapsule.*`), **needs refining** (4,852 tris vs 3k budget) and importing; see `blender_assets/briefs/LobbyCapsule.md`.
 - `blender_assets/Untitled.blend` is the user's own save of the Pip scene (duplicate of `Pip.blend`); leave it unless they ask.
-- Git initialized, **nothing committed yet** (commit only when the user asks).
+- Git remote: https://github.com/ohimeee/glitched_together (private), branch `main`. Commit/push only when the user asks. `.gitattributes` forces LF endings (StyLua expects LF).
