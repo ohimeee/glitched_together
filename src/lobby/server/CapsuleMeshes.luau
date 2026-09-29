@@ -10,7 +10,7 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local NAVY = Palette.Prologue.Navy
 local WHITE = Palette.Prologue.White
-local GLITCH = Palette.Glitch
+local GLITCH = Palette.Glow.Glitch
 
 -- Color nil = the role's color.
 local Meshes: { [string]: MeshAssets.MeshInfo } = {

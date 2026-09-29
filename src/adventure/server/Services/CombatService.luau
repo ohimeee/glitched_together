@@ -115,6 +115,9 @@ local function effect(props: { [string]: any }, life: number?): Part
 	for k, v in props do
 		(part :: any)[k] = v
 	end
+	if part.Material == Enum.Material.Neon then
+		part.Color = Palette.ForNeon(part.Color)
+	end
 	part.Parent = fx
 	if life then
 		TweenService:Create(part, TweenInfo.new(life), { Transparency = 1 }):Play()
@@ -463,7 +466,7 @@ local function reflect(shot: Shot, miko: Player, at: Vector3)
 	if shot.owner == nil or shot.owner == miko then
 		shot.owner = miko
 	end
-	shot.part.Color = Palette.Miko -- reflected: now Miko's shot
+	shot.part.Color = Palette.Glow.Miko -- reflected: now Miko's shot
 	shot.part.Name = shot.kind .. "Reflected"
 	shot.part.CFrame = CFrame.new(at + shot.dir * 1.5)
 	shieldFlash(miko)

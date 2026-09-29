@@ -44,6 +44,9 @@ local function block(parent: Instance, size: Vector3, cf: CFrame, opts: Opts?): 
 	p.CanCollide = if o.collide == nil then true else o.collide
 	p.Color = o.color or GREY
 	p.Material = o.material or Enum.Material.SmoothPlastic
+	if p.Material == Enum.Material.Neon then
+		p.Color = Palette.ForNeon(p.Color) -- reserved colors stay readable on Neon
+	end
 	p.Transparency = o.transparency or 0
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth

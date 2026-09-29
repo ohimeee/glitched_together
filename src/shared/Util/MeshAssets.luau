@@ -14,6 +14,9 @@ export type MeshInfo = {
 	Collision: Enum.CollisionFidelity?, -- nil = CanCollide false
 }
 
+-- A set of meshes that dresses one grey-box part: offsets/sizes are at Design size and scale with the part.
+export type Skin = { Design: Vector3, Meshes: { [string]: MeshInfo } }
+
 local MeshAssets = {}
 
 local cache: { [string]: MeshPart } = {} -- id → loaded template (collision fidelity is part of the key)

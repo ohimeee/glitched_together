@@ -66,7 +66,7 @@ local function blink(lastBlink: { t: number })
 		puff.Shape = Enum.PartType.Ball
 		puff.Size = Vector3.one * 3
 		puff.Material = Enum.Material.Neon
-		puff.Color = Palette.Kai
+		puff.Color = Palette.Glow.Kai
 		puff.Transparency = 0.4
 		puff.Anchored = true
 		puff.CanCollide = false

@@ -7,6 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -79,7 +80,7 @@ function TopDownAim.Start(color: Color3)
 	reticle.Shape = Enum.PartType.Cylinder
 	reticle.Size = Vector3.new(0.15, 2.4, 2.4)
 	reticle.Material = Enum.Material.Neon
-	reticle.Color = color
+	reticle.Color = Palette.ForNeon(color)
 	reticle.Transparency = 0.35
 	reticle.Anchored = true
 	reticle.CanCollide = false

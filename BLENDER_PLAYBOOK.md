@@ -181,9 +181,11 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | --- | --- | --- | --- |
 | ✅ | **Pip** | All | In game: `blender_assets/Pip.fbx` split per material (644 tris), floating companion via `ArtService` + `PipController` |
 | ✅ | **Lobby capsule** (Kai ▲ / Miko ●) + marquee | Lobby | Done and in game: `blender_assets/LobbyCapsule.blend/.fbx` (2,082 tris per capsule), ids in `src/lobby/server/CapsuleMeshes.luau`, brief `briefs/LobbyCapsule.md` |
-| 1 | Kai / Miko identity accessories (hood with triangle, jacket with circle patch) | All | Roblox accessories: ≤ 4k tris |
+| ✅ | Kai / Miko role badges (▲ / ● back badge accessory) | All | In game: `Identity.*`, `ArtService/Badges.luau`. Full outfits per world (art-direction §5) still to do |
 | ✅ | Giant title-menu buttons, UI panels, "CONTINUE?" title card | Prologue | In game: `blender_assets/PrologueUI.*`, brief `briefs/PrologueUI.md`, skins in `ArtService` |
-| 2 | Coin block, pixel cloud, voxel tree, Pixel Crusher, grapple ring, crate | Pixel Plains | Crusher must read as dangerous |
+| ✅ | Grass block, moving block, Pixel Crusher, grapple ring, crate, cloud, star coin block | Pixel Plains | In game: `PixelPlains.*`, brief `briefs/PixelPlains.md` |
+| 1 | Stone/dirt pillar kit, voxel tree, pixel flowers, "START →" and "BY KAI + MIKO" signs | Pixel Plains | Replace the last plain grey-box pieces; kid details |
+| 1 | Castle kit: floor tiles, 6-stud walls with arches, torch, brazier, banner, iron bars, cracked wall, wooden door, enemies (googly-eyed skeleton, slime, archer, shield guard, mage) | Starfall Castle | Top-down readable; floors carry the design |
 | 2 | Castle gate, torch/brazier, banner, bookshelf, iron bars, Siege Cart | Starfall Castle | Top-down readable from above |
 | 3 | Wireframe cubes, missing-texture blocks, SAVE button | Glitched Core | |
 | 3 | Bosses: Crusher King (stacked blocks + crown), Hollow Dragon, The Unfinished | W1–W3 | Split into parts that the boss code can move |

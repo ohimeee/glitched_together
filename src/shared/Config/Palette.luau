@@ -3,7 +3,30 @@
 -- danger red, The Glitch magenta (+ cyan fringe / black checker).
 local hex = Color3.fromHex
 
-return {
+-- Neon adds a lot of brightness in Roblox (orange reads yellow, teal reads white-cyan). Use these on Neon parts
+-- so the glow still reads as the reserved color.
+local function glow(c: Color3): Color3
+	return c:Lerp(Color3.new(0, 0, 0), 0.35)
+end
+
+local Palette
+local glowOf: { [string]: Color3 } = {}
+
+-- The color to use on a Neon part: reserved colors get their Glow version, anything else is unchanged.
+local function forNeon(c: Color3): Color3
+	return glowOf[c:ToHex()] or c
+end
+
+Palette = {
+	ForNeon = forNeon,
+	Glow = {
+		Kai = glow(hex("#FF8A2B")),
+		Miko = glow(hex("#1FC7B6")),
+		Duo = hex("#C8CCD6"),
+		Neutral = glow(hex("#FFD23F")),
+		Danger = glow(hex("#E5383B")),
+		Glitch = glow(hex("#FF2BD6")),
+	},
 	-- reserved gameplay colors
 	Kai = hex("#FF8A2B"),
 	Miko = hex("#1FC7B6"),
@@ -41,3 +64,9 @@ return {
 	Core = { Grey = hex("#7A7D85"), Dark = hex("#3A3C42"), Void = hex("#141518") },
 	Final = { Sky = hex("#1A2466"), Starlight = hex("#FFF3C4") },
 }
+
+for _, name in { "Kai", "Miko", "Duo", "Neutral", "Danger", "Glitch" } do
+	glowOf[(Palette :: any)[name]:ToHex()] = Palette.Glow[name]
+end
+
+return Palette
