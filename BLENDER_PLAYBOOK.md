@@ -172,8 +172,10 @@ Source: [Roblox mesh specifications](https://create.roblox.com/docs/art/modeling
 5. **Save** source + export into the repo:
    - `blender_assets/<Name>.blend` (save a *copy* so the user's open file isn't renamed: `bpy.ops.wm.save_as_mainfile(filepath=..., copy=True)`)
    - `blender_assets/<Name>.fbx` (`use_selection=True, object_types={"MESH"}, apply_unit_scale=True, bake_space_transform=True`)
-6. **Import to Studio**: Home → **Import 3D** → the `.fbx` (user click; Studio MCP has no FBX import tool). Put it in `ServerStorage/Assets` or the world model.
-7. **Hook up in Studio** with `execute_luau` (Edit): set Anchored, CollisionFidelity, add tags/attributes the code expects (implementation.md §4 tag table), then `screen_capture` to confirm.
+6. **Import to Studio**: Home → **Import** → the `.fbx`. **The user has to click this** (Studio MCP has no FBX import tool, and MCPControl clicks don't reach Studio while VS Code holds the foreground; Windows has only one cursor). Import into any open place: it uploads each mesh as an asset.
+7. **Read the ids** with `execute_luau` (Edit): each MeshPart's `MeshId`, `Size`, `Position`. Our FBX comes in at **100× (cm)** with Blender (x, y, z) → Roblox (−x, z, y), so divide sizes/offsets by 100; Blender −Y (front) ends up facing Roblox −Z.
+8. **Hook up in code** (Rojo-friendly, no .rbxm to hand-save): store ids + offsets + look in a data module and create the parts at runtime with `AssetService:CreateMeshPartAsync(Content.fromUri(id), { CollisionFidelity = … })`, load each mesh once and `Clone()` it, keep a grey-box fallback. Example: `src/lobby/server/CapsuleMeshes.luau` + `LobbyBuilder`. Then delete the imported model from the place, playtest, and `screen_capture` to confirm.
+9. **Testing a place:** `rojo build <project> -o build/<Place>.rbxl`, open it in a second Studio (`RobloxStudioBeta.exe -task EditFile -localPlaceFile …`); to reload after code changes, kill that Studio process and rebuild (Studio HTTP is off, so live-pushing source from the MCP isn't possible without the Rojo plugin click).
 
 Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`, `PP_CoinBlock`, `SC_CastleGate`, `GC_WireframeCube`.
 
@@ -203,7 +205,7 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | Priority | Asset | World | Notes |
 | --- | --- | --- | --- |
 | ✅ | **Pip** | All | Done: `blender_assets/Pip.fbx` (276 faces) |
-| 🟡 | **Lobby capsule** (Kai ▲ / Miko ●) + marquee | Lobby | **First pass done, needs refining**: `blender_assets/LobbyCapsule.blend/.fbx`, brief `briefs/LobbyCapsule.md`. TODO: cut tris 4,852 → under 3,000 (lower dome/torus segments), review screenshots from the lobby camera angle, import to Studio and swap into `LobbyBuilder` keeping `Zone` + `Screen.SurfaceGui.Status` |
+| ✅ | **Lobby capsule** (Kai ▲ / Miko ●) + marquee | Lobby | Done and in game: `blender_assets/LobbyCapsule.blend/.fbx` (2,082 tris per capsule), ids in `src/lobby/server/CapsuleMeshes.luau`, brief `briefs/LobbyCapsule.md` |
 | 1 | Kai / Miko identity accessories (hood with triangle, jacket with circle patch) | All | Roblox accessories: ≤ 4k tris |
 | 2 | Giant title-menu buttons, Options slider, "CONTINUE?" card | Prologue | Floating UI-as-geometry |
 | 2 | Coin block, pixel cloud, voxel tree, Pixel Crusher, grapple ring, crate | Pixel Plains | Crusher must read as dangerous |

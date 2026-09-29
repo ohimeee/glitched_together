@@ -1,9 +1,12 @@
--- Builds the grey-box lobby (platform + 6 capsule pairs) if the place doesn't already have one.
+-- Builds the lobby (platform + 6 capsule pairs) if the place doesn't already have one.
+-- Capsules use the Blender meshes (CapsuleMeshes); if they can't load, it falls back to grey-box parts.
 -- Once you build a real lobby in Studio (same names and the CapsulePair tag), this does nothing.
+local AssetService = game:GetService("AssetService")
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
+local CapsuleMeshes = require(script.Parent.CapsuleMeshes)
 
 local PAIRS = 6
 local RING_RADIUS = 46
@@ -131,6 +134,125 @@ local function capsule(name: string, cf: CFrame, color: Color3, roleLabel: strin
 	return m
 end
 
+local function zone(parent: Instance, cf: CFrame)
+	part({
+		Name = "Zone",
+		Size = Vector3.new(6.5, 8, 6.5),
+		CFrame = cf * CFrame.new(0, 5, 0),
+		Transparency = 1,
+		CanCollide = false,
+		CanQuery = false,
+		CanTouch = false,
+		Parent = parent,
+	})
+end
+
+local function createMeshPart(id: string, collision: Enum.CollisionFidelity): MeshPart
+	local options = { CollisionFidelity = collision, RenderFidelity = Enum.RenderFidelity.Precise }
+	local ok, result = pcall(function()
+		return AssetService:CreateMeshPartAsync(Content.fromUri(id), options)
+	end)
+	if ok then
+		return result
+	end
+	return AssetService:CreateMeshPartAsync(id :: any, options) -- older signature took the id string
+end
+
+-- Loads every capsule mesh once (in parallel). Returns nil if any fails, so the grey-box capsules are used.
+local function loadMeshTemplates(): { [string]: MeshPart }?
+	local templates: { [string]: MeshPart } = {}
+	local pending, failed = 0, false
+	for name, info in CapsuleMeshes.Meshes do
+		pending += 1
+		task.spawn(function()
+			local ok, result = pcall(createMeshPart, info.Id, info.Collision or Enum.CollisionFidelity.Box)
+			if ok then
+				local p = result :: MeshPart
+				p.Name = name
+				p.Size = info.Size
+				p.Anchored = true
+				p.Material = info.Material
+				p.Color = info.Color or Color3.new(1, 1, 1)
+				p.Transparency = info.Transparency or 0
+				p.CanCollide = info.Collision ~= nil
+				p.CanTouch = false
+				p.CastShadow = info.Material ~= Enum.Material.Neon and info.Material ~= Enum.Material.Glass
+				templates[name] = p
+			else
+				warn(`LobbyBuilder: couldn't load mesh {name} ({result}); using grey-box capsules`)
+				failed = true
+			end
+			pending -= 1
+		end)
+	end
+	while pending > 0 do
+		task.wait()
+	end
+	return if failed then nil else templates
+end
+
+local function meshPart(templates: { [string]: MeshPart }, name: string, cf: CFrame, parent: Instance): MeshPart
+	local p = templates[name]:Clone()
+	p.CFrame = cf * CFrame.new(CapsuleMeshes.Meshes[name].Offset)
+	p.Parent = parent
+	return p
+end
+
+-- Capsule from the Blender meshes. onNegativeX: this capsule is on the pair's -X side, so its knob turns to face out.
+local function meshCapsule(
+	templates: { [string]: MeshPart },
+	name: string,
+	cf: CFrame,
+	color: Color3,
+	roleLabel: string,
+	shape: string,
+	onNegativeX: boolean
+): Model
+	local m = Instance.new("Model")
+	m.Name = name
+
+	for _, partName in CapsuleMeshes.CapsuleParts do
+		local p = meshPart(templates, partName, cf, m)
+		if not CapsuleMeshes.Meshes[partName].Color then
+			if partName == "Capsule_Glass" then
+				p.Color = color:Lerp(Color3.new(1, 1, 1), 0.45)
+			elseif partName == "Capsule_Glow_Role" then
+				p.Color = color:Lerp(Color3.new(0, 0, 0), 0.3) -- Neon blows bright colors out (orange reads yellow)
+			else
+				p.Color = color
+			end
+		end
+		if partName == "Capsule_Knob_Role" and onNegativeX then
+			local off = CapsuleMeshes.Meshes[partName].Offset
+			p.CFrame = cf * CFrame.new(-off.X, off.Y, off.Z) * CFrame.Angles(0, math.pi, 0)
+		end
+	end
+	meshPart(templates, CapsuleMeshes.Emblem[shape], cf, m)
+
+	-- role name on the front of the rim band
+	local sign = part({
+		Name = "Sign",
+		Size = Vector3.new(5, 1.1, 0.1),
+		CFrame = cf * CFrame.new(0, 10.5, -4.8),
+		Transparency = 1,
+		CanCollide = false,
+		CanQuery = false,
+		CanTouch = false,
+		Parent = m,
+	})
+	label(sign, Enum.NormalId.Front, (if shape == "Triangle" then "▲ " else "● ") .. roleLabel, color)
+
+	local light = Instance.new("PointLight")
+	light.Color = color
+	light.Range = 12
+	light.Brightness = 1.5
+	light.Parent = m:FindFirstChild("Capsule_Glow_Role")
+
+	zone(m, cf)
+	m.PrimaryPart = m:FindFirstChild("Capsule_Base") :: BasePart
+	return m
+end
+
 function LobbyBuilder.Build()
 	if workspace:FindFirstChild("Lobby") then
 		return
@@ -151,7 +273,7 @@ function LobbyBuilder.Build()
 		Name = "Rim",
 		Shape = Enum.PartType.Cylinder,
 		Size = Vector3.new(0.4, 152, 152),
-		CFrame = CFrame.new(0, -0.2, 0) * CFrame.Angles(0, 0, math.rad(90)),
+		CFrame = CFrame.new(0, -0.25, 0) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = Color3.fromRGB(255, 80, 170),
 		Material = Enum.Material.Neon,
 		CanCollide = false,
@@ -183,6 +305,8 @@ function LobbyBuilder.Build()
 	pairsFolder.Name = "CapsulePairs"
 	pairsFolder.Parent = lobby
 
+	local templates = loadMeshTemplates()
+
 	for i = 1, PAIRS do
 		local angle = (i - 1) / PAIRS * math.pi * 2
 		local pos = Vector3.new(math.cos(angle) * RING_RADIUS, 0, math.sin(angle) * RING_RADIUS)
@@ -191,20 +315,29 @@ function LobbyBuilder.Build()
 
 		local pair = Instance.new("Model")
 		pair.Name = `Pair{i}`
-		local kai =
-			capsule("KaiCapsule", pairCf * CFrame.new(-6, 0, 0), Roles.Kai.Color, Roles.Kai.Label, Roles.Kai.Shape)
-		kai.Parent = pair
-		local miko =
-			capsule("MikoCapsule", pairCf * CFrame.new(6, 0, 0), Roles.Miko.Color, Roles.Miko.Label, Roles.Miko.Shape)
-		miko.Parent = pair
-
-		local screen = part({
-			Name = "Screen",
-			Size = Vector3.new(10, 4, 0.5),
-			CFrame = pairCf * CFrame.new(0, 12, -1),
-			Color = Color3.fromRGB(15, 15, 25),
-			Parent = pair,
-		})
+		local kaiCf, mikoCf = pairCf * CFrame.new(-6, 0, 0), pairCf * CFrame.new(6, 0, 0)
+		local screen: BasePart
+		if templates then
+			local kai = Roles.Kai
+			meshCapsule(templates, "KaiCapsule", kaiCf, kai.Color, kai.Label, kai.Shape, true).Parent = pair
+			local miko = Roles.Miko
+			meshCapsule(templates, "MikoCapsule", mikoCf, miko.Color, miko.Label, miko.Shape, false).Parent = pair
+			for _, name in CapsuleMeshes.MarqueeParts do
+				meshPart(templates, name, pairCf, pair)
+			end
+			screen = meshPart(templates, CapsuleMeshes.Screen, pairCf, pair)
+			screen.Name = "Screen"
+		else
+			capsule("KaiCapsule", kaiCf, Roles.Kai.Color, Roles.Kai.Label, Roles.Kai.Shape).Parent = pair
+			capsule("MikoCapsule", mikoCf, Roles.Miko.Color, Roles.Miko.Label, Roles.Miko.Shape).Parent = pair
+			screen = part({
+				Name = "Screen",
+				Size = Vector3.new(10, 4, 0.5),
+				CFrame = pairCf * CFrame.new(0, 12, -1),
+				Color = Color3.fromRGB(15, 15, 25),
+				Parent = pair,
+			})
+		end
 		label(screen, Enum.NormalId.Front, "STEP IN TO PLAY", Color3.fromRGB(255, 255, 255), "Status")
 
 		pair.Parent = pairsFolder

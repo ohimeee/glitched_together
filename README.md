@@ -9,10 +9,10 @@ Two-player co-op Roblox adventure. Design docs: [design.md](design.md) (why), [m
 | `lobby.project.json` | Lobby place: capsule pairs, lock-in, teleport (Rojo port 34873) |
 | `adventure.project.json` | Adventure place: the game (Rojo port 34872) |
 | `src/shared` | Net remotes, Config (Tuning, Kits, Worlds, Roles, Dialogue, Places), Util |
-| `src/lobby` | LobbyBuilder (grey-box lobby), Capsules, Lobby UI |
+| `src/lobby` | LobbyBuilder (lobby + capsule pairs from Blender meshes, grey-box fallback), CapsuleMeshes (mesh ids), Capsules, Lobby UI |
 | `src/adventure/server` | `Main` + Services (Duo, Save, World, Checkpoint, Health, Interactable, Mover, Ability, Relay, Hint, Cutscene, Enemy, Boss, Collision) + `Greybox` level builder |
 | `src/adventure/client` | Input (Input Action System with fallback), Aim, Controllers, AbilitiesClient |
-| `blender_assets/` | Blender sources (.blend) and FBX exports for Studio (Pip, LobbyCapsule first pass); `briefs/` = design briefs |
+| `blender_assets/` | Blender sources (.blend) and FBX exports for Studio (Pip, LobbyCapsule); `briefs/` = design briefs |
 
 ## Run it
 

@@ -22,8 +22,16 @@ local MESSAGE_TIME = 2.5 -- how long TRY AGAIN / STUDIO notices stay on a screen
 LobbyBuilder.Build()
 Worlds.ApplyLook(Worlds.ByName.PixelPlains.Look)
 
-local duoMap = MemoryStoreService:GetHashMap("Duos")
-local rejoinMap = MemoryStoreService:GetHashMap("Rejoin")
+-- MemoryStore throws in an unpublished place; keep going so the capsule lock-in can still be tested in Studio.
+-- Every later use is inside a pcall, so missing maps only turn off teleport/rejoin.
+local duoMap: MemoryStoreHashMap, rejoinMap: MemoryStoreHashMap
+local storeOk, storeErr = pcall(function()
+	duoMap = MemoryStoreService:GetHashMap("Duos")
+	rejoinMap = MemoryStoreService:GetHashMap("Rejoin")
+end)
+if not storeOk then
+	warn(`[Capsules] MemoryStore unavailable ({storeErr}); duo teleport and rejoin are off`)
+end
 local rejoinOffer = Net.event("RejoinOffer")
 local rejoinAccept = Net.event("RejoinAccept")
 

@@ -1,6 +1,32 @@
 # Brief: Lobby capsule pair
 
-**Status (Sep 30, 2026): first pass modeled, not yet reviewed or imported.** Files: `blender_assets/LobbyCapsule.blend` (objects `LobbyCapsule`, `Capsule_Emblem_Tri`, `Capsule_Emblem_Circle`, `Capsule_Marquee`, plus `LobbyCapsule_MikoPreview` for looks only) and `LobbyCapsule.fbx` (the four real objects). Capsule 9.8 × 9.4 × 13.5 studs, **4,852 tris (over the 3k budget)**, marquee 212 tris. Materials `Cap_Plastic_Role` / `Cap_Glow_Role` are Kai orange placeholders, recolor per role in Studio. Next: refine (fewer segments, check silhouette from the lobby camera), then import.
+**Status (Sep 30, 2026): done and in the game.** Files: `blender_assets/LobbyCapsule.blend` and `LobbyCapsule.fbx`. Imported with Studio's 3D importer (meshes uploaded to the account); ids and offsets live in `src/lobby/server/CapsuleMeshes.luau`, and `LobbyBuilder` creates the MeshParts at runtime with `AssetService:CreateMeshPartAsync` (grey-box fallback if a mesh fails to load). Verified in a Studio playtest: all 6 pairs build, player walks in and out of the door, stands on the floor, back glass blocks, stepping in sets `Role = Kai` and the screen shows "WAITING FOR MIKO". If the FBX is re-exported, re-import it and update the ids in `CapsuleMeshes.luau`.
+
+### What's in the file (second pass)
+
+Laid out in the **pair frame** that `LobbyBuilder` uses: Kai capsule centered at x = −6, marquee at x = 0, Miko preview at x = +6. Front (open door) = Blender **−Y**. 1 BU = 1 stud.
+
+One object per Roblox material zone, so each MeshPart gets its own Material/Color in Studio and both roles share the same meshes:
+
+| Object | Tris | Roblox look | Notes |
+| --- | --- | --- | --- |
+| `Capsule_Base` | 284 | SmoothPlastic, navy `#14183A` | Plinth, r 4.8, 0 → 0.55 |
+| `Capsule_Frame` | 700 | SmoothPlastic, white `#F0F0FA` | Floor disc (top at 0.9), 2 door-jamb pillars + 1 back pillar, rim band 9.8 → 11.2 |
+| `Capsule_Glass` | 132 | Glass, role color, Transparency ~0.4 | 240° shell (back + sides), 0.14 thick; front 120° open (≈5.8 studs clear between jambs) |
+| `Capsule_Glow_Role` | 384 | Neon, role color | Floor ring + ceiling ring (add a PointLight/SpotLight in Studio for the "light column") |
+| `Capsule_Dome_Role` | 286 | SmoothPlastic, role color | Squashed dome, top at 13.9 |
+| `Capsule_Knob_Role` | 296 | SmoothPlastic, role color | Gachapon twist knob on the rim. Modeled on Kai's **outer side (−X)**; for Miko place it on +X (rotate 180° about up) |
+| `Capsule_Emblem_Tri` | 80 | SmoothPlastic, white | Kai ▲ crest standing on the dome, faces front |
+| `Capsule_Emblem_Circle` | 284 | SmoothPlastic, white | Miko ● crest (placed on the Miko preview at x = +6) |
+| `Marquee_Frame` | 188 | SmoothPlastic, white | 9 × 1.4 × 4.2 frame, bottom 14.4, recessed front, two legs resting on the domes |
+| `Marquee_Screen` | 12 | SmoothPlastic, navy | Sits in the recess; put `SurfaceGui.Status` on its **front** face (or keep the `Screen` Part there) |
+| `Marquee_Glitch` | 84 | Neon, pink `#FF50AA` | Razor-edged "missing pixel" cubes breaking out of two corners |
+
+Capsule = **2,082 tris** (+80 with ▲, +284 with ●), marquee 284. All watertight, transforms applied, capsule parts share the pivot at the capsule's bottom center; marquee parts share a pivot at the bottom of the legs. `*_MikoPreview` objects (teal materials) are for looks only and are not exported.
+
+**In Studio:** the importer brought it in at 100× (FBX cm) and mapped Blender (x, y, z) → Roblox (−x, z, y), so the door (Blender −Y) faces Roblox −Z as `LobbyBuilder` expects; `CapsuleMeshes.luau` stores sizes already divided by 100. Collision: Frame and Glass use PreciseConvexDecomposition (keeps the doorway open), Base/Dome/Marquee Hull, rings/crests/knob/glitch/screen don't collide. Each capsule keeps an invisible `Zone` (6.5 × 8 × 6.5 at y = 5) and the pair's `Screen` (the Marquee_Screen mesh) carries `SurfaceGui.Status`. A transparent `Sign` part on the rim shows "▲ KAI" / "● MIKO"; a PointLight in the glow rings lights the inside. Neon glow color is the role color darkened 30% (full orange blows out to yellow).
+
+**Changes from the first pass:** 4,852 → 2,082 tris; origin was 0.4 above the bottom; 40 non-manifold edges (zero-thickness glass) fixed; ▲ emblem lay flat on the dome and couldn't be read, now both emblems are upright crests that flank the marquee (▲ [SCREEN] ●); marquee had no supports, now has legs; loose `Cube.00x` glitch pixels merged into `Marquee_Glitch`; 5-pillar "birdcage" cut to door jambs + back pillar so the glass reads.
 
 **Where:** Lobby platform, 6 pairs (implementation.md §2). Replaces the grey-box `KaiCapsule` / `MikoCapsule` / `Screen` parts from `src/lobby/server/LobbyBuilder.luau`.
 
