@@ -124,7 +124,9 @@ local Sfx: { [string]: Def } = {
 
 -- Music per world (design.md §8), all APM. Crossfaded by AudioController on workspace "World".
 local Music: { [string]: Def } = {
-	Prologue = { Id = pse(101684715165177), Volume = 0.4 }, -- "Nocturnal Loneliness (Solo Piano)": slow, lonely
+	-- "Music Box Lullaby": quiet and lonely but gentle (user, Oct 1: the solo piano "Nocturnal Loneliness",
+	-- 101684715165177, was too sad)
+	Prologue = { Id = pse(9047785119), Volume = 0.4 },
 	PixelPlains = { Id = pse(1837768333), Volume = 0.3 }, -- "Jolly Adventure (a)": chiptune, upbeat
 	StarfallCastle = { Id = pse(1841593944), Volume = 0.35 }, -- "Enchanted Kingdom a": orchestral fantasy
 	GlitchedCore = { Id = pse(9048374858), Volume = 0.3 }, -- "Castle in 8 Bit": worlds 1 + 2, remixed
