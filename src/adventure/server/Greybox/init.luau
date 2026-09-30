@@ -751,8 +751,8 @@ local function buildGlitchedCore(world: Model)
 	local W = "GlitchedCore"
 	killFloor(world, -40)
 	workspace:SetAttribute("KillY", -60)
-	local DARK = Palette.Core.Dark
-	platform(world, Vector3.new(40, 4, 40), 0, 0, 0, { color = DARK, name = "MissingTextures" })
+	local GREY = Palette.Core.Grey -- default-looking grey on purpose (art-direction.md §8); the void stays dark
+	platform(world, Vector3.new(40, 4, 40), 0, 0, 0, { color = GREY, name = "MissingTextures" })
 	spawnAt(world, 0, 0, -8)
 	checkpoint(world, 1, 0, 0, 0, W, {
 		"Miko: left click to see the Code Layer.",
@@ -766,7 +766,7 @@ local function buildGlitchedCore(world: Model)
 		tags = { "CodeLayer" },
 	})
 	block(world, Vector3.new(4, 4, 4), CFrame.new(12, 2, 8), { name = "CopyCrate", color = KAI, tags = { "Copyable" } })
-	platform(world, Vector3.new(30, 4, 30), 0, 0, 60, { color = DARK, name = "WireMaze" })
+	platform(world, Vector3.new(30, 4, 30), 0, 0, 60, { color = GREY, name = "WireMaze" })
 	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 6, 70), {
 		name = "WorldExit",
 		color = DUO,

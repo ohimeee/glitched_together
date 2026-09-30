@@ -97,21 +97,23 @@ local ByName: { [string]: World } = {
 	GlitchedCore = {
 		Name = "GlitchedCore",
 		Title = "The Glitched Core",
-		Palette = { rgb(130, 130, 135), rgb(15, 15, 18), rgb(60, 255, 120), rgb(255, 40, 200) }, -- grey, black, green, magenta
+		-- grey, void, Miko teal, Glitch magenta: the only strong colors are the Code Layer and the Glitch (art-direction §8, §16)
+		Palette = { rgb(122, 125, 133), rgb(20, 21, 24), rgb(31, 199, 182), rgb(255, 43, 214) },
 		Look = {
+			-- cold and dim, but the grey blocks must still read (art-direction §9: saturation −0.4, dense grey haze)
 			ClockTime = 0,
 			Brightness = 1.2,
-			Ambient = rgb(70, 70, 80),
-			OutdoorAmbient = rgb(80, 80, 90),
-			AtmosphereDensity = 0.45,
-			AtmosphereHaze = 1,
-			AtmosphereColor = rgb(60, 60, 70),
-			AtmosphereDecay = rgb(60, 255, 120),
+			Ambient = rgb(118, 120, 132),
+			OutdoorAmbient = rgb(128, 130, 142),
+			AtmosphereDensity = 0.32,
+			AtmosphereHaze = 0.8,
+			AtmosphereColor = rgb(96, 98, 108),
+			AtmosphereDecay = rgb(70, 110, 120),
 			BloomIntensity = 1.2,
 			BloomThreshold = 1.1,
-			Saturation = -0.2,
-			Contrast = 0.2,
-			Tint = rgb(235, 255, 240),
+			Saturation = -0.4,
+			Contrast = 0.1,
+			Tint = rgb(235, 242, 248),
 		},
 	},
 	Epilogue = {
