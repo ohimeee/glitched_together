@@ -69,6 +69,19 @@ local function runDropper(dropper: BasePart)
 			block:Destroy()
 		end)
 		task.wait(every)
+		-- while Kai holds a block frozen, the dropper waits: no new blocks raining past the one being used
+		-- (playtest Oct 1)
+		local function anyFrozen(): boolean
+			for _, b in folder:GetChildren() do
+				if frozen(b) then
+					return true
+				end
+			end
+			return false
+		end
+		while dropper:IsDescendantOf(workspace) and anyFrozen() do
+			task.wait(0.2)
+		end
 	end
 end
 
