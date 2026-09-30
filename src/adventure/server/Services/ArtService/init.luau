@@ -19,6 +19,7 @@ type WorldArt = { Skins: { [string]: MeshAssets.Skin }, Dressing: { [string]: st
 local Worlds: { [string]: WorldArt } = {
 	Prologue = require(script.Prologue),
 	PixelPlains = require(script.PixelPlains),
+	StarfallCastle = require(script.StarfallCastle),
 }
 
 local Skins: { [string]: MeshAssets.Skin } = {}
@@ -42,7 +43,10 @@ local function templatesFor(skinName: string): { [string]: MeshPart }?
 end
 
 local function moves(part: BasePart): boolean
-	return not part.Anchored or CollectionService:HasTag(part, "Mover") or CollectionService:HasTag(part, "Pullable")
+	return not part.Anchored
+		or CollectionService:HasTag(part, "Mover")
+		or CollectionService:HasTag(part, "Pullable")
+		or CollectionService:HasTag(part, "Enemy") -- CombatService moves enemies by CFrame
 end
 
 -- Puts a skin over one grey-box part. Returns false (part untouched) if the meshes aren't available.
@@ -57,7 +61,7 @@ function ArtService.Apply(part: BasePart, skinName: string): boolean
 	for name, info in skin.Meshes do
 		local p = templates[name]:Clone()
 		p.Size = info.Size * k
-		p.CFrame = part.CFrame * CFrame.new(info.Offset * k)
+		p.CFrame = part.CFrame * CFrame.new(info.Offset * k) * CFrame.Angles(0, math.rad(info.Yaw or 0), 0)
 		if weld then
 			p.Anchored = false
 			p.Massless = true

@@ -209,6 +209,34 @@ end
 
 -- enemies ----------------------------------------------------------------------------------------
 
+-- Colors an enemy: the part itself, or (when ArtService skinned it and the part is invisible) a Highlight
+-- over its meshes. nil = back to normal.
+local function tint(part: BasePart, color: Color3?, fallback: Color3)
+	if part.Transparency < 1 then
+		part.Color = color or fallback
+		return
+	end
+	local hl = part:FindFirstChild("Tint") :: Highlight?
+	if not color then
+		if hl then
+			hl:Destroy()
+		end
+		return
+	end
+	if not hl then
+		local newHl = Instance.new("Highlight")
+		newHl.Name = "Tint"
+		newHl.OutlineTransparency = 1
+		newHl.DepthMode = Enum.HighlightDepthMode.Occluded
+		newHl.Adornee = part:FindFirstChildWhichIsA("MeshPart") or part
+		newHl.Parent = part
+		hl = newHl
+	end
+	local h = hl :: Highlight
+	h.FillColor = color
+	h.FillTransparency = 0.45
+end
+
 local function makeBar(foe: Foe)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "HPBar"
@@ -265,7 +293,15 @@ end
 local function setShieldVisible(foe: Foe, up: boolean)
 	local shield = foe.part:FindFirstChild("Shield")
 	if shield and shield:IsA("BasePart") then
-		shield.Transparency = if up then 0 else 0.8
+		local skinned = shield:GetAttribute("Skinned") ~= nil
+		if not skinned then
+			shield.Transparency = if up then 0 else 0.8
+		end
+		for _, d in shield:GetChildren() do
+			if d:IsA("MeshPart") then
+				d.Transparency = if up then 0 else 0.8
+			end
+		end
 	end
 end
 
@@ -278,7 +314,14 @@ local function kill(foe: Foe)
 		for _, side in { -1, 1 } do
 			local small = part:Clone()
 			for _, child in small:GetChildren() do
-				child:Destroy()
+				if child:IsA("MeshPart") then
+					-- keep the art: shrink it around the new, smaller body
+					local rel = part.CFrame:ToObjectSpace(child.CFrame)
+					child.Size *= 0.6
+					child.CFrame = part.CFrame * (rel - rel.Position + rel.Position * 0.6)
+				else
+					child:Destroy()
+				end
 			end
 			small.Size = part.Size * 0.6
 			small:SetAttribute("Small", true)
@@ -318,10 +361,10 @@ function CombatService.DamageEnemy(part: BasePart, amount: number, source: Playe
 	if foe.fill then
 		foe.fill.Size = UDim2.fromScale(math.clamp(foe.hp / foe.maxHp, 0, 1), 1)
 	end
-	part.Color = Color3.new(1, 1, 1)
+	tint(part, Color3.new(1, 1, 1), foe.color)
 	task.delay(0.08, function()
 		if not foe.dead then
-			part.Color = foe.color
+			tint(part, if foe.state == "Windup" then DANGER else nil, foe.color)
 		end
 	end)
 	if source and source:GetAttribute("Role") == "Kai" then
@@ -723,7 +766,7 @@ local function stepMelee(foe: Foe, target: Player, dist: number, now: number, dt
 				Color = DANGER,
 				Transparency = 0.5,
 			}, 0.2)
-			foe.part.Color = foe.color
+			tint(foe.part, nil, foe.color)
 			foe.state = "Recover"
 			foe.stateUntil = now + foe.spec.Recover
 		end
@@ -736,7 +779,7 @@ local function stepMelee(foe: Foe, target: Player, dist: number, now: number, dt
 		if dist <= foe.spec.Reach then
 			foe.state = "Windup"
 			foe.stateUntil = now + foe.spec.Windup
-			foe.part.Color = foe.color:Lerp(Color3.new(1, 1, 1), 0.5) -- telegraph
+			tint(foe.part, DANGER, foe.color:Lerp(Color3.new(1, 1, 1), 0.5)) -- telegraph (red = danger)
 		else
 			tryMove(foe, unitOr(flat(r.Position - foe.part.Position), Vector3.zAxis), foe.spec.Speed * dt)
 		end

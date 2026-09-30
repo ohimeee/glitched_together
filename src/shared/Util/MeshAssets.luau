@@ -6,12 +6,14 @@ local AssetService = game:GetService("AssetService")
 
 export type MeshInfo = {
 	Id: string,
+	TextureId: string?, -- AI-generated / textured meshes: the color map (Color stays white so it shows true)
 	Offset: Vector3, -- studs, from the owning object's origin (see each data module)
 	Size: Vector3, -- studs
 	Material: Enum.Material,
 	Color: Color3?, -- nil = caller colors it
 	Transparency: number?,
 	Collision: Enum.CollisionFidelity?, -- nil = CanCollide false
+	Yaw: number?, -- degrees about Y, applied when placed (generated meshes face different ways)
 }
 
 -- A set of meshes that dresses one grey-box part: offsets/sizes are at Design size and scale with the part.
@@ -47,6 +49,9 @@ function MeshAssets.Template(name: string, info: MeshInfo): MeshPart
 	p.Anchored = true
 	p.Material = info.Material
 	p.Color = info.Color or Color3.new(1, 1, 1)
+	if info.TextureId then
+		p.TextureID = info.TextureId
+	end
 	p.Transparency = info.Transparency or 0
 	p.CanCollide = info.Collision ~= nil
 	p.CanQuery = info.Collision ~= nil
