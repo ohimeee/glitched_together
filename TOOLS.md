@@ -23,7 +23,7 @@ Every call needs `studio_id` from `list_roblox_studios`.
 | `generate_mesh` | AI textured mesh (the graphics baseline) | **Only in Edit mode** (fails while playing). 2–3 at a time (`async: true` + `wait_job_finished`). Avoid words like "fangs"/"menacing" (moderation). Result is a Model tagged `Assistant-…`: read its MeshPart `MeshId`/`TextureID`/`Size`, check facing, then delete it |
 | `generate_material` | AI MaterialVariant | Results were too heavy for Pixel Plains; we hand-make maps instead (`textures/make_pixelplains.py`) |
 | `upload_image` | Upload PNGs, returns `rbxassetid://` (Image type) | Needs **http URLs**: run `python -m http.server 8765 --bind 127.0.0.1` in `textures/` (background) and pass `http://127.0.0.1:8765/<file>.png`. New uploads can take a few seconds to render |
-| `search_asset` / `insert_asset` | Creator Store search/insert (models, audio…) | Audio: use only creator **ProSoundEffects** (licensed) or Roblox/APM music; many user uploads are ripped game sounds. Descriptive queries ("whoosh swoosh") work; long multi-word queries often return 0; `verifiedCreatorsOnly`/`facets` don't filter |
+| `search_asset` / `insert_asset` | Creator Store search/insert (models, audio…) | Audio rules and every other sound source: §3b |
 | `generate_texture`, `generate_procedural_model`, `inspect_instance`, `search_game_tree`, `script_read/grep/search`, `multi_edit`, `character_navigation`, `user_keyboard_input`, `user_mouse_input`, `segment_mesh`, `store_image`, `http_get`, `subagent`, `skill` | Available, rarely needed | |
 
 **Can't do:** Studio UI clicks (File → Import 3D). MCPControl can't bring Studio to the front while VS Code holds focus → ask the user to import FBX files (batch them). Scripts can't set a MaterialVariant's maps at runtime → declare variants in `adventure.project.json` (MaterialService).
@@ -31,19 +31,83 @@ Every call needs `studio_id` from `list_roblox_studios`.
 ## 2. Blender
 
 - **Blender 5.2.2** at `D:\Blender\blender.exe`. Start with the MCP server already running: `cmd //c start "" "D:\Blender\blender.exe" --python "C:\Users\User\tools\blender-mcp\autostart.py"` (port 9876, also enables Poly Haven, loads the Sketchfab key).
-- **Blender MCP** (`mcp__blender__*`): `execute_blender_code` (main tool, bpy/bmesh), `get_scene_info`, `get_object_info`, `get_viewport_screenshot`, `bpy_api_lookup`, `describe_node_type`, `export_scene`, `set_texture`; Poly Haven (`search/download_polyhaven_asset`), Sketchfab (`search/download_sketchfab_model`, `get_sketchfab_model_preview`), Poly Pizza (needs a key, off), Hyper3D/Hunyuan/Tripo via add-on (paid, off). Add-on protocol is behind (11 vs 13) but works; `uvx mcp-for-blender install-addon` would update it.
+- **Blender MCP** (`mcp__blender__*`): `execute_blender_code` (main tool, bpy/bmesh), `get_scene_info`, `get_object_info`, `get_viewport_screenshot`, `bpy_api_lookup`, `describe_node_type`, `export_scene`, `set_texture`, `get_addon_status`, `disable_telemetry` (keep telemetry off). Asset integrations: §3 (Poly Haven and Sketchfab on; Poly Pizza, Hyper3D, Hunyuan and add-on Tripo off). Add-on protocol is behind (11 vs 13) but works; `uvx mcp-for-blender install-addon` would update it.
 - Pipeline and scripting rules: `BLENDER_PLAYBOOK.md` §6–7 (stud scale, Blender (x,y,z) → Roblox (−x,z,y), FBX export flags, offsets computed from bbox centers, save a `.blend` copy + `.fbx` in `blender_assets/`).
 
-## 3. 3D / asset sources
+## 3. 3D / asset sources (props, environments, textures)
 
-| Source | How | Rules |
+**Which one for what:**
+
+| Need | First choice | Then |
 | --- | --- | --- |
-| Studio `generate_mesh` | see above | First choice for characters, enemies, held items, organic props |
-| **Tripo** REST API V3 | keys `TRIPO_API_KEY`, `_2..4` in `.env` (gitignored) | Free credits; never buy. For hero assets / when generate_mesh runs out |
-| **Poly Haven** | Blender MCP | CC0 textures/HDRIs/models |
-| **Sketchfab** | Blender MCP (token in `C:\Users\User\tools\blender-mcp\keys.env`) | Downloadable CC0 / CC-BY only (credit CC-BY) |
-| **Blend Swap** | `mcp__blendswap__*` (`search_assets`, `get_asset`, `get_balance`, `download_asset`) | 7 free downloads/day; check `get_balance` first; CC0/CC-BY only; commercial use may need the Artist plan |
-| Hand-made textures | Python + Pillow/numpy scripts in `textures/` | `make_pixelplains.py`, `make_toolfx.py`, `make_castlefx.py`; Beam textures run along the image's height |
+| Characters, enemies, bosses, held items, organic props (stylized, textured) | Studio `generate_mesh` | Tripo (hero quality, image-to-3D, rigging) |
+| Exact-size kit pieces (platforms, walls, doors, signs) | Blender, scripted (BLENDER_PLAYBOOK §6–7) | real surfaces from Roblox materials / Poly Haven textures |
+| Environment surfaces (stone, wood, dirt, metal), skies | **Poly Haven** textures/HDRIs | hand-made maps in `textures/` |
+| Set dressing / filler props for environments (barrels, bookshelves, rocks, plants, furniture) | **Blend Swap**, **Sketchfab** | Poly Haven models, generate_mesh |
+| Anything downloaded | restyle to the world's palette (art-direction §16), decimate to budget (≤20k tris/mesh, props 300–5k), bottom-center origin, export FBX, user imports | |
+
+Environment polish plan (CLAUDE.md note 7): It Takes Two–level detail per world from these sources: dense prop clusters, layered foreground/background, real PBR surfaces, warm light pools. Study It Takes Two for principles only, never copy its assets or layouts.
+
+### Studio `generate_mesh` (Roblox Cube, textured)
+See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-like chunky <thing>, <world colors/materials>, believable <material> textures, It Takes Two art style"*. Name owner colors in words ("aqua turquoise", "bright orange trim") and check the result: generations sometimes pick the wrong color (a first grapple gun came out green with an orange rope) or shape (a chute came out as a U-pipe). Regenerate, or build it in Blender.
+
+### Tripo (REST API v3, called directly, not through the Blender add-on)
+- **Keys:** repo `.env` (gitignored): `TRIPO_API_KEY`, backups `TRIPO_API_KEY_2`, `_3`, `_4` (they start with `tsk_`). Use key 1, move to the next when one runs out. Free credits only: **never buy or top up**; tell the user when all 4 are empty. Never print or commit key values.
+- **API:** base `https://openapi.tripo3d.ai/v3`, header `Authorization: Bearer <key>`, JSON bodies.
+  - `POST /generation/text-to-model` `{ "prompt": "...", "model": "v3.1-20260211" }` (or `v3.0-20250812`; texture/PBR options) → `data.task_id`
+  - `POST /generation/image-to-model` (one image; upload it first with `POST /upload`)
+  - `GET /tasks/{task_id}`: poll until `status` is `"success"`, then read `model_url` (GLB) and `rendered_image_url`. **Model URLs expire after ~5 minutes: download at once.**
+  - Rigging: `/animations/rig-check`, `/animations/rig`, `/animations/retarget` (a full game-ready character pipeline costs about 85 credits).
+  - Docs: https://developers.tripo3d.ai/en/docs/quick-start and https://docs.tripo3d.ai
+- **Pipeline:** download the GLB to the scratchpad → import into Blender → clean up (tri budget, one mesh per material, bottom-center origin, stud scale) → export FBX into `blender_assets/` → the user imports it in Studio. Credit Tripo in a credits file if their terms ask for it.
+- No Tripo script exists in the repo yet: write one in Python (read `.env`, `urllib`/`requests`) the first time it's needed.
+
+### Poly Haven (CC0: free for anything, no credit needed)
+- Through Blender MCP (switched on by `autostart.py`, no key): `get_polyhaven_status`, `get_polyhaven_categories(asset_type)`, `search_polyhaven_assets(asset_type, categories)`, `get_polyhaven_asset_preview`, `download_polyhaven_asset(asset_id, asset_type, resolution, file_format)`, `set_texture(object_name, texture_id)`.
+- `asset_type`: `hdris` (skies, lighting), `textures` (PBR sets: diffuse, normal, roughness, displacement), `models` (rocks, plants, furniture, …).
+- Use for: real stone, wood, dirt, metal and fabric surfaces on Blender kit pieces (keep maps ≤1024 for Roblox SurfaceAppearance; normal maps must be OpenGL), environment props, lighting reference. Restyle to the world (e.g. castle stone tinted toward `#6E6A80`).
+- Site: https://polyhaven.com
+
+### Sketchfab (huge model library; license per model)
+- Through Blender MCP (token in `C:\Users\User\tools\blender-mcp\keys.env` as `BLENDERMCP_SKETCHFAB_API_KEY`, loaded by `autostart.py`): `get_sketchfab_status`, `search_sketchfab_models(query, categories, count, downloadable)`, `get_sketchfab_model_preview(uid)`, `download_sketchfab_model(uid)` (imports into Blender; check `world_bounding_box` and rescale).
+- **Only downloadable models under CC0 or CC-BY** (CC-BY: put author + link in a credits file). Skip NC (non-commercial), ND and SA. Check each model's license before using it.
+- Use for: specific real-world props and environment pieces generate_mesh can't make; restyle (materials, colors) and decimate.
+
+### Blend Swap (MCP `blendswap`, HTTP server, key in `~/.claude.json`)
+- Tools: `search_assets` (free), `get_asset` (free: details + license), `get_balance` (free: credits and today's free downloads), `download_asset` (**7 free downloads a day**, then 10 credits each). Paid cloud rendering tools `list_studio_tools`, `quote_generation`, `create_generation`, `get_generation`: don't use without the user's OK.
+- **Rules:** `get_balance` before downloading; only **CC0 / CC-BY** assets (credit CC-BY), skip NC and SA; licenses are declared by uploaders and not verified, so show the license before relying on a file. Their plan list says commercial use needs the Artist plan: check before shipping anything from Blend Swap. Never buy a plan or credits.
+- Use for: ready-made props and set dressing (.blend files) → append in Blender, decimate, restyle, export FBX.
+- Site: https://blendswap.com
+
+### Poly Pizza, Hyper3D Rodin, Hunyuan3D (Blender add-on)
+Off. Poly Pizza (stylized low-poly, CC-BY credit) needs a free API key from https://poly.pizza/settings/api; the add-on's Hyper3D / Hunyuan / Tripo generators are paid Premium only (we call Tripo directly instead).
+
+### Hand-made textures
+Python + Pillow/numpy scripts in `textures/`: `make_pixelplains.py` (PixelPlastic maps, belt tread, crayon sun), `make_toolfx.py` (freeze ring, pause glyph, pixel spark, pause beam, rope, scanlines), `make_castlefx.py` (flame, star spark, slash, smoke, area ring). Beam textures run along the image's **height**; particles are drawn white where the emitter's Color tints them. Upload with `upload_image` (§1).
+
+## 3b. Sound and music sources
+
+Goal (CLAUDE.md note 5): movement, every tool use (wind-up / effect / impact), enemies, a crackle whenever the Glitch appears, Pip bleeps, UI, and music per world. The user approved searching the whole internet: pick the best-sounding option from any source below, as long as the license allows commercial use in a game. **Check the license on every file**, keep `sounds/CREDITS.md` (file, source, author, license, link), and never use ripped game/movie audio.
+
+| Source | License | Notes |
+| --- | --- | --- |
+| **Roblox Creator Store: ProSoundEffects** | Pro Sound Effects' catalog, licensed for Roblox experiences | No download or upload needed: `search_asset` (assetType `Audio`, scope `creator_store`), use the id directly. Descriptive queries work ("whoosh swoosh"); long multi-word queries often return nothing; `verifiedCreatorsOnly`/`facets` don't filter. Ignore other uploaders (many are ripped) |
+| Roblox Creator Store: Roblox / APM Music | licensed for Roblox experiences | music tracks, same search |
+| **Kenney.nl** audio packs | CC0 | Interface, Impact, Digital, RPG, Sci-fi, Casino, Music Jingles… clean game SFX |
+| **Freesound.org** | per sound (CC0 / CC-BY / CC-BY-NC) | 700k+ sounds; filter License = CC0 (or CC-BY with credit); skip NC |
+| **Sonniss GameAudioGDC** bundles | royalty-free, commercial, no attribution | yearly multi-GB professional libraries (sonniss.com/gameaudiogdc) |
+| **OpenGameArt.org** | per file (CC0 / CC-BY / GPL…) | game SFX and chiptune music; prefer CC0, CC-BY with credit; skip GPL/NC |
+| **Pixabay** sound effects + music | Pixabay Content License | commercial OK, no attribution; can't resell the raw files |
+| **Mixkit** (Envato) | Mixkit free license | check the license page per category (SFX and music differ) |
+| **ZapSplat** | free with credit (Gold removes credit) | big pro library; add credit |
+| **Incompetech** (Kevin MacLeod) | CC-BY 4.0 | music; credit required |
+| **FreePD** | CC0 / public domain | music |
+| **Soundimage.org** (Eric Matyas) | free with attribution | game music loops and SFX |
+| AI sound generation | varies | for unique sounds (Pip's voice, Glitch crackle) if a connected audio AI is available |
+
+**Getting non-Roblox files into the game:** downloading is needed (state file, source, size; the user approved CC0/commercial-safe downloads for this). Put files in `sounds/` (WAV/OGG/MP3, trimmed, normalized), log them in `sounds/CREDITS.md`, then the **user bulk-imports** them in Studio's Asset Manager (audio uploads need the user; ≤7 min per file), and the ids go into `src/shared/Config/Sounds.luau`.
+
+**Build plan:** `Config/Sounds.luau` (all ids + volume/pitch, like Tuning/Palette), SoundGroups Music / SFX / UI, 3D sounds parented to their sources, music crossfade between worlds, duck music during cutscenes, Pip bleep-talk with the typewriter.
 
 ## 4. Browser (references)
 
