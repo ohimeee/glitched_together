@@ -41,6 +41,11 @@ return {
 	-- Traversal objects
 	SwingRange = 18,
 	SwingBoost = 1.2,
+	SwingPump = 45, -- studs/s² of steering along the swing arc (pumping), never along the rope
+	SwingDrag = 0.04, -- per second: a pendulum slowly settles instead of swinging forever
+	SwingStartSpeed = 14, -- grabbing while nearly still starts a swing this fast (toward where you face)
+	SwingMinLength = 7, -- studs: grabbing very close lets the rope out to this
+	SwingLean = 0.85, -- 0 = upright, 1 = body lies fully along the rope
 	GrindSpeed = 40,
 	GrindGrabRange = 8,
 	VentForce = 90,

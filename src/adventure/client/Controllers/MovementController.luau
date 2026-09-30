@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local ToolFx = require(ReplicatedStorage.Shared.Config.ToolFx)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
@@ -25,7 +26,9 @@ type Swing = {
 	anchor: () -> Vector3?,
 	length: number,
 	boost: number,
-	rope: Part,
+	rope: { Instance }, -- drawn rope (swing points only: the Grapple Line's rope is ToolFxController's)
+	anchorAt: Attachment?,
+	energy: number, -- per unit mass: ½v² + g·y (kept exact so the pendulum doesn't bleed speed)
 	onEnd: (() -> ())?,
 }
 
@@ -111,8 +114,16 @@ local function onCharacter(character: Model)
 		if current then
 			current.swing = nil
 		end
-		s.rope:Destroy()
+		for _, inst in s.rope do
+			inst:Destroy()
+		end
 		humanoid.PlatformStand = false
+		-- stand back up (the body leaned along the rope), facing the way we fly
+		local fly = flat(root.AssemblyLinearVelocity)
+		local look = if fly.Magnitude > 1 then fly.Unit else flat(root.CFrame.LookVector)
+		if look.Magnitude > 0.01 then
+			root.CFrame = CFrame.lookAt(root.Position, root.Position + look.Unit)
+		end
 		humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
 		if jumped then
 			local v = root.AssemblyLinearVelocity * s.boost
@@ -124,7 +135,7 @@ local function onCharacter(character: Model)
 		end
 	end
 
-	local function startSwing(anchor: () -> Vector3?, boost: number, onEnd: (() -> ())?): boolean
+	local function startSwing(anchor: () -> Vector3?, boost: number, onEnd: (() -> ())?, drawRope: boolean?): boolean
 		local pos = anchor()
 		if not pos or grind then
 			return false
@@ -132,23 +143,48 @@ local function onCharacter(character: Model)
 		if swing then
 			stopSwing(false)
 		end
-		local rope = Instance.new("Part")
-		rope.Name = "SwingRope"
-		rope.Anchored = true
-		rope.CanCollide = false
-		rope.CanQuery = false
-		rope.CanTouch = false
-		rope.Material = Enum.Material.Neon
-		rope.Color = if player:GetAttribute("Role") == "Miko" then Color3.fromRGB(255, 170, 60) else Color3.new(1, 1, 1)
-		rope.Size = Vector3.new(0.2, 0.2, 1)
-		rope.Parent = workspace
+		local rope: { Instance } = {}
+		local anchorAt: Attachment? = nil
+		local hand = character:FindFirstChild("RightGripAttachment", true) :: Attachment?
+		if drawRope and hand then
+			-- a braided rope from the hand to the point (same look as the Grapple Line's)
+			local a = Instance.new("Attachment")
+			a.Name = "SwingAnchor"
+			a.Position = pos
+			a.Parent = workspace.Terrain
+			anchorAt = a
+			local beam = Instance.new("Beam")
+			beam.Attachment0 = hand
+			beam.Attachment1 = a
+			beam.Texture = ToolFx.Textures.Rope
+			beam.TextureMode = Enum.TextureMode.Static
+			beam.TextureLength = 2
+			beam.Width0 = Tuning.ToolFx.RopeWidth
+			beam.Width1 = Tuning.ToolFx.RopeWidth
+			beam.FaceCamera = true
+			beam.Segments = 1
+			beam.Parent = a
+			rope = { a }
+		end
+		-- carry the run-up into the swing; from a standstill, start one toward where you face
+		local v = root.AssemblyLinearVelocity
+		if flat(v).Magnitude < Tuning.SwingStartSpeed * 0.5 then
+			local dir = if humanoid.MoveDirection.Magnitude > 0.1
+				then flat(humanoid.MoveDirection).Unit
+				else flat(root.CFrame.LookVector).Unit
+			setVelocity(v + dir * Tuning.SwingStartSpeed)
+		end
 		swing = {
 			anchor = anchor,
-			length = math.max((root.Position - pos).Magnitude, 6),
+			length = math.max((root.Position - pos).Magnitude, Tuning.SwingMinLength),
 			boost = boost,
 			rope = rope,
+			anchorAt = anchorAt,
+			energy = 0,
 			onEnd = onEnd,
 		}
+		local v0 = root.AssemblyLinearVelocity
+		swing.energy = 0.5 * v0:Dot(v0) + Tuning.Gravity * root.Position.Y
 		if current then
 			current.swing = swing
 		end
@@ -166,26 +202,50 @@ local function onCharacter(character: Model)
 			return
 		end
 		local v = root.AssemblyLinearVelocity
-		local steer = flat(humanoid.MoveDirection) * 60
-		v += (Vector3.new(0, -Tuning.Gravity, 0) + steer) * dt
+		local toAnchor = anchorPos - root.Position
+		local n = if toAnchor.Magnitude > 0.01 then toAnchor.Unit else Vector3.yAxis -- along the rope, up
+		-- pumping: steer only across the rope (along the arc), like leaning on a real swing
+		local input = flat(humanoid.MoveDirection)
+		local pump = (input - n * input:Dot(n)) * Tuning.SwingPump
+		local g = Tuning.Gravity
+		s.energy += pump:Dot(v) * dt -- pumping adds energy, drag takes a little
+		s.energy -= Tuning.SwingDrag * dt * v:Dot(v)
+		v += (Vector3.new(0, -g, 0) + pump) * dt
 		local pos = root.Position + v * dt
 		local offset = pos - anchorPos
 		if offset.Magnitude > s.length then
-			local n = offset.Unit
-			pos = anchorPos + n * s.length
-			local outward = v:Dot(n)
+			local out = offset.Unit
+			pos = anchorPos + out * s.length
+			local outward = v:Dot(out)
 			if outward > 0 then
-				v -= n * outward
+				v -= out * outward -- the rope takes the pull; the speed along the arc stays
 			end
+			-- taut: set the speed from the energy (plain Euler steps would lose ~30% per swing)
+			local speed = math.sqrt(math.max(0, 2 * (s.energy - g * pos.Y)))
+			if v.Magnitude > 0.05 then
+				v = v.Unit * speed
+			end
+		else
+			s.energy = 0.5 * v:Dot(v) + g * pos.Y -- slack: free fall keeps its own energy
 		end
-		local facing = if flat(v).Magnitude > 1 then flat(v).Unit else root.CFrame.LookVector
-		root.CFrame = CFrame.lookAt(pos, pos + facing)
+		-- hang from the rope: the body leans along it, facing the way it swings
+		local up = Vector3.yAxis:Lerp((anchorPos - pos).Unit, Tuning.SwingLean).Unit
+		local fwd = v - up * v:Dot(up)
+		if fwd.Magnitude < 0.5 then
+			fwd = root.CFrame.LookVector - up * root.CFrame.LookVector:Dot(up)
+		end
+		if fwd.Magnitude > 0.01 then
+			local look = fwd.Unit
+			local right = look:Cross(up).Unit
+			local target = CFrame.fromMatrix(pos, right, up)
+			root.CFrame = root.CFrame.Rotation:Lerp(target.Rotation, math.min(1, dt * 12)) + pos
+		else
+			root.CFrame = root.CFrame.Rotation + pos
+		end
 		setVelocity(v)
-
-		local mid = (pos + anchorPos) / 2
-		local len = (pos - anchorPos).Magnitude
-		s.rope.Size = Vector3.new(0.2, 0.2, len)
-		s.rope.CFrame = CFrame.lookAt(mid, anchorPos)
+		if s.anchorAt then
+			s.anchorAt.Position = anchorPos
+		end
 	end
 
 	-- Grind rails ---------------------------------------------------------------------
@@ -468,7 +528,7 @@ local function onCharacter(character: Model)
 			Audio.play("Swing", root)
 			startSwing(function()
 				return if point.Parent then Tags.position(point) else nil
-			end, Tuning.SwingBoost)
+			end, Tuning.SwingBoost, nil, true)
 		end
 	end))
 

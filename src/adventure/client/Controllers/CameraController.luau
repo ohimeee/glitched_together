@@ -13,6 +13,11 @@ local CameraController = {}
 
 local HEIGHT, BACK = 55, 30
 local FOLLOW_FOV = 74
+-- Follow mode with a tool: over-the-shoulder, so the screen-center crosshair sits beside the character, not on it
+local SHOULDER = Vector3.new(2.6, 1.2, 0) -- studs, camera space (right, up)
+local shoulder = 0 -- 0..1, eased in/out
+local shoulderParams = RaycastParams.new()
+shoulderParams.FilterType = Enum.RaycastFilterType.Exclude
 local mode = "Follow"
 local override: (() -> CFrame?)? = nil
 local bound = false
@@ -96,6 +101,19 @@ local function step(dt: number)
 	else
 		if camera.CameraType ~= Enum.CameraType.Custom then
 			camera.CameraType = Enum.CameraType.Custom
+		end
+		-- runs after Roblox's camera each frame, so the shift never accumulates
+		local want = if player:GetAttribute("Kit") and m == "Follow" then 1 else 0
+		shoulder += (want - shoulder) * math.min(1, dt * 6)
+		if shoulder > 0.01 then
+			local cf = camera.CFrame
+			local shift = cf:VectorToWorldSpace(SHOULDER * shoulder)
+			shoulderParams.FilterDescendantsInstances = if player.Character then { player.Character } else {}
+			local hit = workspace:Raycast(cf.Position, shift, shoulderParams)
+			if hit then -- a wall beside the camera: stop just short of it
+				shift = shift.Unit * math.max(0, hit.Distance - 0.5)
+			end
+			camera.CFrame = cf + shift
 		end
 	end
 end
