@@ -5,6 +5,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
@@ -243,6 +244,106 @@ local function rope(p: Player, target: Instance, life: number?)
 	end
 end
 
+-- Copy / Paste ---------------------------------------------------------------------------------------
+
+local function boxOf(inst: Instance): (CFrame?, Vector3?)
+	if inst:IsA("BasePart") then
+		return inst.CFrame, inst.Size
+	elseif inst:IsA("Model") then
+		return inst:GetBoundingBox()
+	end
+	return nil, nil
+end
+
+-- Copy: a white scan line sweeps down the object while a thin beam links it to Kai's copier
+local function copyScan(p: Player, source: Instance)
+	local cf, size = boxOf(source)
+	local part = partOf(source)
+	if not (cf and size and part) then
+		return
+	end
+	local scan = Instance.new("Part")
+	scan.Name = "FxScan"
+	scan.Anchored = true
+	scan.CanCollide = false
+	scan.CanQuery = false
+	scan.CanTouch = false
+	scan.CastShadow = false
+	scan.Material = Enum.Material.Neon
+	scan.Color = WHITE
+	scan.Transparency = 0.2
+	scan.Size = Vector3.new(size.X + 0.6, 0.15, size.Z + 0.6)
+	scan.Parent = workspace
+	local outline = Instance.new("Highlight")
+	outline.FillColor = WHITE
+	outline.OutlineColor = WHITE
+	outline.FillTransparency = 0.7
+	outline.Adornee = source
+	outline.Parent = scan
+	local at = pin(part, T.ScanTime + 0.2)
+	local muzzle = muzzleOf(p)
+	if muzzle then
+		local beam = Instance.new("Beam")
+		beam.Attachment0 = muzzle
+		beam.Attachment1 = at
+		beam.Texture = TEX.PauseBeam
+		beam.LightEmission = 0.8
+		beam.LightInfluence = 0
+		beam.FaceCamera = true
+		beam.Width0 = 0.15
+		beam.Width1 = 0.6
+		beam.Color = ColorSequence.new(WHITE)
+		beam.Parent = scan
+	end
+	local started = os.clock()
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		local k = (os.clock() - started) / T.ScanTime
+		if k >= 1 then
+			conn:Disconnect()
+			scan:Destroy()
+			burst(at, TEX.PixelSpark, WHITE, 10, { size = shrink(0.6), life = 0.4, speed = 10 })
+			return
+		end
+		scan.CFrame = cf * CFrame.new(0, size.Y * (0.5 - k), 0)
+		outline.FillTransparency = 0.7 + 0.3 * k
+	end)
+end
+
+-- Paste: the ghost outline snaps solid with a ring and sparks at its base
+local function pasteSnap(paste: Instance)
+	local cf, size = boxOf(paste)
+	local part = partOf(paste)
+	if not (cf and size and part) then
+		return
+	end
+	local hl = Instance.new("Highlight")
+	hl.Name = "FxPasteSnap"
+	hl.FillColor = WHITE
+	hl.OutlineColor = WHITE
+	hl.FillTransparency = 0
+	hl.OutlineTransparency = 0
+	hl.DepthMode = Enum.HighlightDepthMode.Occluded
+	hl.Parent = paste
+	TweenService:Create(
+		hl,
+		TweenInfo.new(T.PasteSnapTime, Enum.EasingStyle.Quad),
+		{ FillTransparency = 1, OutlineTransparency = 1 }
+	):Play()
+	Debris:AddItem(hl, T.PasteSnapTime + 0.1)
+	local base = Instance.new("Attachment")
+	base.Parent = part
+	base.WorldPosition = cf.Position - Vector3.new(0, size.Y / 2 - 0.2, 0)
+	Debris:AddItem(base, 1)
+	burst(base, TEX.FreezeRing, WHITE, 1, {
+		size = grow(math.max(size.X, size.Z) * 1.6),
+		life = T.RingTime,
+		speed = 0,
+		flat = true,
+	})
+	burst(base, TEX.PixelSpark, WHITE, 14, { size = shrink(0.7), life = 0.45, speed = 14 })
+end
+
 -- Frozen objects keep shedding a few ⏸ pixels while the pause holds -----------------------------------
 
 local function frozenGlow(inst: Instance, part: BasePart)
@@ -290,6 +391,10 @@ function ToolFxController.Init()
 			clearRope(p)
 		elseif kind == "PullStart" and target then
 			rope(p, target, Tuning.GrappleLine.PullTime + 0.1)
+		elseif kind == "CopyScan" and target then
+			copyScan(p, target)
+		elseif kind == "Pasted" and target then
+			pasteSnap(target)
 		end
 	end)
 

@@ -9,9 +9,10 @@ export type HeldItem = {
 	Id: string,
 	TextureId: string,
 	Size: Vector3, -- studs (generated proportions, scaled to read at game size)
-	Hand: string, -- "RightHand" | "LeftHand"
-	Grip: CFrame, -- the item's CFrame relative to the hand (arm hanging, hand -Z = forward)
+	Hand: string, -- the character part it's welded to: "RightHand" | "LeftHand" | "Head"
+	Grip: CFrame, -- the item's CFrame relative to that part (arm hanging / head: -Z = forward)
 	Muzzle: Vector3?, -- where beams / ropes / spells leave the item, in the item's space
+	ShiftedGrip: CFrame?, -- where it moves while the player is Shifted (Layer Shift goggles over the eyes)
 }
 
 local Held: { [string]: { HeldItem } } = {
@@ -66,6 +67,28 @@ local Held: { [string]: { HeldItem } } = {
 			Grip = CFrame.new(-0.35, 0.45, -0.4) * CFrame.Angles(0, math.pi, 0),
 		},
 	},
+	-- chunky grey copier with orange trim and a clipboard on its little screen (scanner window along the mesh's +Z)
+	CopyPaste = {
+		{
+			Id = "rbxassetid://110772368683225",
+			TextureId = "rbxassetid://89724513764682",
+			Size = v(0.819, 1.2, 0.813),
+			Hand = "RightHand",
+			Grip = CFrame.new(0, 0.3, -0.3) * CFrame.Angles(0, math.pi, 0),
+			Muzzle = v(0, -0.1, 0.42),
+		},
+	},
+	-- teal grid-lens goggles: pushed up on Miko's forehead, pulled over her eyes while she's shifted
+	LayerShift = {
+		{
+			Id = "rbxassetid://93415967069608",
+			TextureId = "rbxassetid://119483078389987",
+			Size = v(1.35, 0.65, 0.632),
+			Hand = "Head",
+			Grip = CFrame.new(0, 0.85, -0.45) * CFrame.Angles(rad(20), math.pi, 0), -- sits on top of hair
+			ShiftedGrip = CFrame.new(0, 0.1, -0.62) * CFrame.Angles(0, math.pi, 0),
+		},
+	},
 }
 
 return {
@@ -76,6 +99,7 @@ return {
 		PixelSpark = "rbxassetid://129067538080219",
 		PauseBeam = "rbxassetid://102235581488980",
 		Rope = "rbxassetid://107393717442232",
+		Scanlines = "rbxassetid://120490453315783",
 		-- Starfall Castle (textures/make_castlefx.py)
 		Flame = "rbxassetid://120721842836471",
 		StarSpark = "rbxassetid://122158522084345",

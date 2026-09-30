@@ -76,6 +76,7 @@ function CopyPaste.Use(p: Player, useIndex: number, target: Instance?, aim: any)
 		copied[p] = template(source)
 		p:SetAttribute("CopiedName", source.Name)
 		toolResult:FireClient(p, "Copied", source)
+		toolResult:FireAllClients("CopyScan", p, source) -- everyone sees the scan (ToolFxController)
 		return
 	end
 

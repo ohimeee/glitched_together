@@ -85,4 +85,12 @@ shade = 0.55 + 0.6 * np.clip(np.cos(np.linspace(-1.2, 1.9, H)), 0, 1)[:, None]
 arr[..., :3] = np.clip(arr[..., :3] * shade[..., None], 0, 255)
 save(Image.fromarray(arr.astype(np.uint8), "RGBA").rotate(90, expand=True), "FX_Rope.png")
 
+# 6) Scanlines (Layer Shift overlay, tiled on screen), 64: thin white rows every 4 px, tinted teal in code
+S = 64
+arr = np.zeros((S, S, 4), np.uint8)
+arr[..., :3] = 255
+arr[::4, :, 3] = 255
+arr[1::4, :, 3] = 90
+Image.fromarray(arr, "RGBA").save(OUT + "FX_Scanlines.png")
+
 print("ok")

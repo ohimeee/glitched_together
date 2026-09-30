@@ -269,6 +269,16 @@ local function giveHeld(p: Player)
 		weld.C0 = item.Grip
 		weld.Parent = handle
 		handle.Parent = character
+		if item.ShiftedGrip then
+			local function place()
+				weld.C0 = if p:GetAttribute("Shifted") then item.ShiftedGrip :: CFrame else item.Grip
+			end
+			local conn = p:GetAttributeChangedSignal("Shifted"):Connect(place)
+			handle.Destroying:Once(function()
+				conn:Disconnect()
+			end)
+			place()
+		end
 	end
 end
 

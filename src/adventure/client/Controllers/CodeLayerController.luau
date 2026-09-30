@@ -1,17 +1,22 @@
 -- Code Layer visibility (implementation.md §8): hidden for Kai always, and for Miko unless she's shifted.
--- Shifted Miko sees them as green wireframes and the real world desaturates. Pulled-out objects show for everyone.
+-- Shifted Miko sees them as teal wireframes (her color, art-direction.md §6/§8) and the real world desaturates, with
+-- a teal scanline wipe across her screen on each shift (§12) and faint scanlines while shifted. Pulled-out objects
+-- show for everyone.
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local ToolFx = require(ReplicatedStorage.Shared.Config.ToolFx)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local player = Players.LocalPlayer
 
 local CodeLayerController = {}
 
-local GREEN = Color3.fromRGB(60, 255, 120)
+local TEAL = Palette.Miko
 local tracked: { [Instance]: boolean } = {}
 
 local function shifted(): boolean
@@ -41,8 +46,8 @@ local function refresh(inst: Instance)
 	if not hl then
 		local newHl = Instance.new("Highlight")
 		newHl.Name = "CodeLayerLook"
-		newHl.FillColor = GREEN
-		newHl.OutlineColor = GREEN
+		newHl.FillColor = TEAL
+		newHl.OutlineColor = TEAL
 		newHl.DepthMode = Enum.HighlightDepthMode.Occluded
 		newHl.Parent = inst
 		hl = newHl
@@ -73,6 +78,65 @@ local function refreshAll()
 	}):Play()
 end
 
+-- The shift wipe: a teal line sweeps down Miko's screen; scanlines stay faintly while she's shifted.
+local wipeGui: ScreenGui? = nil
+
+local function shiftWipe()
+	local gui = wipeGui
+	if not gui then
+		local g = Instance.new("ScreenGui")
+		g.Name = "ShiftWipe"
+		g.IgnoreGuiInset = true
+		g.ResetOnSpawn = false
+		g.DisplayOrder = 5
+		local lines = Instance.new("ImageLabel")
+		lines.Name = "Scanlines"
+		lines.Size = UDim2.fromScale(1, 1)
+		lines.BackgroundTransparency = 1
+		lines.Image = ToolFx.Textures.Scanlines
+		lines.ImageColor3 = TEAL
+		lines.ScaleType = Enum.ScaleType.Tile
+		lines.TileSize = UDim2.fromOffset(64, 64)
+		lines.ImageTransparency = 1
+		lines.Parent = g
+		local bar = Instance.new("Frame")
+		bar.Name = "Wipe"
+		bar.Size = UDim2.new(1, 0, 0.12, 0)
+		bar.AnchorPoint = Vector2.new(0, 0.5)
+		bar.BackgroundColor3 = TEAL
+		bar.BorderSizePixel = 0
+		bar.Visible = false
+		local grad = Instance.new("UIGradient")
+		grad.Rotation = 90
+		grad.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.7, 0.55),
+			NumberSequenceKeypoint.new(0.95, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		grad.Parent = bar
+		bar.Parent = g
+		g.Parent = player:WaitForChild("PlayerGui")
+		wipeGui = g
+		gui = g
+	end
+	local g = gui :: ScreenGui
+	local bar = g:FindFirstChild("Wipe") :: Frame
+	local lines = g:FindFirstChild("Scanlines") :: ImageLabel
+	local on = shifted()
+	bar.Visible = true
+	bar.Position = UDim2.fromScale(0, if on then -0.1 else 1.1)
+	local sweep = TweenService:Create(bar, TweenInfo.new(Tuning.ToolFx.WipeTime, Enum.EasingStyle.Quad), {
+		Position = UDim2.fromScale(0, if on then 1.1 else -0.1),
+	})
+	sweep:Play()
+	sweep.Completed:Once(function()
+		bar.Visible = false
+	end)
+	TweenService:Create(lines, TweenInfo.new(Tuning.ToolFx.WipeTime), { ImageTransparency = if on then 0.9 else 1 })
+		:Play()
+end
+
 function CodeLayerController.Init()
 	Tags.each("CodeLayer", function(inst)
 		tracked[inst] = true
@@ -83,7 +147,10 @@ function CodeLayerController.Init()
 	end, function(inst)
 		tracked[inst] = nil
 	end)
-	player:GetAttributeChangedSignal("Shifted"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("Shifted"):Connect(function()
+		refreshAll()
+		shiftWipe()
+	end)
 end
 
 return CodeLayerController

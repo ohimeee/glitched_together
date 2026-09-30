@@ -104,10 +104,12 @@ end
 
 -- Studio only: jump worlds from the command bar with workspace:SetAttribute("DebugWorld", "PixelPlains").
 if game:GetService("RunService"):IsStudio() then
-	workspace:GetAttributeChangedSignal("DebugWorld"):Connect(function()
+	local function debugJump()
 		local target = workspace:GetAttribute("DebugWorld")
 		if type(target) == "string" then
 			WorldService.Load(target, 0)
 		end
-	end)
+	end
+	workspace:GetAttributeChangedSignal("DebugWorld"):Connect(debugJump)
+	debugJump() -- set before the first world finished loading
 end

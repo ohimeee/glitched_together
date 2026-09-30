@@ -78,6 +78,9 @@ return {
 		RingSize = 9, -- studs: freeze / release shockwave at the target
 		RingTime = 0.45,
 		RopeWidth = 0.35,
+		ScanTime = 0.45, -- Copy: the scan line sweeping over the copied object
+		PasteSnapTime = 0.3, -- Paste: ghost outline → solid
+		WipeTime = 0.35, -- Layer Shift: teal line across Miko's screen
 	},
 	-- Level contraptions (ContraptionService); levels can override per part with attributes
 	Contraptions = {
