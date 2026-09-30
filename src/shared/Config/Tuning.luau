@@ -64,6 +64,8 @@ return {
 	SwingArc = 60, -- degrees each side of straight down the assist settles on
 	SwingAssist = 1.6, -- per second: how fast the swing eases into that arc (from a standstill or a fast run-up)
 	SwingMaxSpeed = 80, -- studs/s cap (no flings)
+	SwingBounce = 0.3, -- hitting a wall mid-swing bounces back at this fraction of the speed
+	SwingStuckTime = 0.35, -- seconds blocked before the swing lets go (you drop and stand up)
 	SwingJumpForward = 16, -- studs/s added forward along the swing when you jump off
 	SwingTurnRate = 1.2, -- radians/s: A/D slowly turn the swing's plane
 	SwingLean = 0.85, -- 0 = upright, 1 = body lies fully along the rope

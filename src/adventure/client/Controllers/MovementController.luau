@@ -33,6 +33,7 @@ type Swing = {
 	angle: number, -- radians from straight down, + = forward along plane
 	omega: number, -- radians/s
 	pose: RBXScriptConnection?, -- hanging pose (arms up on the rope)
+	blocked: number, -- seconds the swing has been stuck against something
 	onEnd: (() -> ())?,
 }
 
@@ -127,10 +128,9 @@ local function onCharacter(character: Model)
 		humanoid.PlatformStand = false
 		-- stand back up (the body leaned along the rope), facing the way we fly
 		local fly = flat(root.AssemblyLinearVelocity)
-		local look = if fly.Magnitude > 1 then fly.Unit else flat(root.CFrame.LookVector)
-		if look.Magnitude > 0.01 then
-			root.CFrame = CFrame.lookAt(root.Position, root.Position + look.Unit)
-		end
+		local look = if fly.Magnitude > 1 then fly.Unit else s.plane
+		root.CFrame = CFrame.lookAt(root.Position, root.Position + look)
+		root.AssemblyAngularVelocity = Vector3.zero
 		humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
 		if jumped then
 			-- jump off forward (the way you came), stronger the faster you swing forward: time it at the front
@@ -221,6 +221,7 @@ local function onCharacter(character: Model)
 			rope = rope,
 			anchorAt = anchorAt,
 			pose = hangPose(),
+			blocked = 0,
 			onEnd = onEnd,
 		}
 		if current then
@@ -306,10 +307,17 @@ local function onCharacter(character: Model)
 		local move = pos - root.Position
 		local hit = if move.Magnitude > 0.01 then workspace:Raycast(root.Position, move, rayParams) else nil
 		if hit then
-			s.omega = 0 -- blocked: stay put (a reel still lifts you clear), then swing back
+			-- bump: bounce back a little (a reel still lifts you clear); stuck for a moment = let go and land
+			s.omega = -s.omega * Tuning.SwingBounce
 			pos = root.Position
+			s.blocked += dt
+			if s.blocked > Tuning.SwingStuckTime then
+				stopSwing(false)
+				return
+			end
 		else
 			s.angle = nextAngle
+			s.blocked = 0
 		end
 		local tangent = s.plane * math.cos(s.angle) + Vector3.yAxis * math.sin(s.angle)
 		local v = tangent * s.omega * L + (anchorPos - pos).Unit * (reel / math.max(dt, 1e-3))
