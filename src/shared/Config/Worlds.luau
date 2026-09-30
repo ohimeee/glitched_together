@@ -16,6 +16,7 @@ export type Look = {
 	Tint: Color3,
 	SunTexture: string?, -- nil = Roblox's default sun
 	SunSize: number?, -- degrees (Sky.SunAngularSize), default 21
+	EnvSpecular: number?, -- Lighting.EnvironmentSpecularScale, default 1 (lower = less sky sheen on glossy toys)
 }
 
 export type World = {
@@ -57,11 +58,11 @@ local ByName: { [string]: World } = {
 		Palette = { rgb(88, 200, 72), rgb(110, 190, 255), rgb(255, 205, 40) }, -- bright green, sky blue, coin gold
 		Look = {
 			ClockTime = 13,
-			Brightness = 3,
+			Brightness = 2.4,
 			Ambient = rgb(120, 130, 150),
 			OutdoorAmbient = rgb(150, 170, 200),
-			AtmosphereDensity = 0.25,
-			AtmosphereHaze = 1,
+			AtmosphereDensity = 0.18, -- light haze only: more and the grass washes out to mint
+			AtmosphereHaze = 0.5,
 			AtmosphereColor = rgb(200, 230, 255),
 			AtmosphereDecay = rgb(120, 180, 255),
 			BloomIntensity = 0.6,
@@ -71,6 +72,7 @@ local ByName: { [string]: World } = {
 			Tint = rgb(255, 250, 240),
 			SunTexture = "rbxassetid://120731124856629", -- a kid's crayon sun (textures/PP_CrayonSun2.png, art-direction §8)
 			SunSize = 30,
+			EnvSpecular = 0.25, -- the plastic kit reflected so much sky that the grass read pale mint
 		},
 	},
 	StarfallCastle = {
@@ -158,7 +160,7 @@ local function applyLook(look: Look)
 	Lighting.Ambient = look.Ambient
 	Lighting.OutdoorAmbient = look.OutdoorAmbient
 	Lighting.EnvironmentDiffuseScale = 1
-	Lighting.EnvironmentSpecularScale = 1
+	Lighting.EnvironmentSpecularScale = look.EnvSpecular or 1
 
 	local atmosphere = child("Atmosphere", "WorldAtmosphere")
 	atmosphere.Density = look.AtmosphereDensity
