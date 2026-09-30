@@ -63,11 +63,9 @@ function GrappleLine.Use(p: Player, useIndex: number, target: Instance?)
 	end
 
 	if useIndex == 1 then
-		if not target then -- let go
-			if swinging[p] then
-				swinging[p] = nil
-				toolResult:FireAllClients("GrappleEnd", p)
-			end
+		if not target then -- let go (always tell everyone, so no client keeps a stale rope)
+			swinging[p] = nil
+			toolResult:FireAllClients("GrappleEnd", p)
 			return
 		end
 		local ring = Tags.find(target, "GrappleRing")

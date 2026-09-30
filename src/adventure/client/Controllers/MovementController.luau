@@ -28,7 +28,11 @@ type Swing = {
 	boost: number,
 	rope: { Instance }, -- drawn rope (swing points only: the Grapple Line's rope is ToolFxController's)
 	anchorAt: Attachment?,
-	energy: number, -- per unit mass: ½v² + g·y (kept exact so the pendulum doesn't bleed speed)
+	target: number, -- rope length it reels in to
+	plane: Vector3, -- flat unit axis the swing moves along ("forward": the way you came)
+	angle: number, -- radians from straight down, + = forward along plane
+	omega: number, -- radians/s
+	pose: RBXScriptConnection?, -- hanging pose (arms up on the rope)
 	onEnd: (() -> ())?,
 }
 
@@ -117,6 +121,9 @@ local function onCharacter(character: Model)
 		for _, inst in s.rope do
 			inst:Destroy()
 		end
+		if s.pose then
+			s.pose:Disconnect()
+		end
 		humanoid.PlatformStand = false
 		-- stand back up (the body leaned along the rope), facing the way we fly
 		local fly = flat(root.AssemblyLinearVelocity)
@@ -126,13 +133,45 @@ local function onCharacter(character: Model)
 		end
 		humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
 		if jumped then
-			local v = root.AssemblyLinearVelocity * s.boost
-			setVelocity(Vector3.new(v.X, math.max(v.Y, 0) + Tuning.DoubleJumpVelocity * 0.6, v.Z))
+			-- jump off forward (the way you came), stronger the faster you swing forward: time it at the front
+			local v = root.AssemblyLinearVelocity
+			local forward = math.max(v:Dot(s.plane), 0) * s.boost + Tuning.SwingJumpForward
+			local up = math.max(v.Y, 0) + Tuning.DoubleJumpVelocity * 0.6
+			setVelocity(s.plane * forward + Vector3.new(0, up, 0))
 		end
 		resetAir()
 		if s.onEnd then
 			task.spawn(s.onEnd)
 		end
+	end
+
+	local reelTarget: (anchorPos: Vector3) -> number
+	local swingPlane: (anchorPos: Vector3) -> Vector3
+
+	-- Hanging pose while swinging: both arms up on the rope, legs slightly forward, knees bent. Set on every
+	-- Stepped (after the Animator writes its pose). Local only for now (Motor6D.Transform doesn't replicate).
+	local function hangPose(): RBXScriptConnection?
+		local function joint(part: string, name: string): Motor6D?
+			local p = character:FindFirstChild(part)
+			local j = p and p:FindFirstChild(name)
+			return if j and j:IsA("Motor6D") then j else nil
+		end
+		local pose = {
+			{ joint("RightUpperArm", "RightShoulder"), CFrame.Angles(math.pi, 0, math.rad(-8)) },
+			{ joint("LeftUpperArm", "LeftShoulder"), CFrame.Angles(math.pi, 0, math.rad(8)) },
+			{ joint("RightUpperLeg", "RightHip"), CFrame.Angles(math.rad(-20), 0, 0) },
+			{ joint("LeftUpperLeg", "LeftHip"), CFrame.Angles(math.rad(-10), 0, 0) },
+			{ joint("RightLowerLeg", "RightKnee"), CFrame.Angles(math.rad(35), 0, 0) },
+			{ joint("LeftLowerLeg", "LeftKnee"), CFrame.Angles(math.rad(25), 0, 0) },
+		}
+		return RunService.Stepped:Connect(function()
+			for _, entry in pose do
+				local j = entry[1] :: Motor6D?
+				if j then
+					j.Transform = entry[2]
+				end
+			end
+		end)
 	end
 
 	local function startSwing(anchor: () -> Vector3?, boost: number, onEnd: (() -> ())?, drawRope: boolean?): boolean
@@ -166,25 +205,24 @@ local function onCharacter(character: Model)
 			beam.Parent = a
 			rope = { a }
 		end
-		-- carry the run-up into the swing; from a standstill, start one toward where you face
-		local v = root.AssemblyLinearVelocity
-		if flat(v).Magnitude < Tuning.SwingStartSpeed * 0.5 then
-			local dir = if humanoid.MoveDirection.Magnitude > 0.1
-				then flat(humanoid.MoveDirection).Unit
-				else flat(root.CFrame.LookVector).Unit
-			setVelocity(v + dir * Tuning.SwingStartSpeed)
-		end
+		local plane = swingPlane(pos)
+		local offset = root.Position - pos
+		local length = math.max(offset.Magnitude, Tuning.SwingMinLength)
+		local angle = math.atan2(offset:Dot(plane), -offset.Y)
+		local tangent = plane * math.cos(angle) + Vector3.yAxis * math.sin(angle)
 		swing = {
 			anchor = anchor,
-			length = math.max((root.Position - pos).Magnitude, Tuning.SwingMinLength),
+			length = length,
+			target = reelTarget(pos),
+			plane = plane,
+			angle = angle,
+			omega = root.AssemblyLinearVelocity:Dot(tangent) / length, -- keep the run-up
 			boost = boost,
 			rope = rope,
 			anchorAt = anchorAt,
-			energy = 0,
+			pose = hangPose(),
 			onEnd = onEnd,
 		}
-		local v0 = root.AssemblyLinearVelocity
-		swing.energy = 0.5 * v0:Dot(v0) + Tuning.Gravity * root.Position.Y
 		if current then
 			current.swing = swing
 		end
@@ -194,6 +232,35 @@ local function onCharacter(character: Model)
 		return true
 	end
 
+	-- How long the rope ends up: at most SwingMaxLength, and short enough that the low point of the arc clears
+	-- the floor under the anchor (a far ring grabbed from the ground zips you up instead of dragging you through it).
+	function reelTarget(anchorPos: Vector3): number
+		local length = math.max((root.Position - anchorPos).Magnitude, Tuning.SwingMinLength)
+		local target = math.min(length, Tuning.SwingMaxLength)
+		local below = workspace:Raycast(anchorPos, Vector3.new(0, -(target + 12), 0), rayParams)
+		if below then
+			target = math.min(target, anchorPos.Y - below.Position.Y - Tuning.SwingGroundGap)
+		end
+		return math.max(target, 3)
+	end
+
+	-- The swing's plane ("forward"): the way you came (run-up), else from you toward the point, else the camera's
+	-- facing: you always swing on toward where you were heading.
+	function swingPlane(anchorPos: Vector3): Vector3
+		local run = flat(root.AssemblyLinearVelocity)
+		if run.Magnitude > 4 then
+			return run.Unit
+		end
+		local toward = flat(anchorPos - root.Position)
+		if toward.Magnitude > 2 then
+			return toward.Unit
+		end
+		local look = flat(workspace.CurrentCamera.CFrame.LookVector)
+		return if look.Magnitude > 0.01 then look.Unit else Vector3.zAxis
+	end
+
+	-- An assisted pendulum in one vertical plane: angle from straight down, eased into a steady arc
+	-- (Tuning.SwingArc) so every swing reads the same and you only time the jump.
 	local function stepSwing(dt: number)
 		local s = swing :: Swing
 		local anchorPos = s.anchor()
@@ -201,42 +268,57 @@ local function onCharacter(character: Model)
 			stopSwing(false)
 			return
 		end
-		local v = root.AssemblyLinearVelocity
-		local toAnchor = anchorPos - root.Position
-		local n = if toAnchor.Magnitude > 0.01 then toAnchor.Unit else Vector3.yAxis -- along the rope, up
-		-- pumping: steer only across the rope (along the arc), like leaning on a real swing
+		local g = Tuning.SwingGravity
+		-- A/D slowly turn the plane
 		local input = flat(humanoid.MoveDirection)
-		local pump = (input - n * input:Dot(n)) * Tuning.SwingPump
-		local g = Tuning.Gravity
-		s.energy += pump:Dot(v) * dt -- pumping adds energy, drag takes a little
-		s.energy -= Tuning.SwingDrag * dt * v:Dot(v)
-		v += (Vector3.new(0, -g, 0) + pump) * dt
-		local pos = root.Position + v * dt
-		local offset = pos - anchorPos
-		if offset.Magnitude > s.length then
-			local out = offset.Unit
-			pos = anchorPos + out * s.length
-			local outward = v:Dot(out)
-			if outward > 0 then
-				v -= out * outward -- the rope takes the pull; the speed along the arc stays
-			end
-			-- taut: set the speed from the energy (plain Euler steps would lose ~30% per swing)
-			local speed = math.sqrt(math.max(0, 2 * (s.energy - g * pos.Y)))
-			if v.Magnitude > 0.05 then
-				v = v.Unit * speed
-			end
+		local side = s.plane:Cross(Vector3.yAxis)
+		local turn = input:Dot(side) * Tuning.SwingTurnRate * dt
+		if math.abs(turn) > 1e-4 then
+			s.plane = CFrame.fromAxisAngle(Vector3.yAxis, -turn):VectorToWorldSpace(s.plane)
+		end
+		-- reel in (a far grab zips toward the point first)
+		local reel = 0
+		if s.length > s.target then
+			reel = math.min(Tuning.SwingReelSpeed * dt, s.length - s.target)
+			s.length -= reel
+		end
+		local L = s.length
+		-- pendulum + assist toward the arc: ω² = 2g/L (cos θ − cos A) at every point of that arc
+		s.omega += -(g / L) * math.sin(s.angle) * dt
+		local arc = math.rad(Tuning.SwingArc)
+		local want2 = 2 * g / L * (math.cos(s.angle) - math.cos(arc))
+		local want = math.sqrt(math.max(want2, 0))
+		local dir = if s.omega > 0.05 then 1 elseif s.omega < -0.05 then -1 elseif s.angle <= 0 then 1 else -1
+		if want2 > 0 then
+			s.omega += (dir * want - s.omega) * math.min(1, Tuning.SwingAssist * dt)
+		elseif math.abs(s.angle) > arc then
+			s.omega *= 1 - math.min(1, Tuning.SwingAssist * dt) -- past the arc (a fast run-up): calm it down
+		end
+		local maxOmega = Tuning.SwingMaxSpeed / L
+		s.omega = math.clamp(s.omega, -maxOmega, maxOmega)
+		local nextAngle = s.angle + s.omega * dt
+
+		local function pointAt(theta: number): Vector3
+			return anchorPos + (s.plane * math.sin(theta) - Vector3.yAxis * math.cos(theta)) * L
+		end
+		local pos = pointAt(nextAngle)
+		-- the body is moved by hand, so it must not pass through floors or walls: stop the swing there
+		local move = pos - root.Position
+		local hit = if move.Magnitude > 0.01 then workspace:Raycast(root.Position, move, rayParams) else nil
+		if hit then
+			s.omega = 0 -- blocked: stay put (a reel still lifts you clear), then swing back
+			pos = root.Position
 		else
-			s.energy = 0.5 * v:Dot(v) + g * pos.Y -- slack: free fall keeps its own energy
+			s.angle = nextAngle
 		end
-		-- hang from the rope: the body leans along it, facing the way it swings
+		local tangent = s.plane * math.cos(s.angle) + Vector3.yAxis * math.sin(s.angle)
+		local v = tangent * s.omega * L + (anchorPos - pos).Unit * (reel / math.max(dt, 1e-3))
+
+		-- hang from the rope: the body leans along it, facing forward along the swing
 		local up = Vector3.yAxis:Lerp((anchorPos - pos).Unit, Tuning.SwingLean).Unit
-		local fwd = v - up * v:Dot(up)
-		if fwd.Magnitude < 0.5 then
-			fwd = root.CFrame.LookVector - up * root.CFrame.LookVector:Dot(up)
-		end
-		if fwd.Magnitude > 0.01 then
-			local look = fwd.Unit
-			local right = look:Cross(up).Unit
+		local look = s.plane - up * s.plane:Dot(up)
+		if look.Magnitude > 0.01 then
+			local right = look.Unit:Cross(up).Unit
 			local target = CFrame.fromMatrix(pos, right, up)
 			root.CFrame = root.CFrame.Rotation:Lerp(target.Rotation, math.min(1, dt * 12)) + pos
 		else

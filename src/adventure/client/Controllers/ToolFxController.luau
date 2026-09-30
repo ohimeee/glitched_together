@@ -442,7 +442,18 @@ function ToolFxController.Init()
 	end
 	CollectionService:GetInstanceAddedSignal("Freezable"):Connect(watch)
 
-	game:GetService("Players").PlayerRemoving:Connect(clearRope)
+	-- a new kit (world change, role swap) never keeps the old tool's rope
+	local Players = game:GetService("Players")
+	local function watchKit(p: Player)
+		p:GetAttributeChangedSignal("Kit"):Connect(function()
+			clearRope(p)
+		end)
+	end
+	for _, p in Players:GetPlayers() do
+		watchKit(p)
+	end
+	Players.PlayerAdded:Connect(watchKit)
+	Players.PlayerRemoving:Connect(clearRope)
 end
 
 return ToolFxController

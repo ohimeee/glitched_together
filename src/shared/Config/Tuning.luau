@@ -38,14 +38,39 @@ return {
 	LedgeAssistReach = 2.5, -- studs a near-miss ledge pulls you up
 	MobileAutoSprintAfter = 1.5,
 
+	-- Follow camera (CameraController): mouse-look, cursor locked, crosshair = screen center
+	Camera = {
+		MouseSensitivity = 0.0035, -- radians per pixel
+		StickSpeed = 3.2, -- radians per second at full stick
+		TouchSensitivity = 0.006,
+		PitchMin = -75, -- degrees (looking down)
+		PitchMax = 70, -- degrees (looking up)
+		Distance = 16, -- studs behind the pivot
+		MinDistance = 6,
+		MaxDistance = 40,
+		PivotHeight = 2.2, -- studs above the root (head height)
+		Shoulder = Vector3.new(2.4, 0.8, 0), -- camera-space offset while holding a tool (crosshair beside the body)
+		GroundClearance = 1.5, -- looking up: the camera never sinks below the floor, it looks up from low
+		FOV = 74,
+		SwingFovBoost = 10, -- degrees wider at full swing speed (Spider-Man trick: speed reads bigger)
+	},
+
 	-- Traversal objects
 	SwingRange = 18,
 	SwingBoost = 1.2,
-	SwingPump = 45, -- studs/s² of steering along the swing arc (pumping), never along the rope
-	SwingDrag = 0.04, -- per second: a pendulum slowly settles instead of swinging forever
-	SwingStartSpeed = 14, -- grabbing while nearly still starts a swing this fast (toward where you face)
-	SwingMinLength = 7, -- studs: grabbing very close lets the rope out to this
+	-- It Takes Two style swing (MovementController): an assisted pendulum that settles into a steady arc forward
+	-- along the way you came; you only time the jump. A/D slowly turn it.
+	SwingGravity = 120, -- studs/s² on the rope: a bit under world gravity so the arc reads big and weighty
+	SwingArc = 60, -- degrees each side of straight down the assist settles on
+	SwingAssist = 1.6, -- per second: how fast the swing eases into that arc (from a standstill or a fast run-up)
+	SwingMaxSpeed = 80, -- studs/s cap (no flings)
+	SwingJumpForward = 16, -- studs/s added forward along the swing when you jump off
+	SwingTurnRate = 1.2, -- radians/s: A/D slowly turn the swing's plane
 	SwingLean = 0.85, -- 0 = upright, 1 = body lies fully along the rope
+	SwingMinLength = 7, -- studs: grabbing very close lets the rope out to this
+	SwingMaxLength = 16, -- studs: a far grab reels in to this (zips toward the point), then swings
+	SwingReelSpeed = 40, -- studs/s the rope reels in
+	SwingGroundGap = 5.5, -- studs: the rope is short enough that the bottom of the arc clears the floor by this
 	GrindSpeed = 40,
 	GrindGrabRange = 8,
 	VentForce = 90,
