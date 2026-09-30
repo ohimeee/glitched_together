@@ -7,6 +7,7 @@
 --             and the wall resets so the duo can retry. Pause Beam freezes are read from the Frozen attribute.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -183,11 +184,19 @@ function ContraptionService.Init()
 		if inst:IsA("BasePart") then
 			-- the Glitch is heard before it's seen (art-direction.md §7): a crackle, then a buzzing hum while it runs
 			local hum: Sound? = nil
+			-- hidden until the chase starts (playtest Oct 1: a frozen magenta wall standing in the level from afar
+			-- read as a mystery); it glitches in when it wakes and out again when the chase resets or ends
+			local shown = inst.Transparency
+			inst.Transparency = 1
+			local function fade(to: number)
+				TweenService:Create(inst, TweenInfo.new(0.4), { Transparency = to }):Play()
+			end
 			inst:GetAttributeChangedSignal("Running"):Connect(function()
 				if hum then
 					hum:Destroy()
 					hum = nil
 				end
+				fade(if inst:GetAttribute("Running") then shown else 1)
 				if inst:GetAttribute("Running") then
 					Audio.play("GlitchCrackle", inst, 1.5)
 					hum = Audio.play("GlitchHum", inst)
