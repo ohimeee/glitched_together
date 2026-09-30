@@ -550,6 +550,11 @@ local function buildPixelPlains(world: Model)
 	for i, z in { 104, 121, 138 } do -- 7-stud gaps between heads: room to stand between hits
 		crusher(-75, z, 0, { Period = 1.4, Offset = (i - 1) * 0.45 })
 	end
+	block(P, Vector3.new(16, 2, 40), CFrame.new(-75, 22.5, 121), { -- no walking the crusher tops
+		name = "FactoryRoof",
+		color = METAL,
+		material = Enum.Material.Metal,
+	})
 	grass(Vector3.new(30, 6, 30), -75, 0, 156, "KaiEnd")
 	plate("S1", -75, 0, 162, "PlateKai")
 	grass(Vector3.new(40, 6, 10), -40, 0, 160, "KaiReturn")
@@ -820,6 +825,11 @@ local function buildPixelPlains(world: Model)
 	factoryWalls(656, 716)
 	crusher(0, 674, 62, { Period = 1.6 })
 	crusher(0, 698, 62, { Period = 1.6, Offset = 0.8 })
+	block(P, Vector3.new(16, 2, 60), CFrame.new(0, 62 + 22.5, 686), { -- no walking the crusher tops
+		name = "FactoryRoof",
+		color = METAL,
+		material = Enum.Material.Metal,
+	})
 
 	grass(Vector3.new(30, 4, 30), 0, 62, 731, "FactoryExit")
 	blob(0, 62, 728, 14)
@@ -830,7 +840,7 @@ local function buildPixelPlains(world: Model)
 	-- 1-3 continued: COIN PRESS. The twist: Glitch blobs pace a yard (Kai freezes one to slip past, frozen ones
 	-- can't hurt), then the coin press: four crushers over a lane. Miko pulls the crate through in hops while Kai
 	-- freezes the crusher above it; the crate on the plate opens the vault.
-	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 210))
+	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 220))
 	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "PressPath")
 	checkpoint(P, nextOrder(), 0, 0, 6, W, {
 		"Kai: freeze a Glitch blob to slip past it. Frozen blobs can't hurt you.",
@@ -844,18 +854,24 @@ local function buildPixelPlains(world: Model)
 	blob(0, 0, 30, 18)
 	blob(0, 0, 47, 18)
 	blob(0, 0, 64, 18)
-	grass(Vector3.new(14, 4, 90), 0, 0, 120, "PressLane") -- z 75..165
+	grass(Vector3.new(14, 4, 100), 0, 0, 125, "PressLane") -- z 75..175
 	for _, x in { -8, 8 } do
-		dirtWall(Vector3.new(2, 22, 90), x, 22, 120)
+		dirtWall(Vector3.new(2, 22, 100), x, 22, 125)
 	end
+	-- roof just above the crushers' top position: no riding a head up and walking the tops (playtest Oct 1)
+	block(P, Vector3.new(16, 2, 100), CFrame.new(0, 22.5, 125), {
+		name = "FactoryRoof",
+		color = METAL,
+		material = Enum.Material.Metal,
+	})
 	checkpoint(P, nextOrder(), 0, 0, 80, W, {
 		"Miko: pull the crate along the lane. Kai: freeze the crusher above it!",
 		"The crate has to reach the plate at the end.",
 	})
 	-- 22 apart (12-stud gaps between the 10-deep heads): room for the crate plus one pull between two hits
 	-- (playtest Oct 1: 4-stud gaps were too tight)
-	for i, z in { 95, 117, 139 } do
-		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.43 })
+	for i, z in { 95, 117, 139, 161 } do
+		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.33 })
 	end
 	block(P, Vector3.new(4, 4, 4), CFrame.new(0, 2, 82), {
 		name = "Crate",
@@ -865,12 +881,12 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	plate("D1", 0, 0, 158)
-	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 166))
-	grass(Vector3.new(30, 4, 30), 0, 0, 182, "CoinVault") -- z 167..197
-	checkpoint(P, nextOrder(), 0, 0, 178, W)
-	sign(P, "COIN VAULT", CFrame.new(0, 10, 196), Vector3.new(14, 3, 0.4))
-	grass(Vector3.new(14, 4, 13), 0, 0, 203.5, "VaultExit")
+	plate("D1", 0, 0, 170)
+	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 176))
+	grass(Vector3.new(30, 4, 30), 0, 0, 192, "CoinVault") -- z 177..207
+	checkpoint(P, nextOrder(), 0, 0, 188, W)
+	sign(P, "COIN VAULT", CFrame.new(0, 10, 206), Vector3.new(14, 3, 0.4))
+	grass(Vector3.new(14, 4, 13), 0, 0, 213.5, "VaultExit")
 
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
 	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))
