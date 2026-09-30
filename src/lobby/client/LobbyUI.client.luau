@@ -5,33 +5,39 @@ local SocialService = game:GetService("SocialService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 
 local player = Players.LocalPlayer
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "LobbyUI"
 gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.Parent = player:WaitForChild("PlayerGui")
 
+-- sticker buttons in the main HUD style (UiTheme default: FredokaOne, art-direction.md §11)
 local function button(text: string, color: Color3, position: UDim2): TextButton
 	local b = Instance.new("TextButton")
 	b.AnchorPoint = Vector2.new(1, 1)
 	b.Position = position
-	b.Size = UDim2.fromOffset(190, 48)
-	b.BackgroundColor3 = color
-	b.Font = Enum.Font.FredokaOne
-	b.TextScaled = true
-	b.TextColor3 = Color3.new(1, 1, 1)
+	b.Size = UDim2.fromOffset(210, 52)
 	b.Text = text
+	b.TextScaled = true
 	b.AutoButtonColor = true
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = b
+	b.ZIndex = 2
 	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim.new(0, 8)
-	pad.PaddingBottom = UDim.new(0, 8)
+	pad.PaddingTop = UDim.new(0, 10)
+	pad.PaddingBottom = UDim.new(0, 10)
 	pad.Parent = b
 	b.Parent = gui
+	UiSkin.Panel(b, { Fill = color })
+	UiSkin.Text(b, "Title", Color3.new(1, 1, 1))
+	b.MouseEnter:Connect(function()
+		b.Rotation = -2
+	end)
+	b.MouseLeave:Connect(function()
+		b.Rotation = 0
+	end)
 	return b
 end
 

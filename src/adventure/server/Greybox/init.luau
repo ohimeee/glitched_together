@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 
 local Greybox = {}
 
@@ -68,22 +69,35 @@ local function platform(parent: Instance, size: Vector3, x: number, top: number,
 	return block(parent, size, CFrame.new(x, top - size.Y / 2, z), opts)
 end
 
+-- Signs follow the world's look (UiTheme Sign*): menu panels in the Prologue, hand-painted marker on wood in
+-- Pixel Plains, gold storybook lettering in the castle, monospace in the Core. Set per Build.
+local signTheme: UiTheme.Theme = UiTheme.Default
+
 local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, color: Color3?): Part
-	local s =
-		block(parent, size or Vector3.new(24, 6, 0.6), cf, { color = color or NAVY, name = "Sign", collide = false })
+	local s = block(parent, size or Vector3.new(24, 6, 0.6), cf, {
+		color = color or signTheme.SignBoard,
+		material = signTheme.SignMaterial,
+		name = "Sign",
+		collide = false,
+	})
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = face
-		gui.LightInfluence = 0
+		gui.LightInfluence = 0.3
 		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 		gui.PixelsPerStud = 30
 		gui.Parent = s
 		local label = Instance.new("TextLabel")
-		label.Size = UDim2.fromScale(1, 1)
+		label.AnchorPoint = Vector2.new(0.5, 0.5)
+		label.Position = UDim2.fromScale(0.5, 0.5)
+		label.Size = UDim2.fromScale(0.92, 0.84)
+		label.Rotation = signTheme.SignTilt
 		label.BackgroundTransparency = 1
-		label.Font = Enum.Font.FredokaOne
+		label.Font = signTheme.SignFont
 		label.TextScaled = true
-		label.TextColor3 = WHITE
+		label.TextColor3 = signTheme.SignInk
+		label.TextStrokeColor3 = Color3.new(0, 0, 0)
+		label.TextStrokeTransparency = 0.75
 		label.Text = text
 		label.Parent = gui
 	end
@@ -1012,6 +1026,7 @@ local function buildPlaceholder(world: Model, name: string)
 end
 
 function Greybox.Build(worldName: string): Model
+	signTheme = UiTheme.For(worldName)
 	local world = Instance.new("Model")
 	world.Name = "World"
 	if worldName == "Prologue" then

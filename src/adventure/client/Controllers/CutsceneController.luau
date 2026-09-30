@@ -6,6 +6,7 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local TweenService = game:GetService("TweenService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
+local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Input = require(script.Parent.Parent.Input)
 local CameraController = require(script.Parent.CameraController)
@@ -15,6 +16,7 @@ local player = Players.LocalPlayer
 local CutsceneController = {}
 
 local LINE_TIME = 3.2
+local LINE_CPS = 40 -- typewriter speed, characters per second
 local playingId: string? = nil
 local token = 0
 
@@ -68,6 +70,22 @@ function CutsceneController.Init()
 	skipHint.TextXAlignment = Enum.TextXAlignment.Right
 	skipHint.TextColor3 = Color3.fromRGB(180, 180, 200)
 	skipHint.Parent = bottom
+
+	-- world-themed: the speaker is a sticker chip in their color, lines use the world's font (UiTheme)
+	speaker.Size = UDim2.new(0.16, 0, 0.26, 0)
+	speaker.Position = UDim2.fromScale(0.2, 0.04)
+	speaker.TextXAlignment = Enum.TextXAlignment.Center
+	local chipPad = Instance.new("UIPadding")
+	chipPad.PaddingTop = UDim.new(0, 4)
+	chipPad.PaddingBottom = UDim.new(0, 4)
+	chipPad.Parent = speaker
+	UiSkin.Panel(speaker, { NoShadow = true })
+	UiSkin.Text(speaker, "Title")
+	UiSkin.Text(line, "Float", Color3.new(1, 1, 1))
+	UiSkin.Text(skipHint, "Float", Color3.fromRGB(180, 180, 200))
+	line.Position = UDim2.fromScale(0.2, 0.38)
+	line.Size = UDim2.new(0.6, 0, 0.5, 0)
+	line.TextWrapped = true
 
 	local function refreshSkip()
 		local votes = workspace:GetAttribute("SkipVotes") or 0
@@ -136,9 +154,18 @@ function CutsceneController.Init()
 				return
 			end
 			speaker.Text = l.Speaker
-			speaker.TextColor3 = speakerColor(l.Speaker)
+			UiSkin.Panel(speaker, { NoShadow = true, Fill = speakerColor(l.Speaker) })
+			UiSkin.SetTextColor(speaker, Color3.fromRGB(25, 22, 40))
 			line.Text = l.Text
-			task.wait(LINE_TIME)
+			line.MaxVisibleGraphemes = 0
+			local total = utf8.len(l.Text) or #l.Text
+			local t0 = os.clock()
+			while token == myToken and os.clock() - t0 < LINE_TIME do
+				local shown = math.floor((os.clock() - t0) * LINE_CPS)
+				line.MaxVisibleGraphemes = if shown >= total then -1 else shown
+				task.wait()
+			end
+			line.MaxVisibleGraphemes = -1
 		end
 		if token == myToken then
 			Net.event("CutsceneDone"):FireServer()

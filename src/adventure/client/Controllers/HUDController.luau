@@ -1,5 +1,6 @@
--- HUD (mechanics.md §6): hearts/HP, tool labels, crosshair, Pip hint bubble, Downed / GAME OVER? /
--- partner-wait overlays, and on-screen buttons for mobile.
+-- HUD (mechanics.md §6): hearts/HP, tool card, crosshair, Pip hint bubble, Downed / GAME OVER? /
+-- partner-wait overlays, and on-screen buttons for mobile. Every panel is a themed sticker (UiTheme via UiSkin):
+-- it re-skins per world (FredokaOne menu → Arcade pixel → Fantasy storybook → Code grey), art-direction.md §11.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -10,21 +11,25 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Input = require(script.Parent.Parent.Input)
 
 local player = Players.LocalPlayer
 
 local HUDController = {}
 
-local FONT = Enum.Font.FredokaOne
+-- Hearts keep one round font in every world (the ♥ glyph is missing from the pixel/code fonts).
+local HEART_FONT = Enum.Font.FredokaOne
+local HEART_FULL = Color3.fromRGB(255, 95, 162) -- Pip pink: health, not a gameplay color
+local HINT_CPS = 45 -- Pip's typewriter speed, characters per second
 
-local TOOL_TEXT: { [string]: { string } } = {
-	PauseBeam = { "PAUSE BEAM", "LMB  Freeze", "RMB  Release" },
-	GrappleLine = { "GRAPPLE LINE", "LMB  Swing", "RMB  Pull" },
-	FireMage = { "FIRE MAGE", "LMB  Fireball   E  Ignite", "RMB  Flame Wall   Shift  Blink" },
-	ShieldKnight = { "SHIELD KNIGHT", "LMB  Sword", "RMB  Block   Shift  Charge" },
-	CopyPaste = { "COPY / PASTE", "LMB  Copy", "RMB  Paste (R rotate)" },
-	LayerShift = { "LAYER SHIFT", "LMB  Shift", "RMB  Pull Out" },
+local TOOL_TEXT: { [string]: { any } } = {
+	PauseBeam = { "PAUSE BEAM", { "LMB", "Freeze" }, { "RMB", "Release" } },
+	GrappleLine = { "GRAPPLE LINE", { "LMB", "Swing" }, { "RMB", "Pull" } },
+	FireMage = { "FIRE MAGE", { "LMB", "Fireball   E Ignite" }, { "RMB", "Flame Wall   Shift Blink" } },
+	ShieldKnight = { "SHIELD KNIGHT", { "LMB", "Sword" }, { "RMB", "Block   Shift Charge" } },
+	CopyPaste = { "COPY / PASTE", { "LMB", "Copy" }, { "RMB", "Paste   R Rotate" } },
+	LayerShift = { "LAYER SHIFT", { "LMB", "Shift" }, { "RMB", "Pull Out" } },
 }
 
 local gui: ScreenGui
@@ -38,67 +43,166 @@ local function new(className: string, props: { [string]: any }, parent: Instance
 	return inst
 end
 
-local function text(props: { [string]: any }, parent: Instance?): TextLabel
+local function text(props: { [string]: any }, parent: Instance?, kind: UiSkin.TextKind?, color: Color3?): TextLabel
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
-	props.Font = FONT
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextStrokeTransparency = props.TextStrokeTransparency or 0.5
-	return new("TextLabel", props, parent)
+	local label = new("TextLabel", props, parent)
+	UiSkin.Text(label, kind or "Body", color)
+	return label
 end
 
 local function corner(parent: Instance, radius: number)
 	new("UICorner", { CornerRadius = UDim.new(0, radius) }, parent)
 end
 
--- Health ------------------------------------------------------------------------------
+local function roleColor(p: Player): Color3
+	local info = (Roles :: any)[p:GetAttribute("Role") or ""]
+	return if info then info.Color else Palette.Duo
+end
+
+-- Health: a sticker chip with hearts (platforming) or an HP bar (castle) -----------------------
 local function buildHealth()
-	local frame = new("Frame", {
+	local chip = new("Frame", {
 		Name = "Health",
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 20, 1, -20),
-		Size = UDim2.fromOffset(260, 44),
-		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(170, 52),
+		ZIndex = 2,
 	}, gui)
-	local label =
-		text({ Size = UDim2.fromScale(1, 1), TextScaled = true, TextXAlignment = Enum.TextXAlignment.Left }, frame)
+	UiSkin.Panel(chip)
+	new("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }, chip)
+	local hearts = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 3 }, chip)
+	new("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 4),
+	}, hearts)
 
+	local hpBack = new("Frame", {
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 0, 0.5, 6),
+		Size = UDim2.new(1, 0, 0, 12),
+		BackgroundColor3 = Color3.fromRGB(20, 20, 35),
+		Visible = false,
+		ZIndex = 3,
+	}, chip)
+	corner(hpBack, 6)
+	local hpFill = new("Frame", { Size = UDim2.fromScale(1, 1), ZIndex = 4 }, hpBack)
+	corner(hpFill, 6)
+	local hpLabel = text({
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 0, 0, -1),
+		Size = UDim2.new(1, 0, 0, 16),
+		TextScaled = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 3,
+	}, hpBack, "Title")
+
+	local heartLabels: { TextLabel } = {}
 	local function refresh()
 		local kind = player:GetAttribute("HealthKind")
 		local health = (player:GetAttribute("Health") or 0) :: number
 		local max = (player:GetAttribute("MaxHealth") or 3) :: number
+		local theme = UiSkin.Theme()
 		if kind == "HP" then
-			label.Text = `HP {math.floor(health)} / {max}`
-		else
-			label.Text = string.rep("♥ ", health) .. string.rep("♡ ", math.max(0, max - health))
+			hearts.Visible = false
+			hpBack.Visible = true
+			chip.Size = UDim2.fromOffset(220, 52)
+			hpFill.Size = UDim2.fromScale(math.clamp(health / math.max(max, 1), 0, 1), 1)
+			hpFill.BackgroundColor3 = roleColor(player)
+			hpLabel.Text = `HP {math.floor(health)} / {max}`
+			return
 		end
-		label.TextColor3 = if health <= 1 and kind ~= "HP" then Color3.fromRGB(255, 90, 90) else Color3.new(1, 1, 1)
+		hearts.Visible = true
+		hpBack.Visible = false
+		chip.Size = UDim2.fromOffset(24 + max * 38, 52)
+		for i = 1, math.max(max, #heartLabels) do
+			local h = heartLabels[i]
+			if not h and i <= max then
+				h = new("TextLabel", {
+					Size = UDim2.fromOffset(34, 40),
+					BackgroundTransparency = 1,
+					Font = HEART_FONT,
+					TextScaled = true,
+					Text = "♥",
+					ZIndex = 3,
+				}, hearts)
+				heartLabels[i] = h
+			end
+			if h then
+				h.Visible = i <= max
+				h.TextColor3 = if i <= health then HEART_FULL else theme.SubInk
+				h.TextTransparency = if i <= health then 0 else 0.35
+			end
+		end
 	end
 	for _, attr in { "Health", "MaxHealth", "HealthKind" } do
 		player:GetAttributeChangedSignal(attr):Connect(refresh)
 	end
-	refresh()
+	UiSkin.OnTheme(refresh)
+
+	-- a quick bump when you lose a heart
+	local last = (player:GetAttribute("Health") or 0) :: number
+	player:GetAttributeChangedSignal("Health"):Connect(function()
+		local now = (player:GetAttribute("Health") or 0) :: number
+		if now < last then
+			chip.Rotation = -4
+			TweenService:Create(chip, TweenInfo.new(0.35, Enum.EasingStyle.Elastic), { Rotation = 0 }):Play()
+		end
+		last = now
+	end)
 end
 
--- Tools + crosshair ---------------------------------------------------------------------
+-- Tool card + crosshair -----------------------------------------------------------------------
+local function keyRow(parent: Instance, order: number): (TextLabel, TextLabel)
+	local row = new("Frame", {
+		Size = UDim2.new(1, 0, 0, 26),
+		BackgroundTransparency = 1,
+		LayoutOrder = order,
+		ZIndex = 3,
+	}, parent)
+	local key = new("TextLabel", {
+		Size = UDim2.fromOffset(48, 24),
+		TextScaled = true,
+		ZIndex = 4,
+	}, row)
+	UiSkin.Panel(key, { NoShadow = true })
+	UiSkin.Text(key, "Title")
+	new("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }, key)
+	local action = text({
+		Position = UDim2.fromOffset(58, 0),
+		Size = UDim2.new(1, -58, 1, 0),
+		TextScaled = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 3,
+	}, row, "Body")
+	return key, action
+end
+
 local function buildTools()
-	local frame = new("Frame", {
+	local card = new("Frame", {
 		Name = "Tools",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -20, 1, -20),
-		Size = UDim2.fromOffset(240, 96),
-		BackgroundColor3 = Color3.fromRGB(15, 15, 30),
-		BackgroundTransparency = 0.35,
+		Size = UDim2.fromOffset(270, 112),
 		Visible = false,
+		ZIndex = 2,
 	}, gui)
-	corner(frame, 12)
-	new("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingTop = UDim.new(0, 8) }, frame)
-	new("UIListLayout", { Padding = UDim.new(0, 2) }, frame)
-	local title =
-		text({ Size = UDim2.new(1, 0, 0, 30), TextScaled = true, TextXAlignment = Enum.TextXAlignment.Left }, frame)
-	local use1 =
-		text({ Size = UDim2.new(1, 0, 0, 22), TextScaled = true, TextXAlignment = Enum.TextXAlignment.Left }, frame)
-	local use2 =
-		text({ Size = UDim2.new(1, 0, 0, 22), TextScaled = true, TextXAlignment = Enum.TextXAlignment.Left }, frame)
+	UiSkin.Panel(card)
+	new("UIPadding", {
+		PaddingLeft = UDim.new(0, 12),
+		PaddingRight = UDim.new(0, 12),
+		PaddingTop = UDim.new(0, 8),
+	}, card)
+	new("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, card)
+	local title = text({
+		Size = UDim2.new(1, 0, 0, 30),
+		TextScaled = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		LayoutOrder = 0,
+		ZIndex = 3,
+	}, card, "Title")
+	local key1, use1 = keyRow(card, 1)
+	local key2, use2 = keyRow(card, 2)
 
 	local crosshair = text({
 		Name = "Crosshair",
@@ -108,51 +212,91 @@ local function buildTools()
 		Text = "+",
 		TextScaled = true,
 		Visible = false,
-	}, gui)
+	}, gui, "Float")
 
 	local function refresh()
 		local kit = player:GetAttribute("Kit")
 		local info = kit and TOOL_TEXT[kit]
-		frame.Visible = info ~= nil
+		card.Visible = info ~= nil
 		crosshair.Visible = info ~= nil and player:GetAttribute("CameraMode") ~= "TopDown"
 		if info then
-			local role = (Roles :: any)[player:GetAttribute("Role") or "Kai"]
 			title.Text = info[1]
-			title.TextColor3 = role.Color
-			use1.Text = info[2]
-			use2.Text = info[3]
+			UiSkin.SetTextColor(title, roleColor(player)) -- your tool, your color (§6, §11)
+			key1.Text, use1.Text = info[2][1], info[2][2]
+			key2.Text, use2.Text = info[3][1], info[3][2]
 		end
 	end
 	player:GetAttributeChangedSignal("Kit"):Connect(refresh)
 	player:GetAttributeChangedSignal("CameraMode"):Connect(refresh)
+	player:GetAttributeChangedSignal("Role"):Connect(refresh)
 	refresh()
 end
 
--- Pip hint bubble -----------------------------------------------------------------------
+-- Pip hint bubble: a speech sticker with a "PIP" tab, a tail, and typewriter text --------------
 local function buildHint()
 	local bubble = new("Frame", {
 		Name = "Hint",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 24),
-		Size = UDim2.fromOffset(520, 70),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		Position = UDim2.new(0.5, 0, 0, 34),
+		Size = UDim2.fromOffset(560, 78),
 		Visible = false,
+		ZIndex = 6,
 	}, gui)
-	corner(bubble, 16)
-	local label = text({
-		Size = UDim2.new(1, -24, 1, -12),
-		Position = UDim2.fromOffset(12, 6),
-		TextScaled = true,
-		TextColor3 = Color3.fromRGB(30, 30, 60),
-		TextStrokeTransparency = 1,
+	local tail = new("Frame", {
+		Name = "Tail",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0, 70, 1, 0),
+		Size = UDim2.fromOffset(20, 20),
+		Rotation = 45,
+		ZIndex = 5,
 	}, bubble)
+	UiSkin.Panel(bubble)
+	UiSkin.Panel(tail, { NoShadow = true })
+	local tab = new("TextLabel", {
+		Name = "Tab",
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.fromOffset(18, 0),
+		Size = UDim2.fromOffset(70, 26),
+		Text = "PIP",
+		TextScaled = true,
+		ZIndex = 8,
+	}, bubble)
+	new("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4) }, tab)
+	local label = text({
+		Size = UDim2.new(1, -32, 1, -24),
+		Position = UDim2.fromOffset(16, 16),
+		TextScaled = true,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 7,
+	}, bubble, "Body")
+	UiSkin.OnTheme(function(theme)
+		UiSkin.Panel(tab, { NoShadow = true, Fill = theme.Accent })
+		UiSkin.Text(tab, "Title", UiSkin.InkOn(theme.Accent))
+	end)
+
 	local shownAt = 0
 	Net.event("Hint").OnClientEvent:Connect(function(line: string)
-		label.Text = "PIP: " .. line
-		bubble.Visible = true
 		local stamp = os.clock()
 		shownAt = stamp
-		task.delay(6, function()
+		label.Text = line
+		label.MaxVisibleGraphemes = 0
+		bubble.Visible = true
+		bubble.Size = UDim2.fromOffset(520, 70)
+		TweenService:Create(bubble, TweenInfo.new(0.25, Enum.EasingStyle.Back), {
+			Size = UDim2.fromOffset(560, 78),
+		}):Play()
+		task.spawn(function()
+			local total = utf8.len(line) or #line
+			local shown = 0
+			while shown < total and shownAt == stamp do
+				shown += 1
+				label.MaxVisibleGraphemes = shown
+				task.wait(1 / HINT_CPS)
+			end
+			label.MaxVisibleGraphemes = -1
+		end)
+		task.delay(Tuning.Pip.HintTime, function()
 			if shownAt == stamp then
 				bubble.Visible = false
 			end
@@ -166,10 +310,13 @@ local function buildOverlays()
 		Name = "Downed",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.7),
-		Size = UDim2.fromOffset(560, 60),
+		Size = UDim2.fromOffset(620, 64),
 		TextScaled = true,
 		Visible = false,
-	}, gui)
+		ZIndex = 9,
+	}, gui, "Title")
+	UiSkin.Panel(downed)
+	new("UIPadding", { PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12) }, downed)
 
 	local fade = new("Frame", {
 		Name = "Fade",
@@ -179,15 +326,17 @@ local function buildOverlays()
 		ZIndex = 50,
 	}, gui)
 
-	local gameOver = text({
+	-- The Glitch's screen: always magenta static, never themed (art-direction.md §7).
+	local gameOver = new("TextLabel", {
 		Name = "GameOver",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = Color3.fromRGB(20, 0, 30),
 		BackgroundTransparency = 0,
+		Font = Enum.Font.Arcade,
 		Text = "GAME OVER?",
-		TextScaled = false,
-		TextSize = 96,
+		TextSize = 110,
 		TextColor3 = Palette.Glitch,
+		TextStrokeTransparency = 1,
 		Visible = false,
 		ZIndex = 60,
 	}, gui)
@@ -200,7 +349,7 @@ local function buildOverlays()
 		TextSize = 40,
 		Visible = false,
 		ZIndex = 40,
-	}, gui)
+	}, gui, "Float")
 
 	RunService.RenderStepped:Connect(function()
 		local now = workspace:GetServerTimeNow()
@@ -208,8 +357,8 @@ local function buildOverlays()
 			downed.Visible = true
 			local at = player:GetAttribute("RespawnAt") :: number?
 			local left = if at then math.max(0, at - now) else 0
-			local mash = if workspace:GetAttribute("BossFight") then "  (mash JUMP!)" else ""
-			downed.Text = `DOWNED — partner can revive (E)  ·  {string.format("%.1f", left)}s{mash}`
+			local mash = if workspace:GetAttribute("BossFight") then "  MASH JUMP!" else ""
+			downed.Text = `DOWNED · partner revives (E) · {string.format("%.1f", left)}s{mash}`
 		else
 			downed.Visible = false
 		end
@@ -232,9 +381,9 @@ local function buildOverlays()
 
 	Net.event("GameOver").OnClientEvent:Connect(function()
 		gameOver.Visible = true
-		for _ = 1, 8 do -- glitch flicker
+		for _ = 1, 8 do -- glitch flicker: hard jumps, RGB split colors
 			gameOver.Position = UDim2.fromOffset(math.random(-12, 12), math.random(-8, 8))
-			gameOver.TextColor3 = if math.random() < 0.5 then Palette.Glitch else Color3.fromRGB(60, 255, 120)
+			gameOver.TextColor3 = if math.random() < 0.5 then Palette.Glitch else Palette.GlitchCyan
 			task.wait(0.08)
 		end
 		gameOver.Position = UDim2.fromOffset(0, 0)
@@ -279,14 +428,14 @@ local function buildTouch()
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = b[4],
 			Size = UDim2.fromOffset(70, 70),
-			BackgroundColor3 = Color3.fromRGB(20, 20, 40),
-			BackgroundTransparency = 0.3,
-			Font = FONT,
 			TextScaled = true,
-			TextColor3 = Color3.new(1, 1, 1),
 			Text = b[3],
+			AutoButtonColor = true,
+			ZIndex = 3,
 		}, gui)
-		corner(button, 35)
+		UiSkin.Panel(button)
+		UiSkin.Text(button, "Title")
+		new("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, button)
 		Input.bindButton(b[1], b[2], button)
 		-- Tool buttons serve every world's tool context.
 		if b[1] == "W1Tools" then
@@ -313,49 +462,50 @@ local function isCastle(): boolean
 	return kit == "FireMage" or kit == "ShieldKnight"
 end
 
-local function roleColor(p: Player): Color3
-	local info = (Roles :: any)[p:GetAttribute("Role") or ""]
-	return if info then info.Color else Palette.Duo
-end
-
 local function buildXpAndUltimate()
 	local xpBack = new("Frame", {
 		Name = "XP",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -18),
-		Size = UDim2.fromOffset(360, 14),
-		BackgroundColor3 = Color3.fromRGB(20, 20, 35),
+		Position = UDim2.new(0.5, 0, 1, -22),
+		Size = UDim2.fromOffset(380, 18),
 		Visible = false,
+		ZIndex = 2,
 	}, gui)
-	corner(xpBack, 7)
-	local xpFill =
-		new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(60, 255, 120) }, xpBack)
-	corner(xpFill, 7)
+	UiSkin.Panel(xpBack)
+	local xpFill = new("Frame", { Size = UDim2.fromScale(0, 1), ZIndex = 3 }, xpBack)
+	local xpCorner = new("UICorner", {}, xpFill)
 	local levelLabel = text({
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 0, -2),
-		Size = UDim2.fromOffset(240, 22),
-		TextSize = 20,
-	}, xpBack)
+		Position = UDim2.new(0.5, 0, 0, -6),
+		Size = UDim2.fromOffset(260, 24),
+		TextSize = 22,
+		ZIndex = 3,
+	}, xpBack, "Float")
 
 	local ultBack = new("Frame", {
 		Name = "Ultimate",
 		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -18, 1, -120),
-		Size = UDim2.fromOffset(240, 18),
-		BackgroundColor3 = Color3.fromRGB(20, 20, 35),
+		Position = UDim2.new(1, -20, 1, -150),
+		Size = UDim2.fromOffset(270, 20),
 		Visible = false,
+		ZIndex = 2,
 	}, gui)
-	corner(ultBack, 9)
-	local ultFill = new("Frame", { Size = UDim2.fromScale(0, 1) }, ultBack)
-	corner(ultFill, 9)
+	UiSkin.Panel(ultBack)
+	local ultFill = new("Frame", { Size = UDim2.fromScale(0, 1), ZIndex = 3 }, ultBack)
+	local ultCorner = new("UICorner", {}, ultFill)
 	local ultLabel = text({
 		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, 0, 0, -2),
-		Size = UDim2.fromOffset(240, 22),
-		TextSize = 18,
+		Position = UDim2.new(1, 0, 0, -6),
+		Size = UDim2.fromOffset(270, 22),
+		TextSize = 20,
 		TextXAlignment = Enum.TextXAlignment.Right,
-	}, ultBack)
+		ZIndex = 3,
+	}, ultBack, "Float")
+	UiSkin.OnTheme(function(theme)
+		xpFill.BackgroundColor3 = theme.Accent
+		xpCorner.CornerRadius = UDim.new(0, theme.Corner)
+		ultCorner.CornerRadius = UDim.new(0, theme.Corner)
+	end)
 
 	local function refresh()
 		local show = isCastle()
@@ -388,40 +538,44 @@ local function buildPicker()
 		Name = "LevelUp",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(560, 250),
-		BackgroundColor3 = Palette.Castle.NightPurple,
+		Size = UDim2.fromOffset(580, 270),
 		Visible = false,
 		ZIndex = 30,
 	}, gui)
-	corner(picker, 18)
-	new("UIStroke", { Thickness = 4, Color = Palette.Castle.Gold }, picker)
+	UiSkin.Panel(picker)
 	local title =
-		text({ Size = UDim2.new(1, 0, 0, 60), TextSize = 40, ZIndex = 31, TextColor3 = Palette.Castle.Gold }, picker)
+		text({ Size = UDim2.new(1, 0, 0, 64), TextSize = 42, ZIndex = 31 }, picker, "Title", Palette.Castle.Gold)
 	local waiting = text({
 		Name = "PickWaiting",
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 110),
 		Size = UDim2.fromOffset(500, 40),
-		TextSize = 26,
+		TextSize = 28,
 		Text = "Waiting for your partner to pick...",
 		Visible = false,
 		ZIndex = 30,
-	}, gui)
+	}, gui, "Float")
 	local buttons: { TextButton } = {}
 	for i = 1, 2 do
 		local b = new("TextButton", {
 			AnchorPoint = Vector2.new(0.5, 0),
-			Position = UDim2.new(if i == 1 then 0.27 else 0.73, 0, 0, 72),
-			Size = UDim2.fromOffset(240, 150),
-			BackgroundColor3 = Palette.Castle.Royal,
-			Font = FONT,
+			Position = UDim2.new(if i == 1 then 0.27 else 0.73, 0, 0, 78),
+			Size = UDim2.fromOffset(240, 160),
 			TextWrapped = true,
-			TextSize = 22,
-			TextColor3 = Color3.new(1, 1, 1),
-			ZIndex = 31,
+			TextSize = 24,
+			AutoButtonColor = true,
+			ZIndex = 33,
 		}, picker)
-		corner(b, 14)
+		UiSkin.Panel(b, { Fill = Palette.Castle.Royal })
+		UiSkin.Text(b, "Title")
 		buttons[i] = b
+		-- a little lift on hover, like picking up a card
+		b.MouseEnter:Connect(function()
+			TweenService:Create(b, TweenInfo.new(0.15), { Rotation = if i == 1 then -2 else 2 }):Play()
+		end)
+		b.MouseLeave:Connect(function()
+			TweenService:Create(b, TweenInfo.new(0.15), { Rotation = 0 }):Play()
+		end)
 	end
 
 	local function refreshWaiting()
@@ -462,7 +616,7 @@ local function buildOverheadBars()
 	local function barFor(p: Player)
 		local bill = new("BillboardGui", {
 			Name = "HPOver",
-			Size = UDim2.fromOffset(70, 9),
+			Size = UDim2.fromOffset(74, 11),
 			StudsOffsetWorldSpace = Vector3.new(0, 2.6, 0),
 			AlwaysOnTop = true,
 			LightInfluence = 0,
@@ -473,9 +627,10 @@ local function buildOverheadBars()
 			{ Name = "Back", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(20, 20, 35) },
 			bill
 		)
-		corner(back, 4)
+		corner(back, 5)
+		new("UIStroke", { Thickness = 2, Color = Palette.Castle.Gold }, back)
 		local fill = new("Frame", { Name = "Fill", Size = UDim2.fromScale(1, 1) }, back)
-		corner(fill, 4)
+		corner(fill, 5)
 		bars[p] = bill
 	end
 	for _, p in Players:GetPlayers() do
@@ -513,7 +668,8 @@ end
 function HUDController.Init()
 	gui = new(
 		"ScreenGui",
-		{ Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true },
+		-- Global z-order: sticker shadows and the hint tail sit behind their panels by ZIndex
+		{ Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Global },
 		player:WaitForChild("PlayerGui")
 	)
 	buildHealth()
