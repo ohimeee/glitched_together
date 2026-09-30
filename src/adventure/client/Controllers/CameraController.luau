@@ -151,7 +151,10 @@ local function step(dt: number)
 	local m = if zone then (zone:GetAttribute("Mode") or mode) :: string else mode
 	local lock = wantsLock(m)
 	UserInputService.MouseBehavior = if lock then Enum.MouseBehavior.LockCenter else Enum.MouseBehavior.Default
-	UserInputService.MouseIconEnabled = not lock
+	-- with a tool out and the cursor free (side-on scenes, Alt), the HUD crosshair follows the cursor instead of the
+	-- mouse icon; menus and cutscenes (MenuContext) always get the normal cursor
+	local toolAim = player:GetAttribute("Kit") ~= nil and m ~= "TopDown" and not Input.isEnabled("MenuContext")
+	UserInputService.MouseIconEnabled = not lock and not toolAim
 	if m ~= "Follow" then
 		wasFollow = false
 	end

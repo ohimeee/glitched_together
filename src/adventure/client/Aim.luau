@@ -1,5 +1,9 @@
--- Soft lock-on aiming for tools: the best tagged target inside a cone around the crosshair (screen center).
+-- Soft lock-on aiming for tools: the best tagged target inside a cone around the crosshair. The crosshair is the
+-- screen center while the mouse-look camera has the cursor locked; otherwise (side-on scenes, Alt held, touch)
+-- it's wherever the cursor or the last touch is (playtest Oct 1: side-on bats couldn't be aimed at).
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -18,9 +22,49 @@ function Aim.root(): BasePart?
 	return c and c:FindFirstChild("HumanoidRootPart") :: BasePart?
 end
 
-function Aim.centerRay(): Ray
+-- last touch on the 3D view (not on a button), in viewport pixels
+local lastTouch: Vector2? = nil
+local usingTouch = false
+UserInputService.InputBegan:Connect(function(input, processed)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		usingTouch = true
+		if not processed then
+			local inset = GuiService:GetGuiInset()
+			lastTouch = Vector2.new(input.Position.X, input.Position.Y) + inset
+		end
+	elseif
+		input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.MouseButton1
+	then
+		usingTouch = false
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		usingTouch = false
+	end
+end)
+
+-- Where the crosshair is, in viewport pixels (matches the HUD, which ignores the GUI inset).
+function Aim.screenPoint(): Vector2
 	local size = camera.ViewportSize
-	return camera:ViewportPointToRay(size.X / 2, size.Y / 2)
+	if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
+		return size / 2
+	end
+	if usingTouch then
+		return lastTouch or size / 2
+	end
+	return UserInputService:GetMouseLocation()
+end
+
+-- True when the crosshair sits in the middle (mouse-look); false when it follows the cursor / touch.
+function Aim.centered(): boolean
+	return UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+end
+
+function Aim.centerRay(): Ray
+	local point = Aim.screenPoint()
+	return camera:ViewportPointToRay(point.X, point.Y)
 end
 
 -- What the crosshair is pointing at (ignores your own character).

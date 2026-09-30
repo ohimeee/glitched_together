@@ -14,6 +14,7 @@ local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Input = require(script.Parent.Parent.Input)
+local Aim = require(script.Parent.Parent.Aim)
 
 local player = Players.LocalPlayer
 
@@ -227,6 +228,14 @@ local function buildTools()
 			key2.Text, use2.Text = info[3][1], info[3][2]
 		end
 	end
+	-- the crosshair sits in the middle while the camera has the cursor locked, else it rides the cursor / touch
+	-- (and stands in for the mouse icon, which CameraController hides while a tool is out)
+	RunService.RenderStepped:Connect(function()
+		if crosshair.Visible then
+			local point = Aim.screenPoint()
+			crosshair.Position = UDim2.fromOffset(point.X, point.Y)
+		end
+	end)
 	player:GetAttributeChangedSignal("Kit"):Connect(refresh)
 	player:GetAttributeChangedSignal("CameraMode"):Connect(refresh)
 	player:GetAttributeChangedSignal("Role"):Connect(refresh)
