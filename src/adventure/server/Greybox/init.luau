@@ -541,7 +541,7 @@ local function buildPixelPlains(world: Model)
 	ring(75, 20, 32)
 	ring(75, 20, 58)
 	grass(Vector3.new(30, 6, 30), 75, 0, 90, "MikoMid")
-	grass(Vector3.new(30, 24, 30), 75, 18, 120) -- the cliff: 18 up, only with the crate as a step
+	grass(Vector3.new(30, 24, 30), 75, 18, 120, "Cliff") -- the cliff: 18 up, only with the crate as a step
 	platform(world, Vector3.new(6, 2, 6), 100, -6, 90, { color = DIRT, name = "CrateIsland" })
 	block(world, Vector3.new(4, 4, 4), CFrame.new(100, -4, 90), {
 		name = "Crate",
@@ -553,7 +553,7 @@ local function buildPixelPlains(world: Model)
 	})
 	pullLever("M3", 75, 27, 163)
 	lift("M3", Vector3.new(8, 1, 56), 75, -2, 163, 20, "Bridge") -- 56-stud pit: past long jump + double + dash (~51)
-	grass(Vector3.new(30, 24, 20), 75, 18, 201)
+	grass(Vector3.new(30, 24, 20), 75, 18, 201, "Cliff")
 	plate("S1", 75, 18, 201, "PlateMiko")
 	local slope = math.atan2(18, 40)
 	block(world, Vector3.new(44, 2, 10), CFrame.new(40, 9, 201) * CFrame.Angles(0, 0, slope) * CFrame.new(0, -1, 0), {
@@ -572,7 +572,7 @@ local function buildPixelPlains(world: Model)
 
 	-- 1-2 CLOUD CLIMB -------------------------------------------------------------------------------
 	grass(Vector3.new(30, 6, 30), 0, 0, 215, "CloudBase")
-	grass(Vector3.new(30, 26, 30), 0, 20, 245) -- 20-stud cliff
+	grass(Vector3.new(30, 26, 30), 0, 20, 245, "Cliff") -- 20-stud cliff
 	ring(0, 30, 224)
 	lift("L1", Vector3.new(8, 1, 8), -10, 0.5, 225, 20, "Lift")
 	pullLever("L1", -10, 23, 240)
@@ -582,7 +582,7 @@ local function buildPixelPlains(world: Model)
 		Period = 3.5,
 		Ease = "Linear",
 	})
-	grass(Vector3.new(30, 26, 30), 0, 20, 335)
+	grass(Vector3.new(30, 26, 30), 0, 20, 335, "Cliff")
 	checkpoint(world, 3, 0, 20, 328, W, {
 		"Miko: ground-pound the white pad while Kai stands on it.",
 		"Kai: freeze the bat up top so Miko can grapple it. Then pound the button to flip the fan.",

@@ -1,10 +1,10 @@
 # Brief: Pixel Plains art pass 2 (new layout, graphics baseline)
 
-**Status (Sep 30, 2026): in progress.** Meshes made, not wired into the game yet. Target: the rebuilt Pixel Plains grey-box (`Greybox/init.luau` buildPixelPlains) at the approved graphics baseline (memory: graphics-baseline), themed voxel toy-plastic (art-direction.md §8), owner colors only on gameplay targets (§6).
+**Status (Sep 30, 2026): wired and verified in a Studio playtest.** Kit imported (user click) and every skin applies (4 cliffs, 8 walls, 3 belts, 2 Glitch Blobs, bat, bounce pad, 10 flowers, 8 bushes, 7 trees). Code: `ArtService/PixelPlains.luau`. Still to do: section 3 list below. Target: the rebuilt Pixel Plains grey-box (`Greybox/init.luau` buildPixelPlains) at the approved graphics baseline (memory: graphics-baseline), themed voxel toy-plastic (art-direction.md §8), owner colors only on gameplay targets (§6).
 
 ## 1. Blender kit (exact-size pieces) — `blender_assets/PixelPlainsKit2.blend / .fbx`
 
-Built at stud scale, bevelled voxels, one mesh per material, cube-projected UVs, transforms applied. Each asset's pieces share a pivot at its bottom center. **Needs the user's Import 3D click in Studio** (File → Import 3D → `PixelPlainsKit2.fbx`), then read the MeshIds with `execute_luau` and compare bounding boxes (import scale varies, memory: studio-ui-clicks).
+Built at stud scale, bevelled voxels, one mesh per material, cube-projected UVs, transforms applied. Each asset's pieces share a pivot at its bottom center. **Imported Sep 30.** Mesh ids: Cliff Top 73194612964423, Dirt 132715282506690, Strata 95695557584433, Stones 131737597349680; Wall Bricks 127532238967506, Core 88505239808610, Top 73396039066734; Belt Frame 131185547489554, Belt 104161523408844, Glow 134386850518263. (Original note: needs the user's Import 3D click in Studio (File → Import 3D → `PixelPlainsKit2.fbx`), then read the MeshIds with `execute_luau` and compare bounding boxes (import scale varies, memory: studio-ui-clicks).
 
 Sizes/offsets below are already in Roblox axes (Blender (x, y, z) → Roblox (−x, z, y)), offset = piece bbox center from the asset's bottom-center origin.
 
@@ -32,7 +32,7 @@ Where they go (ArtService/PixelPlains.luau `Skins` + `Dressing`): `PP_Kit_Cliff`
 | Bush | `rbxassetid://97383134312851` | `rbxassetid://132624303942108` | 2.85 × 4 × 2.86 | Decor |
 | Bounce pad | `rbxassetid://127413358129106` | `rbxassetid://86478495845252` | 2.72 × 3 × 2.72 | skin for `BouncePad` (8 × 1 × 8, Duo white) |
 
-Failed, retry: **Static Bat** ("Moderation failed": reword without "fangs"/"menacing", e.g. "cute round purple voxel bat toy with blocky pixel wings and big googly eyes"), **voxel tree** ("Too Many Requests": run 2–3 generations at a time, not 6).
+Retried and done: Static Bat `rbxassetid://138838808176158` / tex `134256509753880` (4.7 × 2.5 × 2.25), voxel tree `rbxassetid://110637086239850` / tex `81380511005138` (12 × 15.9 × 12). Original failures: **Static Bat** ("Moderation failed": reword without "fangs"/"menacing", e.g. "cute round purple voxel bat toy with blocky pixel wings and big googly eyes"), **voxel tree** ("Too Many Requests": run 2–3 generations at a time, not 6).
 
 Still to generate: teal pull lever, fan/vent base, dropper chute pipe, timed door, wooden sign board with posts, "BY KAI + MIKO" hill sign, crayon sun (skybox), duo pound button.
 
