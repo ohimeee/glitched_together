@@ -367,7 +367,7 @@ local function buildPrologue(world: Model)
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
-		transparency = 0.4,
+		transparency = 0.65,
 		collide = false,
 		tags = { "WorldExit" },
 	})
@@ -475,7 +475,7 @@ local function buildPixelPlains(world: Model)
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
-		transparency = 0.4,
+		transparency = 0.65,
 		collide = false,
 		tags = { "WorldExit" },
 	})
@@ -507,7 +507,7 @@ local function buildGlitchedCore(world: Model)
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
-		transparency = 0.4,
+		transparency = 0.65,
 		collide = false,
 		tags = { "WorldExit" },
 	})
@@ -732,7 +732,7 @@ local function buildStarfallCastle(world: Model)
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
-		transparency = 0.4,
+		transparency = 0.65,
 		collide = false,
 		tags = { "WorldExit" },
 	})
@@ -757,7 +757,7 @@ local function buildPlaceholder(world: Model, name: string)
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
-		transparency = 0.4,
+		transparency = 0.65,
 		collide = false,
 		tags = { "WorldExit" },
 	})
