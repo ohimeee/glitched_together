@@ -31,7 +31,7 @@ Quick socket check without MCP (PowerShell): connect to `localhost:9876` and sen
 | `set_texture` | Apply a downloaded texture to an object |
 | Poly Haven: `search_polyhaven_assets`, `download_polyhaven_asset`, `get_polyhaven_asset_preview` | CC0 HDRIs, PBR textures, models. **On** (autostart.py enables it; no key) |
 | Poly Pizza: `search_polypizza_models`, `download_polypizza_model` | Stylised low-poly models (credit CC-BY authors). **Disabled, needs free API key** |
-| Sketchfab: `search_sketchfab_models`, `get_sketchfab_model_preview`, `download_sketchfab_model` | Specific real-world models. **Disabled, needs API key** |
+| Sketchfab: `search_sketchfab_models`, `get_sketchfab_model_preview`, `download_sketchfab_model` | Models for 3D/environments (user wants it later). Token goes in `C:\Users\User\tools\blender-mcp\keys.env` (`BLENDERMCP_SKETCHFAB_API_KEY=`); `autostart.py` loads it and switches Sketchfab on. Downloadable CC0 / CC-BY only (credit CC-BY) |
 | Hyper3D Rodin / Hunyuan3D / Tripo: `generate_*`, `poll_*`, `import_generated_asset*` | AI text/image → 3D. **Disabled** (this add-on offers Tripo only via paid Premium; we call Tripo's REST API directly instead, see below) |
 | `disable_telemetry` | Turns data collection off if it ever gets turned on |
 
@@ -183,8 +183,8 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 
 | Priority | Asset | World | Notes |
 | --- | --- | --- | --- |
-| ✅ | **Pip** | All | In game: `blender_assets/Pip.fbx` split per material (644 tris), floating companion via `ArtService` + `PipController` |
-| 1 | **Redo to the graphics baseline** (art-direction.md top note): Pip (keep the pixel sprite + missing pixels, but glossy glowing voxels, expressive eyes, speaker-colored glow), lobby capsule, Prologue set, Pixel Plains kit, role badges, castle kit (real stone / wood / metal surfaces before import) | All | Current versions are flat-colored primitive builds from before the baseline |
+| ✅ | **Pip** | All | Redone Sep 30 to the graphics baseline with Studio `generate_mesh` (4 textured parts; ids in `ArtService/Pip.luau`); old Blender voxel version kept in `blender_assets/Pip.*` |
+| 1 | **Redo to the graphics baseline** (art-direction.md top note): lobby capsule, Prologue set, Pixel Plains kit, role badges, castle kit (real stone / wood / metal surfaces before import) | All | Current versions are flat-colored primitive builds from before the baseline |
 | ✅ | **Lobby capsule** (Kai ▲ / Miko ●) + marquee | Lobby | Done and in game: `blender_assets/LobbyCapsule.blend/.fbx` (2,082 tris per capsule), ids in `src/lobby/server/CapsuleMeshes.luau`, brief `briefs/LobbyCapsule.md` |
 | ✅ | Kai / Miko role badges (▲ / ● back badge accessory) | All | In game: `Identity.*`, `ArtService/Badges.luau`. Full outfits per world (art-direction §5) still to do |
 | ✅ | Giant title-menu buttons, UI panels, "CONTINUE?" title card | Prologue | In game: `blender_assets/PrologueUI.*`, brief `briefs/PrologueUI.md`, skins in `ArtService` |
