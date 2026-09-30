@@ -313,6 +313,20 @@ local function onCharacter(character: Model)
 				local dir = flat(humanoid.MoveDirection).Unit
 				task.defer(function()
 					setVelocity(dir * Tuning.LongJumpForward + Vector3.new(0, Tuning.LongJumpUp, 0))
+					-- hold the horizontal speed through the rise (the humanoid's air control would otherwise
+					-- brake it to walk speed at once); vertical stays free so gravity still arcs the jump
+					local lv = Instance.new("LinearVelocity")
+					lv.Attachment0 = attachment
+					lv.MaxForce = math.huge
+					lv.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+					lv.RelativeTo = Enum.ActuatorRelativeTo.World
+					lv.PrimaryTangentAxis = Vector3.xAxis
+					lv.SecondaryTangentAxis = Vector3.zAxis
+					lv.PlaneVelocity = Vector2.new(dir.X, dir.Z) * Tuning.LongJumpForward
+					lv.Parent = root
+					task.delay(Tuning.LongJumpHold, function()
+						lv:Destroy()
+					end)
 				end)
 			end
 			return -- normal jump is Roblox's own

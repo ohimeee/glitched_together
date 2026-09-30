@@ -391,7 +391,7 @@ end
 
 -- Pixel Plains (World 1), Story Line sections 1-1 Starter Meadow, 1-2 Cloud Climb, 1-3 Coin Factory, then the
 -- Glitch Chase set piece and the boss arena. Built to the reach table in CLAUDE.md (measured in Studio): plain
--- jump ≤ 10 studs, double jump 12–18, dash gaps 24–27, anything that needs a tool or the partner is ≥ 45 across
+-- jump ≤ 10 studs, double jump 12–18, dash gaps 24–27, anything that needs a tool or the partner is ≥ 55 across
 -- or ≥ 18 up, so dash + double jump can't skip a puzzle. Not one straight line: the meadow splits the duo into two
 -- trials (Pillar 1: each needs the other's plate), the climb goes vertical and side-on, the factory stacks twists.
 local function buildPixelPlains(world: Model)
@@ -551,19 +551,19 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	pullLever("M3", 75, 27, 158)
-	lift("M3", Vector3.new(8, 1, 47), 75, -2, 158.5, 20, "Bridge")
-	grass(Vector3.new(30, 24, 20), 75, 18, 192)
-	plate("S1", 75, 18, 192, "PlateMiko")
+	pullLever("M3", 75, 27, 163)
+	lift("M3", Vector3.new(8, 1, 56), 75, -2, 163, 20, "Bridge") -- 56-stud pit: past long jump + double + dash (~51)
+	grass(Vector3.new(30, 24, 20), 75, 18, 201)
+	plate("S1", 75, 18, 201, "PlateMiko")
 	local slope = math.atan2(18, 40)
-	block(world, Vector3.new(44, 2, 10), CFrame.new(40, 9, 192) * CFrame.Angles(0, 0, slope) * CFrame.new(0, -1, 0), {
+	block(world, Vector3.new(44, 2, 10), CFrame.new(40, 9, 201) * CFrame.Angles(0, 0, slope) * CFrame.new(0, -1, 0), {
 		color = GRASS,
 		name = "Ramp",
 	})
-	gate(world, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 192))
+	gate(world, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201))
 
 	-- The plaza where the two trials meet.
-	grass(Vector3.new(40, 6, 50), 0, 0, 175, "Plaza")
+	grass(Vector3.new(40, 6, 60), 0, 0, 180, "Plaza")
 	checkpoint(world, 2, 0, 0, 168, W, {
 		"Miko: grapple the ring up the cliff, then pull the teal lever for Kai.",
 		"The yellow lift rises when Miko pulls the lever up top.",

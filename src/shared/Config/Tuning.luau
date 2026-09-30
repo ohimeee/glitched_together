@@ -30,8 +30,11 @@ return {
 	WallJumpAway = 40,
 	CoyoteTime = 0.12,
 	JumpBuffer = 0.1,
-	LongJumpForward = 55, -- crouch + jump while moving (research.md: ITT keeps momentum on a crouch-jump)
+	-- crouch + jump while moving (research.md: ITT keeps momentum on a crouch-jump). Speed is held for
+	-- LongJumpHold s (~20 studs), so long jump + double + dash stays near the sprint reach (~41, CLAUDE.md table).
+	LongJumpForward = 40,
 	LongJumpUp = jumpVelocity(5),
+	LongJumpHold = 0.45,
 	LedgeAssistReach = 2.5, -- studs a near-miss ledge pulls you up
 	MobileAutoSprintAfter = 1.5,
 
