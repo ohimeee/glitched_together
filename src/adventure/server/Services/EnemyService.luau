@@ -86,8 +86,13 @@ function EnemyService.Init()
 			end
 			local speed = inst:GetAttribute("Speed") or 6
 			e.t += dt * speed / math.max(distance, 1)
-			local offset = math.sin(e.t) * distance / 2
-			local cf = e.origin * CFrame.new(offset, 0, 0)
+			local cf
+			if inst:GetAttribute("Type") == "StaticBat" then
+				-- figure-8 in its own XY plane (mechanics.md §4: flies in a figure-8); freeze it to use as an anchor
+				cf = e.origin * CFrame.new(math.sin(e.t) * distance / 2, math.sin(e.t * 2) * distance / 6, 0)
+			else
+				cf = e.origin * CFrame.new(math.sin(e.t) * distance / 2, 0, 0)
+			end
 			if inst:IsA("Model") then
 				inst:PivotTo(cf * e.root.CFrame:ToObjectSpace(inst:GetPivot()))
 			else

@@ -3,6 +3,7 @@
 --
 -- Groups: every trigger (plate, pound button, lever, pulled lever) carries a `Group` attribute.
 -- A DuoGate opens when every trigger in its Group is active. Gates latch open unless `Latch = false`.
+-- `OpenOffset` (Vector3) + `Solid` turn a gate into a lift or a bridge that moves into place when its group is active.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -69,9 +70,17 @@ local function setGateOpen(gate: Instance, open: boolean)
 			part:SetAttribute("ClosedCFrame", part.CFrame)
 		end
 		local closed = part:GetAttribute("ClosedCFrame") :: CFrame
-		local target = if open then closed * CFrame.new(0, -part.Size.Y + 0.2, 0) else closed
-		part.CanCollide = not open
-		TweenService:Create(part, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		-- default: sink into the floor. OpenOffset (world studs) moves it instead, e.g. a lift or a bridge that
+		-- rises into place; Solid keeps it collidable once open.
+		local offset = gate:GetAttribute("OpenOffset") :: Vector3?
+		local sunk = closed * CFrame.new(0, -part.Size.Y + 0.2, 0)
+		local target = if not open then closed elseif offset then closed + offset else sunk
+		part.CanCollide = not open or gate:GetAttribute("Solid") == true
+		local openTime = gate:GetAttribute("OpenTime") :: number? -- lifts move slowly and evenly so riders stay on
+		local info = if openTime
+			then TweenInfo.new(openTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+			else TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		TweenService:Create(part, info, {
 			CFrame = target,
 		}):Play()
 	end

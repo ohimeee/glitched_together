@@ -197,10 +197,10 @@ local function buildPrologue(world: Model)
 
 	-- Giant menu buttons: stepping stones
 	for i, top in { 3, 7, 11 } do
-		platform(world, Vector3.new(10, 4, 10), 0, top, 14 + i * 14, { color = WHITE, name = `MenuButton{i}` })
+		platform(world, Vector3.new(10, 4, 10), 0, top, 13 + i * 11, { color = WHITE, name = `MenuButton{i}` })
 	end
 
-	-- "Options slider": needs double jump + dash
+	-- "Options slider": a 24-stud gap from the last button, past double jump (≤ 22), so it needs the air dash
 	platform(world, Vector3.new(20, 4, 20), 0, 11, 85, { color = NAVY, name = "OptionsSlider" })
 	platform(
 		world,
@@ -243,17 +243,18 @@ local function buildPrologue(world: Model)
 	)
 
 	-- Swing point over a pit → D
-	block(world, Vector3.new(2.5, 2.5, 2.5), CFrame.new(0, 48, 139), {
+	-- SaveSlots sits 18 above LoadGame (reach ~16), so only the swing gets you there
+	block(world, Vector3.new(2.5, 2.5, 2.5), CFrame.new(0, 56, 139), {
 		color = NEUTRAL,
 		material = Enum.Material.Neon,
 		shape = Enum.PartType.Ball,
 		tags = { "SwingPoint" },
 		name = "SwingPoint",
 	})
-	platform(world, Vector3.new(20, 4, 20), 0, 31, 160, { color = NAVY, name = "SaveSlots" })
+	platform(world, Vector3.new(20, 4, 20), 0, 49, 160, { color = NAVY, name = "SaveSlots" })
 
 	-- Grind rail down to E
-	local railStart = Vector3.new(0, 31.5, 172)
+	local railStart = Vector3.new(0, 49.5, 172)
 	local railEnd = Vector3.new(0, 20.5, 232)
 	local rail = block(
 		world,
@@ -267,7 +268,7 @@ local function buildPrologue(world: Model)
 		}
 	)
 	rail.CFrame = CFrame.lookAt((railStart + railEnd) / 2, railEnd)
-	sign(world, "F to grind", CFrame.new(6, 36, 168), Vector3.new(8, 2.5, 0.4))
+	sign(world, "F to grind", CFrame.new(6, 54, 168), Vector3.new(8, 2.5, 0.4))
 
 	platform(world, Vector3.new(30, 4, 34), 0, 18, 253, { color = NAVY, name = "Credits" })
 	checkpoint(world, 4, 0, 18, 244, W, {
@@ -374,112 +375,359 @@ local function buildPrologue(world: Model)
 	sign(world, "NEW GAME (both step in)", CFrame.new(0, 46, 436), Vector3.new(20, 4, 0.4))
 end
 
--- Pixel Plains: Pause Beam / Grapple Line playground.
+-- Pixel Plains (World 1), Story Line sections 1-1 Starter Meadow, 1-2 Cloud Climb, 1-3 Coin Factory, then the
+-- Glitch Chase set piece and the boss arena. Built to the reach table in CLAUDE.md (measured in Studio): plain
+-- jump ≤ 10 studs, double jump 12–18, dash gaps 24–27, anything that needs a tool or the partner is ≥ 45 across
+-- or ≥ 18 up, so dash + double jump can't skip a puzzle. Not one straight line: the meadow splits the duo into two
+-- trials (Pillar 1: each needs the other's plate), the climb goes vertical and side-on, the factory stacks twists.
 local function buildPixelPlains(world: Model)
 	local W = "PixelPlains"
 	killFloor(world, -40)
 	workspace:SetAttribute("KillY", -60)
 	local GRASS = Palette.PixelPlains.Grass
 	local DIRT = Palette.PixelPlains.Dirt
+	local METAL = rgb(120, 120, 130)
+	local BELT = rgb(70, 70, 80)
+	local NEON = Enum.Material.Neon
 
-	platform(world, Vector3.new(40, 6, 40), 0, 0, 0, { color = GRASS, name = "StarterMeadow" })
-	spawnAt(world, 0, 0, -8)
-	checkpoint(world, 1, 0, 0, 0, W, {
-		"Kai: freeze the moving platform (left click) when it's close.",
-		"Miko: grapple rings glow orange. Left click near one.",
-	})
-
-	-- 1. Freeze a moving platform over a pit
-	local mover = block(world, Vector3.new(10, 2, 10), CFrame.new(0, -1, 30), {
-		name = "MovingPlatform",
-		color = STONE,
-		tags = { "Mover", "Freezable" },
-		attrs = { Period = 5 },
-	})
-	waypoints(mover, { CFrame.new(0, -1, 26), CFrame.new(0, -1, 74) })
-	platform(world, Vector3.new(30, 6, 40), 0, 0, 100, { color = GRASS, name = "CrusherLane" })
-	checkpoint(
-		world,
-		2,
-		0,
-		0,
-		86,
-		W,
-		{ "Freeze the crusher when it's at the top.", "Kai freezes, then BOTH run under." }
-	)
-
-	-- 2. Crusher (hazard) between walls
-	for _, x in { -6, 6 } do
-		platform(world, Vector3.new(2, 14, 14), x, 14, 104, { color = DIRT })
+	local function grass(size: Vector3, x: number, top: number, z: number, name: string?): Part
+		return platform(world, size, x, top, z, { color = GRASS, name = name or "Grass" })
 	end
-	local crusher = block(world, Vector3.new(9, 8, 12), CFrame.new(0, 14, 104), {
-		name = "PixelCrusher",
-		color = rgb(120, 120, 130),
-		material = Enum.Material.Metal,
-		tags = { "Mover", "Freezable", "Hazard" },
-		attrs = { Period = 2.5, Damage = 1 },
-	})
-	waypoints(crusher, { CFrame.new(0, 17, 104), CFrame.new(0, 4, 104) })
+	local function dirtWall(size: Vector3, x: number, top: number, z: number)
+		platform(world, size, x, top, z, { color = DIRT, name = "DirtWall" })
+	end
+	-- a Freezable moving block (Kai's target) between two poses
+	local function mover(name: string, size: Vector3, a: CFrame, b: CFrame, attrs: { [string]: any }): Part
+		local m = block(world, size, a, { name = name, color = STONE, tags = { "Mover", "Freezable" }, attrs = attrs })
+		waypoints(m, { a, b })
+		return m
+	end
+	local function crusher(x: number, z: number, floorTop: number, attrs: { [string]: any })
+		attrs.Damage = 1
+		local up, down = CFrame.new(x, floorTop + 17, z), CFrame.new(x, floorTop + 4, z)
+		local c = block(world, Vector3.new(12, 8, 10), up, {
+			name = "PixelCrusher",
+			color = METAL,
+			material = Enum.Material.Metal,
+			tags = { "Mover", "Freezable", "Hazard" },
+			attrs = attrs,
+		})
+		waypoints(c, { up, down })
+	end
+	local function ring(x: number, y: number, z: number)
+		block(world, Vector3.new(1, 3, 3), CFrame.new(x, y, z), { -- 2–3 studs (art-direction.md §17)
+			name = "GrappleRing",
+			color = MIKO,
+			material = NEON,
+			shape = Enum.PartType.Cylinder,
+			tags = { "GrappleRing" },
+		})
+	end
+	-- a hanging teal lever only Miko's Pull reaches
+	local function pullLever(group: string, x: number, y: number, z: number)
+		block(world, Vector3.new(1, 5, 1), CFrame.new(x, y, z) * CFrame.Angles(math.rad(20), 0, 0), {
+			name = "PullLever",
+			color = MIKO,
+			material = NEON,
+			tags = { "Pullable", "LeverPull" },
+			attrs = { Group = group, Mass = 1 },
+		})
+	end
+	local function plate(group: string, x: number, top: number, z: number, name: string?)
+		platform(world, Vector3.new(6, 0.6, 6), x, top + 0.6, z, {
+			color = NEUTRAL,
+			tags = { "PressurePlate" },
+			attrs = { Group = group },
+			name = name or "Plate",
+		})
+	end
+	-- a yellow lift / bridge that moves into place (and stays solid) when its group is active
+	local function lift(group: string, size: Vector3, x: number, top: number, z: number, rise: number, name: string)
+		platform(world, size, x, top, z, {
+			name = name,
+			color = NEUTRAL,
+			tags = { "DuoGate" },
+			attrs = { Group = group, OpenOffset = Vector3.new(0, rise, 0), Solid = true, OpenTime = 2.5 },
+		})
+	end
+	local function conveyor(size: Vector3, x: number, top: number, z: number, speed: number)
+		-- LookVector -Z: carries players back toward where they came from
+		block(world, size, CFrame.new(x, top - size.Y / 2, z), {
+			name = "Conveyor",
+			color = BELT,
+			material = Enum.Material.DiamondPlate,
+			tags = { "Conveyor", "Freezable" },
+			attrs = { Speed = speed },
+		})
+	end
+	local function blob(x: number, top: number, z: number, patrol: number)
+		block(world, Vector3.new(4, 3, 4), CFrame.new(x, top + 1.5, z), {
+			name = "GlitchBlob",
+			color = GLITCH,
+			material = NEON,
+			tags = { "Enemy", "Freezable" },
+			attrs = { Type = "GlitchBlob", PatrolDistance = patrol, Speed = 5 },
+		})
+	end
+	local function rail(a: Vector3, b: Vector3)
+		block(world, Vector3.new(1, 1, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), {
+			color = rgb(170, 175, 190),
+			material = Enum.Material.Metal,
+			tags = { "GrindRail" },
+			name = "GrindRail",
+		})
+	end
+	local function exitPortal(x: number, top: number, z: number)
+		block(world, Vector3.new(12, 12, 3), CFrame.new(x, top + 6, z), {
+			name = "WorldExit",
+			color = DUO,
+			material = NEON,
+			transparency = 0.65,
+			collide = false,
+			tags = { "WorldExit" },
+		})
+	end
 
-	-- 3. Grapple ring + a slow ferry for Kai
-	block(world, Vector3.new(1, 3, 3), CFrame.new(0, 22, 135), { -- 2–3 studs (art-direction.md §17)
-		name = "GrappleRing",
-		color = MIKO,
-		material = Enum.Material.Neon,
-		shape = Enum.PartType.Cylinder,
-		tags = { "GrappleRing" },
+	-- 1-1 STARTER MEADOW ----------------------------------------------------------------------------
+	grass(Vector3.new(60, 6, 40), 0, 0, 0, "StarterMeadow")
+	spawnAt(world, 0, 0, -8)
+	checkpoint(world, 1, 0, 0, -6, W, {
+		"Split up! Kai takes the left trial, Miko the right. Each of you ends on a plate.",
+		"Kai: freeze a rising pillar (left click) and hop on. Miko: grapple the teal rings (left click).",
 	})
-	local ferry = block(world, Vector3.new(8, 2, 8), CFrame.new(10, -1, 130), {
-		name = "Ferry",
-		color = STONE,
-		tags = { "Mover", "Freezable" },
-		attrs = { Period = 8 },
-	})
-	waypoints(ferry, { CFrame.new(10, -1, 124), CFrame.new(10, -1, 146) })
-	platform(world, Vector3.new(34, 6, 36), 0, 0, 168, { color = GRASS, name = "CoinFactory" })
-	checkpoint(world, 3, 0, 0, 156, W, {
-		"Miko: right click pulls yellow things.",
-		"Pull the crate onto the plate, the door stays open while it's there.",
-	})
+	sign(world, "▲ KAI TRIAL", CFrame.new(-20, 6, 16), Vector3.new(14, 3, 0.4)) -- no arrows: signs read from both sides
+	sign(world, "MIKO TRIAL ●", CFrame.new(20, 6, 16), Vector3.new(14, 3, 0.4))
 
-	-- 4. Pull a crate onto a plate → door stays open while it's held
-	block(world, Vector3.new(4, 4, 4), CFrame.new(-10, 2, 172), {
+	-- Kai's trial (west): freeze pillars one at a time, then a corridor of fast crushers.
+	grass(Vector3.new(30, 6, 12), -45, 0, 0, "KaiPath")
+	grass(Vector3.new(30, 6, 30), -75, 0, 0, "KaiStart")
+	for i, z in { 27, 43, 59 } do
+		-- up (top flush with the ledges) ↔ 16 studs down; only one can be frozen at a time, so hop fast
+		mover("MoveBlock", Vector3.new(8, 2, 8), CFrame.new(-75, -1, z), CFrame.new(-75, -17, z), {
+			Period = 2.4,
+			Offset = i * 0.8,
+		})
+	end
+	grass(Vector3.new(30, 6, 30), -75, 0, 86, "KaiMid")
+	grass(Vector3.new(14, 6, 40), -75, 0, 121, "CrusherLane")
+	for _, x in { -83, -67 } do
+		dirtWall(Vector3.new(2, 22, 40), x, 22, 121) -- too tall to climb around (reach ~16)
+	end
+	for i, z in { 108, 121, 134 } do
+		crusher(-75, z, 0, { Period = 1.4, Offset = (i - 1) * 0.45 })
+	end
+	grass(Vector3.new(30, 6, 30), -75, 0, 156, "KaiEnd")
+	plate("S1", -75, 0, 162, "PlateKai")
+	grass(Vector3.new(40, 6, 10), -40, 0, 160, "KaiReturn")
+	gate(world, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160))
+
+	-- Miko's trial (east): a 60-stud grapple chasm, a crate to climb an 18-stud cliff, a lever for a bridge.
+	grass(Vector3.new(30, 6, 12), 45, 0, 0, "MikoPath")
+	grass(Vector3.new(30, 6, 30), 75, 0, 0, "MikoStart")
+	ring(75, 20, 32)
+	ring(75, 20, 58)
+	grass(Vector3.new(30, 6, 30), 75, 0, 90, "MikoMid")
+	grass(Vector3.new(30, 24, 30), 75, 18, 120) -- the cliff: 18 up, only with the crate as a step
+	platform(world, Vector3.new(6, 2, 6), 100, -6, 90, { color = DIRT, name = "CrateIsland" })
+	block(world, Vector3.new(4, 4, 4), CFrame.new(100, -4, 90), {
 		name = "Crate",
 		color = WOOD,
 		material = Enum.Material.WoodPlanks,
 		anchored = false,
-		tags = { "Pullable" },
+		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	platform(
-		world,
-		Vector3.new(6, 0.6, 6),
-		10,
-		0.6,
-		176,
-		{ color = NEUTRAL, tags = { "PressurePlate" }, attrs = { Group = "W1A" }, name = "Plate" }
-	)
-	gate(world, "W1A", Vector3.new(34, 14, 2), CFrame.new(0, 7, 185), false)
+	pullLever("M3", 75, 27, 158)
+	lift("M3", Vector3.new(8, 1, 47), 75, -2, 158.5, 20, "Bridge")
+	grass(Vector3.new(30, 24, 20), 75, 18, 192)
+	plate("S1", 75, 18, 192, "PlateMiko")
+	local slope = math.atan2(18, 40)
+	block(world, Vector3.new(44, 2, 10), CFrame.new(40, 9, 192) * CFrame.Angles(0, 0, slope) * CFrame.new(0, -1, 0), {
+		color = GRASS,
+		name = "Ramp",
+	})
+	gate(world, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 192))
 
-	-- A glitch blob to stomp
-	block(world, Vector3.new(4, 3, 4), CFrame.new(0, 1.5, 164), {
-		name = "GlitchBlob",
-		color = GLITCH,
-		material = Enum.Material.Neon,
-		tags = { "Enemy", "Freezable" },
-		attrs = { Type = "GlitchBlob", PatrolDistance = 16, Speed = 5 },
+	-- The plaza where the two trials meet.
+	grass(Vector3.new(40, 6, 50), 0, 0, 175, "Plaza")
+	checkpoint(world, 2, 0, 0, 168, W, {
+		"Miko: grapple the ring up the cliff, then pull the teal lever for Kai.",
+		"The yellow lift rises when Miko pulls the lever up top.",
+	})
+	sign(world, "1-2 CLOUD CLIMB", CFrame.new(0, 10, 199), Vector3.new(18, 3, 0.4))
+
+	-- 1-2 CLOUD CLIMB -------------------------------------------------------------------------------
+	grass(Vector3.new(30, 6, 30), 0, 0, 215, "CloudBase")
+	grass(Vector3.new(30, 26, 30), 0, 20, 245) -- 20-stud cliff
+	ring(0, 30, 224)
+	lift("L1", Vector3.new(8, 1, 8), -10, 0.5, 225, 20, "Lift")
+	pullLever("L1", -10, 23, 240)
+
+	-- a fast cloud crossing a 60-stud chasm: Kai freezes it in line, both hop (24-stud jumps each side)
+	mover("MoveBlock", Vector3.new(12, 2, 12), CFrame.new(-40, 19, 290), CFrame.new(40, 19, 290), {
+		Period = 3.5,
+		Ease = "Linear",
+	})
+	grass(Vector3.new(30, 26, 30), 0, 20, 335)
+	checkpoint(world, 3, 0, 20, 328, W, {
+		"Miko: ground-pound the white pad while Kai stands on it.",
+		"Kai: freeze the bat up top so Miko can grapple it. Then pound the button to flip the fan.",
 	})
 
-	platform(world, Vector3.new(30, 6, 30), 0, 0, 202, { color = GRASS, name = "Exit" })
-	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 6, 212), {
-		name = "WorldExit",
-		color = DUO,
-		material = Enum.Material.Neon,
-		transparency = 0.65,
+	-- side-on climb: bounce pad (Miko launches Kai) + frozen bat (Kai gives Miko an anchor), then a fan
+	local zone = block(world, Vector3.new(80, 90, 100), CFrame.new(0, 55, 388), {
+		name = "SideOnZone",
+		transparency = 1,
 		collide = false,
-		tags = { "WorldExit" },
+		tags = { "CameraZone" },
+		attrs = { Mode = "SideOn", Axis = Vector3.new(1, 0, 0) },
 	})
-	sign(world, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 16, 212), Vector3.new(24, 4, 0.4))
+	zone.CanQuery = false
+	zone.CanTouch = false
+	platform(world, Vector3.new(8, 1, 8), 0, 20.6, 344, {
+		color = DUO,
+		material = NEON,
+		tags = { "BouncePad" },
+		name = "BouncePad",
+	})
+	grass(Vector3.new(20, 4, 30), 0, 42, 369) -- ledge A: 22 up
+	block(world, Vector3.new(3, 2, 3), CFrame.new(0, 50, 350) * CFrame.Angles(0, math.rad(90), 0), {
+		name = "StaticBat",
+		color = rgb(80, 70, 110),
+		tags = { "Enemy", "Freezable" },
+		attrs = { Type = "StaticBat", PatrolDistance = 12, Speed = 5 },
+	})
+	local vent = block(world, Vector3.new(8, 24, 8), CFrame.new(0, 54, 379), {
+		name = "JumpVent",
+		color = rgb(170, 220, 255),
+		transparency = 0.8,
+		collide = false,
+		tags = { "JumpVent" },
+		attrs = { Direction = -1 },
+	})
+	vent.CanQuery = false
+	local button = platform(world, Vector3.new(5, 0.8, 5), 6, 42.8, 360, {
+		color = NEUTRAL,
+		tags = { "VentButton" },
+		name = "VentButton",
+	})
+	local link = Instance.new("ObjectValue")
+	link.Name = "Vent"
+	link.Value = vent
+	link.Parent = button
+	grass(Vector3.new(20, 4, 16), 0, 62, 398) -- ledge B: 20 up, only on the fan
+	grass(Vector3.new(30, 4, 30), 0, 62, 421, "SkyGate")
+	platform(world, Vector3.new(12, 1, 8), 0, 63, 424, {
+		color = DUO,
+		tags = { "DuoPound" },
+		attrs = { Group = "S2" },
+		name = "DuoPound",
+	})
+	gate(world, "S2", Vector3.new(30, 20, 2), CFrame.new(0, 72, 436))
+	checkpoint(world, 4, 0, 62, 412, W, {
+		"Kai: freeze a belt so you can both walk up it. One at a time!",
+		"Freeze the first belt, run, then freeze the second.",
+	})
+
+	-- 1-3 COIN FACTORY ------------------------------------------------------------------------------
+	local function factoryWalls(z0: number, z1: number)
+		for _, x in { -8, 8 } do
+			dirtWall(Vector3.new(2, 22, z1 - z0), x, 84, (z0 + z1) / 2)
+		end
+	end
+	-- belts faster than sprint: freeze one, walk it, freeze the next
+	conveyor(Vector3.new(14, 2, 30), 0, 62, 452, 26)
+	conveyor(Vector3.new(14, 2, 30), 0, 62, 482, 26)
+	factoryWalls(437, 497)
+	grass(Vector3.new(30, 4, 24), 0, 62, 509, "BeltEnd")
+	blob(0, 62, 512, 16)
+
+	-- dropper pit: Kai freezes a falling block mid-air, Miko grapples it across, then pulls the bridge lever
+	local dropper = block(world, Vector3.new(6, 1, 6), CFrame.new(0, 100, 551), {
+		name = "Dropper",
+		transparency = 1,
+		collide = false,
+		tags = { "Dropper" },
+	})
+	dropper.CanQuery = false
+	lift("F2", Vector3.new(8, 1, 60), -10, 42, 551, 20, "Bridge")
+	grass(Vector3.new(30, 4, 30), 0, 62, 596, "DropperFar")
+	pullLever("F2", 8, 66, 588)
+	checkpoint(world, 5, 0, 62, 600, W, {
+		"Miko: pull the crate onto the plate. Kai: freeze the sliding door while it's open.",
+		"The crate holds the inner gate; the door needs Kai's freeze.",
+	})
+
+	-- crate + plate + timed door
+	grass(Vector3.new(30, 4, 45), 0, 62, 633.5, "DoorRoom")
+	for _, x in { -9.5, 9.5 } do
+		platform(world, Vector3.new(11, 20, 2), x, 82, 651, { color = DIRT, name = "DoorWall" })
+	end
+	platform(world, Vector3.new(8, 8, 2), 0, 82, 651, { color = DIRT, name = "DoorLintel" })
+	mover("TimedDoor", Vector3.new(8, 12, 1.5), CFrame.new(0, 68, 653), CFrame.new(-9, 68, 653), { Period = 3 })
+	platform(world, Vector3.new(6, 1, 6), 12, 74, 620, { color = DIRT, name = "CrateShelf" })
+	block(world, Vector3.new(4, 4, 4), CFrame.new(12, 76.5, 620), {
+		name = "Crate",
+		color = WOOD,
+		material = Enum.Material.WoodPlanks,
+		anchored = false,
+		tags = { "Pullable", "Respawn" },
+		attrs = { Mass = 20 },
+	})
+	plate("F3", -10, 62, 640)
+	gate(world, "F3", Vector3.new(8, 12, 1), CFrame.new(0, 68, 655.5), false)
+
+	-- twist: crushers over a backward belt, and Kai only has one freeze
+	conveyor(Vector3.new(14, 2, 60), 0, 62, 686, 20)
+	factoryWalls(656, 716)
+	crusher(0, 674, 62, { Period = 1.6 })
+	crusher(0, 698, 62, { Period = 1.6, Offset = 0.8 })
+
+	grass(Vector3.new(30, 4, 30), 0, 62, 731, "FactoryExit")
+	blob(0, 62, 728, 14)
+	plate("S3", -9, 62, 738)
+	plate("S3", 9, 62, 738)
+	gate(world, "S3", Vector3.new(30, 20, 2), CFrame.new(0, 72, 746))
+
+	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
+	grass(Vector3.new(30, 4, 20), 0, 62, 756, "ChaseStart")
+	checkpoint(world, 6, 0, 62, 752, W, {
+		"RUN! Grab the rail (F) and jump the gaps!",
+		"Keep moving. The Glitch eats everything behind you.",
+	})
+	rail(Vector3.new(0, 62.5, 770), Vector3.new(0, 50.5, 850))
+	rail(Vector3.new(0, 46.5, 866), Vector3.new(-24, 36.5, 930))
+	rail(Vector3.new(-24, 32.5, 946), Vector3.new(0, 22.5, 1004))
+	local trigger = block(world, Vector3.new(30, 20, 20), CFrame.new(0, 70, 756), { -- the whole start platform
+		name = "ChaseTrigger",
+		transparency = 1,
+		collide = false,
+	})
+	trigger.CanQuery = false
+	trigger.CanTouch = false
+	local wallStart = Vector3.new(0, 60, 722) -- 34 studs behind the start: ~1 s after the warm-up
+	local glitchWall = block(world, Vector3.new(80, 80, 4), CFrame.lookAt(wallStart, wallStart + Vector3.zAxis), {
+		name = "GlitchWall",
+		color = GLITCH,
+		material = NEON,
+		transparency = 0.35,
+		collide = false,
+		tags = { "GlitchWall" },
+		attrs = { Speed = 30, Distance = 282 },
+	})
+	glitchWall.CanQuery = false
+	glitchWall.CanTouch = false
+	local triggerLink = Instance.new("ObjectValue")
+	triggerLink.Name = "Trigger"
+	triggerLink.Value = trigger
+	triggerLink.Parent = glitchWall
+
+	-- BOSS ARENA (the Crusher King arrives with M6) ---------------------------------------------------
+	grass(Vector3.new(30, 4, 30), 0, 20, 1023, "ChaseEnd")
+	checkpoint(world, 7, 0, 20, 1016, W)
+	grass(Vector3.new(60, 6, 60), 0, 20, 1075, "BossArena")
+	exitPortal(0, 20, 1100)
+	sign(world, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 36, 1100), Vector3.new(24, 4, 0.4))
 end
 
 -- Glitched Core: a tiny Code Layer + Copy/Paste demo.

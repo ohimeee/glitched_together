@@ -69,6 +69,16 @@ return {
 
 	-- World 1
 	PauseBeam = { Range = 60, Duration = 4, AimCone = 6 },
+	-- Level contraptions (ContraptionService); levels can override per part with attributes
+	Contraptions = {
+		ConveyorSpeed = 26, -- faster than sprint (24), so a running belt can't be walked up
+		DropEvery = 1.2,
+		DropSize = Vector3.new(6, 6, 6),
+		DropLifetime = 5,
+		ChaseSpeed = 30, -- Glitch Chase wall; grinding is 40, so the duo stays ahead if they keep moving
+		ChaseRetryDelay = 2,
+		ChaseWarmup = 1.5, -- seconds between the duo stepping onto the start and the wall moving
+	},
 	GrappleLine = {
 		Range = 45,
 		Boost = 1.3,

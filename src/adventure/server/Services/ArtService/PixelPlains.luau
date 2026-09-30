@@ -169,29 +169,66 @@ local Skins: { [string]: MeshAssets.Skin } = {
 }
 
 local Dressing: { [string]: string } = {
-	StarterMeadow = "GrassBlock",
-	CrusherLane = "GrassBlock",
-	CoinFactory = "GrassBlock",
-	Exit = "GrassBlock",
-	MovingPlatform = "MoveBlock",
-	Ferry = "MoveBlock",
+	MoveBlock = "MoveBlock",
 	PixelCrusher = "Crusher",
 	GrappleRing = "GrappleRing",
 	Crate = "Crate",
 }
+-- every walkable grass platform of the Greybox layout (Greybox/init.luau buildPixelPlains)
+for _, name in
+	{
+		"Grass",
+		"StarterMeadow",
+		"KaiPath",
+		"KaiStart",
+		"KaiMid",
+		"CrusherLane",
+		"KaiEnd",
+		"KaiReturn",
+		"MikoPath",
+		"MikoStart",
+		"MikoMid",
+		"Plaza",
+		"CloudBase",
+		"SkyGate",
+		"BeltEnd",
+		"DropperFar",
+		"DoorRoom",
+		"FactoryExit",
+		"ChaseStart",
+		"ChaseEnd",
+		"BossArena",
+	}
+do
+	Dressing[name] = "GrassBlock"
+end
 
 -- Pure decoration placed with the world: { skin, CFrame, scale }. Clouds sit high and to the sides so they frame
--- the path without blocking the camera (art-direction.md §10); coin blocks float near the start as a scale moment.
+-- the route without blocking the camera (art-direction.md §10); coin blocks are scale moments along the way.
+local function cloud(x: number, y: number, z: number, yaw: number, scale: number): { any }
+	return { "Cloud", CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0), scale }
+end
+local function coin(x: number, y: number, z: number, yaw: number, scale: number): { any }
+	return { "CoinBlock", CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0), scale }
+end
 local Decor: { { any } } = {
-	{ "Cloud", CFrame.new(-45, 34, 10), 1.3 },
-	{ "Cloud", CFrame.new(40, 42, 40) * CFrame.Angles(0, math.rad(20), 0), 1.6 },
-	{ "Cloud", CFrame.new(-50, 46, 95) * CFrame.Angles(0, math.rad(-15), 0), 1.8 },
-	{ "Cloud", CFrame.new(48, 38, 140), 1.2 },
-	{ "Cloud", CFrame.new(-30, 50, 190) * CFrame.Angles(0, math.rad(10), 0), 2 },
-	{ "Cloud", CFrame.new(20, 60, 240), 2.4 },
-	{ "CoinBlock", CFrame.new(-12, 9, 6) * CFrame.Angles(0, math.rad(15), 0), 1 },
-	{ "CoinBlock", CFrame.new(-7.5, 9, 6) * CFrame.Angles(0, math.rad(15), 0), 1 },
-	{ "CoinBlock", CFrame.new(14, 12, 150) * CFrame.Angles(0, math.rad(-20), 0), 1.5 },
+	cloud(-50, 34, -30, 0, 1.3),
+	cloud(55, 40, -35, 20, 1.6),
+	cloud(-125, 42, 80, -15, 2),
+	cloud(128, 46, 60, 10, 1.8),
+	cloud(-45, 70, 300, 0, 2.2),
+	cloud(48, 84, 365, 25, 2),
+	cloud(-50, 104, 450, -10, 2.4),
+	cloud(52, 96, 600, 15, 2),
+	cloud(-55, 92, 770, 0, 2.4),
+	cloud(45, 64, 950, -20, 2.6),
+	cloud(-40, 52, 1080, 10, 2.8),
+	coin(-12, 9, 6, 15, 1),
+	coin(-7.5, 9, 6, 15, 1),
+	coin(12, 10, 185, -20, 1.5),
+	coin(-16, 76, 505, 10, 1.5),
+	coin(16, 78, 700, -15, 1.5),
+	coin(0, 44, 1060, 0, 2.5),
 }
 
 return { Skins = Skins, Dressing = Dressing, Decor = Decor }
