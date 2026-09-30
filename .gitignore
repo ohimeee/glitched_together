@@ -6,3 +6,8 @@ roblox.d.luau
 lobby.sourcemap.json
 *.blend1
 *.blend@
+
+# API keys (never commit)
+.env
+.env.*
+!.env.example
