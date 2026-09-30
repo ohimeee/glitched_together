@@ -62,6 +62,7 @@ AI text/image → textured 3D (GLB), plus retexture, smart low poly, rigging. Us
 | Generic filler prop (barrel, crate, tree) | Poly Pizza / Poly Haven (once enabled), or Studio `generate_mesh` |
 | Quick grey-box piece or tag-driven level part | Plain Parts in code (see `src/adventure/server/Greybox`) |
 | Surface look (stone, wood, pixel grass) | Studio `generate_material` / MaterialVariant, or Poly Haven textures |
+| World environments (polish phase): textures, HDRIs, set dressing, filler props | **Poly Haven** (CC0) + **Blend Swap** (`blendswap` MCP: `search_assets` with CC0/CC-BY filter, `get_balance` before `download_asset`, then append in Blender, decimate to budget, restyle to the world palette) |
 
 ---
 
