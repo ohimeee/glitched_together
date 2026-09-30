@@ -42,17 +42,42 @@ local function pull(p: Player, target: Instance, root: BasePart)
 	if not part then
 		return
 	end
-	local look = root.CFrame.LookVector * Vector3.new(1, 0, 1)
-	local dest = root.Position + look.Unit * T.PullDistance + Vector3.new(0, 0.5, 0)
+	-- Predictable pulls (playtest Oct 1: "the box is random"): the object comes straight at Miko along the line
+	-- between them, stops PullDistance in front of her (short of any wall), and lands flat on the floor, upright,
+	-- with no drop or tumble.
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { part, p.Character :: Instance }
+	params.RespectCanCollide = true
+	local flatTo = (part.Position - root.Position) * Vector3.new(1, 0, 1)
+	local dir = if flatTo.Magnitude > 0.1 then flatTo.Unit else root.CFrame.LookVector * Vector3.new(1, 0, 1)
+	local half = part.Size.Y / 2
+	local dest = root.Position + dir * T.PullDistance
+	-- don't pass through walls on the way in (checked level, at the object's height, so a shelf under it doesn't count)
+	local path = (dest - part.Position) * Vector3.new(1, 0, 1)
+	local wall = if path.Magnitude > 0.1 then workspace:Raycast(part.Position, path, params) else nil
+	if wall then
+		local keep = math.max(0, wall.Distance - math.max(part.Size.X, part.Size.Z) / 2)
+		dest = part.Position + path.Unit * keep
+	end
+	-- rest on the floor under the destination
+	local floor = workspace:Raycast(dest + Vector3.new(0, 4, 0), Vector3.new(0, -30, 0), params)
+	local y = if floor then floor.Position.Y + half else dest.Y
+	local yaw = math.atan2(-dir.X, -dir.Z)
+	local goal = CFrame.new(dest.X, y, dest.Z) * CFrame.Angles(0, yaw, 0)
+
 	local wasAnchored = part.Anchored
 	part.Anchored = true
+	part.CustomPhysicalProperties = PhysicalProperties.new(part.CurrentPhysicalProperties.Density, 1, 0, 100, 100)
 	toolResult:FireAllClients("PullStart", p, target)
 	local tween =
 		TweenService:Create(part, TweenInfo.new(T.PullTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			CFrame = CFrame.new(dest) * part.CFrame.Rotation,
+			CFrame = goal,
 		})
 	tween:Play()
 	tween.Completed:Wait()
+	part.AssemblyLinearVelocity = Vector3.zero
+	part.AssemblyAngularVelocity = Vector3.zero
 	part.Anchored = wasAnchored
 	toolResult:FireAllClients("Pulled", p, target)
 end
