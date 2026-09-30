@@ -9,7 +9,7 @@
 -- Ids chosen from catalog descriptions; tune Volume/Pitch by ear in a playtest, swap ids freely.
 --
 -- Fields: Id (or Ids: a random one per play), Volume, Pitch (default 1), PitchVar (± random), Range (3D max
--- distance, studs), Group ("SFX" | "UI" | "Music" | "Ambience"), Looped.
+-- distance, studs), Group ("SFX" | "UI" | "Music" | "Ambience"), Looped, Start (music: skip an intro).
 
 export type Def = {
 	Id: string?,
@@ -20,6 +20,7 @@ export type Def = {
 	Range: number?,
 	Group: string?,
 	Looped: boolean?,
+	Start: number?, -- music: seconds to skip at the start (and on every loop)
 }
 
 local function pse(id: number): string
@@ -129,7 +130,8 @@ local Music: { [string]: Def } = {
 	Prologue = { Id = pse(9047785119), Volume = 0.4 },
 	PixelPlains = { Id = pse(1837768333), Volume = 0.3 }, -- "Jolly Adventure (a)": chiptune, upbeat
 	StarfallCastle = { Id = pse(1841593944), Volume = 0.35 }, -- "Enchanted Kingdom a": orchestral fantasy
-	GlitchedCore = { Id = pse(9048374858), Volume = 0.3 }, -- "Castle in 8 Bit": worlds 1 + 2, remixed
+	-- "Castle in 8 Bit": worlds 1 + 2, remixed; the user loves it, minus its 5 s intro (Oct 1)
+	GlitchedCore = { Id = pse(9048374858), Volume = 0.3, Start = 5 },
 	Epilogue = { Id = pse(78697548522569), Volume = 0.4 }, -- "A Hopeful Light": the title theme, now hopeful
 }
 

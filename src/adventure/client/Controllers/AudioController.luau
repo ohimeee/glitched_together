@@ -42,6 +42,12 @@ local function set(layer: Layer, def: Sounds.Def?, group: string, scale: number)
 		s.SoundGroup = Audio.group(group)
 		s.Looped = true
 		s.Volume = 0
+		if def.Start then
+			-- skip the intro, now and on every loop
+			s.PlaybackRegionsEnabled = true
+			s.LoopRegion = NumberRange.new(def.Start, 3600)
+			s.TimePosition = def.Start
+		end
 		s.Parent = SoundService
 		s:Play()
 		layer.sound, layer.base = s, def.Volume
