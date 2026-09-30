@@ -86,6 +86,7 @@ return {
 	HitInvuln = 1,
 	KillZoneRespawnDelay = 1.5,
 	SafePosEvery = 0.5,
+	RespawnBackTime = 1.5, -- auto-respawn where you stood this many seconds before going down (off the hazard)
 	DownedRespawn = 5,
 	DownedRespawnBoss = 8,
 	MashStep = 0.15,

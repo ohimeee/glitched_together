@@ -89,7 +89,7 @@ ITT respawns a dead player quickly, and in boss fights the dead player can mash 
 | Health (castle) | 100 HP bar over the head (ITT's dungeon crawler shows health bars over heads too) |
 | Fall into a kill zone | Instant respawn at the last safe ground position after 1.5 s |
 | Reaching 0 health | Become **Downed** (small ghost, can move slowly, can't use tools) |
-| Auto-respawn from Downed | After 5 s (8 s in boss fights) at the nearest checkpoint marker near your partner |
+| Auto-respawn from Downed | After 5 s (8 s in boss fights) on your own path: where you stood 1.5 s before going down (else the checkpoint). Not next to your partner: in split sections that skipped your part (playtest Oct 1) |
 | Mash to respawn (boss fights) | Each press of Jump removes 0.15 s from the timer |
 | Partner revive | Partner holds E near your ghost for 1.5 s → you revive on the spot with 1 heart / 30 HP |
 | Both Downed at once | Short "GAME OVER?" glitch screen → both restart from the last checkpoint |

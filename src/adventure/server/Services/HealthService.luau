@@ -18,6 +18,8 @@ type State = {
 	respawnLeft: number,
 	falling: boolean,
 	safe: CFrame?,
+	history: { { t: number, cf: CFrame } }, -- recent safe spots, newest last
+	downAt: number,
 }
 
 local states: { [Player]: State } = {}
@@ -30,7 +32,7 @@ local mashEvent = Net.event("RespawnMash")
 local function state(p: Player): State
 	local s = states[p]
 	if not s then
-		s = { lastHit = 0, invulnUntil = 0, respawnLeft = 0, falling = false, safe = nil }
+		s = { lastHit = 0, invulnUntil = 0, respawnLeft = 0, falling = false, safe = nil, history = {}, downAt = 0 }
 		states[p] = s
 	end
 	return s
@@ -140,14 +142,20 @@ function HealthService.Revive(p: Player, onTheSpot: boolean)
 	Audio.play("Revive", rootOf(p))
 	state(p).invulnUntil = os.clock() + Tuning.HitInvuln * 2
 	if not onTheSpot then
-		-- Auto-respawn: next to the partner's last safe spot if they're up, else at the checkpoint.
-		local partner = DuoService.PartnerOf(p)
-		local ps = partner and states[partner]
-		if partner and ps and ps.safe and not partner:GetAttribute("Downed") then
-			place(p, ps.safe * CFrame.new(3, 1, 0))
-		else
-			place(p, CheckpointService.SpawnCFrame(p))
+		-- Auto-respawn on your own path, where you stood a moment before you went down (split sections keep
+		-- each player's progress; playtest Oct 1: respawning next to the partner skipped Kai's trial), else at
+		-- the checkpoint.
+		local s = state(p)
+		local before = s.downAt - Tuning.RespawnBackTime
+		local back: CFrame? = nil
+		for i = #s.history, 1, -1 do
+			if s.history[i].t <= before then
+				back = s.history[i].cf
+				break
+			end
 		end
+		back = back or (s.history[1] and s.history[1].cf)
+		place(p, back or CheckpointService.SpawnCFrame(p))
 	end
 end
 
@@ -174,6 +182,7 @@ function HealthService.Down(p: Player)
 	end
 	p:SetAttribute("Health", 0)
 	p:SetAttribute("Downed", true)
+	state(p).downAt = os.clock()
 	Audio.play("Downed", rootOf(p))
 	setGhost(p, true)
 
@@ -237,6 +246,7 @@ end
 function HealthService.ResetSafe()
 	for _, s in states do
 		s.safe = nil
+		table.clear(s.history)
 	end
 end
 
@@ -273,7 +283,12 @@ local function trackSafeGround()
 					end
 				end
 				if not unsafe then
-					state(p).safe = CFrame.new(root.Position + Vector3.new(0, 1, 0)) * root.CFrame.Rotation
+					local s = state(p)
+					s.safe = CFrame.new(root.Position + Vector3.new(0, 1, 0)) * root.CFrame.Rotation
+					table.insert(s.history, { t = os.clock(), cf = s.safe })
+					if #s.history > 12 then
+						table.remove(s.history, 1)
+					end
 				end
 			end
 		end
