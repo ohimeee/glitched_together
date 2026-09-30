@@ -404,22 +404,40 @@ local function buildPixelPlains(world: Model)
 	local BELT = rgb(70, 70, 80)
 	local NEON = Enum.Material.Neon
 
+	-- Sections are built in their own coordinates, each with an entry and an exit point, then chained end to end
+	-- (the next entry snaps to the previous exit), so new sections slot in without moving any numbers.
+	-- Checkpoint orders count up in build order (= path order).
+	local P: Instance = world
+	local chunks: { { model: Model, entry: Vector3, exit: Vector3 } } = {}
+	local function section(name: string, entry: Vector3, exit: Vector3)
+		local m = Instance.new("Model")
+		m.Name = name
+		m.Parent = world
+		P = m
+		table.insert(chunks, { model = m, entry = entry, exit = exit })
+	end
+	local order = 0
+	local function nextOrder(): number
+		order += 1
+		return order
+	end
+
 	local function grass(size: Vector3, x: number, top: number, z: number, name: string?): Part
-		return platform(world, size, x, top, z, { color = GRASS, name = name or "Grass" })
+		return platform(P, size, x, top, z, { color = GRASS, name = name or "Grass" })
 	end
 	local function dirtWall(size: Vector3, x: number, top: number, z: number)
-		platform(world, size, x, top, z, { color = DIRT, name = "DirtWall" })
+		platform(P, size, x, top, z, { color = DIRT, name = "DirtWall" })
 	end
 	-- a Freezable moving block (Kai's target) between two poses
 	local function mover(name: string, size: Vector3, a: CFrame, b: CFrame, attrs: { [string]: any }): Part
-		local m = block(world, size, a, { name = name, color = STONE, tags = { "Mover", "Freezable" }, attrs = attrs })
+		local m = block(P, size, a, { name = name, color = STONE, tags = { "Mover", "Freezable" }, attrs = attrs })
 		waypoints(m, { a, b })
 		return m
 	end
 	local function crusher(x: number, z: number, floorTop: number, attrs: { [string]: any })
 		attrs.Damage = 1
 		local up, down = CFrame.new(x, floorTop + 17, z), CFrame.new(x, floorTop + 4, z)
-		local c = block(world, Vector3.new(12, 8, 10), up, {
+		local c = block(P, Vector3.new(12, 8, 10), up, {
 			name = "PixelCrusher",
 			color = METAL,
 			material = Enum.Material.Metal,
@@ -429,7 +447,7 @@ local function buildPixelPlains(world: Model)
 		waypoints(c, { up, down })
 	end
 	local function ring(x: number, y: number, z: number)
-		block(world, Vector3.new(1, 3, 3), CFrame.new(x, y, z), { -- 2–3 studs (art-direction.md §17)
+		block(P, Vector3.new(1, 3, 3), CFrame.new(x, y, z), { -- 2–3 studs (art-direction.md §17)
 			name = "GrappleRing",
 			color = MIKO,
 			material = NEON,
@@ -439,7 +457,7 @@ local function buildPixelPlains(world: Model)
 	end
 	-- a hanging teal lever only Miko's Pull reaches
 	local function pullLever(group: string, x: number, y: number, z: number)
-		block(world, Vector3.new(1, 5, 1), CFrame.new(x, y, z) * CFrame.Angles(math.rad(20), 0, 0), {
+		block(P, Vector3.new(1, 5, 1), CFrame.new(x, y, z) * CFrame.Angles(math.rad(20), 0, 0), {
 			name = "PullLever",
 			color = MIKO,
 			material = NEON,
@@ -448,7 +466,7 @@ local function buildPixelPlains(world: Model)
 		})
 	end
 	local function plate(group: string, x: number, top: number, z: number, name: string?)
-		platform(world, Vector3.new(6, 0.6, 6), x, top + 0.6, z, {
+		platform(P, Vector3.new(6, 0.6, 6), x, top + 0.6, z, {
 			color = NEUTRAL,
 			tags = { "PressurePlate" },
 			attrs = { Group = group },
@@ -457,7 +475,7 @@ local function buildPixelPlains(world: Model)
 	end
 	-- a yellow lift / bridge that moves into place (and stays solid) when its group is active
 	local function lift(group: string, size: Vector3, x: number, top: number, z: number, rise: number, name: string)
-		platform(world, size, x, top, z, {
+		platform(P, size, x, top, z, {
 			name = name,
 			color = NEUTRAL,
 			tags = { "DuoGate" },
@@ -466,7 +484,7 @@ local function buildPixelPlains(world: Model)
 	end
 	local function conveyor(size: Vector3, x: number, top: number, z: number, speed: number)
 		-- LookVector -Z: carries players back toward where they came from
-		block(world, size, CFrame.new(x, top - size.Y / 2, z), {
+		block(P, size, CFrame.new(x, top - size.Y / 2, z), {
 			name = "Conveyor",
 			color = BELT,
 			material = Enum.Material.DiamondPlate,
@@ -475,7 +493,7 @@ local function buildPixelPlains(world: Model)
 		})
 	end
 	local function blob(x: number, top: number, z: number, patrol: number)
-		block(world, Vector3.new(4, 3, 4), CFrame.new(x, top + 1.5, z), {
+		block(P, Vector3.new(4, 3, 4), CFrame.new(x, top + 1.5, z), {
 			name = "GlitchBlob",
 			color = GLITCH,
 			material = NEON,
@@ -484,7 +502,7 @@ local function buildPixelPlains(world: Model)
 		})
 	end
 	local function rail(a: Vector3, b: Vector3)
-		block(world, Vector3.new(1, 1, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), {
+		block(P, Vector3.new(1, 1, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), {
 			color = rgb(170, 175, 190),
 			material = Enum.Material.Metal,
 			tags = { "GrindRail" },
@@ -492,7 +510,7 @@ local function buildPixelPlains(world: Model)
 		})
 	end
 	local function exitPortal(x: number, top: number, z: number)
-		block(world, Vector3.new(12, 12, 3), CFrame.new(x, top + 6, z), {
+		block(P, Vector3.new(12, 12, 3), CFrame.new(x, top + 6, z), {
 			name = "WorldExit",
 			color = DUO,
 			material = NEON,
@@ -503,14 +521,15 @@ local function buildPixelPlains(world: Model)
 	end
 
 	-- 1-1 STARTER MEADOW ----------------------------------------------------------------------------
+	section("StarterMeadow", Vector3.zero, Vector3.new(0, 0, 210))
 	grass(Vector3.new(60, 6, 40), 0, 0, 0, "StarterMeadow")
-	spawnAt(world, 0, 0, -8)
-	checkpoint(world, 1, 0, 0, -6, W, {
+	spawnAt(P, 0, 0, -8)
+	checkpoint(P, nextOrder(), 0, 0, -6, W, {
 		"Split up! Kai takes the left trial, Miko the right. Each of you ends on a plate.",
 		"Kai: freeze a rising pillar (left click) and hop on. Miko: grapple the teal rings (left click).",
 	})
-	sign(world, "▲ KAI TRIAL", CFrame.new(-20, 6, 16), Vector3.new(14, 3, 0.4)) -- no arrows: signs read from both sides
-	sign(world, "MIKO TRIAL ●", CFrame.new(20, 6, 16), Vector3.new(14, 3, 0.4))
+	sign(P, "▲ KAI TRIAL", CFrame.new(-20, 6, 16), Vector3.new(14, 3, 0.4)) -- no arrows: signs read from both sides
+	sign(P, "MIKO TRIAL ●", CFrame.new(20, 6, 16), Vector3.new(14, 3, 0.4))
 
 	-- Kai's trial (west): freeze pillars one at a time, then a corridor of fast crushers.
 	grass(Vector3.new(30, 6, 12), -45, 0, 0, "KaiPath")
@@ -533,7 +552,7 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(30, 6, 30), -75, 0, 156, "KaiEnd")
 	plate("S1", -75, 0, 162, "PlateKai")
 	grass(Vector3.new(40, 6, 10), -40, 0, 160, "KaiReturn")
-	gate(world, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160))
+	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160))
 
 	-- Miko's trial (east): a 60-stud grapple chasm, a crate to climb an 18-stud cliff, a lever for a bridge.
 	grass(Vector3.new(30, 6, 12), 45, 0, 0, "MikoPath")
@@ -542,8 +561,8 @@ local function buildPixelPlains(world: Model)
 	ring(75, 20, 58)
 	grass(Vector3.new(30, 6, 30), 75, 0, 90, "MikoMid")
 	grass(Vector3.new(30, 24, 30), 75, 18, 120, "Cliff") -- the cliff: 18 up, only with the crate as a step
-	platform(world, Vector3.new(6, 2, 6), 100, -6, 90, { color = DIRT, name = "CrateIsland" })
-	block(world, Vector3.new(4, 4, 4), CFrame.new(100, -4, 90), {
+	platform(P, Vector3.new(6, 2, 6), 100, -6, 90, { color = DIRT, name = "CrateIsland" })
+	block(P, Vector3.new(4, 4, 4), CFrame.new(100, -4, 90), {
 		name = "Crate",
 		color = WOOD,
 		material = Enum.Material.WoodPlanks,
@@ -556,21 +575,63 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(30, 24, 20), 75, 18, 201, "Cliff")
 	plate("S1", 75, 18, 201, "PlateMiko")
 	local slope = math.atan2(18, 40)
-	block(world, Vector3.new(44, 2, 10), CFrame.new(40, 9, 201) * CFrame.Angles(0, 0, slope) * CFrame.new(0, -1, 0), {
+	block(P, Vector3.new(44, 2, 10), CFrame.new(40, 9, 201) * CFrame.Angles(0, 0, slope) * CFrame.new(0, -1, 0), {
 		color = GRASS,
 		name = "Ramp",
 	})
-	gate(world, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201))
+	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201))
 
 	-- The plaza where the two trials meet.
 	grass(Vector3.new(40, 6, 60), 0, 0, 180, "Plaza")
-	checkpoint(world, 2, 0, 0, 168, W, {
+	checkpoint(P, nextOrder(), 0, 0, 168, W, {
 		"Miko: grapple the ring up the cliff, then pull the teal lever for Kai.",
 		"The yellow lift rises when Miko pulls the lever up top.",
 	})
-	sign(world, "1-2 CLOUD CLIMB", CFrame.new(0, 10, 199), Vector3.new(18, 3, 0.4))
+	-- 1-1 continued: WINDMILL HILL. The first combos, gently (mechanics.md §4 signature combos): Kai freezes a
+	-- falling block in mid-air and Miko swings on it; Miko raises Kai's bridge; then a spinning windmill arm that
+	-- Kai stops in line while Miko swings over it, and both plates to finish (split execution, finish with timing).
+	section("WindmillHill", Vector3.zero, Vector3.new(0, 0, 215))
+	grass(Vector3.new(14, 6, 30), 0, 0, 15, "MillPath")
+	checkpoint(P, nextOrder(), 0, 0, 10, W, {
+		"Kai: freeze a falling block in mid-air (left click). Miko: grapple it and swing across!",
+		"Miko: pull the teal lever on the far side to raise Kai's bridge.",
+	})
+	sign(P, "WINDMILL HILL", CFrame.new(0, 9, 28), Vector3.new(16, 3, 0.4))
+	-- a 65-stud chasm (z 30..95): nothing jumps it
+	local millDropper = block(P, Vector3.new(6, 1, 6), CFrame.new(4, 34, 62), {
+		name = "Dropper",
+		transparency = 1,
+		collide = false,
+		tags = { "Dropper" },
+		attrs = { Every = 2.4 },
+	})
+	millDropper.CanQuery = false
+	grass(Vector3.new(30, 6, 30), 0, 0, 110, "MillFar")
+	pullLever("T1", 8, 12, 118)
+	lift("T1", Vector3.new(8, 1, 65), -10, -20, 62.5, 20, "Bridge")
+	-- the windmill: a 46-stud arm spinning over a 50-stud pit; Kai freezes it pointing across, both run it
+	local armCf = CFrame.new(0, -1, 150) * CFrame.Angles(0, math.rad(90), 0)
+	local arm = block(P, Vector3.new(6, 2, 46), armCf, {
+		name = "WindmillArm",
+		color = STONE,
+		tags = { "Mover", "Freezable" },
+		attrs = { Spin = 36 },
+	})
+	waypoints(arm, { armCf })
+	ring(0, 16, 150) -- Miko can swing over instead
+	grass(Vector3.new(30, 6, 30), 0, 0, 190, "MillTop")
+	checkpoint(P, nextOrder(), 0, 0, 184, W, {
+		"Kai: freeze the windmill arm when it points across, then run!",
+		"Both on the plates to open the gate.",
+	})
+	plate("T1b", -9, 0, 198)
+	plate("T1b", 9, 0, 198)
+	gate(P, "T1b", Vector3.new(30, 20, 2), CFrame.new(0, 10, 206))
+	grass(Vector3.new(14, 6, 10), 0, 0, 212, "MillExit")
 
 	-- 1-2 CLOUD CLIMB -------------------------------------------------------------------------------
+	section("CloudClimb", Vector3.new(0, 0, 210), Vector3.new(0, 62, 437))
+	sign(P, "1-2 CLOUD CLIMB", CFrame.new(0, 10, 212), Vector3.new(18, 3, 0.4))
 	grass(Vector3.new(30, 6, 30), 0, 0, 215, "CloudBase")
 	grass(Vector3.new(30, 26, 30), 0, 20, 245, "Cliff") -- 20-stud cliff
 	ring(0, 30, 224)
@@ -583,13 +644,13 @@ local function buildPixelPlains(world: Model)
 		Ease = "Linear",
 	})
 	grass(Vector3.new(30, 26, 30), 0, 20, 335, "Cliff")
-	checkpoint(world, 3, 0, 20, 328, W, {
+	checkpoint(P, nextOrder(), 0, 20, 328, W, {
 		"Miko: ground-pound the white pad while Kai stands on it.",
 		"Kai: freeze the bat up top so Miko can grapple it. Then pound the button to flip the fan.",
 	})
 
 	-- side-on climb: bounce pad (Miko launches Kai) + frozen bat (Kai gives Miko an anchor), then a fan
-	local zone = block(world, Vector3.new(80, 90, 100), CFrame.new(0, 55, 388), {
+	local zone = block(P, Vector3.new(80, 90, 100), CFrame.new(0, 55, 388), {
 		name = "SideOnZone",
 		transparency = 1,
 		collide = false,
@@ -598,20 +659,20 @@ local function buildPixelPlains(world: Model)
 	})
 	zone.CanQuery = false
 	zone.CanTouch = false
-	platform(world, Vector3.new(8, 1, 8), 0, 20.6, 344, {
+	platform(P, Vector3.new(8, 1, 8), 0, 20.6, 344, {
 		color = DUO,
 		material = NEON,
 		tags = { "BouncePad" },
 		name = "BouncePad",
 	})
 	grass(Vector3.new(20, 4, 30), 0, 42, 369) -- ledge A: 22 up
-	block(world, Vector3.new(3, 2, 3), CFrame.new(0, 50, 350) * CFrame.Angles(0, math.rad(90), 0), {
+	block(P, Vector3.new(3, 2, 3), CFrame.new(0, 50, 350) * CFrame.Angles(0, math.rad(90), 0), {
 		name = "StaticBat",
 		color = rgb(80, 70, 110),
 		tags = { "Enemy", "Freezable" },
 		attrs = { Type = "StaticBat", PatrolDistance = 12, Speed = 5 },
 	})
-	local vent = block(world, Vector3.new(8, 24, 8), CFrame.new(0, 54, 379), {
+	local vent = block(P, Vector3.new(8, 24, 8), CFrame.new(0, 54, 379), {
 		name = "JumpVent",
 		color = rgb(170, 220, 255),
 		transparency = 0.8,
@@ -620,7 +681,7 @@ local function buildPixelPlains(world: Model)
 		attrs = { Direction = -1 },
 	})
 	vent.CanQuery = false
-	local button = platform(world, Vector3.new(5, 0.8, 5), 6, 42.8, 360, {
+	local button = platform(P, Vector3.new(5, 0.8, 5), 6, 42.8, 360, {
 		color = NEUTRAL,
 		tags = { "VentButton" },
 		name = "VentButton",
@@ -631,19 +692,68 @@ local function buildPixelPlains(world: Model)
 	link.Parent = button
 	grass(Vector3.new(20, 4, 16), 0, 62, 398) -- ledge B: 20 up, only on the fan
 	grass(Vector3.new(30, 4, 30), 0, 62, 421, "SkyGate")
-	platform(world, Vector3.new(12, 1, 8), 0, 63, 424, {
+	platform(P, Vector3.new(12, 1, 8), 0, 63, 424, {
 		color = DUO,
 		tags = { "DuoPound" },
 		attrs = { Group = "S2" },
 		name = "DuoPound",
 	})
-	gate(world, "S2", Vector3.new(30, 20, 2), CFrame.new(0, 72, 436))
-	checkpoint(world, 4, 0, 62, 412, W, {
+	gate(P, "S2", Vector3.new(30, 20, 2), CFrame.new(0, 72, 436))
+	checkpoint(P, nextOrder(), 0, 62, 412, W, {
 		"Kai: freeze a belt so you can both walk up it. One at a time!",
 		"Freeze the first belt, run, then freeze the second.",
 	})
 
+	-- 1-2 continued: CLOUD TOWER. Straight up: Kai freezes a fast elevator cloud at the top; Miko swings up a
+	-- 22-stud wall and pulls the lever that lifts Kai ("Miko grapples up and drops ropes for Kai"); then a chasm
+	-- where Miko swings ring to ring while Kai hops frozen clouds; a Heavy Lever for both at the top.
+	section("CloudTower", Vector3.zero, Vector3.new(0, 42, 230))
+	grass(Vector3.new(30, 4, 20), 0, 0, 10, "TowerPath")
+	checkpoint(P, nextOrder(), 0, 0, 8, W, {
+		"Kai: freeze the elevator cloud when it's up, then hop to the ledge.",
+		"Ride it up, freeze it at the top.",
+	})
+	sign(P, "CLOUD TOWER", CFrame.new(0, 9, 19), Vector3.new(16, 3, 0.4))
+	grass(Vector3.new(30, 4, 30), 0, 0, 35, "TowerBase")
+	mover("MoveBlock", Vector3.new(10, 2, 10), CFrame.new(0, -1, 56), CFrame.new(0, 19, 56), { Period = 1.4 })
+	grass(Vector3.new(30, 4, 20), 0, 20, 72, "Ledge") -- 20 up: only the frozen cloud reaches it
+	ring(0, 52, 86) -- Miko swings up the next 22
+	lift("C1", Vector3.new(8, 1, 8), 10, 20.5, 76, 22, "Lift") -- Kai's ride once Miko pulls the lever
+	grass(Vector3.new(30, 4, 20), 0, 42, 100, "Ledge")
+	pullLever("C1", -8, 52, 106)
+	checkpoint(P, nextOrder(), 0, 42, 96, W, {
+		"Miko: swing ring to ring. Kai: freeze a cloud in line, hop, freeze the next.",
+		"Only one freeze at a time, Kai: hop fast!",
+	})
+	-- an 80-stud chasm (z 110..190)
+	for _, z in { 126, 150, 174 } do
+		ring(0, 56, z)
+	end
+	mover("MoveBlock", Vector3.new(12, 2, 12), CFrame.new(-26, 41, 132), CFrame.new(26, 41, 132), { Period = 3.2 })
+	mover(
+		"MoveBlock",
+		Vector3.new(12, 2, 12),
+		CFrame.new(26, 41, 168),
+		CFrame.new(-26, 41, 168),
+		{ Period = 3.2, Offset = 1.1 }
+	)
+	grass(Vector3.new(30, 4, 30), 0, 42, 205, "TowerTop")
+	checkpoint(P, nextOrder(), 0, 42, 196, W, {
+		"Pull the big lever together (hold E, both at once).",
+		"Both of you hold the lever at the same time.",
+	})
+	local heavy = block(P, Vector3.new(1, 5, 1), CFrame.new(-8, 44.5, 212), {
+		color = DUO,
+		tags = { "HeavyLever" },
+		attrs = { Group = "C2" },
+		name = "HeavyLever",
+	})
+	heavy.CFrame *= CFrame.Angles(math.rad(20), 0, 0)
+	gate(P, "C2", Vector3.new(30, 20, 2), CFrame.new(0, 52, 220))
+	grass(Vector3.new(14, 4, 10), 0, 42, 225, "TowerExit")
+
 	-- 1-3 COIN FACTORY ------------------------------------------------------------------------------
+	section("CoinFactory", Vector3.new(0, 62, 437), Vector3.new(0, 62, 747))
 	local function factoryWalls(z0: number, z1: number)
 		for _, x in { -8, 8 } do
 			dirtWall(Vector3.new(2, 22, z1 - z0), x, 84, (z0 + z1) / 2)
@@ -655,9 +765,13 @@ local function buildPixelPlains(world: Model)
 	factoryWalls(437, 497)
 	grass(Vector3.new(30, 4, 24), 0, 62, 509, "BeltEnd")
 	blob(0, 62, 512, 16)
+	checkpoint(P, nextOrder(), 0, 62, 503, W, {
+		"Kai: freeze a falling block over the pit. Miko: grapple it and swing across!",
+		"Miko: pull the teal lever on the far side to raise the bridge for Kai.",
+	})
 
 	-- dropper pit: Kai freezes a falling block mid-air, Miko grapples it across, then pulls the bridge lever
-	local dropper = block(world, Vector3.new(6, 1, 6), CFrame.new(0, 100, 551), {
+	local dropper = block(P, Vector3.new(6, 1, 6), CFrame.new(0, 100, 551), {
 		name = "Dropper",
 		transparency = 1,
 		collide = false,
@@ -667,7 +781,7 @@ local function buildPixelPlains(world: Model)
 	lift("F2", Vector3.new(8, 1, 60), -10, 42, 551, 20, "Bridge")
 	grass(Vector3.new(30, 4, 30), 0, 62, 596, "DropperFar")
 	pullLever("F2", 8, 66, 588)
-	checkpoint(world, 5, 0, 62, 600, W, {
+	checkpoint(P, nextOrder(), 0, 62, 600, W, {
 		"Miko: pull the crate onto the plate. Kai: freeze the sliding door while it's open.",
 		"The crate holds the inner gate; the door needs Kai's freeze.",
 	})
@@ -677,12 +791,12 @@ local function buildPixelPlains(world: Model)
 	-- turned 90° so the part's X is the wall's thickness, like every other DirtWall (the art skin assumes it)
 	local across = CFrame.Angles(0, math.rad(90), 0)
 	for _, x in { -9.5, 9.5 } do
-		block(world, Vector3.new(2, 20, 11), CFrame.new(x, 72, 651) * across, { color = DIRT, name = "DoorWall" })
+		block(P, Vector3.new(2, 20, 11), CFrame.new(x, 72, 651) * across, { color = DIRT, name = "DoorWall" })
 	end
-	block(world, Vector3.new(2, 8, 8), CFrame.new(0, 78, 651) * across, { color = DIRT, name = "DoorWall" })
+	block(P, Vector3.new(2, 8, 8), CFrame.new(0, 78, 651) * across, { color = DIRT, name = "DoorWall" })
 	mover("TimedDoor", Vector3.new(8, 12, 1.5), CFrame.new(0, 68, 653), CFrame.new(-9, 68, 653), { Period = 3 })
-	platform(world, Vector3.new(6, 1, 6), 12, 74, 620, { color = DIRT, name = "CrateShelf" })
-	block(world, Vector3.new(4, 4, 4), CFrame.new(12, 76.5, 620), {
+	platform(P, Vector3.new(6, 1, 6), 12, 74, 620, { color = DIRT, name = "CrateShelf" })
+	block(P, Vector3.new(4, 4, 4), CFrame.new(12, 76.5, 620), {
 		name = "Crate",
 		color = WOOD,
 		material = Enum.Material.WoodPlanks,
@@ -691,7 +805,7 @@ local function buildPixelPlains(world: Model)
 		attrs = { Mass = 20 },
 	})
 	plate("F3", -10, 62, 640)
-	gate(world, "F3", Vector3.new(8, 12, 1), CFrame.new(0, 68, 655.5), false)
+	gate(P, "F3", Vector3.new(8, 12, 1), CFrame.new(0, 68, 655.5), false)
 
 	-- twist: crushers over a backward belt, and Kai only has one freeze
 	conveyor(Vector3.new(14, 2, 60), 0, 62, 686, 20)
@@ -703,18 +817,62 @@ local function buildPixelPlains(world: Model)
 	blob(0, 62, 728, 14)
 	plate("S3", -9, 62, 738)
 	plate("S3", 9, 62, 738)
-	gate(world, "S3", Vector3.new(30, 20, 2), CFrame.new(0, 72, 746))
+	gate(P, "S3", Vector3.new(30, 20, 2), CFrame.new(0, 72, 746))
+
+	-- 1-3 continued: COIN PRESS. The twist: Glitch blobs pace a yard (Kai freezes one to slip past, frozen ones
+	-- can't hurt), then the coin press: four crushers over a lane. Miko pulls the crate through in hops while Kai
+	-- freezes the crusher above it; the crate on the plate opens the vault.
+	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 190))
+	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "PressPath")
+	checkpoint(P, nextOrder(), 0, 0, 6, W, {
+		"Kai: freeze a Glitch blob to slip past it. Frozen blobs can't hurt you.",
+		"Don't touch the magenta blobs!",
+	})
+	sign(P, "COIN PRESS", CFrame.new(0, 9, 14), Vector3.new(14, 3, 0.4))
+	grass(Vector3.new(24, 4, 60), 0, 0, 45, "BlobYard") -- z 15..75
+	for _, x in { -13, 13 } do
+		dirtWall(Vector3.new(2, 22, 60), x, 22, 45)
+	end
+	blob(0, 0, 30, 18)
+	blob(0, 0, 47, 18)
+	blob(0, 0, 64, 18)
+	grass(Vector3.new(14, 4, 70), 0, 0, 110, "PressLane") -- z 75..145
+	for _, x in { -8, 8 } do
+		dirtWall(Vector3.new(2, 22, 70), x, 22, 110)
+	end
+	checkpoint(P, nextOrder(), 0, 0, 80, W, {
+		"Miko: pull the crate along the lane. Kai: freeze the crusher above it!",
+		"The crate has to reach the plate at the end.",
+	})
+	for i, z in { 92, 106, 120, 134 } do
+		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.33 })
+	end
+	block(P, Vector3.new(4, 4, 4), CFrame.new(0, 2, 82), {
+		name = "Crate",
+		color = WOOD,
+		material = Enum.Material.WoodPlanks,
+		anchored = false,
+		tags = { "Pullable", "Respawn" },
+		attrs = { Mass = 20 },
+	})
+	plate("D1", 0, 0, 141)
+	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 146))
+	grass(Vector3.new(30, 4, 30), 0, 0, 162, "CoinVault") -- z 147..177
+	checkpoint(P, nextOrder(), 0, 0, 158, W)
+	sign(P, "COIN VAULT", CFrame.new(0, 10, 176), Vector3.new(14, 3, 0.4))
+	grass(Vector3.new(14, 4, 13), 0, 0, 183.5, "VaultExit")
 
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
+	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))
 	grass(Vector3.new(30, 4, 20), 0, 62, 756, "ChaseStart")
-	checkpoint(world, 6, 0, 62, 752, W, {
+	checkpoint(P, nextOrder(), 0, 62, 752, W, {
 		"RUN! Grab the rail (F) and jump the gaps!",
 		"Keep moving. The Glitch eats everything behind you.",
 	})
 	rail(Vector3.new(0, 62.5, 770), Vector3.new(0, 50.5, 850))
 	rail(Vector3.new(0, 46.5, 866), Vector3.new(-24, 36.5, 930))
 	rail(Vector3.new(-24, 32.5, 946), Vector3.new(0, 22.5, 1004))
-	local trigger = block(world, Vector3.new(30, 20, 20), CFrame.new(0, 70, 756), { -- the whole start platform
+	local trigger = block(P, Vector3.new(30, 20, 20), CFrame.new(0, 70, 756), { -- the whole start platform
 		name = "ChaseTrigger",
 		transparency = 1,
 		collide = false,
@@ -722,7 +880,7 @@ local function buildPixelPlains(world: Model)
 	trigger.CanQuery = false
 	trigger.CanTouch = false
 	local wallStart = Vector3.new(0, 60, 722) -- 34 studs behind the start: ~1 s after the warm-up
-	local glitchWall = block(world, Vector3.new(80, 80, 4), CFrame.lookAt(wallStart, wallStart + Vector3.zAxis), {
+	local glitchWall = block(P, Vector3.new(80, 80, 4), CFrame.lookAt(wallStart, wallStart + Vector3.zAxis), {
 		name = "GlitchWall",
 		color = GLITCH,
 		material = NEON,
@@ -740,10 +898,22 @@ local function buildPixelPlains(world: Model)
 
 	-- BOSS ARENA (the Crusher King arrives with M6) ---------------------------------------------------
 	grass(Vector3.new(30, 4, 30), 0, 20, 1023, "ChaseEnd")
-	checkpoint(world, 7, 0, 20, 1016, W)
+	checkpoint(P, nextOrder(), 0, 20, 1016, W)
 	grass(Vector3.new(60, 6, 60), 0, 20, 1075, "BossArena")
 	exitPortal(0, 20, 1100)
-	sign(world, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 36, 1100), Vector3.new(24, 4, 0.4))
+	sign(P, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 36, 1100), Vector3.new(24, 4, 0.4))
+
+	-- chain: each section's entry snaps onto the previous section's exit
+	local cursor = chunks[1].entry
+	for _, c in chunks do
+		local shift = cursor - c.entry
+		c.model:SetAttribute("Shift", shift) -- ArtService moves the section's decor by the same amount
+		if shift.Magnitude > 0 then
+			c.model.WorldPivot = CFrame.new(c.entry)
+			c.model:PivotTo(CFrame.new(cursor))
+		end
+		cursor = c.exit + shift
+	end
 end
 
 -- Glitched Core: a tiny Code Layer + Copy/Paste demo.

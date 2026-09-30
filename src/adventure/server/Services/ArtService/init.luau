@@ -118,7 +118,10 @@ function ArtService.Dress(world: Instance, worldName: string)
 		end
 		for _, item in art.Decor do
 			if world.Parent then
-				placeDecor(world, item[1], item[2], item[3] or 1)
+				-- item[4]: the Greybox section it belongs to (decor moves with that section's Shift)
+				local section = item[4] and world:FindFirstChild(item[4])
+				local shift = (section and section:GetAttribute("Shift") or Vector3.zero) :: Vector3
+				placeDecor(world, item[1], CFrame.new(shift) * item[2], item[3] or 1)
 			end
 		end
 		if art.Extras and world.Parent then

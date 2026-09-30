@@ -501,6 +501,21 @@ for _, name in
 		"ChaseStart",
 		"ChaseEnd",
 		"BossArena",
+		-- sections added Oct 1 (Windmill Hill, Cloud Tower, Coin Press)
+		"MillPath",
+		"MillFar",
+		"MillTop",
+		"MillExit",
+		"TowerPath",
+		"TowerBase",
+		"Ledge",
+		"TowerTop",
+		"TowerExit",
+		"PressPath",
+		"BlobYard",
+		"PressLane",
+		"CoinVault",
+		"VaultExit",
 	}
 do
 	Dressing[name] = "GrassBlock"
@@ -508,11 +523,20 @@ end
 
 -- Pure decoration placed with the world: { skin, CFrame, scale }. Clouds sit high and to the sides so they frame
 -- the route without blocking the camera (art-direction.md §10); coin blocks are scale moments along the way.
+-- The 4th field is the Greybox section (by where it sits in that section's own coordinates), so decor follows
+-- its section when sections are chained further along.
+local function sectionAt(z: number): string
+	return if z < 210
+		then "StarterMeadow"
+		elseif z < 437 then "CloudClimb"
+		elseif z < 747 then "CoinFactory"
+		else "GlitchChase"
+end
 local function cloud(x: number, y: number, z: number, yaw: number, scale: number): { any }
-	return { "Cloud", CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0), scale }
+	return { "Cloud", CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0), scale, sectionAt(z) }
 end
 local function coin(x: number, y: number, z: number, yaw: number, scale: number): { any }
-	return { "CoinBlock", CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0), scale }
+	return { "CoinBlock", CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0), scale, sectionAt(z) }
 end
 local Decor: { { any } } = {
 	cloud(-50, 34, -30, 0, 1.3),
@@ -532,46 +556,63 @@ local Decor: { { any } } = {
 	coin(-16, 76, 505, 10, 1.5),
 	coin(16, 78, 700, -15, 1.5),
 	coin(0, 44, 1060, 0, 2.5),
-	{ "Flowers", CFrame.new(-24, 1.95, -14) * CFrame.Angles(0, math.rad(178), 0), 1.3 },
-	{ "Flowers", CFrame.new(22, 1.8, -12) * CFrame.Angles(0, math.rad(142), 0), 1.2 },
-	{ "Bush", CFrame.new(-26, 3.2, 8) * CFrame.Angles(0, math.rad(186), 0), 1.6 },
-	{ "Bush", CFrame.new(26, 2.8, 6) * CFrame.Angles(0, math.rad(188), 0), 1.4 },
-	{ "Flowers", CFrame.new(-86, 1.8, -10) * CFrame.Angles(0, math.rad(108), 0), 1.2 },
-	{ "Bush", CFrame.new(-86, 3, 94) * CFrame.Angles(0, math.rad(212), 0), 1.5 },
-	{ "Flowers", CFrame.new(86, 1.8, 10) * CFrame.Angles(0, math.rad(252), 0), 1.2 },
-	{ "Bush", CFrame.new(86, 3, 82) * CFrame.Angles(0, math.rad(324), 0), 1.5 },
-	{ "Flowers", CFrame.new(-16, 1.95, 196) * CFrame.Angles(0, math.rad(84), 0), 1.3 },
-	{ "Flowers", CFrame.new(16, 1.8, 158) * CFrame.Angles(0, math.rad(270), 0), 1.2 },
-	{ "Bush", CFrame.new(16, 3.2, 206) * CFrame.Angles(0, math.rad(318), 0), 1.6 },
-	{ "Bush", CFrame.new(-12, 2.8, 226) * CFrame.Angles(0, math.rad(142), 0), 1.4 },
-	{ "Flowers", CFrame.new(10, 21.8, 250) * CFrame.Angles(0, math.rad(320), 0), 1.2 },
-	{ "Bush", CFrame.new(-10, 23, 342) * CFrame.Angles(0, math.rad(272), 0), 1.5 },
-	{ "Flowers", CFrame.new(12, 63.8, 414) * CFrame.Angles(0, math.rad(138), 0), 1.2 },
-	{ "Bush", CFrame.new(-12, 23.2, 1016) * CFrame.Angles(0, math.rad(212), 0), 1.6 },
-	{ "Flowers", CFrame.new(20, 22.1, 1060) * CFrame.Angles(0, math.rad(120), 0), 1.4 },
-	{ "Flowers", CFrame.new(-22, 22.1, 1090) * CFrame.Angles(0, math.rad(216), 0), 1.4 },
-	{ "Tree", CFrame.new(-25, 6.4, -15) * CFrame.Angles(0, math.rad(20), 0), 0.8 },
-	{ "Tree", CFrame.new(25, 5.6, -16) * CFrame.Angles(0, math.rad(309), 0), 0.7 },
-	{ "Tree", CFrame.new(-87, 6.4, 12) * CFrame.Angles(0, math.rad(321), 0), 0.8 },
-	{ "Tree", CFrame.new(87, 6.4, -12) * CFrame.Angles(0, math.rad(39), 0), 0.8 },
-	{ "Tree", CFrame.new(-16, 5.6, 205) * CFrame.Angles(0, math.rad(357), 0), 0.7 },
-	{ "Tree", CFrame.new(-24, 28, 1050) * CFrame.Angles(0, math.rad(18), 0), 1.0 },
-	{ "Tree", CFrame.new(24, 28.8, 1098) * CFrame.Angles(0, math.rad(330), 0), 1.1 },
+	{ "Flowers", CFrame.new(-24, 1.95, -14) * CFrame.Angles(0, math.rad(178), 0), 1.3, "StarterMeadow" },
+	{ "Flowers", CFrame.new(22, 1.8, -12) * CFrame.Angles(0, math.rad(142), 0), 1.2, "StarterMeadow" },
+	{ "Bush", CFrame.new(-26, 3.2, 8) * CFrame.Angles(0, math.rad(186), 0), 1.6, "StarterMeadow" },
+	{ "Bush", CFrame.new(26, 2.8, 6) * CFrame.Angles(0, math.rad(188), 0), 1.4, "StarterMeadow" },
+	{ "Flowers", CFrame.new(-86, 1.8, -10) * CFrame.Angles(0, math.rad(108), 0), 1.2, "StarterMeadow" },
+	{ "Bush", CFrame.new(-86, 3, 94) * CFrame.Angles(0, math.rad(212), 0), 1.5, "StarterMeadow" },
+	{ "Flowers", CFrame.new(86, 1.8, 10) * CFrame.Angles(0, math.rad(252), 0), 1.2, "StarterMeadow" },
+	{ "Bush", CFrame.new(86, 3, 82) * CFrame.Angles(0, math.rad(324), 0), 1.5, "StarterMeadow" },
+	{ "Flowers", CFrame.new(-16, 1.95, 196) * CFrame.Angles(0, math.rad(84), 0), 1.3, "StarterMeadow" },
+	{ "Flowers", CFrame.new(16, 1.8, 158) * CFrame.Angles(0, math.rad(270), 0), 1.2, "StarterMeadow" },
+	{ "Bush", CFrame.new(16, 3.2, 206) * CFrame.Angles(0, math.rad(318), 0), 1.6, "StarterMeadow" },
+	{ "Bush", CFrame.new(-12, 2.8, 226) * CFrame.Angles(0, math.rad(142), 0), 1.4, "CloudClimb" },
+	{ "Flowers", CFrame.new(10, 21.8, 250) * CFrame.Angles(0, math.rad(320), 0), 1.2, "CloudClimb" },
+	{ "Bush", CFrame.new(-10, 23, 342) * CFrame.Angles(0, math.rad(272), 0), 1.5, "CloudClimb" },
+	{ "Flowers", CFrame.new(12, 63.8, 414) * CFrame.Angles(0, math.rad(138), 0), 1.2, "CloudClimb" },
+	{ "Bush", CFrame.new(-12, 23.2, 1016) * CFrame.Angles(0, math.rad(212), 0), 1.6, "GlitchChase" },
+	{ "Flowers", CFrame.new(20, 22.1, 1060) * CFrame.Angles(0, math.rad(120), 0), 1.4, "GlitchChase" },
+	{ "Flowers", CFrame.new(-22, 22.1, 1090) * CFrame.Angles(0, math.rad(216), 0), 1.4, "GlitchChase" },
+	{ "Tree", CFrame.new(-25, 6.4, -15) * CFrame.Angles(0, math.rad(20), 0), 0.8, "StarterMeadow" },
+	{ "Tree", CFrame.new(25, 5.6, -16) * CFrame.Angles(0, math.rad(309), 0), 0.7, "StarterMeadow" },
+	{ "Tree", CFrame.new(-87, 6.4, 12) * CFrame.Angles(0, math.rad(321), 0), 0.8, "StarterMeadow" },
+	{ "Tree", CFrame.new(87, 6.4, -12) * CFrame.Angles(0, math.rad(39), 0), 0.8, "StarterMeadow" },
+	{ "Tree", CFrame.new(-16, 5.6, 205) * CFrame.Angles(0, math.rad(357), 0), 0.7, "StarterMeadow" },
+	{ "Tree", CFrame.new(-24, 28, 1050) * CFrame.Angles(0, math.rad(18), 0), 1.0, "GlitchChase" },
+	{ "Tree", CFrame.new(24, 28.8, 1098) * CFrame.Angles(0, math.rad(330), 0), 1.1, "GlitchChase" },
 	-- kid details: the "BY KAI + MIKO" hill west of the meadow, facing the plaza; a floor fan under the vent;
 	-- the dropper's chute coming out of a cloud
 	-- a stepped voxel hill far out west (terraces, so it reads as a hill, not a wall); letters on the low front step
 	{ "Cliff", CFrame.new(-230, -40, 110), 4 }, -- front step, top y 0
 	{ "Cliff", CFrame.new(-262, -12, 104), 3 }, -- middle step, top y 18
 	{ "Cliff", CFrame.new(-282, 12, 112), 1.6 }, -- summit, top y 28
-	{ "HillSign", CFrame.lookAt(Vector3.new(-205, 4.4, 110), Vector3.new(0, 4.4, 110)), 1 },
-	{ "Tree", CFrame.new(-282, 34.4, 112) * CFrame.Angles(0, math.rad(40), 0), 0.8 },
-	{ "Tree", CFrame.new(-248, 24.4, 82) * CFrame.Angles(0, math.rad(200), 0), 0.8 },
-	{ "Tree", CFrame.new(-250, 23.6, 128) * CFrame.Angles(0, math.rad(120), 0), 0.7 },
-	{ "Bush", CFrame.new(-222, 3.6, 76) * CFrame.Angles(0, math.rad(12), 0), 1.8 },
-	{ "Bush", CFrame.new(-218, 3.2, 146) * CFrame.Angles(0, math.rad(190), 0), 1.6 },
-	{ "Fan", CFrame.new(0, 43, 379) * CFrame.Angles(math.rad(-90), 0, 0), 3.2 },
-	{ "Chute", CFrame.new(0, 107.8, 551), 1.1 },
+	{ "HillSign", CFrame.lookAt(Vector3.new(-205, 4.4, 110), Vector3.new(0, 4.4, 110)), 1, "StarterMeadow" },
+	{ "Tree", CFrame.new(-282, 34.4, 112) * CFrame.Angles(0, math.rad(40), 0), 0.8, "StarterMeadow" },
+	{ "Tree", CFrame.new(-248, 24.4, 82) * CFrame.Angles(0, math.rad(200), 0), 0.8, "StarterMeadow" },
+	{ "Tree", CFrame.new(-250, 23.6, 128) * CFrame.Angles(0, math.rad(120), 0), 0.7, "StarterMeadow" },
+	{ "Bush", CFrame.new(-222, 3.6, 76) * CFrame.Angles(0, math.rad(12), 0), 1.8, "StarterMeadow" },
+	{ "Bush", CFrame.new(-218, 3.2, 146) * CFrame.Angles(0, math.rad(190), 0), 1.6, "StarterMeadow" },
+	{ "Fan", CFrame.new(0, 43, 379) * CFrame.Angles(math.rad(-90), 0, 0), 3.2, "CloudClimb" },
+	{ "Chute", CFrame.new(0, 107.8, 551), 1.1, "CoinFactory" },
 	cloud(0, 117, 551, 0, 1.5),
+	-- Windmill Hill (its own coordinates: entry at the origin, heading +Z)
+	{ "Tree", CFrame.new(-11, 5.6, 100) * CFrame.Angles(0, math.rad(40), 0), 0.7, "WindmillHill" },
+	{ "Bush", CFrame.new(11, 3, 96) * CFrame.Angles(0, math.rad(200), 0), 1.4, "WindmillHill" },
+	{ "Flowers", CFrame.new(-12, 1.8, 180) * CFrame.Angles(0, math.rad(80), 0), 1.2, "WindmillHill" },
+	{ "Tree", CFrame.new(12, 5.6, 186) * CFrame.Angles(0, math.rad(300), 0), 0.7, "WindmillHill" },
+	{ "Cloud", CFrame.new(-45, 36, 150), 2, "WindmillHill" },
+	{ "Cloud", CFrame.new(50, 44, 60) * CFrame.Angles(0, math.rad(20), 0), 1.8, "WindmillHill" },
+	-- Cloud Tower
+	{ "Cloud", CFrame.new(-40, 60, 60), 2.2, "CloudTower" },
+	{ "Cloud", CFrame.new(45, 80, 150) * CFrame.Angles(0, math.rad(-15), 0), 2.4, "CloudTower" },
+	{ "Flowers", CFrame.new(10, 43.8, 200) * CFrame.Angles(0, math.rad(40), 0), 1.2, "CloudTower" },
+	{ "Bush", CFrame.new(-11, 45, 196) * CFrame.Angles(0, math.rad(260), 0), 1.4, "CloudTower" },
+	-- Coin Press: the vault is stacked with coin blocks
+	{ "CoinBlock", CFrame.new(-10, 8, 170) * CFrame.Angles(0, math.rad(10), 0), 1.5, "CoinPress" },
+	{ "CoinBlock", CFrame.new(10, 8, 170) * CFrame.Angles(0, math.rad(-10), 0), 1.5, "CoinPress" },
+	{ "CoinBlock", CFrame.new(0, 14, 172), 2, "CoinPress" },
+	{ "Cloud", CFrame.new(40, 40, 110), 2, "CoinPress" },
 }
 
 -- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the

@@ -102,12 +102,14 @@ if save.world == "Prologue" and save.checkpoint == 0 then
 	task.delay(1, CutsceneService.Play, "Intro_Continue")
 end
 
--- Studio only: jump worlds from the command bar with workspace:SetAttribute("DebugWorld", "PixelPlains").
+-- Studio only: jump worlds from the command bar with workspace:SetAttribute("DebugWorld", "PixelPlains");
+-- set workspace "DebugCheckpoint" (a number) first to start at that checkpoint.
 if game:GetService("RunService"):IsStudio() then
 	local function debugJump()
 		local target = workspace:GetAttribute("DebugWorld")
 		if type(target) == "string" then
-			WorldService.Load(target, 0)
+			local cp = workspace:GetAttribute("DebugCheckpoint")
+			WorldService.Load(target, if type(cp) == "number" then cp else 0)
 		end
 	end
 	workspace:GetAttributeChangedSignal("DebugWorld"):Connect(debugJump)
