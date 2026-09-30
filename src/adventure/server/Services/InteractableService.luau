@@ -67,8 +67,32 @@ local function partsOf(inst: Instance): { BasePart }
 	return list
 end
 
+-- Someone standing on (or just above) any part of this gate?
+local function ridden(gate: Instance): boolean
+	for _, part in partsOf(gate) do
+		for _, p in Players:GetPlayers() do
+			local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root then
+				local lp = part.CFrame:PointToObjectSpace(root.Position)
+				local h = part.Size / 2
+				if math.abs(lp.X) <= h.X + 1 and math.abs(lp.Z) <= h.Z + 1 and lp.Y >= h.Y - 1 and lp.Y <= h.Y + 8 then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
 local function setGateOpen(gate: Instance, open: boolean)
 	if (gate:GetAttribute("Open") == true) == open then
+		return
+	end
+	-- a lift or bridge never drops out from under someone: it waits until they step off (playtest Oct 1)
+	if not open and gate:GetAttribute("OpenOffset") and ridden(gate) then
+		task.delay(0.5, function()
+			InteractableService.Evaluate()
+		end)
 		return
 	end
 	gate:SetAttribute("Open", open)
