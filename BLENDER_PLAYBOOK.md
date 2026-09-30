@@ -180,6 +180,7 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | Priority | Asset | World | Notes |
 | --- | --- | --- | --- |
 | ✅ | **Pip** | All | In game: `blender_assets/Pip.fbx` split per material (644 tris), floating companion via `ArtService` + `PipController` |
+| 1 | **Redo to the graphics baseline** (art-direction.md top note): Pip (keep the pixel sprite + missing pixels, but glossy glowing voxels, expressive eyes, speaker-colored glow), lobby capsule, Prologue set, Pixel Plains kit, role badges, castle kit (real stone / wood / metal surfaces before import) | All | Current versions are flat-colored primitive builds from before the baseline |
 | ✅ | **Lobby capsule** (Kai ▲ / Miko ●) + marquee | Lobby | Done and in game: `blender_assets/LobbyCapsule.blend/.fbx` (2,082 tris per capsule), ids in `src/lobby/server/CapsuleMeshes.luau`, brief `briefs/LobbyCapsule.md` |
 | ✅ | Kai / Miko role badges (▲ / ● back badge accessory) | All | In game: `Identity.*`, `ArtService/Badges.luau`. Full outfits per world (art-direction §5) still to do |
 | ✅ | Giant title-menu buttons, UI panels, "CONTINUE?" title card | Prologue | In game: `blender_assets/PrologueUI.*`, brief `briefs/PrologueUI.md`, skins in `ArtService` |
