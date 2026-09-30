@@ -29,10 +29,10 @@ Quick socket check without MCP (PowerShell): connect to `localhost:9876` and sen
 | `bpy_api_lookup`, `describe_node_type` | Look up API / shader node sockets instead of guessing |
 | `export_scene` | Export helper (or use `bpy.ops.export_scene.fbx` directly) |
 | `set_texture` | Apply a downloaded texture to an object |
-| Poly Haven: `search_polyhaven_assets`, `download_polyhaven_asset`, `get_polyhaven_asset_preview` | CC0 HDRIs, textures, models. **Currently disabled** → see §9 |
+| Poly Haven: `search_polyhaven_assets`, `download_polyhaven_asset`, `get_polyhaven_asset_preview` | CC0 HDRIs, PBR textures, models. **On** (autostart.py enables it; no key) |
 | Poly Pizza: `search_polypizza_models`, `download_polypizza_model` | Stylised low-poly models (credit CC-BY authors). **Disabled, needs free API key** |
 | Sketchfab: `search_sketchfab_models`, `get_sketchfab_model_preview`, `download_sketchfab_model` | Specific real-world models. **Disabled, needs API key** |
-| Hyper3D Rodin / Hunyuan3D / Tripo: `generate_*`, `poll_*`, `import_generated_asset*` | AI text/image → 3D, one object at a time. **Disabled** (API keys or paid Premium) |
+| Hyper3D Rodin / Hunyuan3D / Tripo: `generate_*`, `poll_*`, `import_generated_asset*` | AI text/image → 3D. **Disabled** (this add-on offers Tripo only via paid Premium; we call Tripo's REST API directly instead, see below) |
 | `disable_telemetry` | Turns data collection off if it ever gets turned on |
 
 ### Roblox Studio MCP (`mcp__Roblox_Studio__*`), useful for art
@@ -45,6 +45,9 @@ Quick socket check without MCP (PowerShell): connect to `localhost:9876` and sen
 | `upload_image`, `store_image` | Push reference or texture images into Studio |
 | `execute_luau` (Edit) | Place / scale / tag imported meshes, set CollisionFidelity, build from parts |
 | `screen_capture` | See the result in Studio |
+
+### Tripo API (direct REST, not the Blender add-on)
+AI text/image → textured 3D (GLB), plus retexture, smart low poly, rigging. Use when Studio `generate_mesh` runs out or a hero asset needs more quality/control. Keys in repo `.env` (gitignored): `TRIPO_API_KEY`, backups `TRIPO_API_KEY_2..4`, used in order when one runs out of credits. API **V3** (V2 retired Oct 2026). Docs: https://platform.tripo3d.ai/docs. Output → Blender cleanup (tri budget, split per material, origin bottom-center) → FBX → user Import click. Credit Tripo in `CREDITS.md` if its terms require it.
 
 ### Other
 - **Claude in Chrome (`mcp__claude-in-chrome__*`), running in the user's Brave browser:** browse for reference pictures (§3A).
