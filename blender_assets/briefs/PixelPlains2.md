@@ -67,4 +67,4 @@ Generated: box fan `rbxassetid://75748223101068` / tex `128839206690973` (faces 
 - Belt tread (`PP_BeltTread3.png`, Texture on the belt's top face, U offset 6 centers it): on that face V runs along the belt and +V points back against its LookVector; `BeltController` scrolls −V at the belt's Speed and stops while Frozen.
 - Crayon sun (`PP_CrayonSun2.png`): the sky adds the sun on top, so the texture is darkened to land on warm gold; `Worlds` Look `SunTexture` / `SunSize`.
 
-Open: grass flat tops read pale mint at noon (same with the variant off, so it's lighting/haze, not the material); revisit in the environment lighting pass. The Glitch Chase wall is visible from far away across the level.
+Grass flat tops read pale mint at noon (sky reflections + haze, same with the variant off): fixed with Pixel Plains `EnvSpecular` 0.25, Brightness 2.4, lighter haze (`Config/Worlds.luau`). The "BY KAI + MIKO" hill moved far west onto stepped Cliff terraces (a single 80-stud cube read as a wall). Open: the Glitch Chase wall is visible from far away across the level.

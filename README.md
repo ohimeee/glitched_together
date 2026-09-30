@@ -10,8 +10,9 @@ Two-player co-op Roblox adventure. Design docs: [design.md](design.md) (why), [a
 | `adventure.project.json` | Adventure place: the game (Rojo port 34872) |
 | `src/shared` | Net remotes, Config (Tuning, Kits, Worlds, Roles, Dialogue, Places), Util |
 | `src/lobby` | LobbyBuilder (lobby + capsule pairs from Blender meshes, grey-box fallback), CapsuleMeshes (mesh ids), Capsules, Lobby UI |
-| `src/adventure/server` | `Main` + Services (Duo, Save, World, Checkpoint, Health, Interactable, Mover, Ability, Relay, Hint, Cutscene, Enemy, Boss, Collision) + `Greybox` level builder |
-| `src/adventure/client` | Input (Input Action System with fallback), Aim, Controllers, AbilitiesClient |
+| `src/adventure/server` | `Main` + Services (Duo, Save, World, Checkpoint, Health, Interactable, Mover, Contraption, Ability, Relay, Hint, Cutscene, Enemy, Combat, CombatFx, Xp, Boss, Collision, Art) + `Greybox` level builder |
+| `src/adventure/client` | Input (Input Action System with fallback), Aim, Controllers (incl. ToolFxController = tool VFX, BeltController = conveyor treads), AbilitiesClient |
+| `textures/` | Hand-made textures + the Python scripts that make them (`make_pixelplains.py`, `make_toolfx.py`, `make_castlefx.py`); ids live in `Config/ToolFx.luau`, `Config/Worlds.luau`, `ArtService/*`, and `adventure.project.json` (MaterialVariants) |
 | `blender_assets/` | Blender sources (.blend) and FBX exports for Studio (Pip, LobbyCapsule, PrologueUI); `briefs/` = design briefs. Imported mesh ids live in `src/lobby/server/CapsuleMeshes.luau` and `src/adventure/server/Services/ArtService.luau` |
 
 ## Run it
