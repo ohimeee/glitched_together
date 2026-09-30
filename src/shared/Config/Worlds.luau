@@ -14,6 +14,8 @@ export type Look = {
 	Saturation: number,
 	Contrast: number,
 	Tint: Color3,
+	SunTexture: string?, -- nil = Roblox's default sun
+	SunSize: number?, -- degrees (Sky.SunAngularSize), default 21
 }
 
 export type World = {
@@ -67,6 +69,8 @@ local ByName: { [string]: World } = {
 			Saturation = 0.25,
 			Contrast = 0.05,
 			Tint = rgb(255, 250, 240),
+			SunTexture = "rbxassetid://120731124856629", -- a kid's crayon sun (textures/PP_CrayonSun2.png, art-direction §8)
+			SunSize = 30,
 		},
 	},
 	StarfallCastle = {
@@ -170,6 +174,10 @@ local function applyLook(look: Look)
 	cc.Saturation = look.Saturation
 	cc.Contrast = look.Contrast
 	cc.TintColor = look.Tint
+
+	local sky = child("Sky", "WorldSky")
+	sky.SunTextureId = look.SunTexture or "rbxasset://sky/sun.jpg"
+	sky.SunAngularSize = look.SunSize or 21
 end
 
 return { Order = Order, ByName = ByName, ApplyLook = applyLook }

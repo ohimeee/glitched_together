@@ -674,10 +674,12 @@ local function buildPixelPlains(world: Model)
 
 	-- crate + plate + timed door
 	grass(Vector3.new(30, 4, 45), 0, 62, 633.5, "DoorRoom")
+	-- turned 90° so the part's X is the wall's thickness, like every other DirtWall (the art skin assumes it)
+	local across = CFrame.Angles(0, math.rad(90), 0)
 	for _, x in { -9.5, 9.5 } do
-		platform(world, Vector3.new(11, 20, 2), x, 82, 651, { color = DIRT, name = "DoorWall" })
+		block(world, Vector3.new(2, 20, 11), CFrame.new(x, 72, 651) * across, { color = DIRT, name = "DoorWall" })
 	end
-	platform(world, Vector3.new(8, 8, 2), 0, 82, 651, { color = DIRT, name = "DoorLintel" })
+	block(world, Vector3.new(2, 8, 8), CFrame.new(0, 78, 651) * across, { color = DIRT, name = "DoorWall" })
 	mover("TimedDoor", Vector3.new(8, 12, 1.5), CFrame.new(0, 68, 653), CFrame.new(-9, 68, 653), { Period = 3 })
 	platform(world, Vector3.new(6, 1, 6), 12, 74, 620, { color = DIRT, name = "CrateShelf" })
 	block(world, Vector3.new(4, 4, 4), CFrame.new(12, 76.5, 620), {

@@ -20,6 +20,18 @@
     },
     "Lighting": {
       "$properties": { "Technology": "Future" }
+    },
+    "MaterialService": {
+      "PixelPlastic": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "SmoothPlastic",
+          "ColorMap": "rbxassetid://87037792069810",
+          "NormalMap": "rbxassetid://129079399874302",
+          "RoughnessMap": "rbxassetid://123209092209948",
+          "StudsPerTile": 8
+        }
+      }
     }
   }
 }

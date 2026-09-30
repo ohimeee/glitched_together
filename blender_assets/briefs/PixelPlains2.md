@@ -34,7 +34,7 @@ Where they go (ArtService/PixelPlains.luau `Skins` + `Dressing`): `PP_Kit_Cliff`
 
 Retried and done: Static Bat `rbxassetid://138838808176158` / tex `134256509753880` (4.7 × 2.5 × 2.25), voxel tree `rbxassetid://110637086239850` / tex `81380511005138` (12 × 15.9 × 12). Original failures: **Static Bat** ("Moderation failed": reword without "fangs"/"menacing", e.g. "cute round purple voxel bat toy with blocky pixel wings and big googly eyes"), **voxel tree** ("Too Many Requests": run 2–3 generations at a time, not 6).
 
-Still to generate: teal pull lever, fan/vent base, dropper chute pipe, timed door, wooden sign board with posts, "BY KAI + MIKO" hill sign, crayon sun (skybox), duo pound button.
+Still to generate: duo pound button. (Lever, fan, chute, door, signs, hill sign and crayon sun are done: section 4.)
 
 ## 3. Wiring plan (next session)
 
@@ -42,3 +42,29 @@ Still to generate: teal pull lever, fan/vent base, dropper chute pipe, timed doo
 2. Enemy skins like `ArtService/StarfallCastle.luau` (`enemy(design, id, tex, size, offsetY, yaw)`); decor via `Decor` (`{ skin, CFrame, scale }`).
 3. Surfaces: Studio `generate_material` for a "PixelPlastic" MaterialVariant (glossy toy plastic with fine pixel bumps) and apply to the kit MeshParts, so they are not flat colors (graphics baseline).
 4. Playtest + screenshots per section; then environment dressing (trees, flowers, bushes, clouds, coin blocks) along the route, leaving the play space clear (§10).
+
+## 4. Kit 3 + surfaces (Sep 30, 2026, second session) — wired and verified in a Studio playtest
+
+References (Google Images in Brave): stylized wooden signs (uneven planks, big nail heads, posts at the ends poking above), cartoon wooden doors (strap hinges from the hinge side with rounded tabs, ring handle, rivets), cartoon lever switches (chunky base plate with slot, big knob). Shapes only; nothing copied.
+
+**Blender kit 3** `blender_assets/PixelPlainsKit3.blend / .fbx` (imported; ids + offsets in `ArtService/PixelPlains.luau`). Roblox materials give the real surfaces (WoodPlanks / Wood / Metal), owner glow only on the gameplay piece:
+
+| Skin (Design) | Pieces | Notes |
+| --- | --- | --- |
+| `Sign` (14 × 3 × 0.4) | Planks (WoodPlanks), Battens + nail heads (Wood) | stays thinner than the part so the SurfaceGui text on both faces shows; `Extras` adds `SignPost` skins at both board ends, raycast to the ground |
+| `SignPost` (0.9 × 6 × 0.9) | one post | stretched to height |
+| `TimedDoor` (8 × 12 × 1.5) | Frame (Neon Kai: freezable), Body (WoodPlanks), Bands (strap hinges, rivets, ring handle) | |
+| `PullLever` (1 × 5 × 1) | Base (iron socket, slot, bolts), Shaft (steel), Grip (Neon Miko knob + socket band) | |
+| `Chute` (8 × 16 × 8) | Pipe, Bands, Hole | decor over the dropper, pipe top hidden in a cloud |
+| `HillSign` (75.55 × 8.79 × 1.6) | "BY KAI + MIKO" pixel letters, cream | decor on a scaled `Cliff` hill west of the meadow, faces the plaza; readable from its −Z side |
+
+Generated: box fan `rbxassetid://75748223101068` / tex `128839206690973` (faces +Z as generated, placed pitched −90° under the jump vent, depth squashed). A generated chute came out as a U-pipe basin, so the chute is Blender-made instead.
+
+**Dropper blocks** (`FallBlock`) get a coin-block cube skin with a Kai-orange Neon edge frame (ArtService dresses parts added to the world later via `DescendantAdded`).
+
+**Textures** (`textures/make_pixelplains.py` makes all of them; re-upload after changes):
+- `PixelPlastic` MaterialVariant (near-white glossy plastic, soft 1-stud pixel bevel grid, 8 studs/tile). **Runtime scripts can't set a variant's maps**, so it lives in `adventure.project.json` → MaterialService. Used on flat kit surfaces (grass/dirt/strata, cloud, coin and move blocks, fall blocks); left off bricks, stones, crusher teeth, letters (the grid made them look like chocolate bars). Studio's `generate_material` results were too heavy (black grout, brick patterns) for this palette.
+- Belt tread (`PP_BeltTread3.png`, Texture on the belt's top face, U offset 6 centers it): on that face V runs along the belt and +V points back against its LookVector; `BeltController` scrolls −V at the belt's Speed and stops while Frozen.
+- Crayon sun (`PP_CrayonSun2.png`): the sky adds the sun on top, so the texture is darkened to land on warm gold; `Worlds` Look `SunTexture` / `SunSize`.
+
+Open: grass flat tops read pale mint at noon (same with the variant off, so it's lighting/haze, not the material); revisit in the environment lighting pass. The Glitch Chase wall is visible from far away across the level.

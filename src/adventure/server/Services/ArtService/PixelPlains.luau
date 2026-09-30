@@ -9,6 +9,7 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local PP = Palette.PixelPlains
 local SMOOTH = Enum.Material.SmoothPlastic
 local NEON = Enum.Material.Neon
+local PLASTIC = "PixelPlastic" -- ArtService/Materials: toy plastic with a soft pixel grid
 local v = Vector3.new
 
 local Skins: { [string]: MeshAssets.Skin } = {
@@ -20,6 +21,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, 1, 0),
 				Size = v(20.4, 4, 20.4),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = PP.Grass,
 			},
 			PP_Kit_GrassBlock_Dirt = {
@@ -27,6 +29,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, -0.475, 0),
 				Size = v(19.7, 5.05, 19.7),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = PP.Dirt,
 			},
 			PP_Kit_GrassBlock_Spots = {
@@ -34,6 +37,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, -1.65, 0),
 				Size = v(19.9, 1.5, 19.9),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = Color3.fromHex("#8A5A2E"),
 			},
 		},
@@ -46,6 +50,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, 0, 0),
 				Size = v(9.7, 1.9, 9.7),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = Color3.fromHex("#E8E4D8"),
 			},
 			PP_Kit_MoveBlock_Frame = {
@@ -65,6 +70,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, 0.3, 0),
 				Size = v(9.1, 6.6, 11.6),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = Color3.fromHex("#3C3C4B"),
 			},
 			PP_Prop_Crusher_Hazard = {
@@ -136,6 +142,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, 0, 0),
 				Size = v(22, 8, 7),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = PP.Cloud,
 			},
 		},
@@ -148,6 +155,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, 0, 0),
 				Size = v(3.7, 3.7, 3.7),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = PP.Gold,
 			},
 			PP_Prop_CoinBlock_Frame = {
@@ -155,6 +163,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Offset = v(0, 0, 0),
 				Size = v(4, 4, 4),
 				Material = SMOOTH,
+				Variant = PLASTIC,
 				Color = Color3.fromHex("#C8961E"),
 			},
 			PP_Prop_CoinBlock_Mark = {
@@ -201,6 +210,7 @@ Skins.Cliff = {
 			Offset = v(0, 7.5, 0),
 			Size = v(20.5, 5, 20.5),
 			Material = SMOOTH,
+			Variant = PLASTIC,
 			Color = PP.Grass,
 		},
 		PP_Kit_Cliff_Dirt = {
@@ -208,6 +218,7 @@ Skins.Cliff = {
 			Offset = v(0, -0.8, 0),
 			Size = v(20, 18.4, 20),
 			Material = SMOOTH,
+			Variant = PLASTIC,
 			Color = PP.Dirt,
 		},
 		PP_Kit_Cliff_Strata = {
@@ -215,6 +226,7 @@ Skins.Cliff = {
 			Offset = v(0, -1.4, 0),
 			Size = v(20.24, 6.2, 20.24),
 			Material = SMOOTH,
+			Variant = PLASTIC,
 			Color = Color3.fromHex("#8A5A2E"),
 		},
 		PP_Kit_Cliff_Stones = {
@@ -241,6 +253,7 @@ Skins.DirtWall = {
 			Offset = v(0, -0.5, 0),
 			Size = v(1.6, 19, 20),
 			Material = SMOOTH,
+			Variant = PLASTIC,
 			Color = Color3.fromHex("#8A5A2E"),
 		},
 		PP_Kit_DirtWall_Top = {
@@ -248,6 +261,7 @@ Skins.DirtWall = {
 			Offset = v(0, 9.1, 0),
 			Size = v(2.3, 1.8, 20.2),
 			Material = SMOOTH,
+			Variant = PLASTIC,
 			Color = PP.Grass,
 		},
 	},
@@ -266,8 +280,16 @@ Skins.Belt = {
 			Id = "rbxassetid://104161523408844",
 			Offset = v(0, 0.55, 0),
 			Size = v(12, 0.45, 30),
-			Material = SMOOTH,
+			Material = Enum.Material.Rubber,
 			Color = Color3.fromHex("#2E2E36"),
+			-- tread with painted chevrons (textures/PP_BeltTread3.png); BeltController scrolls it at the belt's speed
+			Texture = {
+				Id = "rbxassetid://108056695290827",
+				Face = Enum.NormalId.Top,
+				StudsPerTile = Vector2.new(12, 12),
+				Offset = Vector2.new(6, 0), -- centers the chevrons across the belt
+				Tag = "BeltScroll",
+			},
 		},
 		PP_Kit_Belt_Glow = {
 			Id = "rbxassetid://134386850518263",
@@ -288,6 +310,156 @@ Skins.Tree = gen("rbxassetid://110637086239850", "rbxassetid://81380511005138", 
 Skins.Flowers = gen("rbxassetid://97758112493229", "rbxassetid://84236852470382", v(3.3, 3, 2.2), v(3.28, 3, 2.21))
 Skins.Bush = gen("rbxassetid://97383134312851", "rbxassetid://132624303942108", v(2.9, 4, 2.9), v(2.85, 4, 2.86))
 
+-- Kit 3 (blender_assets/PixelPlainsKit3.*): signs, timed door, pull lever, dropper chute, "BY KAI + MIKO" letters.
+-- Real surfaces from Roblox materials (wood grain, metal); owner glow only on the gameplay part of each target.
+local WOOD = Color3.fromHex("#C8964B")
+local WOOD_DARK = Color3.fromHex("#7A5230")
+local IRON = Color3.fromHex("#4A4A55")
+Skins.Sign = { -- the text stays on the grey-box part's SurfaceGuis; planks sit just behind both faces
+	Design = v(14, 3, 0.4),
+	Meshes = {
+		PP_Prop_Sign_Planks = {
+			Id = "rbxassetid://132889818651877",
+			Offset = v(0.005, -0.047, 0),
+			Size = v(13.553, 2.979, 0.28),
+			Material = Enum.Material.WoodPlanks,
+			Color = WOOD,
+		},
+		PP_Prop_Sign_Battens = {
+			Id = "rbxassetid://123232037562820",
+			Offset = v(0, 0, 0),
+			Size = v(10.1, 3.1, 0.38),
+			Material = Enum.Material.Wood,
+			Color = WOOD_DARK,
+		},
+	},
+}
+Skins.SignPost = {
+	Design = v(0.9, 6, 0.9),
+	Meshes = {
+		PP_Prop_SignPost = {
+			Id = "rbxassetid://132664259938554",
+			Offset = v(0, 0, 0),
+			Size = v(0.9, 6, 0.9),
+			Material = Enum.Material.Wood,
+			Color = WOOD_DARK,
+		},
+	},
+}
+Skins.TimedDoor = {
+	Design = v(8, 12, 1.5),
+	Meshes = {
+		PP_Prop_TimedDoor_Frame = {
+			Id = "rbxassetid://132087797472788",
+			Offset = v(0, 0, 0),
+			Size = v(8, 12, 1.5),
+			Material = NEON,
+			Color = Palette.Glow.Kai, -- freezable = Kai's target
+		},
+		PP_Prop_TimedDoor_Body = {
+			Id = "rbxassetid://73092785320641",
+			Offset = v(0.016, -0.074, 0),
+			Size = v(6.811, 10.819, 1.1),
+			Material = Enum.Material.WoodPlanks,
+			Color = Color3.fromHex("#B07A3E"),
+		},
+		PP_Prop_TimedDoor_Bands = {
+			Id = "rbxassetid://110777536701275",
+			Offset = v(0.44, 0, 0),
+			Size = v(6.52, 7.9, 1.848),
+			Material = Enum.Material.Metal,
+			Color = IRON,
+		},
+	},
+}
+Skins.PullLever = {
+	Design = v(1, 5, 1),
+	Meshes = {
+		PP_Prop_PullLever_Base = {
+			Id = "rbxassetid://102182536798766",
+			Offset = v(0, -2.045, 0),
+			Size = v(1.8, 0.91, 1.8),
+			Material = Enum.Material.Metal,
+			Color = IRON,
+		},
+		PP_Prop_PullLever_Shaft = {
+			Id = "rbxassetid://137471515726725",
+			Offset = v(0, -0.2, 0),
+			Size = v(0.5, 3.1, 0.5),
+			Material = Enum.Material.Metal,
+			Color = Color3.fromHex("#9A9AA6"),
+		},
+		PP_Prop_PullLever_Grip = {
+			Id = "rbxassetid://97623882299147",
+			Offset = v(0, 0.245, 0),
+			Size = v(1.9, 4.91, 1.9),
+			Material = NEON,
+			Color = Palette.Glow.Miko, -- pullable = Miko's target
+		},
+	},
+}
+Skins.Chute = {
+	Design = v(8, 16, 8),
+	Meshes = {
+		PP_Prop_Chute_Pipe = {
+			Id = "rbxassetid://103468657655327",
+			Offset = v(0, 0.3, 0),
+			Size = v(7.877, 15.4, 7.877),
+			Material = Enum.Material.Metal,
+			Color = Color3.fromHex("#8A8FA0"),
+		},
+		PP_Prop_Chute_Bands = {
+			Id = "rbxassetid://72257420203446",
+			Offset = v(0, -0.775, 0),
+			Size = v(8.4, 14.25, 8.4),
+			Material = Enum.Material.Metal,
+			Color = IRON,
+		},
+		PP_Prop_Chute_Hole = {
+			Id = "rbxassetid://99075131701142",
+			Offset = v(0, -7.8, 0),
+			Size = v(6.8, 0.3, 6.8),
+			Material = SMOOTH,
+			Color = Color3.fromHex("#16161C"),
+		},
+	},
+}
+Skins.HillSign = { -- "BY KAI + MIKO" in chunky pixel letters, readable from the -Z side (art-direction.md §8)
+	Design = v(75.55, 8.79, 1.6),
+	Meshes = {
+		PP_Prop_HillSign = {
+			Id = "rbxassetid://114249860822124",
+			Offset = v(0, 0, 0),
+			Size = v(75.549, 8.79, 1.6),
+			Material = SMOOTH,
+			Color = Color3.fromHex("#FFF4DC"),
+		},
+	},
+}
+-- dropper blocks: the coin-block cube with a Kai-orange edge frame (freezable)
+Skins.FallBlock = {
+	Design = v(4, 4, 4),
+	Meshes = {
+		Body = {
+			Id = "rbxassetid://120682677424503",
+			Offset = v(0, 0, 0),
+			Size = v(3.7, 3.7, 3.7),
+			Material = SMOOTH,
+			Variant = PLASTIC,
+			Color = Color3.fromHex("#E8E4D8"),
+		},
+		Frame = {
+			Id = "rbxassetid://139212127358567",
+			Offset = v(0, 0, 0),
+			Size = v(4, 4, 4),
+			Material = NEON,
+			Color = Palette.Glow.Kai,
+		},
+	},
+}
+-- generated box fan (faces +Z as generated); placed pitched so it blows up, depth squashed into a floor vent
+Skins.Fan = gen("rbxassetid://75748223101068", "rbxassetid://128839206690973", v(2.5, 2.5, 2), v(2.49, 2.5, 0.8))
+
 local Dressing: { [string]: string } = {
 	MoveBlock = "MoveBlock",
 	PixelCrusher = "Crusher",
@@ -300,6 +472,10 @@ local Dressing: { [string]: string } = {
 	GlitchBlob = "GlitchBlobSkin",
 	BouncePad = "BouncePadSkin",
 	StaticBat = "StaticBatSkin",
+	Sign = "Sign",
+	TimedDoor = "TimedDoor",
+	PullLever = "PullLever",
+	FallBlock = "FallBlock", -- dropper blocks are Kai's freeze targets too (dressed as they spawn)
 }
 -- every walkable grass platform of the Greybox layout (Greybox/init.luau buildPixelPlains)
 for _, name in
@@ -381,6 +557,49 @@ local Decor: { { any } } = {
 	{ "Tree", CFrame.new(-16, 5.6, 205) * CFrame.Angles(0, math.rad(357), 0), 0.7 },
 	{ "Tree", CFrame.new(-24, 28, 1050) * CFrame.Angles(0, math.rad(18), 0), 1.0 },
 	{ "Tree", CFrame.new(24, 28.8, 1098) * CFrame.Angles(0, math.rad(330), 0), 1.1 },
+	-- kid details: the "BY KAI + MIKO" hill west of the meadow, facing the plaza; a floor fan under the vent;
+	-- the dropper's chute coming out of a cloud
+	{ "Cliff", CFrame.new(-150, -20, 110), 4 },
+	{ "HillSign", CFrame.lookAt(Vector3.new(-122, 24.4, 110), Vector3.new(0, 24.4, 110)), 1 },
+	{ "Tree", CFrame.new(-165, 27.9, 88) * CFrame.Angles(0, math.rad(40), 0), 1.0 },
+	{ "Tree", CFrame.new(-170, 27.9, 132) * CFrame.Angles(0, math.rad(200), 0), 1.2 },
+	{ "Bush", CFrame.new(-140, 23, 80) * CFrame.Angles(0, math.rad(12), 0), 1.8 },
+	{ "Fan", CFrame.new(0, 43, 379) * CFrame.Angles(math.rad(-90), 0, 0), 3.2 },
+	{ "Chute", CFrame.new(0, 107.8, 551), 1.1 },
+	cloud(0, 117, 551, 0, 1.5),
 }
 
-return { Skins = Skins, Dressing = Dressing, Decor = Decor }
+-- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the
+-- board's ends so they never cover the lettering).
+local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { world }
+	params.RespectCanCollide = true
+	for _, sign in world:GetDescendants() do
+		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then
+			continue
+		end
+		local top = sign.Position.Y + sign.Size.Y / 2
+		for _, side in { -1, 1 } do
+			local foot = sign.CFrame * Vector3.new(side * (sign.Size.X / 2 - 0.1), -sign.Size.Y / 2, 0)
+			local hit = workspace:Raycast(foot, Vector3.new(0, -60, 0), params)
+			if hit then
+				local height = top + 0.5 - hit.Position.Y
+				local post = Instance.new("Part")
+				post.Name = "SignPost"
+				post.Size = Vector3.new(0.9, height, 0.9)
+				post.CFrame = CFrame.new(foot.X, hit.Position.Y + height / 2, foot.Z) * sign.CFrame.Rotation
+				post.Anchored = true
+				post.CanCollide = false
+				post.CanQuery = false
+				post.CanTouch = false
+				post.Transparency = 1
+				post.Parent = sign
+				apply(post, "SignPost")
+			end
+		end
+	end
+end
+
+return { Skins = Skins, Dressing = Dressing, Decor = Decor, Extras = Extras }

@@ -14,6 +14,11 @@ export type MeshInfo = {
 	Transparency: number?,
 	Collision: Enum.CollisionFidelity?, -- nil = CanCollide false
 	Yaw: number?, -- degrees about Y, applied when placed (generated meshes face different ways)
+	-- MaterialVariant name, on top of Material. Variants live in adventure.project.json (MaterialService): scripts
+	-- can't set a variant's maps at runtime. Maps are hand-made PNGs in textures/ (near-white, so part Color rules).
+	Variant: string?,
+	-- a tiling Texture on one face (e.g. a conveyor tread); Tag lets a client controller animate it
+	Texture: { Id: string, Face: Enum.NormalId, StudsPerTile: Vector2, Offset: Vector2?, Tag: string? }?,
 }
 
 -- A set of meshes that dresses one grey-box part: offsets/sizes are at Design size and scale with the part.
@@ -48,7 +53,23 @@ function MeshAssets.Template(name: string, info: MeshInfo): MeshPart
 	p.Size = info.Size
 	p.Anchored = true
 	p.Material = info.Material
+	if info.Variant then
+		p.MaterialVariant = info.Variant
+	end
 	p.Color = info.Color or Color3.new(1, 1, 1)
+	if info.Texture then
+		local t = Instance.new("Texture")
+		t.Texture = info.Texture.Id
+		t.Face = info.Texture.Face
+		t.StudsPerTileU = info.Texture.StudsPerTile.X
+		t.StudsPerTileV = info.Texture.StudsPerTile.Y
+		t.OffsetStudsU = info.Texture.Offset and info.Texture.Offset.X or 0
+		t.OffsetStudsV = info.Texture.Offset and info.Texture.Offset.Y or 0
+		if info.Texture.Tag then
+			t:AddTag(info.Texture.Tag)
+		end
+		t.Parent = p
+	end
 	if info.TextureId then
 		p.TextureID = info.TextureId
 	end

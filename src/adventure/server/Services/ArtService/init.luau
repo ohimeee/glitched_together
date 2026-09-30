@@ -14,7 +14,12 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local PipMeshes = require(script.Pip)
 local Badges = require(script.Badges)
 
-type WorldArt = { Skins: { [string]: MeshAssets.Skin }, Dressing: { [string]: string }, Decor: { { any } } }
+type WorldArt = {
+	Skins: { [string]: MeshAssets.Skin },
+	Dressing: { [string]: string },
+	Decor: { { any } },
+	Extras: ((world: Instance, apply: (BasePart, string) -> boolean) -> ())?, -- runs once skins + decor are in
+}
 
 local Worlds: { [string]: WorldArt } = {
 	Prologue = require(script.Prologue),
@@ -114,6 +119,16 @@ function ArtService.Dress(world: Instance, worldName: string)
 			if world.Parent then
 				placeDecor(world, item[1], item[2], item[3] or 1)
 			end
+		end
+		if art.Extras and world.Parent then
+			art.Extras(world, ArtService.Apply)
+		end
+	end)
+	-- parts spawned later (dropper blocks) get their skin too
+	world.DescendantAdded:Connect(function(d)
+		local skinName = art.Dressing[d.Name]
+		if skinName and d:IsA("BasePart") and not d:GetAttribute("Skinned") then
+			task.defer(ArtService.Apply, d, skinName)
 		end
 	end)
 end

@@ -61,7 +61,7 @@ AI text/image → textured 3D (GLB), plus retexture, smart low poly, rigging. Us
 | Hero asset with exact style (Pip, capsules, signature props, boss parts) | **Blender**, scripted |
 | Generic filler prop (barrel, crate, tree) | Poly Pizza / Poly Haven (once enabled), or Studio `generate_mesh` |
 | Quick grey-box piece or tag-driven level part | Plain Parts in code (see `src/adventure/server/Greybox`) |
-| Surface look (stone, wood, pixel grass) | Studio `generate_material` / MaterialVariant, or Poly Haven textures |
+| Surface look (stone, wood, pixel grass) | Roblox materials first (Wood, WoodPlanks, Metal, Rubber); a custom MaterialVariant from hand-made maps (`textures/make_*.py`) declared in the Rojo project (scripts can't set variant maps at runtime); Studio `generate_material` came out too heavy for Pixel Plains; Poly Haven textures |
 | World environments (polish phase): textures, HDRIs, set dressing, filler props | **Poly Haven** (CC0) + **Blend Swap** (`blendswap` MCP: `search_assets` with CC0/CC-BY filter, `get_balance` before `download_asset`, then append in Blender, decimate to budget, restyle to the world palette) |
 
 ---
@@ -189,7 +189,7 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | ✅ | Kai / Miko role badges (▲ / ● back badge accessory) | All | In game: `Identity.*`, `ArtService/Badges.luau`. Full outfits per world (art-direction §5) still to do |
 | ✅ | Giant title-menu buttons, UI panels, "CONTINUE?" title card | Prologue | In game: `blender_assets/PrologueUI.*`, brief `briefs/PrologueUI.md`, skins in `ArtService` |
 | ✅ | Grass block, moving block, Pixel Crusher, grapple ring, crate, cloud, star coin block | Pixel Plains | In game: `PixelPlains.*`, brief `briefs/PixelPlains.md` |
-| 1 | **Pixel Plains art pass 2** (new layout): cliff, dirt wall, conveyor kit (Blender, `PixelPlainsKit2.*`, awaiting import) + generated Glitch Blob, flowers, bush, bounce pad; still to make: Static Bat, tree, lever, fan, dropper chute, door, sign boards, "BY KAI + MIKO" sign | Pixel Plains | Brief + ids: `briefs/PixelPlains2.md` |
+| ✅ | **Pixel Plains art pass 2** (new layout): cliff, dirt wall, conveyor (`PixelPlainsKit2.*`), signs + posts, timed door, pull lever, dropper chute, "BY KAI + MIKO" letters (`PixelPlainsKit3.*`), generated Glitch Blob, Static Bat, tree, flowers, bush, bounce pad, fan; PixelPlastic variant, belt tread, crayon sun (`textures/`) | Pixel Plains | Brief + ids: `briefs/PixelPlains2.md` |
 | 1 | Castle kit: floor tiles, 6-stud walls with arches, torch, brazier, banner, iron bars, cracked wall, wooden door, enemies (googly-eyed skeleton, slime, archer, shield guard, mage) | Starfall Castle | Top-down readable; floors carry the design |
 | 2 | Castle gate, torch/brazier, banner, bookshelf, iron bars, Siege Cart | Starfall Castle | Top-down readable from above |
 | 3 | Wireframe cubes, missing-texture blocks, SAVE button | Glitched Core | |
