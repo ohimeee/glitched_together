@@ -1,53 +1,46 @@
--- Pip, the floating companion (blender_assets/Pip.*): split per material. ArtService builds ReplicatedStorage.PipModel.
+-- Pip, the floating companion: Roblox Studio generate_mesh (textured glossy voxel sprite, the graphics
+-- baseline), split into Body / WingL / WingR / Antenna so PipController can flap the wings. The generation faced
+-- +Z; offsets here are already turned 180° (face on -Z, as PipController expects) and every part gets Yaw = 180.
+-- ArtService builds ReplicatedStorage.PipModel from this (pivot = Body).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
-local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local SMOOTH = Enum.Material.SmoothPlastic
+local v = Vector3.new
 
 local PipMeshes: { [string]: MeshAssets.MeshInfo } = {
-	Pip_Body = {
-		Id = "rbxassetid://135129700526761",
-		Offset = Vector3.new(0, -0.5, 0.01),
-		Size = Vector3.new(2, 2, 0.75),
+	Body = {
+		Id = "rbxassetid://79472728381879",
+		TextureId = "rbxassetid://100885623527464",
+		Offset = v(0.001, -0.222, 0),
+		Size = v(1.583, 1.95, 1.6),
 		Material = SMOOTH,
-		Color = Color3.fromRGB(250, 245, 230),
+		Yaw = 180,
 	},
-	Pip_Face = {
-		Id = "rbxassetid://123843613543931",
-		Offset = Vector3.new(0, -0.75, -0.335),
-		Size = Vector3.new(1, 1, 0.1),
+	WingL = {
+		Id = "rbxassetid://120702701400605",
+		TextureId = "rbxassetid://80331020612231",
+		Offset = v(-0.946, -0.024, -0.078),
+		Size = v(0.696, 1.336, 0.476),
 		Material = SMOOTH,
-		Color = Palette.Prologue.Navy,
+		Yaw = 180,
 	},
-	Pip_Cheek = {
-		Id = "rbxassetid://107122889950116",
-		Offset = Vector3.new(0, -0.875, -0.335),
-		Size = Vector3.new(1.5, 0.25, 0.1),
+	WingR = {
+		Id = "rbxassetid://74852559275551",
+		TextureId = "rbxassetid://126383625960546",
+		Offset = v(0.947, -0.025, -0.078),
+		Size = v(0.694, 1.336, 0.475),
 		Material = SMOOTH,
-		Color = Color3.fromRGB(255, 120, 190),
+		Yaw = 180,
 	},
-	Pip_Wing = {
-		Id = "rbxassetid://95379349566842",
-		Offset = Vector3.new(0, -0.5, 0.26),
-		Size = Vector3.new(3.5, 1, 0.25),
+	Antenna = {
+		Id = "rbxassetid://111170738058732",
+		TextureId = "rbxassetid://115898407403995",
+		Offset = v(-0.375, 0.845, -0.218),
+		Size = v(0.36, 0.704, 0.173),
 		Material = SMOOTH,
-		Color = Palette.Prologue.Pink, -- Pip's own color, not the Glitch
-	},
-	Pip_Star = {
-		Id = "rbxassetid://99816899660790",
-		Offset = Vector3.new(-0.125, 1.25, 0.01),
-		Size = Vector3.new(0.75, 0.5, 0.25),
-		Material = Enum.Material.Neon,
-		Color = Color3.fromRGB(255, 205, 40),
-	},
-	Pip_Antenna = {
-		Id = "rbxassetid://104360292988220",
-		Offset = Vector3.new(-0.125, 0.75, 0.01),
-		Size = Vector3.new(0.25, 0.5, 0.25),
-		Material = SMOOTH,
-		Color = Color3.fromRGB(240, 240, 250),
+		Yaw = 180,
 	},
 }
 

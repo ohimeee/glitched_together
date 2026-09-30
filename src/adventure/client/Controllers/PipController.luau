@@ -2,6 +2,8 @@
 -- to your shoulder when a hint arrives. Its glow takes the color of whoever it talks to (art-direction.md §5):
 -- white while floating between you, your role color while it talks to you. Local-only copy of ReplicatedStorage.PipModel (published by ArtService);
 -- if the meshes never load, the hint bubble still works on its own.
+-- Motion (Tuning.Pip): spring follow that overshoots and settles, a lazy figure-8 drift, banking into its
+-- motion, a spin + hop when it has something to say, wing flaps, and a short glitch stutter now and then.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -33,6 +35,24 @@ local function rootOf(p: Player?): BasePart?
 	return character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 end
 
+-- Where Pip wants to be, before drift/bob.
+local function anchorTarget(me: BasePart, hinting: boolean): Vector3
+	if hinting then
+		-- beside your head, on the camera's right, so it reads as talking to you
+		return me.Position + camera.CFrame.RightVector * 3 + Vector3.new(0, 3, 0)
+	end
+	local other = rootOf(partner())
+	local mid = if other and (other.Position - me.Position).Magnitude < T.Leash
+		then (me.Position + other.Position) / 2
+		else me.Position
+	return mid + Vector3.new(0, T.Height, 0)
+end
+
+local function easeOutBack(x: number): number
+	local c = 1.4
+	return 1 + (c + 1) * (x - 1) ^ 3 + c * (x - 1) ^ 2
+end
+
 function PipController.Init()
 	task.spawn(function()
 		local template = ReplicatedStorage:WaitForChild("PipModel", 60) :: Model?
@@ -51,10 +71,30 @@ function PipController.Init()
 		end
 		pip.Parent = workspace
 
+		-- every part's pose relative to the model pivot, so wings can flap on top of the body's motion
+		-- (position only: the parts carry their own Yaw, and a rotated pivot would cancel it)
+		local pivot0 = CFrame.new(pip:GetPivot().Position)
+		local parts: { BasePart } = {}
+		local rest: { CFrame } = {}
+		local flapSign: { number } = {}
+		local hinge: { Vector3 } = {} -- wing root, in pivot space
+		for _, d in pip:GetDescendants() do
+			if d:IsA("BasePart") then
+				table.insert(parts, d)
+				local rel = pivot0:ToObjectSpace(d.CFrame)
+				table.insert(rest, rel)
+				local sign = if d.Name == "WingL" then -1 elseif d.Name == "WingR" then 1 else 0
+				table.insert(flapSign, sign)
+				-- inner edge of the wing (toward the body's center line)
+				table.insert(hinge, rel.Position - Vector3.new(sign * d.Size.X / 2, 0, 0))
+			end
+		end
+
 		local glow = pip:FindFirstChildWhichIsA("PointLight", true)
-		local hintUntil = 0
+		local hintUntil, spinStart = 0, -math.huge
 		Net.event("Hint").OnClientEvent:Connect(function()
 			hintUntil = os.clock() + T.HintTime
+			spinStart = os.clock()
 			local role = (Roles :: any)[player:GetAttribute("Role") or ""]
 			if glow then
 				glow.Color = if role then role.Color else Palette.Duo
@@ -66,31 +106,85 @@ function PipController.Init()
 			end)
 		end)
 
+		local rng = Random.new()
+		local nextJitter = os.clock() + rng:NextNumber(T.JitterMin, T.JitterMax)
+		local jitterUntil = 0
 		local pos: Vector3? = nil
+		local vel = Vector3.zero
+		local bank, pitch = 0, 0
+		local cframes: { CFrame } = table.create(#parts)
+
 		RunService.RenderStepped:Connect(function(dt)
 			local me = rootOf(player)
 			if not me then
 				return
 			end
-			local target: Vector3
-			if os.clock() < hintUntil then
-				-- beside your head, on the camera's right, so it reads as talking to you
-				target = me.Position + camera.CFrame.RightVector * 3 + Vector3.new(0, 3, 0)
-			else
-				local other = rootOf(partner())
-				local mid = if other and (other.Position - me.Position).Magnitude < T.Leash
-					then (me.Position + other.Position) / 2
-					else me.Position
-				target = mid + Vector3.new(0, T.Height, 0)
-			end
-			target += Vector3.new(0, math.sin(os.clock() * T.BobSpeed) * T.BobHeight, 0)
+			dt = math.min(dt, 1 / 20) -- keep the spring stable through frame hitches
+			local now = os.clock()
+			local cam = camera.CFrame
 
-			pos = if pos then pos:Lerp(target, 1 - math.exp(-dt * T.Sharpness)) else target
-			local at = pos :: Vector3
-			local look = Vector3.new(camera.CFrame.Position.X, at.Y, camera.CFrame.Position.Z)
-			if (look - at).Magnitude > 0.1 then
-				pip:PivotTo(CFrame.lookAt(at, look)) -- Pip's face is its -Z side
+			-- target: anchor + figure-8 in the camera's view plane + bob
+			local w = now * T.DriftSpeed
+			local drift = cam.RightVector * (math.sin(w) * T.DriftRadius)
+				+ Vector3.new(0, math.sin(w * 2) * T.DriftRadius * 0.5 + math.sin(now * T.BobSpeed) * T.BobHeight, 0)
+			local target = anchorTarget(me, now < hintUntil) + drift
+
+			-- spring follow (semi-implicit Euler)
+			if not pos or (target - pos).Magnitude > T.SnapDistance then
+				pos, vel = target, Vector3.zero
 			end
+			local p = pos :: Vector3
+			vel += ((target - p) * T.Stiffness - vel * T.Damping) * dt
+			if vel.Magnitude > T.MaxSpeed then
+				vel = vel.Unit * T.MaxSpeed
+			end
+			p += vel * dt
+			pos = p
+
+			-- lean into sideways motion; dip toward/away from the camera
+			local side = vel:Dot(cam.RightVector)
+			local toward = vel:Dot(-cam.LookVector)
+			local k = 1 - math.exp(-dt * T.BankSharpness)
+			bank += (math.clamp(-side * T.BankPerSpeed, -T.MaxBank, T.MaxBank) - bank) * k
+			pitch += (math.clamp(toward * T.BankPerSpeed * 0.5, -T.MaxBank, T.MaxBank) - pitch) * k
+
+			-- excited spin + hop after a hint
+			local spin, hop = 0, 0
+			local s = (now - spinStart) / T.SpinTime
+			if s >= 0 and s < 1 then
+				spin = easeOutBack(s) * math.pi * 2
+				hop = math.sin(s * math.pi) * T.SpinHop
+			end
+
+			-- glitch stutter: hard snaps, never smooth (art-direction.md §7)
+			local jitter = Vector3.zero
+			if now >= nextJitter then
+				jitterUntil = now + T.JitterTime
+				nextJitter = now + rng:NextNumber(T.JitterMin, T.JitterMax)
+			end
+			if now < jitterUntil and math.floor(now * 30) % 2 == 0 then
+				local a = T.JitterAmount
+				jitter = Vector3.new(rng:NextNumber(-a, a), rng:NextNumber(-a, a) * 0.5, rng:NextNumber(-a, a))
+			end
+
+			local at = p + Vector3.new(0, hop, 0) + jitter
+			local look = Vector3.new(cam.Position.X, at.Y, cam.Position.Z)
+			if (look - at).Magnitude < 0.1 then
+				return
+			end
+			-- Pip's face is its -Z side
+			local root = CFrame.lookAt(at, look) * CFrame.Angles(pitch, spin, bank)
+
+			local flap = math.sin(now * T.FlapSpeed) * T.FlapAngle
+			for i, rel in rest do
+				local sign = flapSign[i]
+				if sign ~= 0 then
+					local h = hinge[i]
+					rel = CFrame.new(h) * CFrame.Angles(0, 0, sign * flap) * CFrame.new(-h) * rel
+				end
+				cframes[i] = root * rel
+			end
+			workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 		end)
 	end)
 end

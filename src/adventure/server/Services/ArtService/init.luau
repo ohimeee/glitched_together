@@ -161,9 +161,12 @@ local function giveBadge(p: Player)
 	emblem.CanCollide = false
 	emblem.CanQuery = false
 	emblem.CFrame = handle.CFrame * CFrame.new(info.Offset * s)
-	local weld = Instance.new("WeldConstraint")
+	-- a Weld with a fixed C0 (a WeldConstraint records its offset when it activates, which can be after
+	-- AddAccessory has already moved the plate, leaving the emblem behind)
+	local weld = Instance.new("Weld")
 	weld.Part0 = handle
 	weld.Part1 = emblem
+	weld.C0 = CFrame.new(info.Offset * s)
 	weld.Parent = emblem
 	emblem.Parent = handle
 	humanoid:AddAccessory(accessory)
@@ -195,16 +198,22 @@ function ArtService.Init()
 		model.Name = "PipModel"
 		for name, info in PipMeshes do
 			local p = templates[name]
-			p.CFrame = CFrame.new(info.Offset)
+			p.CFrame = CFrame.new(info.Offset) * CFrame.Angles(0, math.rad(info.Yaw or 0), 0)
 			p.CastShadow = false
 			p.Parent = model
 		end
-		model.PrimaryPart = templates.Pip_Body
-		local glow = Instance.new("PointLight") -- keeps Pip readable in dark worlds; PipController recolors it
+		model.PrimaryPart = templates.Body
+		-- keeps Pip readable in dark worlds; PipController recolors it. Sits in front of the face (the mesh's +Z):
+		-- a light inside the body would leave Pip's own surface dark.
+		local lamp = Instance.new("Attachment")
+		lamp.Name = "Glow"
+		lamp.Position = Vector3.new(0, 0.2, 1.8)
+		lamp.Parent = templates.Body
+		local glow = Instance.new("PointLight")
 		glow.Color = Palette.Duo
-		glow.Range = 8
-		glow.Brightness = 1.2
-		glow.Parent = templates.Pip_Body
+		glow.Range = 10
+		glow.Brightness = 1.6
+		glow.Parent = lamp
 		model.Parent = ReplicatedStorage
 	end)
 

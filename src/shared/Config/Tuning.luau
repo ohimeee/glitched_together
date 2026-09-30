@@ -136,12 +136,34 @@ return {
 
 	-- Pip, the floating companion (client-side)
 	Pip = {
-		Scale = 0.75,
+		Scale = 1,
 		Height = 6, -- studs above the duo's midpoint
-		Sharpness = 3, -- follow smoothing (higher = snappier)
-		BobHeight = 0.4,
-		BobSpeed = 2,
 		Leash = 40, -- partner farther than this: Pip stays with you
 		HintTime = 6, -- seconds Pip hangs at your shoulder after a hint
+		-- spring follow: overshoots a little, then settles (damping ratio ≈ Damping / (2·√Stiffness) ≈ 0.6)
+		Stiffness = 26,
+		Damping = 6,
+		MaxSpeed = 60, -- studs/s cap so a respawn teleport doesn't fling Pip across the map
+		SnapDistance = 80, -- farther than this from its target: Pip just reappears there
+		-- idle drift: a lazy figure-8 in the camera's view plane, plus a bob
+		DriftRadius = 1.1,
+		DriftSpeed = 0.55, -- loops per second ÷ 2π
+		BobHeight = 0.3,
+		BobSpeed = 2.2,
+		-- banking: lean into sideways motion, nose-dip when moving toward/away from the camera
+		BankPerSpeed = math.rad(2.2), -- radians per stud/s
+		MaxBank = math.rad(30),
+		BankSharpness = 8,
+		-- excited spin + hop when a hint arrives
+		SpinTime = 0.7,
+		SpinHop = 1.4,
+		-- glitch stutter: every JitterMin–JitterMax s, snaps around for JitterTime (Pip is half-finished code)
+		JitterMin = 5,
+		JitterMax = 11,
+		JitterTime = 0.2,
+		JitterAmount = 0.35,
+		-- wings (parts named WingL / WingR) flap about their inner edge
+		FlapSpeed = 9,
+		FlapAngle = math.rad(22),
 	},
 }
