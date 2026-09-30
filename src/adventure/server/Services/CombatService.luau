@@ -20,6 +20,7 @@ local DuoService = require(script.Parent.DuoService)
 local InteractableService = require(script.Parent.InteractableService)
 local XpService = require(script.Parent.XpService)
 local CombatFx = require(script.Parent.CombatFx)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local C = Tuning.Combat
 local ENEMIES = Tuning.Enemies :: any
@@ -203,6 +204,7 @@ function CombatService.HitPlayer(p: Player, amount: number, fromPos: Vector3)
 	if shieldCovers(p, fromPos) then
 		CombatService.AddCharge(p, amount)
 		shieldFlash(p)
+		Audio.play("ShieldBlock", rootOf(p))
 		return
 	end
 	HealthService.Damage(p, amount)
@@ -311,6 +313,7 @@ local function kill(foe: Foe)
 	foes[foe.part] = nil
 	local part = foe.part
 	XpService.Drop(part.Position, foe.spec.XP)
+	Audio.play(if foe.kind == "SplitSlime" then "SlimeSquish" else "EnemyDeath", part.Position)
 	if foe.kind == "SplitSlime" and not part:GetAttribute("Small") then
 		for _, side in { -1, 1 } do
 			local small = part:Clone()
@@ -352,12 +355,14 @@ function CombatService.DamageEnemy(part: BasePart, amount: number, source: Playe
 			and flat(part.CFrame.LookVector).Unit:Dot(to.Unit) >= math.cos(math.rad(foe.spec.Arc / 2))
 		then
 			effect({ Size = Vector3.new(2, 2, 2), CFrame = CFrame.new(fromPos), Color = Color3.new(1, 1, 1) }, 0.2)
+			Audio.play("ShieldBlock", part, 0.8)
 			foe.awake = true
 			return 0
 		end
 	end
 	foe.hp -= amount
 	foe.awake = true
+	Audio.play("EnemyHit", part)
 	part:SetAttribute("HP", math.max(0, foe.hp))
 	if foe.fill then
 		foe.fill.Size = UDim2.fromScale(math.clamp(foe.hp / foe.maxHp, 0, 1), 1)
@@ -484,6 +489,10 @@ function CombatService.Fire(spec: ShotSpec)
 		Color = spec.color or FIRE,
 		Transparency = if spec.kind == "Fireball" then 0.35 else 0, -- a hot core inside the flames
 	})
+	Audio.play(
+		if spec.kind == "Fireball" then "FireballCast" elseif spec.kind == "Arrow" then "ArrowShoot" else "StaticShot",
+		spec.origin
+	)
 	if spec.kind == "Fireball" then
 		CombatFx.Fire(part, size)
 	else
@@ -521,6 +530,7 @@ local function reflect(shot: Shot, miko: Player, at: Vector3)
 	shot.part.Name = shot.kind .. "Reflected"
 	shot.part.CFrame = CFrame.new(at + shot.dir * 1.5)
 	shieldFlash(miko)
+	Audio.play("Reflect", at)
 end
 
 local function stepShot(shot: Shot, dt: number): boolean -- false = remove
@@ -572,6 +582,13 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 			end
 		end
 		CombatFx.Impact(hit.Position, shot.kind == "Fireball", shot.part.Color)
+		Audio.play(
+			if shot.kind:find("Fireball")
+				then "FireImpact"
+				elseif shot.kind:find("Arrow") then "ArrowHit"
+				else "GlitchStatic",
+			hit.Position
+		)
 		return false
 	end
 	shot.part.CFrame = CFrame.new(pos + move)
@@ -602,6 +619,7 @@ function CombatService.FlameWall(cf: CFrame, owner: Player?)
 	light.Range = T.Length + 8
 	light.Brightness = 3
 	light.Parent = part
+	Audio.play("FlameWall", part)
 	table.insert(walls, { part = part, owner = owner, untilTime = os.clock() + T.Life, nextTick = os.clock() })
 end
 
@@ -666,12 +684,14 @@ function CombatService.Meteor(pos: Vector3, owner: Player?)
 	})
 	CombatFx.Fire(rock, 3)
 	CombatFx.Emit(rock, "Smoke", 2.5, 25, Color3.fromRGB(90, 80, 100))
+	Audio.play("MeteorFall", rock)
 	TweenService:Create(rock, TweenInfo.new(T.Cast, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 		CFrame = CFrame.new(pos + Vector3.new(0, 1.5, 0)),
 	}):Play()
 	task.delay(T.Cast, function()
 		marker:Destroy()
 		rock:Destroy()
+		Audio.play("MeteorImpact", pos)
 		CombatFx.Burst(pos + Vector3.new(0, 1.5, 0), {
 			{ "Flame", 30, 4 },
 			{ "Stars", 30, 2.5, CombatFx.Gold },
@@ -688,6 +708,7 @@ function CombatService.Rally(pos: Vector3, owner: Player?)
 		{ "Ring", 1, T.Radius * 2.4, Palette.Miko },
 		{ "Stars", 24, 2, Color3.new(1, 1, 1) },
 	}, Palette.Miko, T.Radius * 3)
+	Audio.play("Rally", pos)
 	CombatService.Radial(pos, T.Radius, T.Damage, owner)
 	CombatService.Stun(pos, T.Radius, T.Stun)
 end
@@ -709,12 +730,17 @@ function CombatService.MeleeBox(cf: CFrame, size: Vector3, damage: number, owner
 		end
 	end
 	CombatFx.Slash(cf, size)
+	Audio.play("SwordSwing", cf.Position)
+	if hits > 0 then
+		Audio.play("SwordHit", cf.Position)
+	end
 	return hits
 end
 
 -- Shield Charge path: damage + shove enemies near the segment, break CrackedWall parts on it.
 function CombatService.ChargeLine(from: Vector3, dir: Vector3, length: number, damage: number, owner: Player?)
 	dir = unitOr(flat(dir), Vector3.zAxis)
+	Audio.play("ShieldCharge", from + dir * length)
 	for part in foes do
 		local rel = flat(part.Position - from)
 		local along = rel:Dot(dir)
@@ -734,6 +760,7 @@ function CombatService.ChargeLine(from: Vector3, dir: Vector3, length: number, d
 		if wall and wall:IsA("BasePart") and wall.Parent then
 			wall.CanCollide = false
 			wall.CanQuery = false
+			Audio.play("PoundDebris", wall.Position, 1.5)
 			TweenService:Create(wall, TweenInfo.new(0.3), { Transparency = 1 }):Play()
 			task.delay(0.35, wall.Destroy, wall)
 			InteractableService.Evaluate()
@@ -748,6 +775,7 @@ function CombatService.Ignite(inst: Instance)
 			return
 		end
 		inst:SetAttribute("Lit", true)
+		Audio.play("Ignite", inst)
 		local flame = effect({
 			Name = "Flame",
 			Size = Vector3.new(1.6, 1, 1.6),
@@ -774,6 +802,7 @@ function CombatService.Ignite(inst: Instance)
 		inst.Color = FIRE
 		inst.Material = Enum.Material.Neon
 		inst:SetAttribute("Burning", true)
+		Audio.play("FlameWall", inst.Position, 0.7)
 		TweenService:Create(inst, TweenInfo.new(1), { Transparency = 1 }):Play()
 		task.delay(1, function()
 			inst:Destroy()
@@ -814,6 +843,13 @@ local function stepMelee(foe: Foe, target: Player, dist: number, now: number, dt
 		if dist <= foe.spec.Reach then
 			foe.state = "Windup"
 			foe.stateUntil = now + foe.spec.Windup
+			Audio.play(
+				if foe.kind == "Skeleton"
+					then "SkeletonRattle"
+					elseif foe.kind == "SplitSlime" then "SlimeSquish"
+					else "EnemySwing",
+				foe.part
+			)
 			tint(foe.part, DANGER, foe.color:Lerp(Color3.new(1, 1, 1), 0.5)) -- telegraph (red = danger)
 		else
 			tryMove(foe, unitOr(flat(r.Position - foe.part.Position), Vector3.zAxis), foe.spec.Speed * dt)
@@ -857,7 +893,9 @@ local function stepMage(foe: Foe, target: Player, dist: number, now: number)
 		local angle = math.random() * math.pi * 2
 		local dir = Vector3.new(math.cos(angle), 0, math.sin(angle))
 		effect({ Size = foe.part.Size, CFrame = foe.part.CFrame, Color = foe.color, Transparency = 0.5 }, 0.3)
+		Audio.play("Teleport", foe.part.Position)
 		tryMove(foe, dir, foe.spec.Teleport, true)
+		Audio.play("GlitchCrackle", foe.part) -- Static enemies are the Glitch: always a crackle
 	else
 		local to = unitOr(flat(r.Position - foe.part.Position), Vector3.zAxis)
 		CombatService.Fire({

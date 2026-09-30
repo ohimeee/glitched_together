@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local CombatService = require(script.Parent.Parent.CombatService)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local T = Tuning.FireMage
 local C = Tuning.Combat
@@ -115,6 +116,7 @@ function FireMage.Use(p: Player, useIndex: number, target: Instance?, aim: any)
 		end
 	elseif useIndex == 5 then
 		-- aim = the spot Kai blinked from (the client already moved him)
+		Audio.play("Blink", root)
 		if p:GetAttribute("Up_EmberTrail") and typeof(aim) == "Vector3" then
 			if (aim - root.Position).Magnitude <= T.Blink.Distance + SLACK then
 				CombatService.Embers(aim, root.Position, p)

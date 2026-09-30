@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local DuoService = require(script.Parent.DuoService)
 local CheckpointService = require(script.Parent.CheckpointService)
 
@@ -136,6 +137,7 @@ function HealthService.Revive(p: Player, onTheSpot: boolean)
 	p:SetAttribute("RespawnAt", nil)
 	setGhost(p, false)
 	HealthService.Restore(p, if useHP then Tuning.ReviveHP else 1)
+	Audio.play("Revive", rootOf(p))
 	state(p).invulnUntil = os.clock() + Tuning.HitInvuln * 2
 	if not onTheSpot then
 		-- Auto-respawn: next to the partner's last safe spot if they're up, else at the checkpoint.
@@ -172,6 +174,7 @@ function HealthService.Down(p: Player)
 	end
 	p:SetAttribute("Health", 0)
 	p:SetAttribute("Downed", true)
+	Audio.play("Downed", rootOf(p))
 	setGhost(p, true)
 
 	local partner = DuoService.PartnerOf(p)
@@ -208,6 +211,7 @@ function HealthService.Damage(p: Player, amount: number)
 
 	local health = (p:GetAttribute("Health") or maxHealth(p)) - amount
 	p:SetAttribute("Health", math.max(0, health))
+	Audio.play("Hurt", rootOf(p))
 	if health <= 0 then
 		HealthService.Down(p)
 	end

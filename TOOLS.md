@@ -91,7 +91,8 @@ Goal (CLAUDE.md note 5): movement, every tool use (wind-up / effect / impact), e
 
 | Source | License | Notes |
 | --- | --- | --- |
-| **Roblox Creator Store: ProSoundEffects** | Pro Sound Effects' catalog, licensed for Roblox experiences | No download or upload needed: `search_asset` (assetType `Audio`, scope `creator_store`), use the id directly. Descriptive queries work ("whoosh swoosh"); long multi-word queries often return nothing; `verifiedCreatorsOnly`/`facets` don't filter. Ignore other uploaders (many are ripped) |
+| **Roblox Creator Store: ProSoundEffects** | Pro Sound Effects' catalog, licensed for Roblox experiences | No download or upload needed: use the id directly. **Search with `python sounds/find_sounds.py "<query>"`** (public toolbox API, keeps only ProSoundEffects / APMOfficial / Roblox / Monstercat, prints length + description; `"q@2"` = max 2 s, `MIN=90` env = min length, `OK=APMOfficial` env = creators). Much faster and more compact than Studio MCP `search_asset` (which can't filter by creator). PSE is a realistic library: search by material/action ("fire whoosh", "metal hits", "magic poof", "electricity static"); cartoon words ("boing", "cartoon jump") find nothing useful. Ignore other uploaders (many are ripped) |
+| Roblox's own sounds (creator **Roblox**) | Roblox's | UI set `Roblox_UI_*` / `RBLX UI *` (clicks, hover, select, whooshes, stinger) |
 | Roblox Creator Store: Roblox / APM Music | licensed for Roblox experiences | music tracks, same search |
 | **Kenney.nl** audio packs | CC0 | Interface, Impact, Digital, RPG, Sci-fi, Casino, Music Jingles… clean game SFX |
 | **Freesound.org** | per sound (CC0 / CC-BY / CC-BY-NC) | 700k+ sounds; filter License = CC0 (or CC-BY with credit); skip NC |
@@ -107,7 +108,7 @@ Goal (CLAUDE.md note 5): movement, every tool use (wind-up / effect / impact), e
 
 **Getting non-Roblox files into the game:** downloading is needed (state file, source, size; the user approved CC0/commercial-safe downloads for this). Put files in `sounds/` (WAV/OGG/MP3, trimmed, normalized), log them in `sounds/CREDITS.md`, then the **user bulk-imports** them in Studio's Asset Manager (audio uploads need the user; ≤7 min per file), and the ids go into `src/shared/Config/Sounds.luau`.
 
-**Build plan:** `Config/Sounds.luau` (all ids + volume/pitch, like Tuning/Palette), SoundGroups Music / SFX / UI, 3D sounds parented to their sources, music crossfade between worlds, duck music during cutscenes, Pip bleep-talk with the typewriter.
+**Built (Oct 1, 2026):** `Config/Sounds.luau` (Sfx / Music / BossMusic / Ambience: ids + Volume/Pitch/PitchVar/Range/Group), `Util/Audio.luau` (`Audio.play(name, part | position | nil)`; server plays replicate to everyone, client plays are local; SoundGroups Music / Ambience / SFX / UI, made by the server), `AudioController` (music + ambience per `workspace.World`, boss music on `BossFight`, crossfade, cutscene duck), hooks in MovementController, ToolFxController, CodeLayerController, HUD (Pip bleeps + chirp, level-up), CutsceneController (Pip bleeps, crackle on "???" lines), CombatService, FireMage, InteractableService, HealthService, CheckpointService, XpService, ContraptionService (Glitch wall crackle + hum). Plain jump / land / footsteps are Roblox's default character sounds. All ids verified loading in Studio.
 
 ## 4. Browser (references)
 
@@ -135,4 +136,5 @@ Goal (CLAUDE.md note 5): movement, every tool use (wind-up / effect / impact), e
 | Castle combat FX | `src/adventure/server/Services/CombatFx.luau` |
 | Tool VFX (client) | `src/adventure/client/Controllers/ToolFxController.luau` |
 | MaterialVariants | `adventure.project.json` → MaterialService |
+| Sound ids, volumes, music per world | `src/shared/Config/Sounds.luau` (player: `src/shared/Util/Audio.luau`; music/ambience/duck: `client/Controllers/AudioController.luau`; credits: `sounds/CREDITS.md`) |
 | Studio world jump | `workspace:SetAttribute("DebugWorld", "<World>")` on the server during play |

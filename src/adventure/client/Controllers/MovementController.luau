@@ -10,6 +10,7 @@ local CollectionService = game:GetService("CollectionService")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
 
@@ -269,6 +270,7 @@ local function onCharacter(character: Model)
 	-- Jumping -------------------------------------------------------------------------
 	local function doubleJump()
 		airJumps += 1
+		Audio.play("DoubleJump", root)
 		local v = root.AssemblyLinearVelocity
 		setVelocity(Vector3.new(v.X, Tuning.DoubleJumpVelocity, v.Z))
 	end
@@ -277,6 +279,7 @@ local function onCharacter(character: Model)
 		local c = cling :: { normal: Vector3, started: number }
 		cling = nil
 		resetAir()
+		Audio.play("WallJump", root)
 		setVelocity(c.normal * Tuning.WallJumpAway + Vector3.new(0, Tuning.WallJumpUp, 0))
 		root.CFrame = CFrame.lookAt(root.Position, root.Position + c.normal)
 	end
@@ -311,6 +314,7 @@ local function onCharacter(character: Model)
 			if crouching and humanoid.MoveDirection.Magnitude > 0.1 then
 				crouching = false
 				local dir = flat(humanoid.MoveDirection).Unit
+				Audio.play("LongJump", root)
 				task.defer(function()
 					setVelocity(dir * Tuning.LongJumpForward + Vector3.new(0, Tuning.LongJumpUp, 0))
 					-- hold the horizontal speed through the rise (the humanoid's air control would otherwise
@@ -363,6 +367,8 @@ local function onCharacter(character: Model)
 			jumpedSinceGround = false
 			if pounding then
 				pounding = false
+				Audio.play("PoundImpact", root)
+				Audio.play("PoundDebris", root)
 				groundPoundEvent:FireServer(root.Position)
 			end
 			if os.clock() - bufferedJumpAt <= Tuning.JumpBuffer and not player:GetAttribute("NoJump") then
@@ -396,6 +402,7 @@ local function onCharacter(character: Model)
 			lastGroundDash = os.clock()
 		end
 		cling = nil
+		Audio.play("Dash", root)
 		local dir = if humanoid.MoveDirection.Magnitude > 0
 			then flat(humanoid.MoveDirection).Unit
 			else root.CFrame.LookVector
@@ -417,6 +424,7 @@ local function onCharacter(character: Model)
 		end
 		pounding = true
 		cling = nil
+		Audio.play("PoundStart", root)
 		burst(Vector3.zero, Tuning.PoundHang) -- brief hang in the air
 		task.delay(Tuning.PoundHang, function()
 			if pounding then
@@ -457,6 +465,7 @@ local function onCharacter(character: Model)
 		end
 		if best then
 			local point = best
+			Audio.play("Swing", root)
 			startSwing(function()
 				return if point.Parent then Tags.position(point) else nil
 			end, Tuning.SwingBoost)
@@ -465,6 +474,7 @@ local function onCharacter(character: Model)
 
 	-- Bounce-pad launch from the server ----------------------------------------------------
 	trove:Add(Net.event("Launch").OnClientEvent:Connect(function(velocity: Vector3)
+		Audio.play("BouncePad", root)
 		stopSwing(false)
 		stopGrind(false)
 		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)

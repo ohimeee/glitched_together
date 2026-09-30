@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Input = require(script.Parent.Parent.Input)
 local CameraController = require(script.Parent.CameraController)
@@ -158,11 +159,20 @@ function CutsceneController.Init()
 			UiSkin.SetTextColor(speaker, Color3.fromRGB(25, 22, 40))
 			line.Text = l.Text
 			line.MaxVisibleGraphemes = 0
+			if l.Speaker == "???" then
+				Audio.play("GlitchCrackle") -- the Glitch speaking: always a crackle (art-direction.md §7)
+			end
 			local total = utf8.len(l.Text) or #l.Text
 			local t0 = os.clock()
+			local bleeped = 0
 			while token == myToken and os.clock() - t0 < LINE_TIME do
 				local shown = math.floor((os.clock() - t0) * LINE_CPS)
 				line.MaxVisibleGraphemes = if shown >= total then -1 else shown
+				-- Pip talks in bleeps (design.md §8), one every few letters while the text types out
+				if l.Speaker == "Pip" and shown < total and shown - bleeped >= 3 then
+					bleeped = shown
+					Audio.play("PipBleep")
+				end
 				task.wait()
 			end
 			line.MaxVisibleGraphemes = -1

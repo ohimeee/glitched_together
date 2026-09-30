@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Net = require(ReplicatedStorage.Shared.Net)
 local DuoService = require(script.Parent.DuoService)
 
@@ -157,6 +158,7 @@ function XpService.Init()
 			end
 			if best then
 				if bestD <= Tuning.Combat.OrbPickup then
+					Audio.play("XpPickup", best)
 					orb.part:Destroy()
 					table.remove(orbs, i)
 					XpService.Give(orb.amount)

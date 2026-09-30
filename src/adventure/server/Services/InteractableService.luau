@@ -12,6 +12,7 @@ local CollectionService = game:GetService("CollectionService")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local DuoService = require(script.Parent.DuoService)
 
 local InteractableService = {}
@@ -35,6 +36,12 @@ local function setActive(inst: Instance, active: boolean)
 		return
 	end
 	inst:SetAttribute("Active", active)
+	local at = if inst:IsA("BasePart") then inst else inst:FindFirstChildWhichIsA("BasePart", true)
+	if Tags.has(inst, "PressurePlate") or Tags.has(inst, "DuoPound") then
+		Audio.play(if active then "PlateDown" else "PlateUp", at)
+	elseif active then
+		Audio.play("Lever", at)
+	end
 	if inst:IsA("BasePart") then
 		if inst:GetAttribute("OrigColor") == nil then
 			inst:SetAttribute("OrigColor", inst.Color)
@@ -65,7 +72,11 @@ local function setGateOpen(gate: Instance, open: boolean)
 		return
 	end
 	gate:SetAttribute("Open", open)
-	for _, part in partsOf(gate) do
+	local parts = partsOf(gate)
+	if parts[1] then
+		Audio.play("GateMove", parts[1])
+	end
+	for _, part in parts do
 		if part:GetAttribute("ClosedCFrame") == nil then
 			part:SetAttribute("ClosedCFrame", part.CFrame)
 		end
@@ -201,6 +212,7 @@ local function onGroundPound(p: Player, pos: Vector3)
 	for _, floor in CollectionService:GetTagged("CrackedFloor") do
 		if floor:IsA("BasePart") and floor:IsDescendantOf(workspace) and onTop(floor, pos, 0.5) then
 			floor.CanCollide = false
+			Audio.play("PoundDebris", floor.Position, 1.5)
 			TweenService:Create(floor, TweenInfo.new(0.3), { Transparency = 1 }):Play()
 			task.delay(0.35, floor.Destroy, floor)
 			progress:Fire("FloorBroken", floor)

@@ -12,6 +12,7 @@ local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Input = require(script.Parent.Parent.Input)
 
 local player = Players.LocalPlayer
@@ -282,6 +283,7 @@ local function buildHint()
 		label.Text = line
 		label.MaxVisibleGraphemes = 0
 		bubble.Visible = true
+		Audio.play("PipChirp")
 		bubble.Size = UDim2.fromOffset(520, 70)
 		TweenService:Create(bubble, TweenInfo.new(0.25, Enum.EasingStyle.Back), {
 			Size = UDim2.fromOffset(560, 78),
@@ -292,6 +294,9 @@ local function buildHint()
 			while shown < total and shownAt == stamp do
 				shown += 1
 				label.MaxVisibleGraphemes = shown
+				if shown % 3 == 1 then
+					Audio.play("PipBleep") -- Pip talks in bleeps (design.md §8)
+				end
 				task.wait(1 / HINT_CPS)
 			end
 			label.MaxVisibleGraphemes = -1
@@ -571,6 +576,7 @@ local function buildPicker()
 		buttons[i] = b
 		-- a little lift on hover, like picking up a card
 		b.MouseEnter:Connect(function()
+			Audio.play("Hover")
 			TweenService:Create(b, TweenInfo.new(0.15), { Rotation = if i == 1 then -2 else 2 }):Play()
 		end)
 		b.MouseLeave:Connect(function()
@@ -591,12 +597,14 @@ local function buildPicker()
 			b:SetAttribute("Choice", name)
 		end
 		picker.Visible = true
+		Audio.play("LevelUp")
 		refreshWaiting()
 	end)
 	for _, b in buttons do
 		b.Activated:Connect(function()
 			local choice = b:GetAttribute("Choice")
 			if picker.Visible and choice then
+				Audio.play("Select")
 				picker.Visible = false
 				pickEvent:FireServer(choice)
 				refreshWaiting()

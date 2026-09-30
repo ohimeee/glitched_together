@@ -4,22 +4,35 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "Shared": { "$path": "src/shared" }
+      "Shared": {
+        "$path": "src/shared"
+      }
     },
     "ServerScriptService": {
-      "Server": { "$path": "src/adventure/server" }
+      "Server": {
+        "$path": "src/adventure/server"
+      }
     },
     "StarterPlayer": {
-      "$properties": { "EnableMouseLockOption": false },
+      "$properties": {
+        "EnableMouseLockOption": false
+      },
       "StarterPlayerScripts": {
-        "Client": { "$path": "src/adventure/client" }
+        "Client": {
+          "$path": "src/adventure/client"
+        }
       }
     },
     "Workspace": {
-      "$properties": { "StreamingEnabled": true, "FallenPartsDestroyHeight": -1000 }
+      "$properties": {
+        "StreamingEnabled": true,
+        "FallenPartsDestroyHeight": -1000
+      }
     },
     "Lighting": {
-      "$properties": { "Technology": "Future" }
+      "$properties": {
+        "Technology": "Future"
+      }
     },
     "MaterialService": {
       "PixelPlastic": {
@@ -30,6 +43,35 @@
           "NormalMap": "rbxassetid://129079399874302",
           "RoughnessMap": "rbxassetid://123209092209948",
           "StudsPerTile": 8
+        }
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      },
+      "Music": {
+        "$className": "SoundGroup",
+        "$properties": {
+          "Volume": 0.8
+        }
+      },
+      "Ambience": {
+        "$className": "SoundGroup",
+        "$properties": {
+          "Volume": 0.8
+        }
+      },
+      "SFX": {
+        "$className": "SoundGroup",
+        "$properties": {
+          "Volume": 1
+        }
+      },
+      "UI": {
+        "$className": "SoundGroup",
+        "$properties": {
+          "Volume": 1
         }
       }
     }

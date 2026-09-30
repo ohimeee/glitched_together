@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local CheckpointService = {}
 
@@ -81,6 +82,7 @@ function CheckpointService.Init()
 			local order = inst:GetAttribute("Order") or 0
 			if order > currentOrder then
 				currentOrder = order
+				Audio.play("Checkpoint", inst)
 				reached:Fire(order, inst)
 			end
 		end)

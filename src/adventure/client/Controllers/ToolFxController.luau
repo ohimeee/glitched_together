@@ -10,6 +10,7 @@ local TweenService = game:GetService("TweenService")
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local ToolFx = require(ReplicatedStorage.Shared.Config.ToolFx)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local T = Tuning.ToolFx
 local TEX = ToolFx.Textures
@@ -375,12 +376,43 @@ local function frozenGlow(inst: Instance, part: BasePart)
 	refresh()
 end
 
+-- Sounds ---------------------------------------------------------------------------------------------
+-- The wind-up plays at the tool in the hand, the impact on the target (Config/Sounds).
+
+local function sounds(kind: string, p: Player, target: Instance?)
+	local part = target and partOf(target)
+	local hand: Instance? = muzzleOf(p) or (p.Character and p.Character:FindFirstChild("HumanoidRootPart"))
+	if kind == "Froze" then
+		Audio.play("PauseBeamFire", hand)
+		Audio.play("Freeze", part)
+	elseif kind == "Released" then
+		Audio.play("Unfreeze", part)
+	elseif kind == "GrappleStart" or kind == "PullStart" then
+		Audio.play("GrappleShoot", hand)
+		task.delay(0.1, function() -- the rope tip lands (rope())
+			if part and part.Parent then
+				Audio.play(if kind == "PullStart" then "Pull" else "GrappleHook", part)
+			end
+		end)
+	elseif kind == "GrappleEnd" then
+		Audio.play("GrappleRelease", hand)
+	elseif kind == "CopyScan" then
+		Audio.play("CopyScan", hand)
+	elseif kind == "Pasted" then
+		Audio.play("Paste", part)
+		Audio.play("PastePoof", part)
+	elseif kind == "PulledOut" then
+		Audio.play("PullOut", part)
+	end
+end
+
 function ToolFxController.Init()
 	local toolResult = Net.event("ToolResult")
 	toolResult.OnClientEvent:Connect(function(kind: string, p: Player?, target: Instance?)
 		if typeof(p) ~= "Instance" or not p:IsA("Player") then
 			return
 		end
+		sounds(kind, p, target)
 		if kind == "Froze" and target then
 			freezeFx(p, target, false)
 		elseif kind == "Released" and target then

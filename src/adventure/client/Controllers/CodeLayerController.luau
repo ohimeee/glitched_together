@@ -11,6 +11,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local ToolFx = require(ReplicatedStorage.Shared.Config.ToolFx)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local player = Players.LocalPlayer
 
@@ -150,6 +151,7 @@ function CodeLayerController.Init()
 	player:GetAttributeChangedSignal("Shifted"):Connect(function()
 		refreshAll()
 		shiftWipe()
+		Audio.play(if shifted() then "ShiftIn" else "ShiftOut")
 	end)
 end
 

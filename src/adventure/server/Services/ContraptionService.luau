@@ -11,6 +11,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local HealthService = require(script.Parent.HealthService)
 
@@ -56,6 +57,7 @@ local function runDropper(dropper: BasePart)
 		block.CanCollide = true
 		CollectionService:AddTag(block, "Freezable")
 		block.Parent = folder
+		Audio.play("Dropper", dropper, 0.6)
 		if block:CanSetNetworkOwnership() then
 			block:SetNetworkOwner(nil)
 		end
@@ -166,6 +168,18 @@ function ContraptionService.Init()
 
 	Tags.each("GlitchWall", function(inst)
 		if inst:IsA("BasePart") then
+			-- the Glitch is heard before it's seen (art-direction.md §7): a crackle, then a buzzing hum while it runs
+			local hum: Sound? = nil
+			inst:GetAttributeChangedSignal("Running"):Connect(function()
+				if hum then
+					hum:Destroy()
+					hum = nil
+				end
+				if inst:GetAttribute("Running") then
+					Audio.play("GlitchCrackle", inst, 1.5)
+					hum = Audio.play("GlitchHum", inst)
+				end
+			end)
 			local link = inst:FindFirstChild("Trigger") :: ObjectValue?
 			chases[inst] = {
 				wall = inst,
