@@ -4,7 +4,7 @@
 
 Every world, prop, color and effect should feel like something Kai and Miko imagined when they were 12, now made real and slowly falling apart. The Glitch is the only thing that ever looks wrong.
 
-> **Graphics baseline (approved Sep 30, 2026):** stylized but believable, close to It Takes Two: rounded, slightly exaggerated shapes with real-feeling, textured surfaces (aged bone, worn leather, scratched metal, fabric). Not flat-colored primitive "toy" builds. Characters, enemies, bosses and organic props are made with Roblox Studio's AI mesh generator (textured) and themed per world (§8); Blender is for exact-size kit pieces, which must also get real surfaces. The Starfall Castle enemies are the reference.
+> **Graphics baseline (approved Sep 30, 2026):** stylized but believable, close to It Takes Two: rounded, slightly exaggerated shapes with real-feeling, textured surfaces (aged bone, worn leather, scratched metal, fabric). Not flat-colored primitive "toy" builds. Characters, enemies, bosses and organic props are made with Roblox Studio's AI mesh generator (textured) and themed per world (§8); Blender is for exact-size kit pieces, which must also get real surfaces. The Starfall Castle enemies are the reference. The baseline is the **quality and realism level**, not one style: like It Takes Two's chapters, every world keeps its own distinct theme, shapes, palette and materials (§3, §8). Pixel Plains stays voxel/toy-plastic, the castle stays storybook fantasy, the Core stays grey and unfinished, all at this finish.
 
 Companion files: `design.md` (why the game plays this way) · `mechanics.md` (numbers) · `implementation.md` (how to build it). This file is about **how the game looks and feels**, and how to build its 3D assets in Blender (§16–18).
 
