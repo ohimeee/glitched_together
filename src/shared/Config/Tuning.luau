@@ -86,6 +86,8 @@ return {
 	HitInvuln = 1,
 	KillZoneRespawnDelay = 1.5,
 	SafePosEvery = 0.5,
+	LeverThrow = 40, -- degrees a pull lever swings over when pulled (and back when pulled again)
+	LeverSwingTime = 0.35,
 	RespawnBackTime = 1.5, -- auto-respawn where you stood this many seconds before going down (off the hazard)
 	DownedRespawn = 5,
 	DownedRespawnBoss = 8,

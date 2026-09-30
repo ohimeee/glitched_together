@@ -479,7 +479,8 @@ local function buildPixelPlains(world: Model)
 			name = name,
 			color = NEUTRAL,
 			tags = { "DuoGate" },
-			attrs = { Group = group, OpenOffset = Vector3.new(0, rise, 0), Solid = true, OpenTime = 2.5 },
+			-- no latch: pulling the lever again lowers it (InteractableService.Toggle)
+			attrs = { Group = group, OpenOffset = Vector3.new(0, rise, 0), Solid = true, OpenTime = 2.5, Latch = false },
 		})
 	end
 	local function conveyor(size: Vector3, x: number, top: number, z: number, speed: number)

@@ -39,10 +39,10 @@ local function setActive(inst: Instance, active: boolean)
 	local at = if inst:IsA("BasePart") then inst else inst:FindFirstChildWhichIsA("BasePart", true)
 	if Tags.has(inst, "PressurePlate") or Tags.has(inst, "DuoPound") then
 		Audio.play(if active then "PlateDown" else "PlateUp", at)
-	elseif active then
-		Audio.play("Lever", at)
+	elseif active or Tags.has(inst, "LeverPull") then
+		Audio.play("Lever", at, if active then 1 else 0.8)
 	end
-	if inst:IsA("BasePart") then
+	if inst:IsA("BasePart") and not Tags.has(inst, "LeverPull") then
 		if inst:GetAttribute("OrigColor") == nil then
 			inst:SetAttribute("OrigColor", inst.Color)
 		end
@@ -282,6 +282,44 @@ end
 -- Used by tools (e.g. Grapple Line pulling a lever tagged LeverPull).
 function InteractableService.Activate(inst: Instance)
 	setActive(inst, true)
+	evaluateGroups()
+end
+
+-- A pulled lever throws over on its base: rest angle ↔ thrown angle (Tuning.LeverThrow), a quick springy swing.
+local function swingLever(lever: BasePart, on: boolean)
+	local rest = lever:GetAttribute("RestCFrame") :: CFrame?
+	if not rest then
+		rest = lever.CFrame
+		lever:SetAttribute("RestCFrame", rest)
+	end
+	local half = lever.Size.Y / 2
+	local pivot = (rest :: CFrame) * CFrame.new(0, -half, 0) -- the foot of the lever
+	local angle = Instance.new("NumberValue")
+	angle.Value = if on then 0 else -math.rad(Tuning.LeverThrow)
+	angle.Changed:Connect(function(a: number)
+		if lever.Parent then
+			lever.CFrame = pivot * CFrame.Angles(a, 0, 0) * CFrame.new(0, half, 0)
+		end
+	end)
+	local tween = TweenService:Create(
+		angle,
+		TweenInfo.new(Tuning.LeverSwingTime, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{ Value = if on then -math.rad(Tuning.LeverThrow) else 0 }
+	)
+	tween.Completed:Once(function()
+		angle:Destroy()
+	end)
+	tween:Play()
+end
+
+-- Pull levers toggle: pull to throw it (on), pull again to throw it back (off). Gates in its group that don't
+-- latch (lever lifts and bridges) follow it back down.
+function InteractableService.Toggle(inst: Instance)
+	local on = not isActive(inst)
+	setActive(inst, on)
+	if inst:IsA("BasePart") then
+		swingLever(inst, on)
+	end
 	evaluateGroups()
 end
 

@@ -31,10 +31,11 @@ local function massOf(inst: Instance): number
 end
 
 local function pull(p: Player, target: Instance, root: BasePart)
-	-- Levers: a pull activates them.
+	-- Levers: a pull throws them over; pulling again throws them back (the rope flicks out and back).
 	local lever = Tags.find(target, "LeverPull")
 	if lever then
-		InteractableService.Activate(lever)
+		toolResult:FireAllClients("PullStart", p, lever)
+		InteractableService.Toggle(lever)
 		return
 	end
 	local part = if target:IsA("BasePart") then target else (target :: any).PrimaryPart
