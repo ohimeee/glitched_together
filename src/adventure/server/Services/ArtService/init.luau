@@ -203,63 +203,73 @@ local function watchBadges(p: Player)
 end
 
 -- Held tools ---------------------------------------------------------------------------------------
--- The item in each player's right hand follows their Kit attribute (ToolFx.Held), welded so everyone sees it.
+-- The items in each player's hands follow their Kit attribute (ToolFx.Held), welded so everyone sees them. The
+-- item with a muzzle is named "HeldTool" (effects start there); the rest are "HeldItem".
 
 local heldTemplates: { [string]: MeshPart | false } = {}
 
-local function heldTemplate(kit: string): MeshPart?
-	local cached = heldTemplates[kit]
+local function heldTemplate(item: ToolFx.HeldItem): MeshPart?
+	local cached = heldTemplates[item.Id]
 	if cached == nil then
-		local info = ToolFx.Held[kit]
 		local ok, result = pcall(MeshAssets.Template, "HeldTool", {
-			Id = info.Id,
-			TextureId = info.TextureId,
+			Id = item.Id,
+			TextureId = item.TextureId,
 			Offset = Vector3.zero,
-			Size = info.Size,
+			Size = item.Size,
 			Material = Enum.Material.SmoothPlastic,
 		})
 		if not ok then
-			warn(`[ArtService] held item {kit}: {result}`)
+			warn(`[ArtService] held item {item.Id}: {result}`)
 		end
 		cached = if ok then result else false
-		heldTemplates[kit] = cached
+		heldTemplates[item.Id] = cached
 	end
 	return if cached then cached else nil
 end
 
 local function giveHeld(p: Player)
 	local character = p.Character
-	local hand = character and (character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm"))
-	if not (character and hand) then
+	if not character then
 		return
 	end
-	local old = character:FindFirstChild("HeldTool")
-	if old then
-		old:Destroy()
+	for _, d in character:GetChildren() do
+		if d:GetAttribute("Held") then
+			d:Destroy()
+		end
 	end
 	local kit = p:GetAttribute("Kit") :: string?
-	local info = kit and ToolFx.Held[kit]
-	local template = info and heldTemplate(kit :: string)
-	if not (info and template) or p.Character ~= character then
-		return
+	for _, item in (kit and ToolFx.Held[kit]) or {} do
+		local hand = character:FindFirstChild(item.Hand)
+		local template = heldTemplate(item)
+		if
+			not (hand and hand:IsA("BasePart") and template)
+			or p.Character ~= character
+			or p:GetAttribute("Kit") ~= kit
+		then
+			continue
+		end
+		local handle = template:Clone()
+		handle.Name = if item.Muzzle then "HeldTool" else "HeldItem"
+		handle:SetAttribute("Held", true)
+		handle.Anchored = false
+		handle.Massless = true
+		handle.CanCollide = false
+		handle.CanQuery = false
+		handle.CanTouch = false
+		handle.CFrame = hand.CFrame * item.Grip
+		if item.Muzzle then
+			local muzzle = Instance.new("Attachment")
+			muzzle.Name = "Muzzle"
+			muzzle.Position = item.Muzzle
+			muzzle.Parent = handle
+		end
+		local weld = Instance.new("Weld")
+		weld.Part0 = hand
+		weld.Part1 = handle
+		weld.C0 = item.Grip
+		weld.Parent = handle
+		handle.Parent = character
 	end
-	local handle = template:Clone()
-	handle.Anchored = false
-	handle.Massless = true
-	handle.CanCollide = false
-	handle.CanQuery = false
-	handle.CanTouch = false
-	handle.CFrame = (hand :: BasePart).CFrame * info.Grip
-	local muzzle = Instance.new("Attachment")
-	muzzle.Name = "Muzzle"
-	muzzle.Position = info.Muzzle
-	muzzle.Parent = handle
-	local weld = Instance.new("Weld")
-	weld.Part0 = hand :: BasePart
-	weld.Part1 = handle
-	weld.C0 = info.Grip
-	weld.Parent = handle
-	handle.Parent = character
 end
 
 local function watchHeld(p: Player)

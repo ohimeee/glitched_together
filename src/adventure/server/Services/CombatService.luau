@@ -19,6 +19,7 @@ local HealthService = require(script.Parent.HealthService)
 local DuoService = require(script.Parent.DuoService)
 local InteractableService = require(script.Parent.InteractableService)
 local XpService = require(script.Parent.XpService)
+local CombatFx = require(script.Parent.CombatFx)
 
 local C = Tuning.Combat
 local ENEMIES = Tuning.Enemies :: any
@@ -186,12 +187,12 @@ end
 local function shieldFlash(p: Player)
 	local r = rootOf(p)
 	if r then
-		effect({
-			Size = Vector3.new(5, 5, 0.3),
-			CFrame = CFrame.lookAt(r.Position + facing(p) * 2.2, r.Position + facing(p) * 4),
-			Color = Palette.Miko,
-			Transparency = 0.3,
-		}, 0.25)
+		CombatFx.Burst(
+			r.Position + facing(p) * 2.2,
+			{ { "Ring", 1, 7, Palette.Miko }, { "Stars", 8, 1, Color3.new(1, 1, 1) } },
+			Palette.Miko,
+			10
+		)
 	end
 end
 
@@ -481,7 +482,13 @@ function CombatService.Fire(spec: ShotSpec)
 		Size = Vector3.one * size,
 		CFrame = CFrame.new(spec.origin),
 		Color = spec.color or FIRE,
+		Transparency = if spec.kind == "Fireball" then 0.35 else 0, -- a hot core inside the flames
 	})
+	if spec.kind == "Fireball" then
+		CombatFx.Fire(part, size)
+	else
+		CombatFx.Emit(part, "Stars", size * 0.8, 18, spec.color or DANGER)
+	end
 	table.insert(shots, {
 		part = part,
 		dir = unitOr(flat(spec.dir), Vector3.zAxis),
@@ -510,6 +517,7 @@ local function reflect(shot: Shot, miko: Player, at: Vector3)
 		shot.owner = miko
 	end
 	shot.part.Color = Palette.Glow.Miko -- reflected: now Miko's shot
+	CombatFx.Tint(shot.part, Palette.Miko)
 	shot.part.Name = shot.kind .. "Reflected"
 	shot.part.CFrame = CFrame.new(at + shot.dir * 1.5)
 	shieldFlash(miko)
@@ -563,7 +571,7 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 				CombatService.Ignite(brazier)
 			end
 		end
-		effect({ Size = Vector3.one * 2, CFrame = CFrame.new(hit.Position), Color = shot.part.Color }, 0.2)
+		CombatFx.Impact(hit.Position, shot.kind == "Fireball", shot.part.Color)
 		return false
 	end
 	shot.part.CFrame = CFrame.new(pos + move)
@@ -580,8 +588,20 @@ function CombatService.FlameWall(cf: CFrame, owner: Player?)
 		Size = Vector3.new(T.Length, 3, 1.5),
 		CFrame = cf,
 		Color = FIRE,
-		Transparency = 0.25,
+		Transparency = 1,
 	})
+	local flames = CombatFx.Emit(part, "Flame", 2.4, T.Length * 7)
+	flames.Shape = Enum.ParticleEmitterShape.Box
+	flames.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+	local stars = CombatFx.Emit(part, "Stars", 1.2, T.Length * 2, CombatFx.Gold)
+	stars.Shape = Enum.ParticleEmitterShape.Box
+	local smoke = CombatFx.Emit(part, "Smoke", 1.6, T.Length * 0.8, Color3.new(1, 1, 1))
+	smoke.Shape = Enum.ParticleEmitterShape.Box
+	local light = Instance.new("PointLight")
+	light.Color = FIRE
+	light.Range = T.Length + 8
+	light.Brightness = 3
+	light.Parent = part
 	table.insert(walls, { part = part, owner = owner, untilTime = os.clock() + T.Life, nextTick = os.clock() })
 end
 
@@ -598,8 +618,13 @@ function CombatService.Embers(from: Vector3, to: Vector3, owner: Player?)
 		Size = Vector3.new(2, 0.4, len),
 		CFrame = CFrame.lookAt(mid, to) * CFrame.new(0, -2.5, 0),
 		Color = FIRE,
-		Transparency = 0.4,
+		Transparency = 1,
 	}, E.Life)
+	local embers = CombatFx.Emit(part, "Flame", 1.1, len * 4)
+	embers.Shape = Enum.ParticleEmitterShape.Box
+	task.delay(E.Life - 0.4, function()
+		embers.Enabled = false
+	end)
 	task.spawn(function()
 		local stop = os.clock() + E.Life
 		while os.clock() < stop and part.Parent do
@@ -628,36 +653,41 @@ end
 
 function CombatService.Meteor(pos: Vector3, owner: Player?)
 	local T = Tuning.FireMage.Meteor
-	local marker = effect({
-		Name = "MeteorMarker",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(0.3, T.Radius * 2, T.Radius * 2),
-		CFrame = CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = FIRE, -- Kai's own attack area: orange, not danger red
-		Transparency = 0.6,
+	local floorPos = pos + Vector3.new(0, 0.1, 0) -- pos is on the floor (FireMage aims at root height - 2.5)
+	local marker = CombatFx.AreaMarker(floorPos, T.Radius, FIRE) -- Kai's own attack area: orange, not danger red
+	marker.Parent = fx
+	local rock = effect({
+		Name = "MeteorRock",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.one * 3,
+		CFrame = CFrame.new(pos + Vector3.new(6, 40, -6)),
+		Color = FIRE,
+		Transparency = 0.2,
 	})
+	CombatFx.Fire(rock, 3)
+	CombatFx.Emit(rock, "Smoke", 2.5, 25, Color3.fromRGB(90, 80, 100))
+	TweenService:Create(rock, TweenInfo.new(T.Cast, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		CFrame = CFrame.new(pos + Vector3.new(0, 1.5, 0)),
+	}):Play()
 	task.delay(T.Cast, function()
 		marker:Destroy()
-		effect({
-			Shape = Enum.PartType.Ball,
-			Size = Vector3.one * T.Radius * 2,
-			CFrame = CFrame.new(pos),
-			Color = FIRE,
-			Transparency = 0.3,
-		}, 0.5)
+		rock:Destroy()
+		CombatFx.Burst(pos + Vector3.new(0, 1.5, 0), {
+			{ "Flame", 30, 4 },
+			{ "Stars", 30, 2.5, CombatFx.Gold },
+			{ "Smoke", 10, 4, Color3.new(1, 1, 1) },
+		}, FIRE, T.Radius * 3)
+		CombatFx.Burst(floorPos, { { "Ring", 1, T.Radius * 2.4, FIRE } })
 		CombatService.Radial(pos, T.Radius, T.Damage, owner)
 	end)
 end
 
 function CombatService.Rally(pos: Vector3, owner: Player?)
 	local T = Tuning.ShieldKnight.Rally
-	effect({
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(0.5, T.Radius * 2, T.Radius * 2),
-		CFrame = CFrame.new(pos - Vector3.new(0, 2.5, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Palette.Miko,
-		Transparency = 0.2,
-	}, 0.5)
+	CombatFx.Burst(pos - Vector3.new(0, 2.4, 0), {
+		{ "Ring", 1, T.Radius * 2.4, Palette.Miko },
+		{ "Stars", 24, 2, Color3.new(1, 1, 1) },
+	}, Palette.Miko, T.Radius * 3)
 	CombatService.Radial(pos, T.Radius, T.Damage, owner)
 	CombatService.Stun(pos, T.Radius, T.Stun)
 end
@@ -678,7 +708,7 @@ function CombatService.MeleeBox(cf: CFrame, size: Vector3, damage: number, owner
 			end
 		end
 	end
-	effect({ Size = size * Vector3.new(1, 0.2, 1), CFrame = cf, Color = Color3.new(1, 1, 1), Transparency = 0.6 }, 0.12)
+	CombatFx.Slash(cf, size)
 	return hits
 end
 
@@ -720,12 +750,17 @@ function CombatService.Ignite(inst: Instance)
 		inst:SetAttribute("Lit", true)
 		local flame = effect({
 			Name = "Flame",
-			Size = Vector3.new(1.6, 2.2, 1.6),
-			CFrame = inst.CFrame * CFrame.new(0, inst.Size.Y / 2 + 1, 0),
+			Size = Vector3.new(1.6, 1, 1.6),
+			CFrame = inst.CFrame * CFrame.new(0, inst.Size.Y / 2 + 0.5, 0),
 			Color = FIRE,
-			Transparency = 0.1,
+			Transparency = 1,
 		})
 		flame.Parent = inst
+		local fire = CombatFx.Emit(flame, "Flame", 2.2, 40)
+		fire.Shape = Enum.ParticleEmitterShape.Box
+		CombatFx.Emit(flame, "Stars", 0.8, 5, CombatFx.Gold)
+		CombatFx.Emit(flame, "Smoke", 1.2, 3, Color3.fromRGB(90, 80, 100))
+		CombatFx.Burst(flame.Position, { { "Flame", 10, 2.4 }, { "Stars", 12, 1.2, CombatFx.Gold } })
 		local light = Instance.new("PointLight")
 		light.Color = FIRE
 		light.Range = 24
