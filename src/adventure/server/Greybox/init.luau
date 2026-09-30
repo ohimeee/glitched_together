@@ -547,7 +547,7 @@ local function buildPixelPlains(world: Model)
 	for _, x in { -83, -67 } do
 		dirtWall(Vector3.new(2, 22, 40), x, 22, 121) -- too tall to climb around (reach ~16)
 	end
-	for i, z in { 108, 121, 134 } do
+	for i, z in { 104, 121, 138 } do -- 7-stud gaps between heads: room to stand between hits
 		crusher(-75, z, 0, { Period = 1.4, Offset = (i - 1) * 0.45 })
 	end
 	grass(Vector3.new(30, 6, 30), -75, 0, 156, "KaiEnd")
@@ -830,7 +830,7 @@ local function buildPixelPlains(world: Model)
 	-- 1-3 continued: COIN PRESS. The twist: Glitch blobs pace a yard (Kai freezes one to slip past, frozen ones
 	-- can't hurt), then the coin press: four crushers over a lane. Miko pulls the crate through in hops while Kai
 	-- freezes the crusher above it; the crate on the plate opens the vault.
-	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 190))
+	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 210))
 	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "PressPath")
 	checkpoint(P, nextOrder(), 0, 0, 6, W, {
 		"Kai: freeze a Glitch blob to slip past it. Frozen blobs can't hurt you.",
@@ -844,16 +844,18 @@ local function buildPixelPlains(world: Model)
 	blob(0, 0, 30, 18)
 	blob(0, 0, 47, 18)
 	blob(0, 0, 64, 18)
-	grass(Vector3.new(14, 4, 70), 0, 0, 110, "PressLane") -- z 75..145
+	grass(Vector3.new(14, 4, 90), 0, 0, 120, "PressLane") -- z 75..165
 	for _, x in { -8, 8 } do
-		dirtWall(Vector3.new(2, 22, 70), x, 22, 110)
+		dirtWall(Vector3.new(2, 22, 90), x, 22, 120)
 	end
 	checkpoint(P, nextOrder(), 0, 0, 80, W, {
 		"Miko: pull the crate along the lane. Kai: freeze the crusher above it!",
 		"The crate has to reach the plate at the end.",
 	})
-	for i, z in { 92, 106, 120, 134 } do
-		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.33 })
+	-- 22 apart (12-stud gaps between the 10-deep heads): room for the crate plus one pull between two hits
+	-- (playtest Oct 1: 4-stud gaps were too tight)
+	for i, z in { 95, 117, 139 } do
+		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.43 })
 	end
 	block(P, Vector3.new(4, 4, 4), CFrame.new(0, 2, 82), {
 		name = "Crate",
@@ -863,12 +865,12 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	plate("D1", 0, 0, 141)
-	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 146))
-	grass(Vector3.new(30, 4, 30), 0, 0, 162, "CoinVault") -- z 147..177
-	checkpoint(P, nextOrder(), 0, 0, 158, W)
-	sign(P, "COIN VAULT", CFrame.new(0, 10, 176), Vector3.new(14, 3, 0.4))
-	grass(Vector3.new(14, 4, 13), 0, 0, 183.5, "VaultExit")
+	plate("D1", 0, 0, 158)
+	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 166))
+	grass(Vector3.new(30, 4, 30), 0, 0, 182, "CoinVault") -- z 167..197
+	checkpoint(P, nextOrder(), 0, 0, 178, W)
+	sign(P, "COIN VAULT", CFrame.new(0, 10, 196), Vector3.new(14, 3, 0.4))
+	grass(Vector3.new(14, 4, 13), 0, 0, 203.5, "VaultExit")
 
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
 	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))

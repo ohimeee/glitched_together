@@ -609,9 +609,9 @@ local Decor: { { any } } = {
 	{ "Flowers", CFrame.new(10, 43.8, 200) * CFrame.Angles(0, math.rad(40), 0), 1.2, "CloudTower" },
 	{ "Bush", CFrame.new(-11, 45, 196) * CFrame.Angles(0, math.rad(260), 0), 1.4, "CloudTower" },
 	-- Coin Press: the vault is stacked with coin blocks
-	{ "CoinBlock", CFrame.new(-10, 8, 170) * CFrame.Angles(0, math.rad(10), 0), 1.5, "CoinPress" },
-	{ "CoinBlock", CFrame.new(10, 8, 170) * CFrame.Angles(0, math.rad(-10), 0), 1.5, "CoinPress" },
-	{ "CoinBlock", CFrame.new(0, 14, 172), 2, "CoinPress" },
+	{ "CoinBlock", CFrame.new(-10, 8, 190) * CFrame.Angles(0, math.rad(10), 0), 1.5, "CoinPress" },
+	{ "CoinBlock", CFrame.new(10, 8, 190) * CFrame.Angles(0, math.rad(-10), 0), 1.5, "CoinPress" },
+	{ "CoinBlock", CFrame.new(0, 14, 192), 2, "CoinPress" },
 	{ "Cloud", CFrame.new(40, 40, 110), 2, "CoinPress" },
 }
 
