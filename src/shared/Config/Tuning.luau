@@ -72,6 +72,13 @@ return {
 
 	-- World 1
 	PauseBeam = { Range = 60, Duration = 4, AimCone = 6 },
+	-- Tool effects (ToolFxController): wind-up → effect → impact, all short so they never hide the play space
+	ToolFx = {
+		BeamTime = 0.35, -- the Pause Beam stays visible this long after a freeze
+		RingSize = 9, -- studs: freeze / release shockwave at the target
+		RingTime = 0.45,
+		RopeWidth = 0.35,
+	},
 	-- Level contraptions (ContraptionService); levels can override per part with attributes
 	Contraptions = {
 		ConveyorSpeed = 26, -- faster than sprint (24), so a running belt can't be walked up

@@ -559,11 +559,16 @@ local Decor: { { any } } = {
 	{ "Tree", CFrame.new(24, 28.8, 1098) * CFrame.Angles(0, math.rad(330), 0), 1.1 },
 	-- kid details: the "BY KAI + MIKO" hill west of the meadow, facing the plaza; a floor fan under the vent;
 	-- the dropper's chute coming out of a cloud
-	{ "Cliff", CFrame.new(-150, -20, 110), 4 },
-	{ "HillSign", CFrame.lookAt(Vector3.new(-122, 24.4, 110), Vector3.new(0, 24.4, 110)), 1 },
-	{ "Tree", CFrame.new(-165, 27.9, 88) * CFrame.Angles(0, math.rad(40), 0), 1.0 },
-	{ "Tree", CFrame.new(-170, 27.9, 132) * CFrame.Angles(0, math.rad(200), 0), 1.2 },
-	{ "Bush", CFrame.new(-140, 23, 80) * CFrame.Angles(0, math.rad(12), 0), 1.8 },
+	-- a stepped voxel hill far out west (terraces, so it reads as a hill, not a wall); letters on the low front step
+	{ "Cliff", CFrame.new(-230, -40, 110), 4 }, -- front step, top y 0
+	{ "Cliff", CFrame.new(-262, -12, 104), 3 }, -- middle step, top y 18
+	{ "Cliff", CFrame.new(-282, 12, 112), 1.6 }, -- summit, top y 28
+	{ "HillSign", CFrame.lookAt(Vector3.new(-205, 4.4, 110), Vector3.new(0, 4.4, 110)), 1 },
+	{ "Tree", CFrame.new(-282, 34.4, 112) * CFrame.Angles(0, math.rad(40), 0), 0.8 },
+	{ "Tree", CFrame.new(-248, 24.4, 82) * CFrame.Angles(0, math.rad(200), 0), 0.8 },
+	{ "Tree", CFrame.new(-250, 23.6, 128) * CFrame.Angles(0, math.rad(120), 0), 0.7 },
+	{ "Bush", CFrame.new(-222, 3.6, 76) * CFrame.Angles(0, math.rad(12), 0), 1.8 },
+	{ "Bush", CFrame.new(-218, 3.2, 146) * CFrame.Angles(0, math.rad(190), 0), 1.6 },
 	{ "Fan", CFrame.new(0, 43, 379) * CFrame.Angles(math.rad(-90), 0, 0), 3.2 },
 	{ "Chute", CFrame.new(0, 107.8, 551), 1.1 },
 	cloud(0, 117, 551, 0, 1.5),

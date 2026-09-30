@@ -16,6 +16,7 @@ local order = {
 	"EffectsController",
 	"PipController",
 	"BeltController",
+	"ToolFxController",
 }
 
 for _, name in order do

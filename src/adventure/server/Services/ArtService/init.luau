@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local ToolFx = require(ReplicatedStorage.Shared.Config.ToolFx)
 local PipMeshes = require(script.Pip)
 local Badges = require(script.Badges)
 
@@ -201,9 +202,87 @@ local function watchBadges(p: Player)
 	end
 end
 
+-- Held tools ---------------------------------------------------------------------------------------
+-- The item in each player's right hand follows their Kit attribute (ToolFx.Held), welded so everyone sees it.
+
+local heldTemplates: { [string]: MeshPart | false } = {}
+
+local function heldTemplate(kit: string): MeshPart?
+	local cached = heldTemplates[kit]
+	if cached == nil then
+		local info = ToolFx.Held[kit]
+		local ok, result = pcall(MeshAssets.Template, "HeldTool", {
+			Id = info.Id,
+			TextureId = info.TextureId,
+			Offset = Vector3.zero,
+			Size = info.Size,
+			Material = Enum.Material.SmoothPlastic,
+		})
+		if not ok then
+			warn(`[ArtService] held item {kit}: {result}`)
+		end
+		cached = if ok then result else false
+		heldTemplates[kit] = cached
+	end
+	return if cached then cached else nil
+end
+
+local function giveHeld(p: Player)
+	local character = p.Character
+	local hand = character and (character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm"))
+	if not (character and hand) then
+		return
+	end
+	local old = character:FindFirstChild("HeldTool")
+	if old then
+		old:Destroy()
+	end
+	local kit = p:GetAttribute("Kit") :: string?
+	local info = kit and ToolFx.Held[kit]
+	local template = info and heldTemplate(kit :: string)
+	if not (info and template) or p.Character ~= character then
+		return
+	end
+	local handle = template:Clone()
+	handle.Anchored = false
+	handle.Massless = true
+	handle.CanCollide = false
+	handle.CanQuery = false
+	handle.CanTouch = false
+	handle.CFrame = (hand :: BasePart).CFrame * info.Grip
+	local muzzle = Instance.new("Attachment")
+	muzzle.Name = "Muzzle"
+	muzzle.Position = info.Muzzle
+	muzzle.Parent = handle
+	local weld = Instance.new("Weld")
+	weld.Part0 = hand :: BasePart
+	weld.Part1 = handle
+	weld.C0 = info.Grip
+	weld.Parent = handle
+	handle.Parent = character
+end
+
+local function watchHeld(p: Player)
+	p.CharacterAdded:Connect(function(character)
+		character:WaitForChild("RightHand", 5)
+		giveHeld(p)
+	end)
+	p:GetAttributeChangedSignal("Kit"):Connect(function()
+		giveHeld(p)
+	end)
+	if p.Character then
+		task.spawn(giveHeld, p)
+	end
+end
+
 -- Init ---------------------------------------------------------------------------------------------
 
 function ArtService.Init()
+	for _, p in Players:GetPlayers() do
+		watchHeld(p)
+	end
+	Players.PlayerAdded:Connect(watchHeld)
+
 	task.spawn(function()
 		local templates = MeshAssets.Load(PipMeshes, "Pip")
 		if not templates then

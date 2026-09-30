@@ -45,6 +45,7 @@ local function pull(p: Player, target: Instance, root: BasePart)
 	local dest = root.Position + look.Unit * T.PullDistance + Vector3.new(0, 0.5, 0)
 	local wasAnchored = part.Anchored
 	part.Anchored = true
+	toolResult:FireAllClients("PullStart", p, target)
 	local tween =
 		TweenService:Create(part, TweenInfo.new(T.PullTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 			CFrame = CFrame.new(dest) * part.CFrame.Rotation,
@@ -63,7 +64,10 @@ function GrappleLine.Use(p: Player, useIndex: number, target: Instance?)
 
 	if useIndex == 1 then
 		if not target then -- let go
-			swinging[p] = nil
+			if swinging[p] then
+				swinging[p] = nil
+				toolResult:FireAllClients("GrappleEnd", p)
+			end
 			return
 		end
 		local ring = Tags.find(target, "GrappleRing")
@@ -101,6 +105,7 @@ function GrappleLine.Init()
 			if anchor == inst and not Tags.has(anchor, "GrappleRing") then
 				swinging[p] = nil
 				toolResult:FireClient(p, "GrappleDrop")
+				toolResult:FireAllClients("GrappleEnd", p)
 			end
 		end
 	end)
