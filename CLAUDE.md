@@ -20,5 +20,10 @@
 - **Studio debug:** during play, `workspace:SetAttribute("DebugWorld", "PixelPlains")` jumps worlds (Studio only).
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
 - **Art:** Lobby capsule done and in the Lobby place (mesh ids in `src/lobby/server/CapsuleMeshes.luau`, spawned at runtime by `LobbyBuilder`; verified in a solo Studio playtest). Prologue title-screen set, Pixel Plains kit (grass blocks, moving blocks, crusher, grapple ring, crate, clouds, star coin blocks), Pip (floating companion) and Kai/Miko back badges in the Adventure place via `ArtService` (engine + per-world data modules). Neon parts use `Palette.Glow` / `Palette.ForNeon` so reserved colors stay readable. Next art: backlog in `BLENDER_PLAYBOOK.md` §8.
+- **Open playtest notes (user, Sep 30, 2026) — do these next:**
+  1. Castle: user likes it a lot (keep this direction).
+  2. **Pip feels plain and linear.** Redo design to the graphics baseline with Studio `generate_mesh` (glowing glossy pixel sprite, missing pixels, big expressive eyes, pink pixel wings, star antenna; generation only works in Edit mode) and replace the lerp follow in `PipController` with spring motion (overshoot/settle), figure-8 idle drift, banking/tilt, excited spin on hints, occasional glitch jitter. Numbers in `Tuning.Pip`.
+  3. **Dash (Shift) lets players bypass some obstacles** (Prologue/Pixel Plains grey-box). Re-check gap widths/heights against dash (14 studs) + double jump, or block the skips (walls, kill zones, sync gates) so each obstacle needs its intended move.
+  4. Exit portals were blinding (fixed in `cc95ddd`, verify).
 - **Studio UI clicks** (e.g. Import 3D) need the user: Claude can't drive Studio's UI while VS Code is foreground. Everything else goes through Studio MCP.
 - Git remote: https://github.com/ohimeee/glitched_together (private), branch `main`. Commit/push only when the user asks. `.gitattributes` forces LF endings (StyLua expects LF).
