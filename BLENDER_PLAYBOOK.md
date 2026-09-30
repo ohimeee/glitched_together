@@ -189,7 +189,7 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | ✅ | Kai / Miko role badges (▲ / ● back badge accessory) | All | In game: `Identity.*`, `ArtService/Badges.luau`. Full outfits per world (art-direction §5) still to do |
 | ✅ | Giant title-menu buttons, UI panels, "CONTINUE?" title card | Prologue | In game: `blender_assets/PrologueUI.*`, brief `briefs/PrologueUI.md`, skins in `ArtService` |
 | ✅ | Grass block, moving block, Pixel Crusher, grapple ring, crate, cloud, star coin block | Pixel Plains | In game: `PixelPlains.*`, brief `briefs/PixelPlains.md` |
-| 1 | Stone/dirt pillar kit, voxel tree, pixel flowers, "START →" and "BY KAI + MIKO" signs | Pixel Plains | Replace the last plain grey-box pieces; kid details |
+| 1 | **Pixel Plains art pass 2** (new layout): cliff, dirt wall, conveyor kit (Blender, `PixelPlainsKit2.*`, awaiting import) + generated Glitch Blob, flowers, bush, bounce pad; still to make: Static Bat, tree, lever, fan, dropper chute, door, sign boards, "BY KAI + MIKO" sign | Pixel Plains | Brief + ids: `briefs/PixelPlains2.md` |
 | 1 | Castle kit: floor tiles, 6-stud walls with arches, torch, brazier, banner, iron bars, cracked wall, wooden door, enemies (googly-eyed skeleton, slime, archer, shield guard, mage) | Starfall Castle | Top-down readable; floors carry the design |
 | 2 | Castle gate, torch/brazier, banner, bookshelf, iron bars, Siege Cart | Starfall Castle | Top-down readable from above |
 | 3 | Wireframe cubes, missing-texture blocks, SAVE button | Glitched Core | |
