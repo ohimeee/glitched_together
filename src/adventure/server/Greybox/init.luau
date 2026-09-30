@@ -761,9 +761,16 @@ local function buildPixelPlains(world: Model)
 		end
 	end
 	-- belts faster than sprint: freeze one, walk it, freeze the next
-	conveyor(Vector3.new(14, 2, 30), 0, 62, 452, 26)
-	conveyor(Vector3.new(14, 2, 30), 0, 62, 482, 26)
+	-- 45 studs/s: faster than sprint + ground-dash spam; the low roof stops jump + air-dash hopping over them
+	-- (playtest Oct 1: space + shift skipped the belts). Only Kai's freeze gets you through.
+	conveyor(Vector3.new(14, 2, 30), 0, 62, 452, 45)
+	conveyor(Vector3.new(14, 2, 30), 0, 62, 482, 45)
 	factoryWalls(437, 497)
+	block(P, Vector3.new(14, 2, 60), CFrame.new(0, 62 + 7.5 + 1, 467), {
+		name = "FactoryRoof",
+		color = METAL,
+		material = Enum.Material.Metal,
+	})
 	grass(Vector3.new(30, 4, 24), 0, 62, 509, "BeltEnd")
 	blob(0, 62, 512, 16)
 	checkpoint(P, nextOrder(), 0, 62, 503, W, {
