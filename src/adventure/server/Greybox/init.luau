@@ -2130,16 +2130,18 @@ local function buildStarfallCastle(world: Model)
 	-- studs, then every 20, then every 30 on the third leg, with pairs (both sides) so Miko has to pick a side
 	-- (every 18 + 6 pairs on the third leg was a wall of arrows nobody survived; user: "lessen them nearing the end")
 	local postAt = { 40, 70, 100, 130, 160, 190, 220, 250, 280, 305 }
-	for s = 330, 590, 20 do
+	for s = 330, 580, 25 do -- every 25 (20 was too thick around the station, playtest Oct 1)
 		table.insert(postAt, s)
 	end
 	for s = 630, 940, 30 do
 		table.insert(postAt, s)
 	end
+	table.insert(postAt, 952) -- two more for the final stretch
+	table.insert(postAt, 966)
 	for i, s in postAt do
 		table.insert(posts, { s, if i % 2 == 0 then 1 else -1 })
 	end
-	for _, s in { 160, 280, 410, 470, 530, 570, 720, 840 } do
+	for _, s in { 160, 280, 405, 480, 530, 720, 840 } do
 		local i = 0
 		for _, p in posts do
 			if p[1] == s then
