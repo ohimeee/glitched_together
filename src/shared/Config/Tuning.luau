@@ -116,6 +116,12 @@ return {
 		ScanTime = 0.45, -- Copy: the scan line sweeping over the copied object
 		PasteSnapTime = 0.3, -- Paste: ghost outline → solid
 		WipeTime = 0.35, -- Layer Shift: teal line across Miko's screen
+		-- Layer Shift seen by others (ShiftCloakController): a teal line sweeps her body away / back
+		CloakTime = 0.55,
+		CloakOutline = 0.85, -- partner outline transparency while she's in the Code Layer (the faint hint)
+		CloakRingSize = 4.5,
+		CloakFlickerBand = 0.7, -- studs around the line where parts glitch-flicker
+		CloakPixels = 2, -- pixels shed per frame during the sweep
 	},
 	-- Level contraptions (ContraptionService); levels can override per part with attributes
 	Contraptions = {

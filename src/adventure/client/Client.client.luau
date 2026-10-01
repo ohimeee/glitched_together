@@ -13,6 +13,7 @@ local order = {
 	"PeekController",
 	"CutsceneController",
 	"CodeLayerController",
+	"ShiftCloakController",
 	"EffectsController",
 	"PipController",
 	"BeltController",

@@ -123,6 +123,7 @@ local function buildArrow()
 		arrow.Position = UDim2.fromOffset(pos.X, pos.Y)
 		arrow.Rotation = math.deg(math.atan2(dir.Y, dir.X))
 		arrow.TextColor3 = roleInfo(p) and roleInfo(p).Color or Color3.new(1, 1, 1)
+		arrow.TextTransparency = if p:GetAttribute("Shifted") then 0.7 else 0 -- in the Code Layer: a faint hint only
 		arrow.Visible = true
 	end)
 end
