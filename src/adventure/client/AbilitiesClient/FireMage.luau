@@ -1,7 +1,7 @@
 -- Kai's Fire Mage, client half (server: AbilitiesServer/FireMage). Top-down aim at the mouse / right stick.
 --   Tool1 (hold)   Fireball auto-fire          Tool2   Flame Wall at the aim point
 --   Tool1 + Tool2  Meteor when Ultimate is full Ignite (E) nearest Brazier / Burnable to the aim point
---   Dash           Blink 10 studs (passes through IronBars), then tells the server (Ember Trail)
+--   Dash           Blink 10 studs (passes through IronBars and BlinkThrough hazards), then tells the server (Ember Trail)
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -46,8 +46,10 @@ local function blink(lastBlink: { t: number })
 		then Vector3.new(hum.MoveDirection.X, 0, hum.MoveDirection.Z).Unit
 		else TopDownAim.direction()
 	local exclude: { Instance } = { character :: Model }
-	for _, bars in CollectionService:GetTagged("IronBars") do
-		table.insert(exclude, bars)
+	for _, tag in { "IronBars", "BlinkThrough" } do
+		for _, inst in CollectionService:GetTagged(tag) do
+			table.insert(exclude, inst)
+		end
 	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude

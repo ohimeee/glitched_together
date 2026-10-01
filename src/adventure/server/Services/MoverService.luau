@@ -210,6 +210,15 @@ function MoverService.Pause(inst: Instance, duration: number)
 	end
 end
 
+-- Stop a mover for `duration` without freezing it (no Frozen attribute, no pause FX): hazards that stall on
+-- something, e.g. the spike roller on Miko's shield.
+function MoverService.Hold(inst: Instance, duration: number)
+	local m = movers[inst]
+	if m then
+		m.pausedUntil = math.max(m.pausedUntil, os.clock() + duration)
+	end
+end
+
 function MoverService.Resume(inst: Instance)
 	local m = movers[inst]
 	if m then

@@ -5,6 +5,10 @@
 --   Projectiles: simulated here (Heartbeat raycast old → new). A blocking Miko's shield redirects any shot that
 --            reaches it along her facing: enemy shots from the front and every one of Kai's fireballs. Redirected
 --            shots are friendly and deal ×1.5 (×2 with Reflect Boost).
+--   Mirrors (parts tagged `Mirror`) bounce any shot off their face. FireSwitch crystals can ask for `Needs` =
+--            "Direct" (Kai's own fireball) or "Reflected" (teal: only a shot off Miko's shield), and a `Window` (s) to
+--            stay lit only that long (two crystals in one group = both lit at once).
+--   ShieldStop hazards (a Mover, e.g. the spike roller) stall while a blocking Miko faces them up close.
 --   Area effects used by the tools: flame walls, meteor, rally burst, sword box, shield-charge line, ignite.
 --   Ultimate charge: player attribute `Ultimate` 0..1 (Kai from damage dealt, Miko from damage blocked).
 local Players = game:GetService("Players")
@@ -20,6 +24,7 @@ local DuoService = require(script.Parent.DuoService)
 local InteractableService = require(script.Parent.InteractableService)
 local XpService = require(script.Parent.XpService)
 local CombatFx = require(script.Parent.CombatFx)
+local MoverService = require(script.Parent.MoverService)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local C = Tuning.Combat
@@ -556,6 +561,14 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 		exclude = characters() -- friendly shots pass through players
 	end
 	local hit = workspace:Raycast(pos, move, worldParams(exclude))
+	if hit and Tags.find(hit.Instance, "Mirror") then
+		local n = unitOr(flat(hit.Normal), -shot.dir)
+		shot.dir = unitOr(shot.dir - 2 * shot.dir:Dot(n) * n, n)
+		shot.part.CFrame = CFrame.new(hit.Position + n * 0.8)
+		CombatFx.Burst(hit.Position, { { "Stars", 8, 1, shot.part.Color } })
+		Audio.play("Reflect", hit.Position)
+		return true
+	end
 	if hit then
 		local inst = hit.Instance
 		local model = inst:FindFirstAncestorOfClass("Model")
@@ -573,8 +586,14 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 				CombatService.DamageEnemy(enemy, shot.damage, shot.owner, pos)
 			end
 			local switch = Tags.find(inst, "FireSwitch")
-			if switch then
-				InteractableService.Activate(switch)
+			local needs = switch and switch:GetAttribute("Needs")
+			if switch and (needs == nil or (needs == "Reflected") == (shot.reflectedBy ~= nil)) then
+				local window = switch:GetAttribute("Window")
+				if type(window) == "number" then
+					InteractableService.Pulse(switch, window)
+				else
+					InteractableService.Activate(switch)
+				end
 			end
 			local brazier = Tags.find(inst, "Brazier")
 			if brazier then
@@ -988,6 +1007,25 @@ function CombatService.Init()
 	fx = Instance.new("Folder")
 	fx.Name = "CombatFX"
 	fx.Parent = workspace
+
+	-- ShieldStop hazards stall on a raised shield facing them up close (Miko walks Kai through behind her)
+	task.spawn(function()
+		while true do
+			task.wait(0.1)
+			for _, hazard in Tags.list("ShieldStop") do
+				local at = Tags.position(hazard)
+				for _, p in DuoService.Players() do
+					local r = rootOf(p)
+					if r and p:GetAttribute("Blocking") then
+						local to = flat(at - r.Position)
+						if to.Magnitude <= C.ShieldStopRange and facing(p):Dot(unitOr(to, Vector3.zAxis)) > 0.5 then
+							MoverService.Hold(hazard, 0.2)
+						end
+					end
+				end
+			end
+		end
+	end)
 
 	Tags.each("Enemy", register, function(inst)
 		if inst:IsA("BasePart") then

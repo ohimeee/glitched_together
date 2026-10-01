@@ -183,6 +183,7 @@ return {
 		ChargedWindow = 1.5, -- enemies shoved by a charge take double Flame Wall damage for this long
 		ShieldDown = 3, -- a charged Shield Guard drops its shield for this long
 		ShieldHitRadius = 3.5, -- projectiles this close to a blocking Miko hit the shield
+		ShieldStopRange = 7, -- a ShieldStop hazard (spike roller) this close in front of a raised shield stalls
 		MeteorAim = 60, -- max range from Kai
 		ReflectBoost = 2, -- Reflect Boost upgrade multiplier
 		SecondWind = { HP = 40, RallyHeal = 20 },

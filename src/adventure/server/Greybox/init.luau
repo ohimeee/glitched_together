@@ -1440,10 +1440,114 @@ local function buildStarfallCastle(world: Model)
 	})
 	gate(world, "C1", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 150))
 
-	-- F: exit
-	wall(-10, 150, -10, 176)
-	wall(10, 150, 10, 176)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 170), {
+	-- F: the way on (the old exit corridor now leads into 2-2)
+	wall(-10, 150, -10, 186)
+	wall(10, 150, 10, 186)
+	floor(-10, 176, 10, 186, "LibraryHall")
+
+	-- 2-2 DARK LIBRARY (obstacles.md 2.3): built around the shield bouncing Kai's fire.
+	-- a fire crystal (FireSwitch): orange takes Kai's own fireball, teal only a shot reflected off Miko's shield
+	local function crystal(group: string, needs: string, x: number, z: number, window: number?)
+		block(world, Vector3.new(2, 4, 2), CFrame.new(x, 3, z) * CFrame.Angles(0, math.rad(45), 0), {
+			name = "Crystal",
+			color = if needs == "Reflected" then MIKO else KAI,
+			material = Enum.Material.Neon,
+			tags = { "FireSwitch" },
+			attrs = { Group = group, Needs = needs, Window = window },
+		})
+	end
+	-- a silver mirror on a stand: bounces any shot off its face (CombatService)
+	local function mirror(x: number, z: number, yaw: number)
+		block(world, Vector3.new(6, 5, 0.6), CFrame.new(x, 3.5, z) * CFrame.Angles(0, math.rad(yaw), 0), {
+			name = "Mirror",
+			color = rgb(215, 225, 240),
+			material = Enum.Material.Glass,
+			tags = { "Mirror" },
+		})
+	end
+
+	-- G: Ricochet Relay. The gate's crystal is teal: only Kai's fire bounced off Miko's raised shield lights it.
+	floor(-25, 186, 25, 226, "ReadingRoom")
+	checkpoint(world, 4, 0, 0, 192, W, {
+		"The teal crystal only takes teal fire. Miko: raise your shield and face the crystal. Kai: shoot her shield!",
+		"Kai's fireball bounces off Miko's shield the way she faces.",
+	})
+	flatSign("2-2 DARK LIBRARY", 0, 200, 18)
+	wall(-25, 186, -10, 186)
+	wall(10, 186, 25, 186)
+	wall(-25, 186, -25, 226)
+	wall(25, 186, 25, 226)
+	wall(-25, 226, -7, 226)
+	wall(14, 226, 25, 226) -- x 6..14: the roller hall's side passage (gate C4) opens off this room
+	crystal("C2", "Reflected", 19, 220)
+	gate(world, "C2", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 226))
+	enemy(world, "StaticArcher", -18, 216)
+	enemy(world, "Skeleton", 14, 208)
+	for _, spot in { { -25, 196 }, { 25, 196 }, { -25, 216 }, { 25, 216 } } do
+		torch(spot[1], spot[2])
+	end
+
+	-- H: Spike Roller Hall. A spiked roller sweeps a narrow hall and stalls on Miko's raised shield. While she holds
+	-- it, Kai blinks through it and stands on the plate at the far end, which opens the side passage for Miko.
+	floor(-6, 226, 6, 288, "RollerHall")
+	wall(-6, 226, -6, 288)
+	wall(6, 228, 6, 288)
+	floor(6, 226, 14, 288, "SidePassage") -- Miko's way round, behind a gate only Kai's plate opens
+	wall(14, 226, 14, 288)
+	gate(world, "C4", Vector3.new(8, WALL_H, 1), CFrame.new(10, WALL_H / 2, 227))
+	platform(world, Vector3.new(4, 0.6, 4), 0, 0.6, 285, {
+		color = NEUTRAL,
+		tags = { "PressurePlate" },
+		attrs = { Group = "C4" },
+		name = "RollerPlate",
+	})
+	local rollerA, rollerB = CFrame.new(0, 3, 234), CFrame.new(0, 3, 280)
+	local roller = block(world, Vector3.new(10, 4, 3), rollerA, {
+		name = "SpikeRoller",
+		color = Palette.Danger,
+		material = Enum.Material.Metal,
+		tags = { "Mover", "Hazard", "ShieldStop", "BlinkThrough" },
+		attrs = { Period = 2.6, Damage = 25 },
+	})
+	waypoints(roller, { rollerA, rollerB })
+	checkpoint(world, 5, 0, 0, 230, W, {
+		"Miko: raise your shield and face the roller to stop it. Kai: blink through it (Shift) and stand on the plate.",
+		"Kai's plate opens Miko's side passage. Miko: keep blocking until Kai is on it!",
+	})
+	torch(-6, 250)
+	torch(6, 268)
+
+	-- I: Mirror Gate. Two crystals lit together (1.5 s each): Kai's orange one straight, and a teal one hidden in a
+	-- nook that only a reflected shot reaches, off the mirror in the corner.
+	floor(-25, 288, 25, 340, "MirrorRoom")
+	checkpoint(world, 6, 0, 0, 294, W, {
+		"Light both crystals at once: Kai shoots the orange one, Miko bounces his fire off the mirror into the teal nook.",
+		"Kai: fire twice fast. Once at the orange crystal, once at Miko's shield. Miko: aim your shield at the mirror.",
+	})
+	wall(-25, 288, -6, 288)
+	wall(14, 288, 25, 288) -- the hall (x -6..6) and the side passage (x 6..14) both open into this room
+	wall(-25, 288, -25, 340)
+	wall(25, 288, 25, 340)
+	wall(-25, 340, -7, 340)
+	wall(7, 340, 25, 340)
+	crystal("C3", "Direct", -18, 334, 1.5)
+	-- the teal nook in the east wall: open only to the north, where the mirror bounces shots coming from the west
+	wall(15, 300, 15, 318)
+	wall(15, 300, 25, 300)
+	crystal("C3", "Reflected", 20, 304, 1.5)
+	mirror(20, 330, 45)
+	gate(world, "C3", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 340))
+	enemy(world, "ShieldGuard", -8, 318)
+	enemy(world, "SplitSlime", 6, 322)
+	for _, spot in { { -25, 300 }, { -25, 324 }, { 25, 326 }, { -7, 340 } } do
+		torch(spot[1], spot[2])
+	end
+
+	-- exit
+	floor(-10, 340, 10, 366, "CastleExit")
+	wall(-10, 340, -10, 366)
+	wall(10, 340, 10, 366)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 360), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
@@ -1451,7 +1555,7 @@ local function buildStarfallCastle(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 160, 16)
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 350, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.

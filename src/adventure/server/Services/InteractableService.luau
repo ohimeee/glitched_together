@@ -315,6 +315,20 @@ function InteractableService.Activate(inst: Instance)
 	evaluateGroups()
 end
 
+-- Light a trigger for `seconds`, then let it go dark again (castle crystals with a Window).
+function InteractableService.Pulse(inst: Instance, seconds: number)
+	local stamp = os.clock()
+	inst:SetAttribute("PulsedAt", stamp)
+	setActive(inst, true)
+	evaluateGroups()
+	task.delay(seconds, function()
+		if inst:GetAttribute("PulsedAt") == stamp then
+			setActive(inst, false)
+			evaluateGroups()
+		end
+	end)
+end
+
 -- A pulled lever throws over on its base: rest angle ↔ thrown angle (Tuning.LeverThrow), a quick springy swing.
 local function swingLever(lever: BasePart, on: boolean)
 	local rest = lever:GetAttribute("RestCFrame") :: CFrame?

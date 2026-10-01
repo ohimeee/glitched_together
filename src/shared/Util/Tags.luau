@@ -28,6 +28,17 @@ function Tags.find(inst: Instance?, tag: string): Instance?
 	return nil
 end
 
+-- Everything with the tag that's in the world right now.
+function Tags.list(tag: string): { Instance }
+	local list = {}
+	for _, inst in CollectionService:GetTagged(tag) do
+		if inst:IsDescendantOf(workspace) then
+			table.insert(list, inst)
+		end
+	end
+	return list
+end
+
 -- World position of a tagged thing (part or model).
 function Tags.position(inst: Instance): Vector3
 	if inst:IsA("BasePart") then

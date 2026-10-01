@@ -94,13 +94,13 @@ ITT's dungeon used freeze-the-lava and blink-through-bars. We already have bars;
 
 | Name | Pattern | Who does what | Formula | Fits |
 | --- | --- | --- | --- | --- |
-| **Ricochet Relay** | P3 + P6 | A switch sits around two corners. Kai fires at Miko's shield; she angles the shot (90° bounce) into wall mirrors and on to the switch. Kai can't see the switch from his side (dark corridor); Miko can | I, E | 2-1 teach |
+| **Ricochet Relay** ✅ (teal crystal: only reflected fire) | P3 + P6 | A switch sits around two corners. Kai fires at Miko's shield; she angles the shot (90° bounce) into wall mirrors and on to the switch. Kai can't see the switch from his side (dark corridor); Miko can | I, E | 2-1 teach |
 | **Torch Run** | P1 + P9 | Dark Library: braziers burn out after 6 s. Kai lights them in a chain while Miko walks the floor that only shows its pressure-plate traps in firelight; Kai has to stay ahead of her | I, E | 2-2 |
 | **Shelf Shove** | P10 | Library maze of sliding bookshelves (a top-down sliding puzzle). Miko Shield Charges shelves one tile; Kai sees the rune order on the ceiling map and calls the next shelf | I, E | 2-2 |
 | **Ember Fuse** | P3 | A rope-bridge network over a chasm: Flame Wall burns ropes, and a burnt rope drops its bridge into place on the far side. Wrong rope = bridge lost; Miko blocks the archer volleys while Kai aims | E | 2-2 |
 | **Golem Lure** | P11 | An iron golem that weapons can't hurt. Miko's Taunt draws its charge; she sidesteps and it smashes a support pillar; Kai Meteors the falling ceiling onto it when it's stunned | E, T | 2-3 mini-boss |
-| **Mirror Gate** | P7 + P3 | A door with two crystal eyes: one takes a straight fireball, the other a reflected one, within 1 s of each other | E, T | sync point |
-| **Spike Roller Hall** | P9 + P12 | A spiked roller sweeps a corridor; the alcoves are too small for two. Miko holds Shield Block in front and the roller stalls on the shield for 2 s while Kai blinks past | E, T | 2-1 twist |
+| **Mirror Gate** ✅ (orange + teal crystals, 1.5 s windows, a corner mirror into the teal nook) | P7 + P3 | A door with two crystal eyes: one takes a straight fireball, the other a reflected one, within 1 s of each other | E, T | sync point |
+| **Spike Roller Hall** ✅ (built as: the roller stalls on Miko's shield, Kai blinks through it to the plate that opens her side passage) | P9 + P12 | A spiked roller sweeps a corridor; the alcoves are too small for two. Miko holds Shield Block in front and the roller stalls on the shield for 2 s while Kai blinks past | E, T | 2-1 twist |
 | **Siege Cart** | P13 | (Already in mechanics.md.) Kai burns barricades, Miko blocks arrow volleys | E | set piece |
 
 ### 2.4 World 3 — Glitched Core (Copy/Paste / Layer Shift)
@@ -134,7 +134,7 @@ This is our Cuckoo Clock: the planning chapter. The unused idea: **Pull Out is a
 | **Release-launch** ✅ built Oct 1 (Spring Yard) | MoverService: when a frozen mover is Released, any character standing on or grappled to it gets that mover's current velocity × `Tuning.ReleaseLaunch`, plus a vertical floor | Spring Snap, Pendulum Fling, Crusher Elevator |
 | **Station** (crank / dial / terminal) ✅ built Oct 1 (`StationService`, crank ferry) | InteractableService: hold E to occupy (you're rooted, P2); move input drives a linked mover's `t` or angle; let go and it eases back (P1 "fade") | Switch Blocks, Balance Scale, Unloaded Chunk, castle shelf maze |
 | **Cycle part** | Generic on/off or rotate-on-a-beat part (`Period`, `Phase`, `OnTime`), freezable | Firebar, Frame Counter, Spring Snap, switch blocks |
-| **Mirror / reflector** | CombatService: tagged reflector parts bounce projectiles like the shield | Ricochet Relay, Mirror Gate |
+| **Mirror / reflector** ✅ built Oct 1 | CombatService: tagged reflector parts bounce projectiles like the shield | Ricochet Relay, Mirror Gate |
 | **Weight scale** | Two-pan lift whose height follows the mass on each pan | Balance Scale, Counterweight |
 | **Safe-side respawn** | HealthService: if your partner crossed this obstacle's `SafeSide` part, you respawn there | every hard timing obstacle |
 | **Next-piece camera hint** | CameraController: a short look-at toward a level-placed `Hint` part when you enter its zone | operator/runner rooms |
