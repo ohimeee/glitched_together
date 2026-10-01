@@ -460,8 +460,45 @@ Skins.FallBlock = {
 -- generated box fan (faces +Z as generated); placed pitched so it blows up, depth squashed into a floor vent
 Skins.Fan = gen("rbxassetid://75748223101068", "rbxassetid://128839206690973", v(2.5, 2.5, 2), v(2.49, 2.5, 0.8))
 
+-- Oct 1 obstacles (obstacles.md 2.2), generated with the user's brief "kinda realistic, kinda It Takes Two": real
+-- toys at doll scale (chrome spring, rope swing, wooden carriage cannon, rope-lashed raft, cast-iron crank).
+-- Offsets put each model's top (or bottom) where the grey-box part's surface is.
+Skins.SpringPadSkin = gen( -- top board flush with the pad, the chrome coil hangs below into the pit
+	"rbxassetid://125992390845979",
+	"rbxassetid://116203241245521",
+	v(8, 1, 8),
+	v(8, 5, 8),
+	v(0, -2, 0)
+)
+Skins.SwingSkin = gen( -- seat flush with the cradle, ropes up
+	"rbxassetid://113564827433679",
+	"rbxassetid://93075112416088",
+	v(8, 1, 8),
+	v(8, 9.4, 8),
+	v(0, 4.2, 0)
+)
+Skins.RaftSkin =
+	gen("rbxassetid://121981429443529", "rbxassetid://91569259664439", v(10, 1, 10), v(10, 1.5, 10), v(0, -0.25, 0))
+-- the cannon sits on the barrel part (the turntable base stays a wooden disc players stand on); it faces +Z as
+-- generated, so it turns 180 to point along the base's LookVector (the launch direction)
+Skins.CannonSkin = gen(
+	"rbxassetid://87559143022413",
+	"rbxassetid://100041832780715",
+	v(2.4, 2.4, 6),
+	v(4.4, 5.6, 6.6),
+	v(0, 1.6, 0),
+	180
+)
+-- the crank wheel stands in the crank part's YZ plane (it spins about X)
+Skins.CrankSkin = gen("rbxassetid://80830869119397", "rbxassetid://99315066484452", v(0.6, 4, 4), v(4, 4, 1), nil, 90)
+
 local Dressing: { [string]: string } = {
 	MoveBlock = "MoveBlock",
+	SpringPad = "SpringPadSkin",
+	SwingCradle = "SwingSkin",
+	Ferry = "RaftSkin",
+	CannonBarrel = "CannonSkin",
+	Crank = "CrankSkin",
 	PixelCrusher = "Crusher",
 	GrappleRing = "GrappleRing",
 	Crate = "Crate",
@@ -516,6 +553,17 @@ for _, name in
 		"PressLane",
 		"CoinVault",
 		"VaultExit",
+		-- Spring Yard, Swing Works (Oct 1)
+		"YardPath",
+		"Yard",
+		"SpringPit",
+		"FarCliff",
+		"YardExit",
+		"WorksPath",
+		"WorksLedge",
+		"WorksFar",
+		"CannonIsland",
+		"WorksExit",
 	}
 do
 	Dressing[name] = "GrassBlock"

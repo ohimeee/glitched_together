@@ -53,6 +53,7 @@ local function moves(part: BasePart): boolean
 		or CollectionService:HasTag(part, "Mover")
 		or CollectionService:HasTag(part, "Pullable")
 		or CollectionService:HasTag(part, "Enemy") -- CombatService moves enemies by CFrame
+		or CollectionService:HasTag(part, "Station") -- StationService turns cranks by CFrame
 end
 
 -- Puts a skin over one grey-box part. Returns false (part untouched) if the meshes aren't available.

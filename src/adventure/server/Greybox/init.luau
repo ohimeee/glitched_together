@@ -487,10 +487,10 @@ local function buildPixelPlains(world: Model)
 	-- a crank Station (StationService): hold E, forward / back drives the linked Driven movers; it glows in the color
 	-- of the only player who can use it (art-direction.md §6)
 	local function crank(owner: string, x: number, top: number, z: number, drives: { Instance })
-		platform(P, Vector3.new(1.2, 3, 1.2), x, top + 3, z, {
+		platform(P, Vector3.new(1.2, 3, 1.2), x, top + 3, z, { -- the post glows in its owner's color
 			name = "CrankPost",
-			color = METAL,
-			material = Enum.Material.Metal,
+			color = if owner == "Kai" then KAI else MIKO,
+			material = NEON,
 		})
 		local wheel = block(P, Vector3.new(0.6, 4, 4), CFrame.new(x, top + 4.5, z), {
 			name = "Crank",
@@ -852,12 +852,6 @@ local function buildPixelPlains(world: Model)
 		Period = 3,
 		LaunchVelocity = Vector3.new(0, Tuning.JumpVelocity(24), 62), -- ~61 studs: lands ~10 onto the far ledge
 	})
-	block(P, Vector3.new(30, 2, 2), CFrame.new(0, 24, 70), { -- the beam the cradle hangs from (decor)
-		name = "CradleBeam",
-		color = WOOD,
-		material = Enum.Material.Wood,
-		collide = false,
-	})
 	grass(Vector3.new(30, 6, 30), 0, 0, 121, "WorksFar") -- z 106..136
 	block(P, Vector3.new(4, 4, 4), CFrame.new(9, 2, 128), {
 		name = "Crate",
@@ -876,7 +870,11 @@ local function buildPixelPlains(world: Model)
 	-- the spin cannon: a turntable with a barrel, turning once every 6 s
 	local cannon = Instance.new("Model")
 	cannon.Name = "SpinCannon"
-	local base = block(cannon, Vector3.new(8, 2, 8), CFrame.new(0, 1, 131), { name = "CannonBase", color = STONE })
+	local base = block(cannon, Vector3.new(8, 2, 8), CFrame.new(0, 1, 131), {
+		name = "CannonBase",
+		color = WOOD,
+		material = Enum.Material.Wood,
+	})
 	local barrel = block(cannon, Vector3.new(2.4, 2.4, 6), CFrame.new(0, 3.2, 128), {
 		name = "CannonBarrel",
 		color = METAL,

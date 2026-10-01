@@ -4,6 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local SMOOTH = Enum.Material.SmoothPlastic
 local v = Vector3.new
@@ -68,7 +69,30 @@ local Skins: { [string]: MeshAssets.Skin } = {
 	),
 }
 
+-- 2-2 Dark Library + Golem Hall props (Oct 1, obstacles.md 2.3): generated to the same storybook-realistic finish.
+-- Offsets put each model's foot on the floor (the grey-box parts float a little).
+Skins.IronGolem = enemy( -- a little castle-tower guardian; its visor faces +Z as generated
+	v(6, 7, 5),
+	"rbxassetid://75830825215040",
+	"rbxassetid://82069423211803",
+	v(7.4, 7, 4.6),
+	0,
+	180
+)
+Skins.SpikeRoller = enemy(v(10, 4, 3), "rbxassetid://135577631972243", "rbxassetid://71542413269555", v(10, 4, 4), 0, 0)
+Skins.GolemPillar = enemy(v(4, 10, 4), "rbxassetid://102180491432565", "rbxassetid://89145144615487", v(4, 10, 4), 0, 0)
+Skins.MirrorSkin =
+	enemy(v(6, 5, 0.6), "rbxassetid://102537945337069", "rbxassetid://112257945113121", v(5, 5.5, 1), -0.75, 0)
+Skins.CrystalTeal =
+	enemy(v(2, 4, 2), "rbxassetid://134206761685461", "rbxassetid://127713500326076", v(2.4, 4.4, 2.4), -0.8, 0)
+Skins.CrystalOrange =
+	enemy(v(2, 4, 2), "rbxassetid://90780134347317", "rbxassetid://94503427299730", v(2.4, 4.4, 2.4), -0.8, 0)
+
 local Dressing: { [string]: string } = {
+	IronGolem = "IronGolem",
+	SpikeRoller = "SpikeRoller",
+	GolemPillar = "GolemPillar",
+	Mirror = "MirrorSkin",
 	Skeleton = "Skeleton",
 	SplitSlime = "SplitSlime",
 	StaticArcher = "StaticArcher",
@@ -77,4 +101,25 @@ local Dressing: { [string]: string } = {
 	StaticMage = "StaticMage",
 }
 
-return { Skins = Skins, Dressing = Dressing, Decor = {} }
+-- Crystals: the skin depends on which fire they take (teal = only Miko's reflected shots, orange = Kai's own), and
+-- a light in the crystal's color comes on while it's lit (the grey-box part, which used to turn green, is hidden).
+local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
+	for _, crystal in world:GetDescendants() do
+		if crystal.Name ~= "Crystal" or not crystal:IsA("BasePart") then
+			continue
+		end
+		local teal = crystal:GetAttribute("Needs") == "Reflected"
+		apply(crystal, if teal then "CrystalTeal" else "CrystalOrange")
+		local light = Instance.new("PointLight")
+		light.Color = if teal then Palette.Miko else Palette.Kai
+		light.Range = 14
+		light.Brightness = 3
+		light.Enabled = false
+		light.Parent = crystal
+		crystal:GetAttributeChangedSignal("Active"):Connect(function()
+			light.Enabled = crystal:GetAttribute("Active") == true
+		end)
+	end
+end
+
+return { Skins = Skins, Dressing = Dressing, Decor = {}, Extras = Extras }
