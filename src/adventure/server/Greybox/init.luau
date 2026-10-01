@@ -2174,7 +2174,7 @@ local function buildStarfallCastle(world: Model)
 		local archer = enemy(world, "StaticArcher", spot.X, spot.Z)
 		archer:SetAttribute("Rooted", true)
 		archer:SetAttribute("Every", 1.4) -- a riding target is only in range ~5 s: shoot faster than the usual 2 s
-		archer:SetAttribute("Damage", 11) -- Kai alone can't soak the whole ride: Miko's shield is needed (14 hit too hard)
+		archer:SetAttribute("Damage", 10) -- Kai alone can't soak the whole ride: Miko's shield is needed (14 hit too hard)
 	end
 	-- the cart: a plank floor with low walls (CanQuery off, so arrows fly over them at the riders); the back opens
 	-- for boarding and shuts when the ride starts, the front drops at the end

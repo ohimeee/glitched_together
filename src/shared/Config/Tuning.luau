@@ -203,7 +203,7 @@ return {
 		WiderBlock = 160,
 		LongerCharge = 22,
 		BiggerFireball = 1.5,
-		BiggerFireballDamage = 1.5, -- and it hits harder (playtest Oct 1): 10 -> 15
+		BiggerFireballDamage = 1.25, -- and it hits harder (playtest Oct 1): 10 -> 12.5
 		FasterCast = 0.25,
 		EmberTrail = { Damage = 4, Life = 3 },
 	},
