@@ -489,8 +489,21 @@ Skins.CannonSkin = gen(
 	v(0, 1.6, 0),
 	180
 )
--- the crank wheel stands in the crank part's YZ plane (it spins about X)
-Skins.CrankSkin = gen("rbxassetid://80830869119397", "rbxassetid://99315066484452", v(0.6, 4, 4), v(4, 4, 1), nil, 90)
+-- the crank wheel stands in the crank part's YZ plane (it spins about X). Its generated texture came out green
+-- (decoration green right next to the owner-colored post), so it wears plain cast iron instead.
+Skins.CrankSkin = {
+	Design = v(0.6, 4, 4),
+	Meshes = {
+		Body = {
+			Id = "rbxassetid://80830869119397",
+			Offset = v(0, 0, 0),
+			Size = v(4, 4, 1),
+			Material = Enum.Material.Metal,
+			Color = Color3.fromHex("#55575F"),
+			Yaw = 90,
+		},
+	},
+}
 
 local Dressing: { [string]: string } = {
 	MoveBlock = "MoveBlock",
@@ -663,6 +676,147 @@ local Decor: { { any } } = {
 	{ "Cloud", CFrame.new(40, 40, 110), 2, "CoinPress" },
 }
 
+-- Spring pads: the coil stands on the pit floor and its board rides the pad, so the skin can't be welded (it
+-- floated over the floor at the top of the pump and sank through it at the bottom). It's anchored with its foot on
+-- the floor instead; the client SpringController stretches it to the pad's top every frame.
+local function rootSprings(world: Instance, params: RaycastParams)
+	for _, pad in world:GetDescendants() do
+		if pad.Name ~= "SpringPad" or not pad:IsA("BasePart") or pad:GetAttribute("Skinned") ~= "SpringPadSkin" then
+			continue
+		end
+		local body = pad:FindFirstChildWhichIsA("MeshPart")
+		local hit = workspace:Raycast(pad.Position, Vector3.new(0, -30, 0), params)
+		if not (body and hit) then
+			continue
+		end
+		local weld = body:FindFirstChildWhichIsA("WeldConstraint")
+		if weld then
+			weld:Destroy()
+		end
+		body.Anchored = true
+		local floor = hit.Position.Y
+		local top = pad.Position.Y + pad.Size.Y / 2
+		local height = math.max(top - floor, 0.5)
+		body:SetAttribute("Floor", floor)
+		body:SetAttribute("Rotation", pad.CFrame.Rotation:ToObjectSpace(body.CFrame.Rotation))
+		body.Size = Vector3.new(body.Size.X, height, body.Size.Z)
+		body.CFrame = CFrame.new(pad.Position.X, floor + height / 2, pad.Position.Z) * body.CFrame.Rotation
+		body:AddTag("SpringStretch")
+	end
+end
+
+-- Swing cradles: the generated seat's two rope-wrapped poles stopped in mid-air. A wooden gantry now spans the
+-- chasm (an A-frame on each ledge, a beam high above the launch arc), and a trolley riding the beam carries the
+-- seat on a V of ropes. The trolley is welded to the cradle, so freezes and launches are untouched.
+local GANTRY_HEIGHT = 32 -- beam above the seat: the release launch peaks ~24 up, so it never reaches the beam
+local GANTRY_HALF = 14 -- legs stand at the ledge edges, clear of plates, crates and Kai's drawbridge lane
+local POLE_TOPS = { v(-3.4, 8.85, 0), v(3.4, 8.85, 0) } -- measured on the SwingSkin at Design size
+local ROPE = Color3.fromHex("#CDB98A")
+
+local function rigGantries(world: Instance, params: RaycastParams, apply: (BasePart, string) -> boolean)
+	for _, cradle in world:GetDescendants() do
+		if
+			cradle.Name ~= "SwingCradle"
+			or not cradle:IsA("BasePart")
+			or cradle:GetAttribute("Skinned") ~= "SwingSkin"
+		then
+			continue
+		end
+		local waypoints = cradle:FindFirstChild("Waypoints")
+		local a, b = waypoints and waypoints:FindFirstChild("1"), waypoints and waypoints:FindFirstChild("2")
+		if not (a and b and a:IsA("BasePart") and b:IsA("BasePart")) then
+			continue
+		end
+		local holder = Instance.new("Folder")
+		holder.Name = "Gantry"
+		holder.Parent = cradle.Parent
+		local function wood(name: string, size: Vector3, cf: CFrame, collide: boolean)
+			local p = Instance.new("Part")
+			p.Name = name
+			p.Size = size
+			p.CFrame = cf
+			p.Anchored = true
+			p.CanCollide = collide
+			p.CanQuery = false -- never in the way of aim rays (Grapple, Pause Beam)
+			p.CanTouch = false
+			p.Material = Enum.Material.Wood
+			p.Color = Color3.fromHex("#7A4E2A")
+			p.Parent = holder
+			apply(p, "SignPost")
+		end
+		-- the beam runs from just behind the near end of the path to past the far ledge's edge
+		local dir = (b.Position - a.Position).Unit
+		local beamY = a.Position.Y + GANTRY_HEIGHT
+		local near = a.Position - dir * 20
+		local far = b.Position + dir * 27
+		local flat = CFrame.lookAt(a.Position, a.Position + dir).Rotation
+		local length = (far - near).Magnitude
+		local mid = (near + far) / 2
+		wood(
+			"Beam",
+			v(2, length, 2),
+			CFrame.new(mid.X, beamY + 1, mid.Z) * flat * CFrame.Angles(math.rad(90), 0, 0),
+			false
+		)
+		for _, foot in { near, far } do
+			wood(
+				"Crossbar",
+				v(1.8, GANTRY_HALF * 2 + 3, 1.8),
+				CFrame.new(foot.X, beamY - 0.9, foot.Z) * flat * CFrame.Angles(0, 0, math.rad(90)),
+				false
+			)
+			for _, side in { -1, 1 } do
+				local top = CFrame.new(foot.X, beamY, foot.Z) * flat * CFrame.new(side * GANTRY_HALF, 0, 0)
+				local hit = workspace:Raycast(top.Position, v(0, -GANTRY_HEIGHT - 20, 0), params)
+				if hit then
+					local h = top.Position.Y - hit.Position.Y
+					wood(
+						"Leg",
+						v(2, h, 2),
+						CFrame.new(top.Position.X, hit.Position.Y + h / 2, top.Position.Z) * flat,
+						true
+					)
+				end
+			end
+		end
+		-- trolley under the beam, welded to the cradle; ropes from the seat's pole tops up to it
+		local k = cradle.Size.X / 8
+		local trolley = Instance.new("Part")
+		trolley.Name = "Trolley"
+		trolley.Size = v(1.6, 1.2, 3)
+		trolley.CFrame = cradle.CFrame * CFrame.new(0, beamY - cradle.Position.Y - 0.6, 0)
+		trolley.Material = Enum.Material.Metal
+		trolley.Color = Color3.fromHex("#3E3F46")
+		trolley.CanCollide = false
+		trolley.CanQuery = false
+		trolley.CanTouch = false
+		trolley.Massless = true
+		trolley.Anchored = false
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = cradle
+		weld.Part1 = trolley
+		weld.Parent = trolley
+		trolley.Parent = cradle
+		local hook = Instance.new("Attachment")
+		hook.Position = v(0, -0.6, 0)
+		hook.Parent = trolley
+		for i, pole in POLE_TOPS do
+			local at = Instance.new("Attachment")
+			at.Name = "RopeTop" .. i
+			at.Position = pole * k
+			at.Parent = cradle
+			local rope = Instance.new("RopeConstraint")
+			rope.Attachment0 = at
+			rope.Attachment1 = hook
+			rope.Length = (trolley.CFrame * hook.Position - cradle.CFrame * at.Position).Magnitude
+			rope.Visible = true
+			rope.Thickness = 0.3
+			rope.Color = BrickColor.new(ROPE)
+			rope.Parent = cradle
+		end
+	end
+end
+
 -- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the
 -- board's ends so they never cover the lettering).
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
@@ -670,6 +824,8 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { world }
 	params.RespectCanCollide = true
+	rootSprings(world, params)
+	rigGantries(world, params, apply)
 	for _, sign in world:GetDescendants() do
 		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then
 			continue
