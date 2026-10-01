@@ -188,6 +188,16 @@ return {
 	},
 	-- castle Torch Run: braziers burn out, spike traps show only in their firelight
 	TorchRun = { BurnTime = 6, Reveal = 12, TrapDamage = 30 },
+	-- castle Ember Fuse: Kai lights a fuse to the keg, arrow traps shoot at the spark, Miko shields it
+	Fuse = {
+		Speed = 5, -- studs/s along the fuse: walking pace, so Miko can keep beside it
+		BreakWait = 3, -- s a spark waits at a break for Kai's Ignite before it fizzles
+		SnuffRadius = 2, -- an enemy shot passing this close puts the spark out
+		TrapEvery = 2.2, -- s between one trap's arrows
+		TrapRange = 38,
+		ArrowSpeed = 40,
+		ArrowDamage = 10,
+	},
 	ShieldKnight = {
 		Sword = { Damage = { 8, 8, 14 } },
 		Charge = { Damage = 12, Cooldown = 6, Distance = 16 },

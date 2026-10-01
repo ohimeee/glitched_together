@@ -12,12 +12,19 @@
 --   Iron Golem: immune to damage. It charges in a straight line at its target (a blocking Miko taunts it); a charge
 --            into a GolemPillar that Kai has burned (Ignite) smashes the pillar and dazes it. When the last pillar of
 --            its `Group` falls, the ceiling comes down on it and the group's trigger (a hidden FireSwitch) fires.
+--   Ember Fuse: a Model tagged `Fuse` with a `Path` folder of parts 1..N on the floor (`Break` points are also tagged
+--            `FuseBreak`), a `FuseStart` part at point 1 and a hidden FireSwitch trigger `KegSwitch`. Kai Ignites the
+--            start; a spark runs the path at Tuning.Fuse.Speed. At a break it waits BreakWait s for Kai to Ignite that
+--            break, else it fizzles. `ArrowTrap` parts shoot at a lit spark in range; a hostile shot passing the spark
+--            snuffs it (back to the start), so Miko walks beside it with her shield up. At the end the keg blows and
+--            the trigger fires.
 --   Area effects used by the tools: flame walls, meteor, rally burst, sword box, shield-charge line, ignite.
 --   Ultimate charge: player attribute `Ultimate` 0..1 (Kai from damage dealt, Miko from damage blocked).
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local CollectionService = game:GetService("CollectionService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
@@ -487,6 +494,205 @@ end
 
 -- projectiles ----------------------------------------------------------------------------------
 
+-- Ember Fuse ------------------------------------------------------------------------------------
+type Fuse = {
+	model: Model,
+	points: { BasePart },
+	breaks: { [number]: BasePart }, -- path index -> its FuseBreak marker
+	lit: boolean,
+	s: number, -- distance along the path
+	nextIndex: number, -- the next path point the spark is heading for
+	waitUntil: number?, -- waiting at a break
+	spark: BasePart?,
+	done: boolean,
+	trapShots: { [BasePart]: number },
+}
+local fuses: { [Model]: Fuse } = {}
+local FT = Tuning.Fuse
+
+local function fuseOf(inst: Instance): Fuse?
+	local model = Tags.find(inst, "Fuse")
+	return model and fuses[model :: Model]
+end
+
+local function fusePoint(f: Fuse): Vector3
+	local travelled = 0
+	for i = 2, #f.points do
+		local a, b = f.points[i - 1].Position, f.points[i].Position
+		local len = (b - a).Magnitude
+		if f.s <= travelled + len then
+			return a:Lerp(b, (f.s - travelled) / math.max(len, 1e-3))
+		end
+		travelled += len
+	end
+	return f.points[#f.points].Position
+end
+
+local function distanceTo(f: Fuse, index: number): number
+	local d = 0
+	for i = 2, index do
+		d += (f.points[i].Position - f.points[i - 1].Position).Magnitude
+	end
+	return d
+end
+
+-- burnt rope segments go black (segment i runs from point i to point i + 1)
+local function setRopes(f: Fuse, burntUpTo: number)
+	for _, rope in f.model:GetChildren() do
+		local i = tonumber(rope.Name:match("^Rope(%d+)$"))
+		if i and rope:IsA("BasePart") then
+			rope.Color = if i < burntUpTo then Color3.fromRGB(40, 34, 30) else Color3.fromRGB(150, 110, 70)
+		end
+	end
+end
+
+local function resetFuse(f: Fuse, fizzle: boolean)
+	if f.spark then
+		if fizzle then
+			CombatFx.Burst(f.spark.Position, { { "Smoke", 6, 1.2, Color3.fromRGB(120, 120, 130) } })
+			Audio.play("GlitchStatic", f.spark.Position)
+		end
+		f.spark:Destroy()
+		f.spark = nil
+	end
+	f.lit, f.s, f.nextIndex, f.waitUntil = false, 0, 2, nil
+	setRopes(f, 0)
+	local start = f.model:FindFirstChild("FuseStart")
+	if start then
+		start:SetAttribute("Lit", nil)
+	end
+	for _, marker in f.breaks do
+		marker:SetAttribute("Lit", true) -- only a waiting break can be lit (Kai's E picks it then)
+	end
+end
+
+local function lightFuse(f: Fuse)
+	if f.lit or f.done then
+		return
+	end
+	f.lit, f.s, f.nextIndex, f.waitUntil = true, 0, 2, nil
+	local start = f.model:FindFirstChild("FuseStart")
+	if start then
+		start:SetAttribute("Lit", true)
+	end
+	local spark = effect({ Name = "FuseSpark", Shape = Enum.PartType.Ball, Size = Vector3.one * 1.2, Color = FIRE })
+	spark.Position = fusePoint(f)
+	CombatFx.Fire(spark, 0.7)
+	local light = Instance.new("PointLight")
+	light.Color = FIRE
+	light.Range = 14
+	light.Brightness = 2
+	light.Parent = spark
+	f.spark = spark
+	Audio.play("Ignite", spark)
+end
+
+local function blowKeg(f: Fuse)
+	f.done = true
+	local keg = f.model:FindFirstChild("Keg") :: BasePart?
+	local at = if keg then keg.Position else fusePoint(f)
+	if f.spark then
+		f.spark:Destroy()
+		f.spark = nil
+	end
+	CombatFx.Burst(
+		at,
+		{ { "Flame", 30, 4 }, { "Stars", 30, 2, CombatFx.Gold }, { "Smoke", 12, 3, Color3.fromRGB(90, 80, 100) } },
+		FIRE,
+		40
+	)
+	Audio.play("MeteorImpact", at)
+	if keg then
+		keg:Destroy()
+	end
+	local trigger = f.model:FindFirstChild("KegSwitch")
+	if trigger then
+		InteractableService.Activate(trigger)
+	end
+end
+
+local function stepFuse(f: Fuse, dt: number)
+	if not f.lit or f.done then
+		return
+	end
+	local now = os.clock()
+	if f.waitUntil then
+		if now >= f.waitUntil then
+			resetFuse(f, true) -- the break wasn't lit in time
+		end
+		return
+	end
+	f.s += FT.Speed * dt
+	local target = distanceTo(f, f.nextIndex)
+	if f.s >= target then
+		f.s = target
+		local marker = f.breaks[f.nextIndex]
+		if marker then
+			f.waitUntil = now + FT.BreakWait
+			marker:SetAttribute("Lit", nil) -- Kai can light it now
+		end
+		f.nextIndex += 1
+		if f.nextIndex > #f.points then
+			blowKeg(f)
+			return
+		end
+	end
+	setRopes(f, f.nextIndex - 1)
+	local spark = f.spark
+	if not spark then
+		return
+	end
+	spark.Position = fusePoint(f) + Vector3.new(0, 0.6, 0)
+	-- arrow traps shoot at a burning spark in range, each on its own rhythm
+	for _, trap in Tags.list("ArrowTrap") do
+		if not trap:IsA("BasePart") then
+			continue
+		end
+		local to = flat(spark.Position - trap.Position)
+		if to.Magnitude > ((trap:GetAttribute("Range") or FT.TrapRange) :: number) then
+			continue
+		end
+		local last = f.trapShots[trap]
+		if not last then
+			-- first sight: wait a moment (Delay) before the first arrow
+			last = now - FT.TrapEvery + ((trap:GetAttribute("Delay") or 0.6) :: number)
+			f.trapShots[trap] = last
+		end
+		if now - last >= FT.TrapEvery then
+			f.trapShots[trap] = now
+			local origin = Vector3.new(trap.Position.X, spark.Position.Y, trap.Position.Z)
+				+ unitOr(to, Vector3.zAxis) * 2
+			CombatService.Fire({
+				origin = origin,
+				dir = to,
+				speed = FT.ArrowSpeed,
+				damage = FT.ArrowDamage,
+				friendly = false,
+				kind = "Arrow",
+				color = DANGER,
+			})
+		end
+	end
+end
+
+-- a hostile shot passing a burning spark puts it out
+local function snuffs(pos: Vector3, move: Vector3): boolean
+	for _, f in fuses do
+		local spark = f.spark
+		if f.lit and spark and math.abs(spark.Position.Y - pos.Y) <= 4 then
+			local seg = flat(move)
+			local rel = flat(spark.Position - pos)
+			local along = if seg.Magnitude > 1e-3 then math.clamp(rel:Dot(seg.Unit), 0, seg.Magnitude) else 0
+			local miss = rel - (if seg.Magnitude > 1e-3 then seg.Unit * along else Vector3.zero)
+			if miss.Magnitude <= FT.SnuffRadius then
+				resetFuse(f, true)
+				return true
+			end
+		end
+	end
+	return false
+end
+
 export type ShotSpec = {
 	origin: Vector3,
 	dir: Vector3,
@@ -570,6 +776,11 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 				end
 			end
 		end
+	end
+
+	if not shot.friendly and next(fuses) and snuffs(pos, move) then
+		CombatFx.Impact(pos, false, shot.part.Color)
+		return false
 	end
 
 	-- hostile shots hit a body they pass close to (a ray only finds the collidable torso/head, so arrows slipped past
@@ -835,6 +1046,24 @@ end
 
 -- Ignite (Kai, E): braziers light up, webs and wooden doors burn away.
 function CombatService.Ignite(inst: Instance)
+	if Tags.has(inst, "FuseStart") then
+		local f = fuseOf(inst)
+		if f then
+			lightFuse(f)
+		end
+		return
+	elseif Tags.has(inst, "FuseBreak") then
+		local f = fuseOf(inst)
+		if f and f.waitUntil and f.breaks[f.nextIndex - 1] == inst then
+			f.waitUntil = nil -- relit: the spark runs on
+			inst:SetAttribute("Lit", true)
+			Audio.play("Ignite", inst)
+			if f.spark then
+				CombatFx.Burst(f.spark.Position, { { "Flame", 8, 1.6 }, { "Stars", 8, 1, CombatFx.Gold } })
+			end
+		end
+		return
+	end
 	if Tags.has(inst, "Brazier") and inst:IsA("BasePart") then
 		if inst:GetAttribute("Lit") then
 			return
@@ -1182,6 +1411,9 @@ end
 
 -- Clear everything when a world unloads.
 function CombatService.Clear()
+	for _, f in fuses do
+		resetFuse(f, false)
+	end
 	for _, shot in shots do
 		shot.part:Destroy()
 	end
@@ -1246,6 +1478,46 @@ function CombatService.Init()
 		end
 	end)
 
+	Tags.each("Fuse", function(inst)
+		local path = inst:FindFirstChild("Path")
+		if not (inst:IsA("Model") and path) then
+			return
+		end
+		local points = {}
+		for _, part in path:GetChildren() do
+			local i = tonumber(part.Name)
+			if part:IsA("BasePart") and i then
+				points[i] = part
+			end
+		end
+		local breaks = {}
+		for i, part in points do
+			if CollectionService:HasTag(part, "FuseBreak") then
+				breaks[i] = part
+			end
+		end
+		local f: Fuse = {
+			model = inst,
+			points = points,
+			breaks = breaks,
+			lit = false,
+			s = 0,
+			nextIndex = 2,
+			waitUntil = nil,
+			spark = nil,
+			done = false,
+			trapShots = {},
+		}
+		fuses[inst] = f
+		resetFuse(f, false)
+	end, function(inst)
+		local f = fuses[inst :: Model]
+		if f and f.spark then
+			f.spark:Destroy()
+		end
+		fuses[inst :: Model] = nil
+	end)
+
 	Tags.each("Enemy", register, function(inst)
 		if inst:IsA("BasePart") then
 			foes[inst] = nil
@@ -1265,6 +1537,11 @@ function CombatService.Init()
 			end
 		end
 		stepWalls()
+		for model, f in fuses do
+			if model.Parent then
+				stepFuse(f, dt)
+			end
+		end
 	end)
 end
 

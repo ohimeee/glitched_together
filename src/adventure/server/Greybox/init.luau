@@ -2651,12 +2651,115 @@ local function buildStarfallCastle(world: Model)
 	flatSign("STATION", station.X + 9, station.Z, 8)
 	CollectionService:AddTag(ride, "SiegeRide")
 
-	-- exit: the end of the line
+	-- the end of the line
 	floor(-10, 1386, 10, 1416, "CartEnd")
 	checkpoint(world, 10, 0, 0, 1392, W)
 	wall(-10, 1386, -10, 1416)
 	wall(10, 1386, 10, 1416)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1410), {
+
+	-- L: EMBER FUSE (2-3, obstacles.md 2.3). The throne hall door is sealed; a fuse winds across the powder hall to a
+	-- keg in front of it. Kai lights it (E) and the spark walks the fuse. Arrow traps on the walls shoot at the spark
+	-- (an arrow that passes it puts it out, back to the start), so Miko walks beside it with her shield up on the
+	-- trap's side. At two breaks the spark waits 3 s for Kai to light it again. The traps' ranges never overlap and
+	-- both breaks sit where no trap reaches. Skeletons go for Miko while she blocks: Kai keeps them off her.
+	floor(-30, 1416, 30, 1500, "PowderHall")
+	checkpoint(world, 11, 0, 0, 1420, W, {
+		"Kai: light the fuse (E). Miko: walk beside the spark with your shield up. Arrows put it out!",
+		"The spark stops at the orange breaks: Kai, light it again (E) within 3 seconds.",
+	})
+	flatSign("2-3 THE POWDER HALL", 0, 1430, 18)
+	wall(-30, 1416, -10, 1416)
+	wall(10, 1416, 30, 1416)
+	wall(-30, 1416, -30, 1500)
+	wall(30, 1416, 30, 1500)
+	wall(-30, 1500, -7, 1500)
+	wall(7, 1500, 30, 1500)
+	for _, spot in { { -30, 1424 }, { 30, 1424 }, { -30, 1490 }, { 30, 1490 } } do
+		torch(spot[1], spot[2])
+	end
+	local fuse = Instance.new("Model")
+	fuse.Name = "Fuse"
+	local path = Instance.new("Folder")
+	path.Name = "Path"
+	path.Parent = fuse
+	local points = {
+		{ -22, 1422 },
+		{ -22, 1446 },
+		{ 0, 1446, true }, -- break 1: out of every trap's reach
+		{ 22, 1446 },
+		{ 22, 1470 },
+		{ 0, 1470, true }, -- break 2
+		{ 0, 1490 },
+	}
+	for i, pt in points do
+		local at = Vector3.new(pt[1] :: number, 0.3, pt[2] :: number)
+		local marker = block(path, Vector3.new(1, 0.4, 1), CFrame.new(at), {
+			name = tostring(i),
+			transparency = 1,
+			collide = false,
+		})
+		marker.CanQuery = false
+		if pt[3] then
+			marker.Name = tostring(i)
+			marker.Transparency = 0
+			marker.Size = Vector3.new(1.6, 0.8, 1.6)
+			marker.Color = KAI -- Kai's target: light it again
+			marker.Material = Enum.Material.Neon
+			CollectionService:AddTag(marker, "FuseBreak")
+		end
+		local nextPt = points[i + 1]
+		if nextPt then
+			local to = Vector3.new(nextPt[1] :: number, 0.3, nextPt[2] :: number)
+			local rope = block(fuse, Vector3.new(0.4, 0.3, (to - at).Magnitude), CFrame.lookAt((at + to) / 2, to), {
+				name = `Rope{i}`,
+				color = rgb(150, 110, 70),
+				material = Enum.Material.Fabric,
+				collide = false,
+			})
+			rope.CanQuery = false
+		end
+	end
+	block(fuse, Vector3.new(1, 1.6, 1), CFrame.new(-22, 0.8, 1421), {
+		name = "FuseStart",
+		color = KAI,
+		material = Enum.Material.Neon,
+		tags = { "FuseStart" },
+	})
+	block(fuse, Vector3.new(3, 3, 3), CFrame.new(0, 1.5, 1493) * CFrame.Angles(0, 0, math.rad(90)), {
+		name = "Keg",
+		color = rgb(110, 70, 40),
+		material = Enum.Material.Wood,
+		shape = Enum.PartType.Cylinder,
+	})
+	local kegSwitch = block(fuse, Vector3.new(1, 1, 1), CFrame.new(0, -3, 1493), {
+		name = "KegSwitch",
+		transparency = 1,
+		collide = false,
+		tags = { "FireSwitch" },
+		attrs = { Group = "C9" },
+	})
+	kegSwitch.CanQuery = false
+	fuse.Parent = world
+	CollectionService:AddTag(fuse, "Fuse")
+	-- arrow traps (24-stud reach each): west covers the first leg, east the right side, north the last stretch
+	for _, trap in { { -29, 1434, 90 }, { 29, 1460, -90 }, { -14, 1499, 180 } } do
+		block(world, Vector3.new(2, 2, 2), CFrame.new(trap[1], 3, trap[2]) * CFrame.Angles(0, math.rad(trap[3]), 0), {
+			name = "ArrowTrap",
+			color = Palette.Danger,
+			material = Enum.Material.Metal,
+			tags = { "ArrowTrap" },
+			attrs = { Range = 24 },
+		})
+	end
+	enemy(world, "Skeleton", -10, 1458)
+	enemy(world, "Skeleton", 12, 1482)
+	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500))
+
+	-- exit: the throne hall door
+	floor(-10, 1500, 10, 1530, "ThroneApproach")
+	wall(-10, 1500, -10, 1530)
+	wall(10, 1500, 10, 1530)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1524), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
@@ -2664,7 +2767,7 @@ local function buildStarfallCastle(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 1400, 16)
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 1512, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.
