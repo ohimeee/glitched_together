@@ -1315,12 +1315,29 @@ local function buildGlitchedCore(world: Model)
 	})
 	sign(P, "DOOR.EXE (NOT RESPONDING)", CFrame.new(0, 18, 40), Vector3.new(20, 3, 0.4))
 	copySource(Vector3.new(4, 4, 4), -8, 4, 14, "Crate")
-	platform(P, Vector3.new(6, 0.6, 6), 3, 0.6, 30, {
+	local doorPlate = platform(P, Vector3.new(6, 0.6, 6), 3, 0.6, 30, {
 		color = NEUTRAL,
 		tags = { "PressurePlate" },
 		attrs = { Group = "P1", PlayersOnly = true },
 		name = "Plate",
 	})
+	-- say it on the plate: crates and pastes don't hold this one (playtest Oct 1: Kai tried pasting on it)
+	local plateLabel = Instance.new("SurfaceGui")
+	plateLabel.Face = Enum.NormalId.Top
+	plateLabel.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	plateLabel.PixelsPerStud = 40
+	plateLabel.LightInfluence = 0.3
+	plateLabel.Parent = doorPlate
+	local plateText = Instance.new("TextLabel")
+	plateText.Size = UDim2.fromScale(0.9, 0.9)
+	plateText.Position = UDim2.fromScale(0.05, 0.05)
+	plateText.BackgroundTransparency = 1
+	plateText.Font = Enum.Font.GothamBlack
+	plateText.TextScaled = true
+	plateText.TextColor3 = Color3.fromRGB(40, 34, 20)
+	plateText.Text = "PLAYERS\nONLY"
+	plateText.Rotation = -90 -- upright for someone walking up to the door (+z)
+	plateText.Parent = plateLabel
 	wall(Vector3.new(2, 34, 84), -13, 30, 41) -- side walls z -1..83
 	wall(Vector3.new(2, 34, 84), 13, 30, 41)
 	wall(Vector3.new(9, 34, 2), -7.5, 30, 42) -- the door wall, door at x -3..3

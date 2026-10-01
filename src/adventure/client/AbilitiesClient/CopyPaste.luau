@@ -45,6 +45,26 @@ function CopyPaste:Start()
 	ghost.Transparency = 1
 	ghost.Parent = workspace
 
+	-- a refused paste (NoPaste room, or into a player) flashes the ghost red where it would have gone, with a label;
+	-- the ghost is already hidden on release, so a flash on the ghost alone showed nothing (playtest Oct 1)
+	local refused = Instance.new("BillboardGui")
+	refused.Size = UDim2.fromOffset(220, 40)
+	refused.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
+	refused.AlwaysOnTop = true
+	refused.Enabled = false
+	refused.Parent = ghost
+	local refusedText = Instance.new("TextLabel")
+	refusedText.Size = UDim2.fromScale(1, 1)
+	refusedText.BackgroundTransparency = 1
+	refusedText.Font = Enum.Font.GothamBlack
+	refusedText.TextScaled = true
+	refusedText.TextColor3 = Color3.fromRGB(255, 80, 80)
+	refusedText.TextStrokeTransparency = 0
+	refusedText.Text = "CAN'T PASTE HERE"
+	refusedText.Parent = refused
+	local lastCf: CFrame? = nil
+	local flashId = 0
+
 	local function pasteCFrame(): CFrame?
 		local root = Aim.root()
 		if not (root and copiedSize) then
@@ -93,6 +113,7 @@ function CopyPaste:Start()
 		ghost.Transparency = 1
 		local cf = pasteCFrame()
 		if cf then
+			lastCf = cf
 			toolUse:FireServer(2, nil, cf)
 		end
 	end))
@@ -120,9 +141,24 @@ function CopyPaste:Start()
 			previewing = false
 			ghost.Transparency = 1
 		elseif kind == "PasteBlocked" then
+			flashId += 1
+			local id = flashId
+			if lastCf and copiedSize then
+				ghost.Size = copiedSize
+				ghost.CFrame = lastCf
+			end
 			ghost.Color = Color3.fromRGB(255, 80, 80)
-			task.delay(0.4, function()
+			ghost.Transparency = 0.3
+			refused.Enabled = true
+			task.delay(0.9, function()
+				if flashId ~= id then
+					return
+				end
 				ghost.Color = Color3.new(1, 1, 1)
+				refused.Enabled = false
+				if not previewing then
+					ghost.Transparency = 1
+				end
 			end)
 		end
 	end))
