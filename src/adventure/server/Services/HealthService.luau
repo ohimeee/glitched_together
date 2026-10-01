@@ -253,7 +253,10 @@ end
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
-local UNSAFE = { "Mover", "KillZone", "Freezable", "Pullable", "Hazard", "Pasted", "CrackedFloor" }
+-- Ground you can't be put back on after a fall: things that move, vanish or hurt (Blinkers switch off, Code Layer
+-- pieces go back when Miko pulls out another, pastes get replaced).
+local UNSAFE =
+	{ "Mover", "KillZone", "Freezable", "Pullable", "Hazard", "Pasted", "CrackedFloor", "Blinker", "CodeLayer" }
 
 local function trackSafeGround()
 	while true do
