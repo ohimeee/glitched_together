@@ -74,6 +74,16 @@
           "RoughnessMap": "rbxassetid://74515872877414",
           "StudsPerTile": 8
         }
+      },
+      "CastleGrass": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Grass",
+          "ColorMap": "rbxassetid://82780044525948",
+          "NormalMap": "rbxassetid://80188543292248",
+          "RoughnessMap": "rbxassetid://127538538980026",
+          "StudsPerTile": 24
+        }
       }
     },
     "SoundService": {

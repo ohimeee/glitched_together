@@ -151,6 +151,21 @@ Skins.CheckpointBanner =
 Skins.BarricadeSkin =
 	enemy(v(10, 5, 1.5), "rbxassetid://96691084781583", "rbxassetid://124296174769582", v(10, 5.2, 2), -0.1, 0)
 
+-- Moonlit courtyard far below the rooms (user's pick, Oct 1, 8th session): realistic-leaning generations
+-- (weathered stone, real bark and needles) with only slight stylization, It Takes Two cinematic look.
+Skins.CourtTowerTop =
+	enemy(v(10, 11.23, 9.82), "rbxassetid://125892169190951", "rbxassetid://106561434667716", v(10, 11.23, 9.82), 0, 0)
+Skins.CourtSpruce =
+	enemy(v(10, 14.66, 9.92), "rbxassetid://139206506575042", "rbxassetid://73918508940539", v(10, 14.66, 9.92), 0, 0)
+Skins.CourtLinden =
+	enemy(v(14.96, 17.36, 16), "rbxassetid://126609478543684", "rbxassetid://95011821570692", v(14.96, 17.36, 16), 0, 0)
+Skins.CourtLantern =
+	enemy(v(3, 8.68, 2.99), "rbxassetid://102429793334089", "rbxassetid://94669498947211", v(3, 8.68, 2.99), 0, 0)
+Skins.CourtWell =
+	enemy(v(6, 7.74, 4.89), "rbxassetid://115921641059654", "rbxassetid://74742023775359", v(6, 7.74, 4.89), 0, 0)
+Skins.CourtCart =
+	enemy(v(4.47, 5, 5.72), "rbxassetid://129495207708574", "rbxassetid://137075705561361", v(4.47, 5, 5.72), 0, 0)
+
 local Dressing: { [string]: string } = {
 	Torch = "TorchSkin",
 	Brazier = "BrazierSkin",
@@ -187,7 +202,7 @@ local SURFACES: { [Enum.Material]: { any } } = {
 -- Environment fill: the top-down camera looks DOWN, so what's below the rooms fills the frame. Every room floor gets a
 -- brick foundation into the dark (the rooms read as one castle mass, not tiles in a void), the cart track gets
 -- timber trestle legs (nothing floats), and a night meadow lies far below the kill floor.
-local FOUNDATION_DEPTH = 38
+local GROUND_Y = -90 -- the moonlit courtyard floor (below KillY, so a fall never lands on it)
 local function art(parent: Instance, name: string, size: Vector3, cf: CFrame, props: { [string]: any }): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -210,25 +225,26 @@ local function fillEnvironment(world: Instance)
 	for _, floor in world:GetDescendants() do
 		if floor:IsA("BasePart") and floor.Material == Enum.Material.Cobblestone and floor.Size.Y <= 2.5 then
 			local bottom = floor.Position.Y - floor.Size.Y / 2
+			local depth = bottom - GROUND_Y -- every room stands on the courtyard (nothing floats)
 			art(
 				folder,
 				"Foundation",
-				Vector3.new(floor.Size.X, FOUNDATION_DEPTH, floor.Size.Z),
-				CFrame.new(floor.Position.X, bottom - FOUNDATION_DEPTH / 2, floor.Position.Z),
+				Vector3.new(floor.Size.X, depth, floor.Size.Z),
+				CFrame.new(floor.Position.X, bottom - depth / 2, floor.Position.Z),
 				{
 					Material = Enum.Material.Slate,
 					MaterialVariant = "CastleWall",
-					Color = Color3.fromRGB(120, 104, 150),
+					Color = Color3.fromRGB(190, 170, 205), -- lighter: the deep foundations read black at night
 				}
 			)
 		elseif floor:IsA("BasePart") and floor.Name == "TrackBend" then
 			local top = floor.Position.Y - 0.5
+			local depth = top - GROUND_Y
 			art(
 				folder,
 				"Trestle",
-				Vector3.new(FOUNDATION_DEPTH, 1.6, 1.6),
-				CFrame.new(floor.Position.X, top - FOUNDATION_DEPTH / 2, floor.Position.Z)
-					* CFrame.Angles(0, 0, math.rad(90)),
+				Vector3.new(depth, 1.6, 1.6),
+				CFrame.new(floor.Position.X, top - depth / 2, floor.Position.Z) * CFrame.Angles(0, 0, math.rad(90)),
 				{
 					Shape = Enum.PartType.Cylinder,
 					Material = Enum.Material.WoodPlanks,
@@ -239,6 +255,162 @@ local function fillEnvironment(world: Instance)
 		end
 	end
 	folder.Parent = world
+end
+
+-- The moonlit courtyard: a lawn far below with cobbled lanes, curtain walls with battlements on both sides,
+-- tall brick towers crowned with slate roofs and a few warm windows, spruce and linden groves, lanterns (small
+-- warm pools, memory subtle-lighting), wells and hay carts. Props never sit under a room (foundations are there).
+local WALL_GAP, WALL_H, WALL_T = 130, 46, 10
+local function courtyard(world: Instance, apply: (BasePart, string) -> boolean)
+	local folder = Instance.new("Folder")
+	folder.Name = "Courtyard"
+	folder.Parent = world
+	local rooms = {}
+	local x0, x1, z0, z1 = math.huge, -math.huge, math.huge, -math.huge
+	for _, f in world:GetDescendants() do
+		local isFloor = f:IsA("BasePart")
+			and f.Size.Y <= 2.5
+			and (f.Material == Enum.Material.Cobblestone or f.Name == "TrackBend")
+		if isFloor then
+			local a, b = f.Position - f.Size / 2, f.Position + f.Size / 2
+			table.insert(rooms, { a.X - 6, b.X + 6, a.Z - 6, b.Z + 6 })
+			x0, x1, z0, z1 = math.min(x0, a.X), math.max(x1, b.X), math.min(z0, a.Z), math.max(z1, b.Z)
+		end
+	end
+	if #rooms == 0 then
+		return
+	end
+	local function clear(x: number, z: number, r: number): boolean
+		for _, rm in rooms do
+			if x + r > rm[1] and x - r < rm[2] and z + r > rm[3] and z - r < rm[4] then
+				return false
+			end
+		end
+		return true
+	end
+	local function prop(name: string, skin: string, scale: number, x: number, z: number, yaw: number): Part?
+		local design = Skins[skin].Design * scale
+		local holder = art(
+			folder,
+			name,
+			design,
+			CFrame.new(x, GROUND_Y + design.Y / 2, z) * CFrame.Angles(0, math.rad(yaw), 0),
+			{ Transparency = 1 }
+		)
+		if apply(holder, skin) then
+			return holder
+		end
+		holder:Destroy()
+		return nil
+	end
+
+	local wx0, wx1 = x0 - WALL_GAP, x1 + WALL_GAP
+	local cz, lz = (z0 + z1) / 2, z1 - z0 + 400
+	-- lawn + a cobbled lane inside each wall
+	art(
+		folder,
+		"Lawn",
+		Vector3.new(math.min(wx1 - wx0 + 200, 2048), 4, math.min(lz + 200, 2048)),
+		CFrame.new((wx0 + wx1) / 2, GROUND_Y - 2, cz),
+		{
+			Material = Enum.Material.Grass,
+			MaterialVariant = "CastleGrass",
+			Color = Color3.fromRGB(170, 190, 165),
+		}
+	)
+	for _, lx in { wx0 + 28, wx1 - 28 } do
+		art(folder, "Lane", Vector3.new(16, 0.4, lz), CFrame.new(lx, GROUND_Y + 0.2, cz), {
+			Material = Enum.Material.Cobblestone,
+			MaterialVariant = "CastleFloor",
+			Color = Color3.fromRGB(150, 140, 160),
+		})
+	end
+	-- curtain walls with merlons, towers every ~200 studs (brick shaft + generated slate-roofed crown)
+	local wallLook =
+		{ Material = Enum.Material.Slate, MaterialVariant = "CastleWall", Color = Color3.fromRGB(205, 185, 215) }
+	for _, wx in { wx0, wx1 } do
+		art(folder, "CurtainWall", Vector3.new(WALL_T, WALL_H, lz), CFrame.new(wx, GROUND_Y + WALL_H / 2, cz), wallLook)
+		for z = cz - lz / 2 + 4, cz + lz / 2 - 4, 8 do
+			art(folder, "Merlon", Vector3.new(WALL_T + 0.6, 4, 4), CFrame.new(wx, GROUND_Y + WALL_H + 2, z), wallLook)
+		end
+		local count = math.max(2, math.floor(lz / 200))
+		for i = 0, count do
+			local tz = cz - lz / 2 + i * lz / count
+			local shaftH = WALL_H + 18
+			art(
+				folder,
+				"TowerShaft",
+				Vector3.new(shaftH, 24, 24),
+				CFrame.new(wx, GROUND_Y + shaftH / 2, tz) * CFrame.Angles(0, 0, math.rad(90)),
+				{
+					Shape = Enum.PartType.Cylinder,
+					Material = Enum.Material.Slate,
+					MaterialVariant = "CastleWall",
+					Color = Color3.fromRGB(215, 195, 220),
+				}
+			)
+			local crown = art(
+				folder,
+				"TowerCrown",
+				Skins.CourtTowerTop.Design * 2.8,
+				CFrame.new(wx, GROUND_Y + shaftH - 4 + Skins.CourtTowerTop.Design.Y * 1.4, tz),
+				{ Transparency = 1 }
+			)
+			if not apply(crown, "CourtTowerTop") then
+				crown:Destroy()
+			end
+			-- two warm slit windows facing the castle, one with a faint light
+			local face = if wx < x0 then 1 else -1
+			for k, wy in { 20, 38 } do
+				local win = art(
+					folder,
+					"TowerWindow",
+					Vector3.new(0.4, 3.2, 1.6),
+					CFrame.new(wx + face * 12, GROUND_Y + wy, tz + (k - 1.5) * 4),
+					{ Material = Enum.Material.Neon, Color = Color3.fromRGB(190, 115, 45) }
+				)
+				if k == 2 then
+					local light = Instance.new("PointLight")
+					light.Color = Color3.fromRGB(255, 170, 90)
+					light.Range = 12
+					light.Brightness = 0.6
+					light.Parent = win
+				end
+			end
+		end
+	end
+	-- groves, lanterns along the lanes, wells and carts
+	local rng = Random.new(2026)
+	for _ = 1, 260 do
+		local x = rng:NextNumber(wx0 + 12, wx1 - 12)
+		local z = rng:NextNumber(cz - lz / 2, cz + lz / 2)
+		local nearLane = math.abs(x - (wx0 + 28)) < 14 or math.abs(x - (wx1 - 28)) < 14
+		if not nearLane and clear(x, z, 10) then
+			if rng:NextNumber() < 0.65 then
+				prop("Spruce", "CourtSpruce", rng:NextNumber(1.8, 3), x, z, rng:NextNumber(0, 360))
+			else
+				prop("Linden", "CourtLinden", rng:NextNumber(1.4, 2.2), x, z, rng:NextNumber(0, 360))
+			end
+		end
+	end
+	for _, lx in { wx0 + 28, wx1 - 28 } do
+		local side = if lx < x0 then 1 else -1
+		for z = cz - lz / 2 + 20, cz + lz / 2 - 20, 60 do
+			local lantern = prop("Lantern", "CourtLantern", 1.4, lx + side * 10, z, 0)
+			if lantern then
+				local light = Instance.new("PointLight")
+				light.Color = Color3.fromRGB(255, 175, 95)
+				light.Range = 12
+				light.Brightness = 0.6
+				light.Parent = lantern
+			end
+			if rng:NextNumber() < 0.25 then
+				prop("Well", "CourtWell", 1.6, lx + side * 22, z + 25, rng:NextNumber(0, 360))
+			elseif rng:NextNumber() < 0.35 then
+				prop("HayCart", "CourtCart", 1.6, lx - side * 2, z + 30, rng:NextNumber(-20, 20))
+			end
+		end
+	end
 end
 
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
@@ -252,8 +424,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		end
 	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
-	-- (the cotton cloud sea below the castle was removed, user Oct 1: "don't like the cloud"; what goes there instead
-	-- is to be decided with the user)
+	task.spawn(courtyard, world, apply) -- meshes load async; the rooms never wait on the backdrop
 	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)
 	for _, pad in world:GetDescendants() do
 		if pad:IsA("BasePart") and CollectionService:HasTag(pad, "Checkpoint") then

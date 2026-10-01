@@ -64,6 +64,7 @@ See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-lik
   - Rigging: `/animations/rig-check`, `/animations/rig`, `/animations/retarget` (a full game-ready character pipeline costs about 85 credits).
   - Docs: https://developers.tripo3d.ai/en/docs/quick-start and https://docs.tripo3d.ai
 - **Pipeline:** download the GLB to the scratchpad → import into Blender → clean up (tri budget, one mesh per material, bottom-center origin, stud scale) → export FBX into `blender_assets/` → the user imports it in Studio. Credit Tripo in a credits file if their terms ask for it.
+- **All 4 keys were out of credit on Oct 1, 2026 (8th session).**
 - No Tripo script exists in the repo yet: write one in Python (read `.env`, `urllib`/`requests`) the first time it's needed.
 
 ### Poly Haven (CC0: free for anything, no credit needed)
