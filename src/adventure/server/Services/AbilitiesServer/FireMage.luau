@@ -45,12 +45,13 @@ local function fireball(p: Player, root: BasePart, aim: Vector3)
 	end
 	lastFireball[p] = now
 	local dir = flatDir(root.Position, aim, root.CFrame.LookVector)
-	local size = if p:GetAttribute("Up_BiggerFireball") then 1.4 * C.BiggerFireball else 1.4
+	local bigger = p:GetAttribute("Up_BiggerFireball") == true
+	local size = if bigger then 1.4 * C.BiggerFireball else 1.4
 	CombatService.Fire({
 		origin = root.Position + dir * 2.5,
 		dir = dir,
 		speed = T.Fireball.Speed,
-		damage = T.Fireball.Damage,
+		damage = if bigger then T.Fireball.Damage * C.BiggerFireballDamage else T.Fireball.Damage,
 		friendly = true,
 		owner = p,
 		kind = "Fireball",

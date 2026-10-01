@@ -461,7 +461,7 @@ end
 
 -- Castle: XP bar, ultimate meter, level-up picker, HP bars over heads (mechanics.md §6) ---------------------
 local UPGRADE_TEXT: { [string]: { string } } = {
-	BiggerFireball = { "BIGGER FIREBALL", "Fireballs are 50% bigger" },
+	BiggerFireball = { "BIGGER FIREBALL", "Fireballs are 50% bigger and hit 50% harder" },
 	FasterCast = { "FASTER CAST", "A fireball every 0.25 s" },
 	DoubleFlameWall = { "DOUBLE FLAME WALL", "Two walls at once" },
 	EmberTrail = { "EMBER TRAIL", "Blink leaves fire behind" },
