@@ -74,11 +74,14 @@ ArtService.Init()
 -- Hints reset on any progress.
 InteractableService.Progress:Connect(HintService.Progress)
 CheckpointService.Reached:Connect(HintService.Progress)
-WorldService.Loaded:Connect(function(worldName: string)
+WorldService.Loaded:Connect(function(worldName: string, restart: boolean?)
 	HintService.Progress()
 	HealthService.SetMode(worldName)
 	HealthService.ResetSafe()
 	CombatService.Clear()
+	if restart then
+		return -- a game over keeps castle levels and ultimate charge; only the rooms reset
+	end
 	for _, p in DuoService.Players() do
 		p:SetAttribute("Ultimate", 0)
 	end
@@ -86,6 +89,12 @@ WorldService.Loaded:Connect(function(worldName: string)
 		XpService.Reset() -- leveling starts fresh each time the castle loads
 	end
 end)
+
+-- Game over (both Downed): rebuild the world and restart at the checkpoint, so every room past it resets
+-- (golem pillars, enemies, gates), like reloading a checkpoint.
+HealthService.OnRestart = function()
+	WorldService.Load(WorldService.Current, CheckpointService.Current(), true)
+end
 
 -- Second Wind (Miko, castle level 3): +40 max HP right away.
 XpService.UpgradeApplied:Connect(function(p: Player, name: string)

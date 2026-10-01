@@ -84,6 +84,7 @@ return {
 	-- Health
 	Hearts = 3,
 	HeartRegenEvery = 5,
+	HpRegen = { Delay = 4, PerSecond = 5 }, -- castle HP: s without a hit before it refills, then HP per second
 	HitInvuln = 1,
 	KillZoneRespawnDelay = 1.5,
 	SafePosEvery = 0.5,

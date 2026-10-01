@@ -15,7 +15,7 @@ local WorldService = {}
 WorldService.Current = "Prologue"
 
 local loaded = Instance.new("BindableEvent")
-WorldService.Loaded = loaded.Event -- (worldName)
+WorldService.Loaded = loaded.Event -- (worldName, restart: boolean?)
 local advancing = false
 
 function WorldService.SetKit(p: Player, tool: string?, camera: string?)
@@ -46,7 +46,8 @@ function WorldService.SpawnPlayer(p: Player)
 	character:PivotTo(cf)
 end
 
-function WorldService.Load(worldName: string, checkpoint: number?)
+-- `restart`: a game over reloading the same world (Loaded listeners keep progress like castle levels)
+function WorldService.Load(worldName: string, checkpoint: number?, restart: boolean?)
 	WorldService.Current = worldName
 	workspace:SetAttribute("World", worldName)
 
@@ -78,7 +79,7 @@ function WorldService.Load(worldName: string, checkpoint: number?)
 		applyKit(p)
 		WorldService.SpawnPlayer(p)
 	end
-	loaded:Fire(worldName)
+	loaded:Fire(worldName, restart)
 end
 
 -- Both players reached the exit: unlock and load the next world.

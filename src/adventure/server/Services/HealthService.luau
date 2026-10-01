@@ -27,6 +27,10 @@ local useHP = false -- castle uses an HP bar instead of hearts
 local gameOverRunning = false
 
 local gameOverEvent = Net.event("GameOver")
+-- Both players down: Main rebuilds the world from the last checkpoint so the room resets too (playtest Oct 1:
+-- burned golem pillars stayed broken after a game over)
+-- (a plain callback, not a BindableEvent: deferred signals would run it after the players were placed)
+HealthService.OnRestart = nil :: (() -> ())?
 local mashEvent = Net.event("RespawnMash")
 
 local function state(p: Player): State
@@ -171,7 +175,17 @@ local function bothDown()
 		p:SetAttribute("RespawnAt", nil)
 		setGhost(p, false)
 		HealthService.Restore(p, maxHealth(p))
-		place(p, CheckpointService.SpawnCFrame(p))
+		states[p] = nil -- the old safe spots belong to the world that's about to be rebuilt
+	end
+	if HealthService.OnRestart then
+		HealthService.OnRestart() -- rebuilds the world and spawns both at the checkpoint
+	else
+		for _, p in DuoService.Players() do
+			place(p, CheckpointService.SpawnCFrame(p))
+		end
+	end
+	for _, p in DuoService.Players() do
+		state(p).invulnUntil = os.clock() + 1.5 -- hazard touches queued before the restart land after it
 	end
 	gameOverRunning = false
 end
@@ -311,14 +325,17 @@ end
 local function regenLoop()
 	while true do
 		task.wait(1)
-		if useHP then
-			continue
-		end
 		local now = os.clock()
 		for _, p in DuoService.Players() do
 			local s = state(p)
 			local health = p:GetAttribute("Health") or 0
-			if
+			if useHP then
+				-- castle HP bar: a slow trickle back once you haven't been hit for a few seconds (playtest Oct 1)
+				local max = maxHealth(p)
+				if not p:GetAttribute("Downed") and health < max and now - s.lastHit >= Tuning.HpRegen.Delay then
+					p:SetAttribute("Health", math.min(max, health + Tuning.HpRegen.PerSecond))
+				end
+			elseif
 				not p:GetAttribute("Downed")
 				and health < Tuning.Hearts
 				and now - s.lastHit >= Tuning.HeartRegenEvery

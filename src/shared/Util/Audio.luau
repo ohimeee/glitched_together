@@ -83,7 +83,10 @@ function Audio.play(name: string, at: (Instance | Vector3)?, volumeScale: number
 	s:Play()
 	if holder then
 		s.Destroying:Once(function()
-			holder:Destroy()
+			-- skip when the holder is what's being destroyed ("Parent property ... is locked")
+			if holder.Parent then
+				holder:Destroy()
+			end
 		end)
 	end
 	if not s.Looped then
