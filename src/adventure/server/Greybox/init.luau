@@ -1814,18 +1814,36 @@ local function buildStarfallCastle(world: Model)
 				mark.Name = "Mark"
 				mark.Face = Enum.NormalId.Top
 				mark.Enabled = false -- CombatService shows it in firelight
-				mark.LightInfluence = 0
+				mark.LightInfluence = 0 -- the firelight would wash a lit mark out
+				mark.Brightness = 2
 				mark.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 				mark.PixelsPerStud = 30
 				mark.Parent = trap
+				-- a dark plate under the X so it reads on the bright orange floor (playtest: "too light")
+				local back = Instance.new("Frame")
+				back.AnchorPoint = Vector2.new(0.5, 0.5)
+				back.Position = UDim2.fromScale(0.5, 0.5)
+				back.Size = UDim2.fromScale(0.86, 0.86)
+				back.BackgroundColor3 = Color3.fromRGB(40, 6, 10)
+				back.BackgroundTransparency = 0.25
+				back.Parent = mark
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(0.18, 0)
+				corner.Parent = back
+				local edge = Instance.new("UIStroke")
+				edge.Color = Palette.Danger
+				edge.Thickness = 4
+				edge.Parent = back
 				local label = Instance.new("TextLabel")
 				label.Size = UDim2.fromScale(1, 1)
 				label.BackgroundTransparency = 1
-				label.Font = Enum.Font.FredokaOne
+				label.Font = Enum.Font.GothamBlack
 				label.TextScaled = true
 				label.TextColor3 = Palette.Danger
+				label.TextStrokeColor3 = Color3.new(0, 0, 0)
+				label.TextStrokeTransparency = 0
 				label.Text = "X" -- FredokaOne has no "✕" glyph (it rendered nothing)
-				label.Parent = mark
+				label.Parent = back
 			end
 		end
 	end
