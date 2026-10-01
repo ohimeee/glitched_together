@@ -6,6 +6,7 @@
 - Every tuning number lives in `src/shared/Config/Tuning.luau`; don't hardcode numbers elsewhere.
 - Code layout and run steps: `README.md`.
 - **All tools we have** (Studio MCP, Blender, asset sources, browser, CLIs) + gotchas: `TOOLS.md`.
+- **Knowledge graph (read first in every new session / context window):** `graphify-out/GRAPH_REPORT.md` (god nodes, communities, surprising links across code + docs). For "where is X / what touches Y" questions run `graphify query "<question>"` (or `graphify path "A" "B"`, `graphify explain "X"`) before grepping. Obsidian vault: `graphify-out/obsidian/`. The folder is gitignored and local: if it's missing run `/graphify . --obsidian`; after big code changes run `/graphify . --update`.
 
 ## Relaunch checklist (after a restart)
 

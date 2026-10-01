@@ -11,3 +11,6 @@ lobby.sourcemap.json
 .env
 .env.*
 !.env.example
+
+# graphify knowledge graph + Obsidian vault (regenerate with /graphify . --obsidian)
+graphify-out/
