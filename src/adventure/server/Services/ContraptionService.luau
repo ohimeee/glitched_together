@@ -24,6 +24,11 @@
 --             `Range` studs, `Angle` degrees either side (Tuning ScanRange / ScanAngle).
 --   Unloaded  (part): floor that isn't loaded: solid and drawn only while a Scanner's cone covers it, then for
 --             `ScanLinger` s more (Glitched Core 3-3 Unloaded Chunk: Kai sweeps the cone, Miko runs what it shows).
+--   Scale     (Model with movers `PanA` and `PanB`, both Driven with ReturnRate 0; PanA's waypoints run high → low,
+--             PanB's low → high): a two-pan balance (Glitched Core Counterweight). Each pan weighs what rests on it
+--             (players `PlayerWeight`, parts with a `Weight` attribute: pastes keep their source's; a Code Layer
+--             piece counts only once pulled out) and both pans seek progress Rest + (A − B) × `Gain`, so A sinking
+--             lifts B. Anchored weights ride their pan. Freezing either pan holds the whole scale.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -34,6 +39,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local HealthService = require(script.Parent.HealthService)
+local MoverService = require(script.Parent.MoverService)
 
 local T = Tuning.Contraptions
 
@@ -480,6 +486,75 @@ local function stepChase(c: Chase, dt: number)
 	end
 end
 
+-- Scales ------------------------------------------------------------------------------------------
+type Scale = { model: Model, a: BasePart, b: BasePart, last: { [BasePart]: CFrame } }
+local scales: { [Model]: Scale } = {}
+local scaleOverlap = OverlapParams.new() -- players (the Default group sees every character group)
+scaleOverlap.FilterType = Enum.RaycastFilterType.Exclude
+local weightOverlap = OverlapParams.new() -- weights, incl. a Code Layer one (only MikoShifted collides with those)
+weightOverlap.FilterType = Enum.RaycastFilterType.Exclude
+weightOverlap.CollisionGroup = "MikoShifted"
+
+-- what rests on a pan: its weight, and the anchored weights that should ride along with it
+local function onPan(pan: BasePart): (number, { BasePart })
+	scaleOverlap.FilterDescendantsInstances = { pan }
+	weightOverlap.FilterDescendantsInstances = { pan }
+	local box = pan.CFrame * CFrame.new(0, pan.Size.Y / 2 + 3, 0)
+	local size = Vector3.new(pan.Size.X, 6, pan.Size.Z)
+	local weight, riders, seen = 0, {}, {}
+	for _, part in workspace:GetPartBoundsInBox(box, size, scaleOverlap) do
+		local model = part:FindFirstAncestorOfClass("Model")
+		local p = model and Players:GetPlayerFromCharacter(model)
+		if p and not seen[p] and not p:GetAttribute("Downed") then
+			seen[p] = true
+			weight += T.PlayerWeight
+		end
+	end
+	for _, part in workspace:GetPartBoundsInBox(box, size, weightOverlap) do
+		if part:GetAttribute("Weight") and not seen[part] then
+			seen[part] = true
+			if part.Anchored then
+				table.insert(riders, part)
+			end
+			if not CollectionService:HasTag(part, "CodeLayer") or part:GetAttribute("PulledOut") then
+				weight += part:GetAttribute("Weight") :: number
+			end
+		end
+	end
+	return weight, riders
+end
+
+local function stepScale(sc: Scale)
+	local wa, ridersA = onPan(sc.a)
+	local wb, ridersB = onPan(sc.b)
+	local rest = (sc.model:GetAttribute("Rest") or 0.5) :: number
+	local gain = (sc.model:GetAttribute("Gain") or T.ScaleGain) :: number
+	local target = math.clamp(rest + (wa - wb) * gain, 0, 1)
+	local held = frozen(sc.a) or frozen(sc.b)
+	for _, pan in { sc.a, sc.b } do
+		local axis = 0
+		if not held then
+			local diff = target - MoverService.Progress(pan)
+			axis = if math.abs(diff) < 0.01 then 0 else math.clamp(diff * 6, -1, 1)
+		end
+		MoverService.Drive(pan, axis)
+	end
+	sc.model:SetAttribute("WeightA", wa) -- read by the pan labels
+	sc.model:SetAttribute("WeightB", wb)
+	for pan, riders in { [sc.a] = ridersA, [sc.b] = ridersB } do
+		local before = sc.last[pan]
+		if before then
+			local delta = pan.CFrame * before:Inverse()
+			if delta.Position.Magnitude > 1e-3 then
+				for _, part in riders do
+					part.CFrame = delta * part.CFrame
+				end
+			end
+		end
+		sc.last[pan] = pan.CFrame
+	end
+end
+
 -- Unloaded Chunk ---------------------------------------------------------------------------------
 local function setLoaded(part: BasePart, on: boolean)
 	if part:GetAttribute("Loaded") == on then
@@ -579,6 +654,15 @@ function ContraptionService.Init()
 			end
 			task.wait(0.05)
 		end
+	end)
+
+	Tags.each("Scale", function(inst)
+		local a, b = inst:FindFirstChild("PanA"), inst:FindFirstChild("PanB")
+		if inst:IsA("Model") and a and b and a:IsA("BasePart") and b:IsA("BasePart") then
+			scales[inst] = { model = inst, a = a, b = b, last = {} }
+		end
+	end, function(inst)
+		scales[inst :: Model] = nil
 	end)
 
 	local unloaded: { [BasePart]: number } = {} -- tile → last time a cone covered it
@@ -705,6 +789,13 @@ function ContraptionService.Init()
 				rides[model] = nil
 			else
 				stepRide(r, dt)
+			end
+		end
+		for model, sc in scales do
+			if not model.Parent then
+				scales[model] = nil
+			else
+				stepScale(sc)
 			end
 		end
 		for coin, s in sinking do

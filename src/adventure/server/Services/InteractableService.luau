@@ -118,6 +118,22 @@ local function setGateOpen(gate: Instance, open: boolean)
 		TweenService:Create(part, info, {
 			CFrame = target,
 		}):Play()
+		-- `HideClosed`: a bridge waiting far below is invisible until it rises, so it never reads as a platform down
+		-- there (Memory Lane); it fades out again as it sinks
+		if gate:GetAttribute("HideClosed") then
+			if part:GetAttribute("ShownTransparency") == nil then
+				part:SetAttribute("ShownTransparency", part.Transparency)
+			end
+			local shown = part:GetAttribute("ShownTransparency") :: number
+			TweenService:Create(part, TweenInfo.new(if open then 0.3 else info.Time), {
+				Transparency = if open then shown else 1,
+			}):Play()
+			for _, gui in part:GetChildren() do
+				if gui:IsA("SurfaceGui") then
+					gui.Enabled = open
+				end
+			end
+		end
 	end
 	if open then
 		progress:Fire("GateOpened", gate)
@@ -230,6 +246,24 @@ local function onTop(part: BasePart, pos: Vector3, slack: number): boolean
 end
 
 local poundTimes: { [Instance]: { [Player]: number } } = {}
+-- Warp pipes (obstacles.md "Warp Pipe Swap"): two `WarpPipe` parts with the same Group, one each side of a wall;
+-- both players ground-pound their own pipe within DuoPoundWindow and they swap places.
+local warpPounds: { [string]: { [Player]: { at: number, pipe: BasePart } } } = {}
+
+local function warpTo(p: Player, pipe: BasePart)
+	local character = p.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not (character and root) then
+		return
+	end
+	local cf = pipe.CFrame * CFrame.new(0, pipe.Size.Y / 2 + 3.5, 0)
+	pcall(function()
+		p:RequestStreamAroundAsync(cf.Position, 2)
+	end)
+	character:PivotTo(CFrame.new(cf.Position) * root.CFrame.Rotation)
+	root.AssemblyLinearVelocity = Vector3.zero
+	Audio.play("Teleport", pipe)
+end
 
 local function onGroundPound(p: Player, pos: Vector3)
 	if typeof(pos) ~= "Vector3" or p:GetAttribute("Downed") then
@@ -252,6 +286,28 @@ local function onGroundPound(p: Player, pos: Vector3)
 			if other and math.abs(os.clock() - other) <= Tuning.DuoPoundWindow then
 				setActive(button, true)
 				evaluateGroups()
+			end
+		end
+	end
+
+	for _, pipe in CollectionService:GetTagged("WarpPipe") do
+		local group = pipe:GetAttribute("Group")
+		if pipe:IsA("BasePart") and pipe:IsDescendantOf(workspace) and group and onTop(pipe, pos, 2) then
+			local pounds = warpPounds[group] or {}
+			warpPounds[group] = pounds
+			pounds[p] = { at = os.clock(), pipe = pipe }
+			local partner = DuoService.PartnerOf(p)
+			local other = partner and pounds[partner]
+			if
+				partner
+				and other
+				and other.pipe ~= pipe
+				and math.abs(os.clock() - other.at) <= Tuning.DuoPoundWindow
+			then
+				table.clear(pounds)
+				warpTo(p, other.pipe)
+				warpTo(partner, pipe)
+				progress:Fire("Warped", pipe)
 			end
 		end
 	end

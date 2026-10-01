@@ -1213,6 +1213,62 @@ local function buildPixelPlains(world: Model)
 	gate(P, "K1", Vector3.new(30, 20, 2), CFrame.new(0, 62, 134))
 	grass(Vector3.new(14, 4, 12), 0, 52, 141, "BonkExit")
 
+	-- 1-3 continued: WARP PIPE SWAP (obstacles.md 2.2, exactly together). A tall wall splits two lanes. Kai's lane
+	-- starts with a chasm only a frozen falling block crosses, Miko's with a grapple chasm; halfway each lane hits
+	-- the other one's obstacle. A white pipe waits in each lane: both ground-pound their pipe within half a second
+	-- and they swap places through the wall (InteractableService WarpPipe). Chasms are 56: past any long jump.
+	section("PipeSwap", Vector3.zero, Vector3.new(0, 0, 190))
+	grass(Vector3.new(44, 4, 20), 0, 0, 10, "PipeStart") -- z 0..20
+	checkpoint(P, nextOrder(), 0, 0, 6, W, {
+		"Split up: Kai left, Miko right. Each lane needs the OTHER one's tool halfway. Find the white pipes!",
+		"Both stand on your pipe and ground-pound at the same time to swap places. Count it down!",
+	})
+	sign(P, "WARP PIPE SWAP", CFrame.new(0, 12, 20), Vector3.new(18, 3, 0.4))
+	sign(P, "▲ KAI", CFrame.new(-12, 7, 18), Vector3.new(8, 3, 0.4))
+	sign(P, "MIKO ●", CFrame.new(12, 7, 18), Vector3.new(8, 3, 0.4))
+	dirtWall(Vector3.new(2, 100, 136), 0, 60, 88) -- z 20..156, -40..60: no way over or under
+	-- first half. Kai's lane (x < 0): freeze a falling block mid-chasm and hop it (25-stud gaps each side)
+	local pipeDropper = block(P, Vector3.new(6, 1, 6), CFrame.new(-12, 34, 48), {
+		name = "Dropper",
+		transparency = 1,
+		collide = false,
+		tags = { "Dropper" },
+		attrs = { Every = 2 },
+	})
+	pipeDropper.CanQuery = false
+	-- Miko's lane (x > 0): two rings over the same 56-stud chasm (z 20..76)
+	ring(12, 16, 35)
+	ring(12, 16, 61)
+	for _, x in { -12, 12 } do
+		grass(Vector3.new(20, 4, 24), x, 0, 88, "PipeLedge") -- z 76..100
+		platform(P, Vector3.new(6, 3, 6), x, 3, 92, {
+			name = "WarpPipe",
+			color = DUO,
+			material = Enum.Material.SmoothPlastic,
+			tags = { "WarpPipe" },
+			attrs = { Group = "PS1" },
+		})
+	end
+	sign(P, "POUND TOGETHER", CFrame.new(-12, 9, 99), Vector3.new(10, 2.5, 0.4))
+	sign(P, "POUND TOGETHER", CFrame.new(12, 9, 99), Vector3.new(10, 2.5, 0.4))
+	-- second half. Kai's lane, now Miko's: rings over a 56 chasm (z 100..156)
+	ring(-12, 16, 115)
+	ring(-12, 16, 141)
+	-- Miko's lane, now Kai's: a spinning arm over the same chasm; freeze it lying along the lane and run
+	local swapArmCf = CFrame.new(12, -1, 128)
+	local swapArm = block(P, Vector3.new(4, 2, 50), swapArmCf, {
+		name = "WindmillArm",
+		color = STONE,
+		tags = { "Mover", "Freezable" },
+		attrs = { Spin = 40 },
+	})
+	waypoints(swapArm, { swapArmCf })
+	grass(Vector3.new(44, 4, 24), 0, 0, 168, "PipeEnd") -- z 156..180
+	plate("PS2", -12, 0, 166)
+	plate("PS2", 12, 0, 166)
+	gate(P, "PS2", Vector3.new(44, 20, 2), CFrame.new(0, 10, 179))
+	grass(Vector3.new(14, 4, 10), 0, 0, 185, "PipeExit") -- z 180..190
+
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
 	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))
 	grass(Vector3.new(30, 4, 20), 0, 62, 756, "ChaseStart")
@@ -1574,6 +1630,66 @@ local function buildGlitchedCore(world: Model)
 	gate(P, "C3", Vector3.new(30, 20, 2), CFrame.new(0, 10, 297))
 	floor(Vector3.new(40, 4, 32), 0, 0, 314, "CoreExit") -- z 298..330
 
+	-- 3-2 continued: LAYER HOP (obstacles.md 2.4, partner as the floor). A tower of real steps, each 20 above the last
+	-- (past any double jump + ledge assist), with a code step between each pair that only shifted Miko stands on. She
+	-- pulls out one code step at a time so Kai can climb on it; pulling out the next sends the last one back, so he
+	-- has to be on a real step by then.
+	section("LayerHop", Vector3.zero, Vector3.new(0, 80, 140))
+	floor(Vector3.new(24, 4, 20), 0, 0, 10, "HopStart") -- z 0..20
+	checkpoint(P, nextOrder(), 0, 0, 6, W, {
+		"Miko: shift and climb the teal steps. Pull out the next one for Kai each time he's on a grey step.",
+		"Only one pulled-out step at a time: when Miko pulls the next, the last one goes back. Kai: stay on grey!",
+	})
+	sign(P, "LAYER HOP", CFrame.new(0, 9, 2), Vector3.new(14, 3, 0.4))
+	for i = 1, 4 do
+		local z = 17 + i * 28 -- code steps at z 31, 59, 87, 115 (8-stud gaps), real ones 14 after each
+		code(Vector3.new(6, 1, 6), 0, i * 20 - 10, z - 14, "CodeStep")
+		if i < 4 then
+			floor(Vector3.new(7, 1, 7), if i % 2 == 1 then 6 else -6, i * 20, z, "RealStep")
+		end
+	end
+	floor(Vector3.new(24, 4, 16), 0, 80, 132, "HopTop") -- z 124..140
+
+	-- 3-2 continued: COUNTERWEIGHT (obstacles.md 2.4). A two-pan scale (ContraptionService Scale): the heavier pan
+	-- sinks and lifts the other. A code anvil rides pan A; once Miko pulls it out it weighs in, and Kai can copy it.
+	-- One player plus the anvil on A lifts whoever stands on B high enough to reach the ledge (18 up). Kai's two
+	-- pastes alone are too light to lift a player, so it always takes the anvil, and someone on pan A.
+	section("Counterweight", Vector3.zero, Vector3.new(0, 18, 64))
+	floor(Vector3.new(30, 4, 16), 0, 0, 8, "ScaleLanding") -- z 0..16
+	checkpoint(P, nextOrder(), 0, 0, 5, W, {
+		"The heavier pan sinks and lifts the other one. Miko: shift. Is there something on the left pan?",
+		"Pull out the anvil so it weighs in. One of you on the left pan with it lifts the other up to the ledge.",
+	})
+	sign(P, "COUNTERWEIGHT", CFrame.new(0, 9, 2), Vector3.new(16, 3, 0.4))
+	local scale = Instance.new("Model")
+	scale.Name = "Scale"
+	scale.Parent = P
+	CollectionService:AddTag(scale, "Scale")
+	local reach = 18 -- each pan travels from 18 below the landing to 18 above it (level = flush)
+	for _, side in { { "PanA", -9, reach, -reach }, { "PanB", 9, -reach, reach } } do
+		local hi, lo =
+			CFrame.new(side[2] :: number, (side[3] :: number) - 0.5, 26),
+			CFrame.new(side[2] :: number, (side[4] :: number) - 0.5, 26)
+		local pan = block(scale, Vector3.new(10, 1, 10), hi:Lerp(lo, 0.5), {
+			name = side[1] :: string,
+			color = NEUTRAL,
+			tags = { "Mover" },
+			attrs = { Driven = true, ReturnRate = 0, Period = 6, Ease = "Linear", Offset = 1.5 },
+		})
+		waypoints(pan, { hi, lo })
+	end
+	-- the anvil in the Code Layer, resting on pan A (it rides the pan; Kai can copy it once it's pulled out)
+	local anvil = platform(P, Vector3.new(4, 3, 4), -11, 3, 28, {
+		color = MIKO,
+		name = "CodeAnvil",
+		tags = { "CodeLayer" }, -- copyable once pulled out, like any Code Layer piece
+		attrs = { Weight = 0.6 },
+	})
+	anvil.Parent = scale -- after the pan, so the pivot shift moves it with the rest
+	platform(P, Vector3.new(2, 50, 2), 0, 30, 26, { color = DARK, name = "ScalePost" }) -- the balance's centre post
+	platform(P, Vector3.new(26, 1.5, 2), 0, 31.5, 26, { color = DARK, name = "ScaleBeam" }) -- high over a raised rider
+	floor(Vector3.new(24, 4, 30), 8, 18, 49, "Ledge") -- z 34..64, top 18 above the landing
+
 	-- 3-3 MEMORY LANE (Story Line, World 3): broken copies of the Title Screen, Pixel Plains and the castle, and the
 	-- tools swap with each one (KitZone volumes, WorldService), then the Core's own Unloaded Chunk and Memory 3.
 	local function kitZone(kit: string, size: Vector3, center: Vector3)
@@ -1598,8 +1714,11 @@ local function buildGlitchedCore(world: Model)
 				Solid = true,
 				OpenTime = 3.5,
 				Latch = false,
+				HideClosed = true,
 			},
 		})
+		piece.Transparency = 1 -- hidden until it rises (HideClosed)
+		piece:SetAttribute("ShownTransparency", 0)
 		if label then
 			local gui = Instance.new("SurfaceGui")
 			gui.Face = Enum.NormalId.Top
@@ -1616,6 +1735,7 @@ local function buildGlitchedCore(world: Model)
 			text.Text = label
 			text.Rotation = 180 -- reads upright walking +z
 			text.Parent = gui
+			gui.Enabled = false -- shown once the button rises (HideClosed)
 			gui.Parent = piece
 		end
 		return piece
@@ -1684,8 +1804,16 @@ local function buildGlitchedCore(world: Model)
 		name = "Bridge",
 		color = NEUTRAL,
 		tags = { "DuoGate" },
-		attrs = { Group = "MB1", OpenOffset = Vector3.new(0, SUNK, 0), Solid = true, OpenTime = 3.5, Latch = false },
-	})
+		attrs = {
+			Group = "MB1",
+			OpenOffset = Vector3.new(0, SUNK, 0),
+			Solid = true,
+			OpenTime = 3.5,
+			Latch = false,
+			HideClosed = true,
+		},
+		transparency = 1,
+	}):SetAttribute("ShownTransparency", 0)
 	local up, down = CFrame.new(-10, 17, 62), CFrame.new(-10, 4, 62)
 	local crusher = block(P, Vector3.new(12, 8, 10), up, {
 		name = "PixelCrusher",
@@ -1763,8 +1891,9 @@ local function buildGlitchedCore(world: Model)
 		name = "Bridge",
 		color = NEUTRAL,
 		tags = { "DuoGate" },
-		attrs = { Group = "MC1", OpenOffset = Vector3.new(0, SUNK, 0), Solid = true, OpenTime = 3.5 },
-	})
+		attrs = { Group = "MC1", OpenOffset = Vector3.new(0, SUNK, 0), Solid = true, OpenTime = 3.5, HideClosed = true },
+		transparency = 1,
+	}):SetAttribute("ShownTransparency", 0)
 	cfloor(-7, 74, 7, 96, "CastleExit")
 	cwall(-7, 74, -7, 96)
 	cwall(7, 74, 7, 96)
@@ -1865,6 +1994,10 @@ local function buildGlitchedCore(world: Model)
 	floor(Vector3.new(40, 4, 31), 0, 0, 160.5, "MemoryPlatform") -- z 145..176
 	plate("MD1", 10, 0, 150)
 	lift("MD1", Vector3.new(8, 1, 123), 0, -SUNK, 83.5, SUNK) -- Kai's bridge, balcony to the far side
+	local kaiBridge = P:FindFirstChild("Bridge") :: Part
+	kaiBridge:SetAttribute("HideClosed", true)
+	kaiBridge:SetAttribute("ShownTransparency", 0)
+	kaiBridge.Transparency = 1
 	local memory = block(P, Vector3.new(40, 14, 14), CFrame.new(0, 7, 166), {
 		name = "Memory3Trigger",
 		transparency = 1,

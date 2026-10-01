@@ -149,6 +149,9 @@ return {
 		ScanRange = 120, -- studs from the scanner
 		ScanAngle = 13, -- degrees either side of where it points (flat)
 		ScanLinger = 0.9, -- s a tile stays solid after the cone leaves it (a little slack, like a fade)
+		-- Glitched Core Counterweight: a two-pan scale; a player weighs 1, weights carry their own `Weight`
+		PlayerWeight = 1,
+		ScaleGain = 0.5, -- progress per unit of weight difference (1 heavier = fully over)
 	},
 	KitZoneCheck = 0.2, -- s between Memory Lane kit-zone checks (WorldService)
 	-- Release as a launcher (obstacles.md Part 3): Kai releasing a Freezable with a LaunchVelocity attribute flings
