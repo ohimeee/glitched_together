@@ -147,6 +147,7 @@ return {
 	Station = {
 		Reach = 8, -- studs to grab the crank; walking (or being knocked) 4 further lets go
 		WheelSpin = 4, -- rad/s the crank wheel turns while cranking
+		PressDebounce = 0.3, -- s: E presses closer than this count once
 	},
 	GrappleLine = {
 		Range = 45,

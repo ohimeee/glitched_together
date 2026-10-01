@@ -68,7 +68,14 @@ local function register(part: Instance)
 	prompt.Parent = part
 	local s: Station = { part = part, prompt = prompt, occupant = nil, axis = 0, home = part.CFrame }
 	stations[part] = s
+	-- one press = one toggle: in a 2-player Studio test each E press arrived twice, grabbing and instantly
+	-- letting go of the crank (playtest Oct 1)
+	local lastPress: { [Player]: number } = {}
 	prompt.Triggered:Connect(function(p: Player)
+		if os.clock() - (lastPress[p] or -math.huge) < T.PressDebounce then
+			return
+		end
+		lastPress[p] = os.clock()
 		if s.occupant == p then
 			release(s)
 		elseif not s.occupant and not p:GetAttribute("Downed") then
