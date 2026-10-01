@@ -194,6 +194,7 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | 1 | Castle kit: floor tiles, 6-stud walls with arches, torch, brazier, banner, iron bars, cracked wall, wooden door, enemies (googly-eyed skeleton, slime, archer, shield guard, mage) | Starfall Castle | Top-down readable; floors carry the design |
 | 2 | Castle gate, torch/brazier, banner, bookshelf, iron bars, Siege Cart | Starfall Castle | Top-down readable from above |
 | 3 | Wireframe cubes, missing-texture blocks, SAVE button | Glitched Core | |
+| 2 | Oct 1 grey-box pieces (after their 2-player test): ON/OFF switch blocks + lever sign (Pixel Plains), Torch Run braziers + spike trap tiles (castle), code plate + door frame (Core) | PP / SC / GC | Nothing floats (memory grounded-props): every prop needs a visible support |
 | 3 | Bosses: Crusher King (stacked blocks + crown), Hollow Dragon, The Unfinished | W1–W3 | Split into parts that the boss code can move |
 | 3 | Kai's and Miko's bedrooms | Epilogue | |
 

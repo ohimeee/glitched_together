@@ -110,7 +110,7 @@ This is our Cuckoo Clock: the planning chapter. The unused idea: **Pull Out is a
 
 | Name | Pattern | Who does what | Formula | Fits |
 | --- | --- | --- | --- | --- |
-| **Paste Past the Door** (todo) | P8 | Our clone-teleport. A door closes 2 s after its plate is released. Kai copies a crate, Miko pulls the plate's twin out of the Code Layer on the far side, Kai pastes the crate on it, and the door stays open | E, T | 3-1 twist |
+| **Paste Past the Door** ✅ (code only, not run yet) | P8 | Our clone-teleport. The door plate counts only players (`PlayersOnly`), so whoever holds it can't pass. Through the open door shifted Miko pulls the plate's twin out of the Code Layer; Kai pastes his crate copy on it and the door (`AnyOf` P1,P2) stays open for her. `NoPaste` volumes stop paste stairs over the walls | E, T | 3-1 twist |
 | **Wire Circuit** ✅ | P6 + P10 | Two sockets in the floor that only Miko sees (wires run to the door). Only pastes power them, and Kai has exactly two: she calls where, he pastes the conductor copies | I, E | 3-1 |
 | **Phantom Steps** ✅ (Frame Counter) | P9 + P6 | Steps are solid on two of four frames (overlapping, so you hop every beat) and drawn only in the Code Layer, with a frame counter only Miko reads. Kai jumps blind on her calls | I, T | 3-2 |
 | **Ghost Bridge** ✅ | P10 + P3 | Miko pulls a code plank out over gap 1 so Kai can cross; he copies it while it's out and pastes it mid-air over gap 2, which has no plank at all (neither crosses it alone) | E | 3-2 |
@@ -137,6 +137,9 @@ This is our Cuckoo Clock: the planning chapter. The unused idea: **Pull Out is a
 | **Cycle part** | Generic on/off or rotate-on-a-beat part (`Period`, `Phase`, `OnTime`), freezable | Firebar, Frame Counter, Spring Snap, switch blocks |
 | **Mirror / reflector** ✅ built Oct 1 | CombatService: tagged reflector parts bounce projectiles like the shield | Ricochet Relay, Mirror Gate |
 | **Weight scale** | Two-pan lift whose height follows the mass on each pan | Balance Scale, Counterweight |
+| **Switch blocks** ✅ built Oct 1 (`SwitchBlock`, `Group` + `Phase`) | Solid only while their group's state matches their phase; ghost otherwise | Switch Towers |
+| **Gate AnyOf / PlayersOnly / NoPaste** ✅ built Oct 1 | Gate opens on any of several groups; plates that only count players; volumes where pastes are refused | Paste Past the Door |
+| **Burn-out braziers + fire traps** ✅ built Oct 1 (`BurnOut`, `FireTrap`) | Braziers go dark after a few seconds; trap marks show only in firelight | Torch Run |
 | **Safe-side respawn** | HealthService: if your partner crossed this obstacle's `SafeSide` part, you respawn there | every hard timing obstacle |
 | **Next-piece camera hint** | CameraController: a short look-at toward a level-placed `Hint` part when you enter its zone | operator/runner rooms |
 
