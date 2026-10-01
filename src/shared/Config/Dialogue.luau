@@ -34,9 +34,18 @@ local Cutscenes: { [string]: { Line } } = {
 		{ Speaker = "Kai", Text = "You were going to tell me?" },
 		{ Speaker = "Miko", Text = "I waited for you. All day." },
 	},
+	-- Memory 3 "Launch Day" (Story Line, World 3): the end of 3-3 Memory Lane, before the final boss
 	W3_Memory3 = {
+		{ Speaker = "Pip", Text = "MEMORY FILE 3 OF 3: LAUNCH_DAY.SAV. ...Loading." },
+		{ Speaker = "Memory", Text = "Launch day. Kai, fifteen, sits on his bed with his shoes on. He doesn't go." },
+		{ Speaker = "Memory", Text = "Next morning he runs all the way to Miko's house. The moving truck is gone." },
+		{ Speaker = "Memory", Text = "He goes home and deletes the project folder." },
+		{ Speaker = "???", Text = "DELETE GLITCHED_TOGETHER? Y/N" },
 		{ Speaker = "Miko", Text = "You came?" },
 		{ Speaker = "Kai", Text = "You were already gone." },
+		{ Speaker = "Pip", Text = "There's one more file. It was corrupted in the castle. It's from Miko." },
+		{ Speaker = "Miko", Text = "I was scared. I'm sorry. You're my best friend, Player One." },
+		{ Speaker = "Kai", Text = "...Let's finish it. Together." },
 	},
 	Final_Phase3 = {
 		{ Speaker = "Pip", Text = "It's not a monster. It's the level you never finished." },

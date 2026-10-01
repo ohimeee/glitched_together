@@ -145,7 +145,12 @@ return {
 		CartSpeed = 11, -- castle Siege Cart (studs/s): Ignite reaches 30, so ~2.5 s to burn the barricade ahead
 		CartStationPause = 2.5, -- s the cart rests at a midway station (crashes after it restart there)
 		CartStationHeal = 50, -- HP back for both at the station
+		-- Glitched Core Unloaded Chunk: floor tiles exist only inside the cone of Kai's scanner terminal
+		ScanRange = 120, -- studs from the scanner
+		ScanAngle = 13, -- degrees either side of where it points (flat)
+		ScanLinger = 0.9, -- s a tile stays solid after the cone leaves it (a little slack, like a fade)
 	},
+	KitZoneCheck = 0.2, -- s between Memory Lane kit-zone checks (WorldService)
 	-- Release as a launcher (obstacles.md Part 3): Kai releasing a Freezable with a LaunchVelocity attribute flings
 	-- whoever stands on it or swings from it
 	ReleaseLaunch = {

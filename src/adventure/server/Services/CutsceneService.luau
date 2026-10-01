@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Dialogue = require(ReplicatedStorage.Shared.Config.Dialogue)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local DuoService = require(script.Parent.DuoService)
 
 local CutsceneService = {}
@@ -76,6 +77,38 @@ function CutsceneService.Init()
 	doneEvent.OnServerEvent:Connect(function(p: Player)
 		if playing then
 			doneVotes[p] = true
+		end
+	end)
+
+	-- Story triggers in a level: a part tagged `CutsceneTrigger` (attribute `Cutscene` = a Dialogue id) plays once,
+	-- when the whole duo stands inside it. Rebuilding the world (a game over) arms it again.
+	task.spawn(function()
+		while true do
+			task.wait(0.25)
+			local duo = DuoService.Players()
+			if playing or #duo == 0 then
+				continue
+			end
+			for _, trigger in Tags.list("CutsceneTrigger") do
+				if not trigger:IsA("BasePart") or trigger:GetAttribute("Played") then
+					continue
+				end
+				local all = true
+				for _, p in duo do
+					local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+					local lp = root and trigger.CFrame:PointToObjectSpace(root.Position)
+					local h = trigger.Size / 2
+					if not (lp and math.abs(lp.X) <= h.X and math.abs(lp.Y) <= h.Y and math.abs(lp.Z) <= h.Z) then
+						all = false
+						break
+					end
+				end
+				if all then
+					trigger:SetAttribute("Played", true)
+					task.spawn(CutsceneService.Play, trigger:GetAttribute("Cutscene") :: string)
+					break
+				end
+			end
 		end
 	end)
 end

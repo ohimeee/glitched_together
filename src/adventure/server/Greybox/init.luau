@@ -1275,6 +1275,42 @@ end
 --   3-2 THE WIRE MAZE: Ghost Bridge (Miko pulls a code plank out, Kai crosses and copies it, then pastes the copy
 --       over the next void, which neither can cross alone), then Phantom Steps (steps solid on a 4-frame beat,
 --       drawn only in the Code Layer: Miko calls the beat and the way, Kai jumps blind).
+-- A castle enemy (also used by the Core's Memory Lane castle echo).
+local function enemy(parent: Instance, kind: string, x: number, z: number)
+	local looks: { [string]: { Vector3 | Color3 } } = {
+		Skeleton = { Vector3.new(3, 5, 2), rgb(230, 225, 210) },
+		SplitSlime = { Vector3.new(4, 3, 4), rgb(120, 200, 90) },
+		StaticArcher = { Vector3.new(3, 5, 2), rgb(170, 165, 200) },
+		ShieldGuard = { Vector3.new(4, 6, 3), rgb(140, 145, 160) },
+		StaticMage = { Vector3.new(3, 6, 3), Palette.Castle.Royal },
+		IronGolem = { Vector3.new(6, 7, 5), rgb(85, 88, 100) },
+	}
+	local look = looks[kind]
+	local size = look[1] :: Vector3
+	local body = block(parent, size, CFrame.new(x, size.Y / 2, z), {
+		name = kind,
+		color = look[2] :: Color3,
+		tags = { "Enemy" },
+		attrs = { Type = kind },
+	})
+	if kind == "ShieldGuard" then
+		local shield =
+			block(body, Vector3.new(size.X + 1, size.Y - 1, 0.6), body.CFrame * CFrame.new(0, 0, -size.Z / 2 - 0.4), {
+				name = "Shield",
+				color = Palette.Castle.Gold,
+				material = Enum.Material.Metal,
+				anchored = false,
+				collide = false,
+			})
+		shield.Massless = true
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = body
+		weld.Part1 = shield
+		weld.Parent = shield
+	end
+	return body
+end
+
 local function buildGlitchedCore(world: Model)
 	local W = "GlitchedCore"
 	killFloor(world, -40)
@@ -1536,8 +1572,309 @@ local function buildGlitchedCore(world: Model)
 		name = "DuoPound",
 	})
 	gate(P, "C3", Vector3.new(30, 20, 2), CFrame.new(0, 10, 297))
-	floor(Vector3.new(40, 4, 30), 0, 0, 313, "CoreExit") -- z 298..328
-	block(P, Vector3.new(12, 12, 3), CFrame.new(0, 6, 326), {
+	floor(Vector3.new(40, 4, 32), 0, 0, 314, "CoreExit") -- z 298..330
+
+	-- 3-3 MEMORY LANE (Story Line, World 3): broken copies of the Title Screen, Pixel Plains and the castle, and the
+	-- tools swap with each one (KitZone volumes, WorldService), then the Core's own Unloaded Chunk and Memory 3.
+	local function kitZone(kit: string, size: Vector3, center: Vector3)
+		local zone = block(P, size, CFrame.new(center), { name = `KitZone_{kit}`, transparency = 1, collide = false })
+		zone.CanQuery = false
+		zone.CanTouch = false
+		zone:SetAttribute("Kit", kit)
+		CollectionService:AddTag(zone, "KitZone")
+	end
+	-- Memory Lane's bridges wait below the kill floor (-40), so nobody who falls can land on one and get stuck down
+	-- there (no jumping in the castle echo, and a sunk menu button would hold a player until the far plate is held)
+	local SUNK = 45
+	-- a bridge piece that rises while its group is held and sinks slowly again when let go (prop and cross)
+	local function hold(group: string, size: Vector3, x: number, z: number, label: string?): Part
+		local piece = platform(P, size, x, -SUNK, z, {
+			name = "MenuButton",
+			color = NEUTRAL,
+			tags = { "DuoGate" },
+			attrs = {
+				Group = group,
+				OpenOffset = Vector3.new(0, SUNK, 0),
+				Solid = true,
+				OpenTime = 3.5,
+				Latch = false,
+			},
+		})
+		if label then
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = Enum.NormalId.Top
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 30
+			gui.LightInfluence = 0.3
+			local text = Instance.new("TextLabel")
+			text.Size = UDim2.fromScale(0.9, 0.8)
+			text.Position = UDim2.fromScale(0.05, 0.1)
+			text.BackgroundTransparency = 1
+			text.Font = signTheme.SignFont
+			text.TextScaled = true
+			text.TextColor3 = Palette.Core.Void
+			text.Text = label
+			text.Rotation = 180 -- reads upright walking +z
+			text.Parent = gui
+			gui.Parent = piece
+		end
+		return piece
+	end
+
+	-- ML-1 TITLE ECHO (no tools, like the Prologue): the menu buttons only rise while the partner holds a plate.
+	-- The start plate raises the right lane; from the far end, a plate raises the left one. Then CONTINUE? needs
+	-- both pounds.
+	section("TitleEcho", Vector3.zero, Vector3.new(0, 0, 170))
+	kitZone("Prologue", Vector3.new(140, 110, 170), Vector3.new(0, 15, 85))
+	floor(Vector3.new(30, 4, 30), 0, 0, 15, "TitleStart") -- z 0..30
+	checkpoint(P, nextOrder(), 0, 0, 8, W, {
+		"No tools here, just like the title screen. One of you holds a plate so the other's buttons rise.",
+		"The plate at the start raises the right lane. The far plate raises the left one.",
+	})
+	sign(P, "3-3 MEMORY LANE", CFrame.new(0, 9, 2), Vector3.new(20, 3, 0.4))
+	plate("MA1", -8, 0, 24)
+	for i, label in { "NEW GAME", "CONTINUE", "OPTIONS", "QUIT" } do
+		local z = 20 + i * 20 -- 8 long, 12-stud gaps: double jumps
+		hold("MA1", Vector3.new(10, 1, 8), 12, z, label)
+		hold("MA2", Vector3.new(10, 1, 8), -12, z, label)
+	end
+	floor(Vector3.new(40, 4, 30), 0, 0, 130, "TitleEnd") -- z 115..145
+	plate("MA2", 10, 0, 121)
+	sign(P, "CONTINUE?", CFrame.new(0, 10, 144), Vector3.new(16, 4, 0.4))
+	platform(P, Vector3.new(12, 1, 8), 0, 1, 135, {
+		color = DUO,
+		tags = { "DuoPound" },
+		attrs = { Group = "MA3" },
+		name = "DuoPound",
+	})
+	gate(P, "MA3", Vector3.new(30, 20, 2), CFrame.new(0, 10, 146))
+	floor(Vector3.new(14, 4, 25), 0, 0, 157.5, "TitleExit") -- z 145..170
+
+	-- ML-2 PLAINS ECHO (Pause Beam / Grapple Line again, faded): Kai freezes a falling block, Miko swings over on it
+	-- and pulls the lever for Kai's bridge, which runs under a crusher he has to freeze. Both plates.
+	section("PlainsEcho", Vector3.zero, Vector3.new(0, 0, 150))
+	kitZone("PixelPlains", Vector3.new(140, 110, 150), Vector3.new(0, 15, 75))
+	local faded = Palette.PixelPlains.Grass:Lerp(GREY, 0.45)
+	local function grass(size: Vector3, x: number, top: number, z: number, name: string)
+		platform(P, size, x, top, z, { color = faded, name = name })
+	end
+	grass(Vector3.new(30, 4, 30), 0, 0, 15, "PlainsStart") -- z 0..30
+	checkpoint(P, nextOrder(), 0, 0, 8, W, {
+		"Your Pixel Plains tools are back! Kai: freeze a falling block. Miko: grapple it and swing across.",
+		"Miko: pull the teal lever over there for Kai's bridge. Kai: freeze the crusher on it.",
+	})
+	sign(P, "1-1 (MEMORY)", CFrame.new(0, 9, 26), Vector3.new(14, 3, 0.4))
+	local dropper = block(P, Vector3.new(6, 1, 6), CFrame.new(4, 34, 62), { -- over a 65-stud chasm (z 30..95)
+		name = "Dropper",
+		transparency = 1,
+		collide = false,
+		tags = { "Dropper" },
+		attrs = { Every = 2.4 },
+	})
+	dropper.CanQuery = false
+	grass(Vector3.new(30, 4, 40), 0, 0, 115, "PlainsFar") -- z 95..135
+	block(P, Vector3.new(1, 5, 1), CFrame.new(8, 12, 112) * CFrame.Angles(math.rad(20), 0, 0), {
+		name = "PullLever",
+		color = MIKO,
+		material = NEON,
+		tags = { "Pullable", "LeverPull" },
+		attrs = { Group = "MB1", Mass = 1 },
+	})
+	platform(P, Vector3.new(8, 1, 65), -10, -SUNK, 62.5, {
+		name = "Bridge",
+		color = NEUTRAL,
+		tags = { "DuoGate" },
+		attrs = { Group = "MB1", OpenOffset = Vector3.new(0, SUNK, 0), Solid = true, OpenTime = 3.5, Latch = false },
+	})
+	local up, down = CFrame.new(-10, 17, 62), CFrame.new(-10, 4, 62)
+	local crusher = block(P, Vector3.new(12, 8, 10), up, {
+		name = "PixelCrusher",
+		color = rgb(120, 120, 130),
+		material = Enum.Material.Metal,
+		tags = { "Mover", "Freezable", "Hazard" },
+		attrs = { Period = 1.6, Damage = 1 },
+	})
+	waypoints(crusher, { up, down })
+	plate("MB2", -8, 0, 128)
+	plate("MB2", 8, 0, 128)
+	gate(P, "MB2", Vector3.new(30, 20, 2), CFrame.new(0, 10, 136))
+	grass(Vector3.new(14, 4, 14), 0, 0, 143, "PlainsExit") -- z 136..150
+
+	-- ML-3 CASTLE ECHO (top-down, Fire Mage / Shield Knight; hearts, so every hit costs one): a wall of static slides
+	-- side to side with one gap. The teal crystal behind it only takes fire bounced off Miko's shield, so she aims
+	-- through the gap (it rests at each end) and Kai shoots her shield. Then the bridge rises and they slip through.
+	section("CastleEcho", Vector3.zero, Vector3.new(0, 0, 96))
+	kitZone("StarfallCastle", Vector3.new(140, 110, 96), Vector3.new(0, 15, 48))
+	local stone = Palette.Castle.Stone:Lerp(GREY, 0.4)
+	local function cfloor(x0: number, z0: number, x1: number, z1: number, name: string)
+		platform(P, Vector3.new(x1 - x0, 2, z1 - z0), (x0 + x1) / 2, 0, (z0 + z1) / 2, {
+			color = stone,
+			material = Enum.Material.Cobblestone,
+			name = name,
+		})
+	end
+	local function cwall(x0: number, z0: number, x1: number, z1: number)
+		local sx, sz = math.max(math.abs(x1 - x0), 1), math.max(math.abs(z1 - z0), 1)
+		platform(P, Vector3.new(sx, 6, sz), (x0 + x1) / 2, 6, (z0 + z1) / 2, {
+			color = Palette.Castle.NightPurple:Lerp(GREY, 0.4),
+			material = Enum.Material.Slate,
+			name = "Wall",
+		})
+	end
+	cfloor(-7, 0, 7, 12, "CastleEntry")
+	checkpoint(P, nextOrder(), 0, 0, 5, W, {
+		"Castle tools! The teal crystal only takes Kai's fire bounced off Miko's shield. Aim through the gap.",
+		"Miko: face the crystal through the gap (it stops at each end). Kai: stand in front of her and shoot her shield.",
+	})
+	cwall(-7, 0, -7, 12)
+	cwall(7, 0, 7, 12)
+	cfloor(-25, 12, 25, 51, "EchoHall") -- z 12..51
+	cwall(-25, 12, -7, 12)
+	cwall(7, 12, 25, 12)
+	cwall(-25, 12, -25, 48)
+	cwall(25, 12, 25, 48)
+	for _, foe in { { "Skeleton", -10, 28 }, { "Skeleton", 10, 30 }, { "SplitSlime", 0, 38 } } do
+		enemy(P, foe[1] :: string, foe[2] :: number, foe[3] :: number):SetAttribute("NoXp", true)
+	end
+	-- the static wall: two segments with a 7-stud gap between them, sliding together (gap centre x -9 <-> 9)
+	for _, side in { -1, 1 } do
+		local a = CFrame.new(-9 + side * 25.5, 3.2, 50)
+		local b = CFrame.new(9 + side * 25.5, 3.2, 50)
+		local seg = block(P, Vector3.new(44, 6, 1.5), a, {
+			name = "StaticWall",
+			color = GLITCH,
+			material = NEON,
+			transparency = 0.25,
+			tags = { "Mover", "Hazard" },
+			attrs = { Period = 8, Damage = 1 },
+		})
+		waypoints(seg, { a, b })
+	end
+	-- the moat (z 51..66, no floor), the island with the teal crystal, and the bridge it raises
+	cfloor(-6, 66, 6, 74, "CrystalIsland")
+	block(P, Vector3.new(2, 4, 2), CFrame.new(0, 3, 70) * CFrame.Angles(0, math.rad(45), 0), {
+		name = "Crystal",
+		color = MIKO,
+		material = NEON,
+		tags = { "FireSwitch" },
+		attrs = { Group = "MC1", Needs = "Reflected" },
+	})
+	platform(P, Vector3.new(8, 2, 15), 0, -SUNK, 58.5, {
+		name = "Bridge",
+		color = NEUTRAL,
+		tags = { "DuoGate" },
+		attrs = { Group = "MC1", OpenOffset = Vector3.new(0, SUNK, 0), Solid = true, OpenTime = 3.5 },
+	})
+	cfloor(-7, 74, 7, 96, "CastleExit")
+	cwall(-7, 74, -7, 96)
+	cwall(7, 74, 7, 96)
+
+	-- ML-4 UNLOADED CHUNK (obstacles.md 2.4, operator and runner): the floor ahead isn't loaded. Tiles exist only in
+	-- the cone of the scanner on Kai's terminal (he's rooted while he steers it, W / S), so he lights the way while
+	-- Miko runs it. Only her Code Layer shows where the real path goes (dead ends light up too). Her plate at the far
+	-- end raises Kai's bridge. Then the last memory.
+	section("UnloadedChunk", Vector3.zero, Vector3.new(0, 0, 176))
+	floor(Vector3.new(30, 4, 22), 0, 0, 11, "Balcony") -- z 0..22
+	checkpoint(P, nextOrder(), 0, 0, 6, W, {
+		"Kai: hold E at the terminal and steer the scanner (W / S). Floor only loads where it shines. Miko: run it!",
+		"Miko: shift to see the real path (teal) and tell Kai where to point. Some tiles lead nowhere.",
+	})
+	sign(P, "UNLOADED CHUNK", CFrame.new(0, 10, 2), Vector3.new(16, 3, 0.4))
+	-- the scanner: a Driven mover that turns from Kai's left (+x) to his right, and holds where he leaves it
+	local cfs = {}
+	for i, yaw in { 60, 0, -60 } do
+		cfs[i] = CFrame.new(0, 7, 19) * CFrame.Angles(0, math.rad(180 + yaw), 0) -- 180: look along +z
+	end
+	local scanner = block(P, Vector3.new(2, 2, 3), cfs[1], {
+		name = "Scanner",
+		color = WHITE,
+		material = NEON,
+		tags = { "Mover", "Scanner" },
+		attrs = { Driven = true, Period = 5, Ease = "Linear", ReturnRate = 0 },
+	})
+	waypoints(scanner, cfs)
+	-- the cone's edges and centre line, welded on (no collision, no aiming)
+	for _, edge in { -Tuning.Contraptions.ScanAngle, 0, Tuning.Contraptions.ScanAngle } do
+		local length = if edge == 0 then 40 else 70
+		local rod = block(
+			scanner,
+			Vector3.new(0.3, 0.3, length),
+			cfs[1] * CFrame.Angles(0, math.rad(edge), 0) * CFrame.new(0, -1, -length / 2),
+			{
+				name = "ScanEdge",
+				color = WHITE,
+				material = NEON,
+				transparency = if edge == 0 then 0.7 else 0.4,
+				anchored = false,
+				collide = false,
+			}
+		)
+		rod.CanQuery = false
+		rod.CanTouch = false
+		rod.Massless = true
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = scanner
+		weld.Part1 = rod
+		weld.Parent = rod
+	end
+	local light = Instance.new("SpotLight")
+	light.Face = Enum.NormalId.Front
+	light.Angle = Tuning.Contraptions.ScanAngle * 2
+	light.Range = 60
+	light.Brightness = 4
+	light.Parent = scanner
+	platform(P, Vector3.new(4, 4, 2), 0, 4, 16, { name = "TerminalDesk", color = DARK })
+	local terminal = block(P, Vector3.new(3, 2, 0.4), CFrame.new(0, 5, 15) * CFrame.Angles(math.rad(-30), 0, 0), {
+		name = "Terminal",
+		color = KAI,
+		material = NEON,
+		tags = { "Station" },
+		attrs = { Owner = "Kai", Label = "scanner", Action = "Use terminal", NoSpin = true },
+	})
+	local link = Instance.new("ObjectValue")
+	link.Name = "Drives"
+	link.Value = scanner
+	link.Parent = terminal
+	-- the path (left, right, then back to the middle) and dead ends; tiles are 6 wide, 7-9 apart
+	local function tile(x: number, z: number)
+		platform(P, Vector3.new(6, 1, 6), x, 0, z, { name = "UnloadedTile", color = GREY, tags = { "Unloaded" } })
+	end
+	for _, at in
+		{
+			{ 12, 32 },
+			{ 22, 42 },
+			{ 28, 55 },
+			{ 20, 67 },
+			{ 8, 75 },
+			{ -4, 82 },
+			{ -16, 90 },
+			{ -26, 100 },
+			{ -22, 113 },
+			{ -10, 120 },
+			{ 2, 127 },
+			{ 10, 138 },
+		}
+	do
+		tile(at[1], at[2])
+		local mark = codeVisual(Vector3.new(6.4, 0.2, 6.4), CFrame.new(at[1], -1.3, at[2]), "PathMark")
+		mark.CanCollide = false
+	end
+	for _, at in { { 40, 64 }, { 50, 72 }, { -30, 80 }, { -22, 132 }, { -30, 142 } } do
+		tile(at[1], at[2])
+	end
+	floor(Vector3.new(40, 4, 31), 0, 0, 160.5, "MemoryPlatform") -- z 145..176
+	plate("MD1", 10, 0, 150)
+	lift("MD1", Vector3.new(8, 1, 123), 0, -SUNK, 83.5, SUNK) -- Kai's bridge, balcony to the far side
+	local memory = block(P, Vector3.new(40, 14, 14), CFrame.new(0, 7, 166), {
+		name = "Memory3Trigger",
+		transparency = 1,
+		collide = false,
+		tags = { "CutsceneTrigger" },
+		attrs = { Cutscene = "W3_Memory3" },
+	})
+	memory.CanQuery = false
+	memory.CanTouch = false
+	block(P, Vector3.new(12, 12, 3), CFrame.new(0, 6, 174), {
 		name = "WorldExit",
 		color = DUO,
 		material = NEON,
@@ -1545,7 +1882,7 @@ local function buildGlitchedCore(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	sign(P, "3-3 MEMORY LANE + THE UNFINISHED (M6)", CFrame.new(0, 16, 326), Vector3.new(26, 3, 0.4))
+	sign(P, "THE UNFINISHED (M6)", CFrame.new(0, 16, 174), Vector3.new(22, 3, 0.4))
 
 	-- chain: each section's entry snaps onto the previous section's exit
 	local cursor = chunks[1].entry
@@ -1562,41 +1899,6 @@ end
 
 -- Starfall Castle, section 2-1 "Castle Gates" (Story Line, mechanics.md §4 World 2): top-down combat. Floors carry
 -- the design (a rug path shows the way), walls are 6 studs so they never hide players (art-direction.md §8, §17).
-local function enemy(parent: Instance, kind: string, x: number, z: number)
-	local looks: { [string]: { Vector3 | Color3 } } = {
-		Skeleton = { Vector3.new(3, 5, 2), rgb(230, 225, 210) },
-		SplitSlime = { Vector3.new(4, 3, 4), rgb(120, 200, 90) },
-		StaticArcher = { Vector3.new(3, 5, 2), rgb(170, 165, 200) },
-		ShieldGuard = { Vector3.new(4, 6, 3), rgb(140, 145, 160) },
-		StaticMage = { Vector3.new(3, 6, 3), Palette.Castle.Royal },
-		IronGolem = { Vector3.new(6, 7, 5), rgb(85, 88, 100) },
-	}
-	local look = looks[kind]
-	local size = look[1] :: Vector3
-	local body = block(parent, size, CFrame.new(x, size.Y / 2, z), {
-		name = kind,
-		color = look[2] :: Color3,
-		tags = { "Enemy" },
-		attrs = { Type = kind },
-	})
-	if kind == "ShieldGuard" then
-		local shield =
-			block(body, Vector3.new(size.X + 1, size.Y - 1, 0.6), body.CFrame * CFrame.new(0, 0, -size.Z / 2 - 0.4), {
-				name = "Shield",
-				color = Palette.Castle.Gold,
-				material = Enum.Material.Metal,
-				anchored = false,
-				collide = false,
-			})
-		shield.Massless = true
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = body
-		weld.Part1 = shield
-		weld.Parent = shield
-	end
-	return body
-end
-
 local function buildStarfallCastle(world: Model)
 	local W = "StarfallCastle"
 	killFloor(world, -40)

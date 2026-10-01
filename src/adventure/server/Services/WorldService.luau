@@ -5,6 +5,8 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Kits = require(ReplicatedStorage.Shared.Config.Kits)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local DuoService = require(script.Parent.DuoService)
 local SaveService = require(script.Parent.SaveService)
 local CheckpointService = require(script.Parent.CheckpointService)
@@ -23,9 +25,14 @@ function WorldService.SetKit(p: Player, tool: string?, camera: string?)
 	p:SetAttribute("CameraMode", camera or "Follow")
 end
 
+-- Kit zones (3-3 Memory Lane, Story Line: "all three ability sets as they swap automatically per area"): a part
+-- tagged `KitZone` with `Kit` = a world name hands whoever stands in it that world's kit and camera (Prologue = no
+-- tools). Outside every zone you hold the current world's kit.
+local zoneOf: { [Player]: string } = {}
+
 local function applyKit(p: Player)
 	local role = p:GetAttribute("Role")
-	local kit = Kits.Worlds[WorldService.Current]
+	local kit = Kits.Worlds[zoneOf[p] or WorldService.Current]
 	if not (role and kit) then
 		return
 	end
@@ -75,6 +82,7 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 	end
 
 	CheckpointService.Reset(worldName, checkpoint or 0)
+	table.clear(zoneOf)
 	for _, p in DuoService.Players() do
 		applyKit(p)
 		WorldService.SpawnPlayer(p)
@@ -138,6 +146,36 @@ local function watchExits()
 	end
 end
 
+local function inside(part: BasePart, pos: Vector3): boolean
+	local lp = part.CFrame:PointToObjectSpace(pos)
+	local h = part.Size / 2
+	return math.abs(lp.X) <= h.X and math.abs(lp.Y) <= h.Y and math.abs(lp.Z) <= h.Z
+end
+
+local function watchKitZones()
+	while true do
+		task.wait(Tuning.KitZoneCheck)
+		local zones = Tags.list("KitZone")
+		for _, p in DuoService.Players() do
+			local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if not root or p:GetAttribute("Falling") or p:GetAttribute("Downed") then
+				continue -- keep the kit while being put back after a fall
+			end
+			local want: string? = nil
+			for _, zone in zones do
+				if zone:IsA("BasePart") and inside(zone, root.Position) then
+					want = zone:GetAttribute("Kit") :: string?
+					break
+				end
+			end
+			if want ~= zoneOf[p] then
+				zoneOf[p] = want :: any
+				applyKit(p)
+			end
+		end
+	end
+end
+
 function WorldService.Init()
 	DuoService.Changed:Connect(function(p: Player)
 		applyKit(p)
@@ -159,6 +197,10 @@ function WorldService.Init()
 	end)
 
 	task.spawn(watchExits)
+	task.spawn(watchKitZones)
+	Players.PlayerRemoving:Connect(function(p)
+		zoneOf[p] = nil
+	end)
 end
 
 return WorldService

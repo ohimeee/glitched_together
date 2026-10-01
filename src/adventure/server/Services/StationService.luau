@@ -4,7 +4,8 @@
 -- to keep at it. A frozen driven mover stays where it is, so Kai can freeze a bridge out and free the operator.
 --
 -- Level data: a BasePart tagged `Station` with one or more ObjectValues named `Drives` pointing at Driven movers
--- (MoverService), optional `Owner` = "Kai" | "Miko" (only that role can crank it).
+-- (MoverService), optional `Owner` = "Kai" | "Miko" (only that role can crank it), `Action` / `Label` (prompt text,
+-- e.g. Kai's scanner terminal in the Core's Unloaded Chunk) and `NoSpin` (a terminal, not a wheel).
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -39,7 +40,7 @@ local function release(s: Station)
 	for _, target in targets(s.part) do
 		MoverService.Drive(target, 0)
 	end
-	s.prompt.ActionText = "Crank"
+	s.prompt.ActionText = (s.part:GetAttribute("Action") or "Crank") :: string
 	if p then
 		p:SetAttribute("Station", nil)
 	end
@@ -59,9 +60,10 @@ local function register(part: Instance)
 	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "StationPrompt"
-	prompt.ActionText = "Crank"
+	prompt.ActionText = (part:GetAttribute("Action") or "Crank") :: string
 	local owner = part:GetAttribute("Owner")
-	prompt.ObjectText = if owner then `{owner}'s crank: W / S` else "Crank: W / S"
+	local label = (part:GetAttribute("Label") or "crank") :: string
+	prompt.ObjectText = if owner then `{owner}'s {label}: W / S` else `{label}: W / S`
 	prompt.HoldDuration = 0
 	prompt.RequiresLineOfSight = false
 	prompt.MaxActivationDistance = T.Reach
@@ -145,7 +147,7 @@ function StationService.Init()
 				MoverService.Drive(target, s.axis)
 			end
 			-- the crank wheel turns with the input (it spins around its own X axis, like a ship's wheel facing you)
-			if s.axis ~= 0 then
+			if s.axis ~= 0 and not part:GetAttribute("NoSpin") then
 				part.CFrame *= CFrame.Angles(s.axis * dt * T.WheelSpin, 0, 0)
 			end
 		end

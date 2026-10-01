@@ -20,6 +20,10 @@
 --             a player leaving the cart, crashes it: after a beat the cart, the barricades and the duo go back to the
 --             start. At the end it stops and drops its front wall. `Stations` ("600,..." track distances): the cart
 --             pauses there for a breather, and a crash after a station restarts the ride from it, not the dock.
+--   Scanner   (part, usually a Driven mover on Kai's terminal Station): lights a flat cone along its LookVector,
+--             `Range` studs, `Angle` degrees either side (Tuning ScanRange / ScanAngle).
+--   Unloaded  (part): floor that isn't loaded: solid and drawn only while a Scanner's cone covers it, then for
+--             `ScanLinger` s more (Glitched Core 3-3 Unloaded Chunk: Kai sweeps the cone, Miko runs what it shows).
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -476,6 +480,43 @@ local function stepChase(c: Chase, dt: number)
 	end
 end
 
+-- Unloaded Chunk ---------------------------------------------------------------------------------
+local function setLoaded(part: BasePart, on: boolean)
+	if part:GetAttribute("Loaded") == on then
+		return
+	end
+	part:SetAttribute("Loaded", on)
+	part.CanCollide = on
+	part.CanQuery = on
+	TweenService:Create(part, TweenInfo.new(if on then 0.12 else 0.35), { Transparency = if on then 0 else 1 }):Play()
+end
+
+local function lit(part: BasePart, scanners: { Instance }): boolean
+	for _, scanner in scanners do
+		if not scanner:IsA("BasePart") then
+			continue
+		end
+		local range = (scanner:GetAttribute("Range") or T.ScanRange) :: number
+		local angle = (scanner:GetAttribute("Angle") or T.ScanAngle) :: number
+		local to = part.Position - scanner.Position
+		local flatTo = Vector3.new(to.X, 0, to.Z)
+		local look = scanner.CFrame.LookVector
+		local flatLook = Vector3.new(look.X, 0, look.Z)
+		if flatTo.Magnitude > range or flatLook.Magnitude < 1e-3 then
+			continue
+		end
+		-- the tile counts once any of it is in the cone: widen the angle by the tile's own half width
+		local slack = math.deg(math.atan2(math.max(part.Size.X, part.Size.Z) / 2, math.max(flatTo.Magnitude, 1)))
+		if
+			flatTo.Magnitude < 1
+			or math.deg(math.acos(math.clamp(flatTo.Unit:Dot(flatLook.Unit), -1, 1))) <= angle + slack
+		then
+			return true
+		end
+	end
+	return false
+end
+
 local function currentFrame(): number
 	return math.floor(workspace:GetServerTimeNow() / T.FrameTime) % T.FrameCount + 1
 end
@@ -537,6 +578,41 @@ function ContraptionService.Init()
 				end
 			end
 			task.wait(0.05)
+		end
+	end)
+
+	local unloaded: { [BasePart]: number } = {} -- tile → last time a cone covered it
+	Tags.each("Unloaded", function(inst)
+		if inst:IsA("BasePart") then
+			unloaded[inst] = -math.huge
+			inst.Transparency = 1
+			inst.CanCollide = false
+			inst.CanQuery = false
+			inst:SetAttribute("Loaded", false)
+		end
+	end, function(inst)
+		unloaded[inst :: BasePart] = nil
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(0.05)
+			if next(unloaded) == nil then
+				continue
+			end
+			local scanners = Tags.list("Scanner")
+			local now = os.clock()
+			for part, seen in unloaded do
+				if not part.Parent then
+					unloaded[part] = nil
+					continue
+				end
+				if lit(part, scanners) then
+					unloaded[part] = now
+					setLoaded(part, true)
+				elseif now - seen > T.ScanLinger then
+					setLoaded(part, false)
+				end
+			end
 		end
 	end)
 

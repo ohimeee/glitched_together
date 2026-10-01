@@ -231,6 +231,10 @@ function HealthService.Damage(p: Player, amount: number)
 	end
 	s.invulnUntil = now + (if useHP then 0.15 else Tuning.HitInvuln)
 	s.lastHit = now
+	if not useHP then
+		-- hearts: every hit is one heart, whatever it would do to an HP bar (castle foes in the Core's Memory Lane)
+		amount = math.min(amount, 1)
+	end
 
 	local health = (p:GetAttribute("Health") or maxHealth(p)) - amount
 	p:SetAttribute("Health", math.max(0, health))
@@ -281,6 +285,7 @@ local UNSAFE = {
 	"CodeLayer",
 	"SwitchBlock",
 	"Cart", -- the Siege Cart: it moves (and a crash puts everyone back on it anyway)
+	"Unloaded", -- Unloaded Chunk floor: there only while Kai's scanner lights it
 }
 
 local function trackSafeGround()

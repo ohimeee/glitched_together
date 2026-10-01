@@ -324,7 +324,9 @@ local function kill(foe: Foe)
 	foe.dead = true
 	foes[foe.part] = nil
 	local part = foe.part
-	XpService.Drop(part.Position, foe.spec.XP)
+	if not part:GetAttribute("NoXp") then -- castle echoes outside the castle (Memory Lane) give no levels
+		XpService.Drop(part.Position, foe.spec.XP)
+	end
 	Audio.play(if foe.kind == "SplitSlime" then "SlimeSquish" else "EnemyDeath", part.Position)
 	if foe.kind == "SplitSlime" and not part:GetAttribute("Small") then
 		for _, side in { -1, 1 } do
