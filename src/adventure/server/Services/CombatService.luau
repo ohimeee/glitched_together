@@ -541,7 +541,7 @@ local function setRopes(f: Fuse, burntUpTo: number)
 	for _, rope in f.model:GetChildren() do
 		local i = tonumber(rope.Name:match("^Rope(%d+)$"))
 		if i and rope:IsA("BasePart") then
-			rope.Color = if i < burntUpTo then Color3.fromRGB(40, 34, 30) else Color3.fromRGB(150, 110, 70)
+			rope.Color = if i < burntUpTo then Color3.fromRGB(40, 34, 30) else Color3.fromRGB(205, 165, 110)
 		end
 	end
 end

@@ -201,7 +201,8 @@ local function setCartWall(r: Ride, name: string, solid: boolean)
 	local wall = r.cart:FindFirstChild(name)
 	if wall and wall:IsA("BasePart") then
 		wall.CanCollide = solid
-		wall.Transparency = if solid then 0 else 0.7
+		-- ArtHidden: the cart mesh draws the walls (ArtService), so the grey-box wall stays invisible
+		wall.Transparency = if wall:GetAttribute("ArtHidden") then 1 elseif solid then 0 else 0.7
 	end
 end
 

@@ -44,6 +44,36 @@
           "RoughnessMap": "rbxassetid://123209092209948",
           "StudsPerTile": 8
         }
+      },
+      "CastleFloor": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Cobblestone",
+          "ColorMap": "rbxassetid://72586310728462",
+          "NormalMap": "rbxassetid://79646224353630",
+          "RoughnessMap": "rbxassetid://123118843322741",
+          "StudsPerTile": 8
+        }
+      },
+      "CastleWall": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Slate",
+          "ColorMap": "rbxassetid://97912679488580",
+          "NormalMap": "rbxassetid://84764003202566",
+          "RoughnessMap": "rbxassetid://75451657911753",
+          "StudsPerTile": 6
+        }
+      },
+      "CastlePlanks": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "WoodPlanks",
+          "ColorMap": "rbxassetid://106038361428924",
+          "NormalMap": "rbxassetid://131256941159892",
+          "RoughnessMap": "rbxassetid://74515872877414",
+          "StudsPerTile": 8
+        }
       }
     },
     "SoundService": {

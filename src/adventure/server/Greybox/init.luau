@@ -2511,11 +2511,22 @@ local function buildStarfallCastle(world: Model)
 		if i < #points then
 			local q = points[i + 1]
 			local mid = (p + q) / 2
-			block(world, Vector3.new(10, 1, (q - p).Magnitude), CFrame.lookAt(mid, q) - Vector3.new(0, 1.25, 0), {
+			local bedCf = CFrame.lookAt(mid, q) - Vector3.new(0, 1.25, 0)
+			block(world, Vector3.new(10, 1, (q - p).Magnitude), bedCf, {
 				name = "TrackBed",
 				color = WOOD,
 				material = Enum.Material.WoodPlanks,
 			})
+			for _, side in { -2.6, 2.6 } do -- iron rails the cart's wheels run on
+				local rail =
+					block(world, Vector3.new(0.5, 0.4, (q - p).Magnitude + 1), bedCf * CFrame.new(side, 0.7, 0), {
+						name = "TrackRail",
+						color = rgb(70, 66, 74),
+						material = Enum.Material.Metal,
+						collide = false,
+					})
+				rail.CanQuery = false
+			end
 		end
 		block(
 			world,
@@ -2674,7 +2685,20 @@ local function buildStarfallCastle(world: Model)
 	wall(30, 1416, 30, 1500)
 	wall(-30, 1500, -7, 1500)
 	wall(7, 1500, 30, 1500)
-	for _, spot in { { -30, 1424 }, { 30, 1424 }, { -30, 1490 }, { 30, 1490 } } do
+	for _, spot in
+		{
+			{ -30, 1424 },
+			{ 30, 1424 },
+			{ -30, 1446 },
+			{ 30, 1446 },
+			{ -30, 1468 },
+			{ 30, 1470 },
+			{ -30, 1490 },
+			{ 30, 1490 },
+			{ -20, 1500 },
+			{ 20, 1500 },
+		}
+	do
 		torch(spot[1], spot[2])
 	end
 	local fuse = Instance.new("Model")
@@ -2712,7 +2736,7 @@ local function buildStarfallCastle(world: Model)
 			local to = Vector3.new(nextPt[1] :: number, 0.3, nextPt[2] :: number)
 			local rope = block(fuse, Vector3.new(0.4, 0.3, (to - at).Magnitude), CFrame.lookAt((at + to) / 2, to), {
 				name = `Rope{i}`,
-				color = rgb(150, 110, 70),
+				color = rgb(205, 165, 110),
 				material = Enum.Material.Fabric,
 				collide = false,
 			})
@@ -2725,11 +2749,10 @@ local function buildStarfallCastle(world: Model)
 		material = Enum.Material.Neon,
 		tags = { "FuseStart" },
 	})
-	block(fuse, Vector3.new(3, 3, 3), CFrame.new(0, 1.5, 1493) * CFrame.Angles(0, 0, math.rad(90)), {
+	block(fuse, Vector3.new(3, 3.5, 3), CFrame.new(0, 1.75, 1493), {
 		name = "Keg",
 		color = rgb(110, 70, 40),
 		material = Enum.Material.Wood,
-		shape = Enum.PartType.Cylinder,
 	})
 	local kegSwitch = block(fuse, Vector3.new(1, 1, 1), CFrame.new(0, -3, 1493), {
 		name = "KegSwitch",
