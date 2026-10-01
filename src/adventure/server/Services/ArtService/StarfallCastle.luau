@@ -146,8 +146,6 @@ Skins.CrackedWallSkin = { -- three cracked sandstone columns across the wall Mik
 		C = { Id = CRACK, TextureId = CRACK_TEX, Offset = v(3.33, 0, 0), Size = v(3.5, 6, 2), Material = SMOOTH },
 	},
 }
-Skins.CastleCloud = -- cotton-wool cloud, flattened into a drifting bank
-	enemy(v(22, 8, 12), "rbxassetid://124097749579889", "rbxassetid://74359789809174", v(22, 7, 14), 0, 0)
 Skins.CheckpointBanner =
 	enemy(v(3, 8, 3), "rbxassetid://77877113311583", "rbxassetid://94044277911094", v(3, 8, 3), 0, 0)
 Skins.BarricadeSkin =
@@ -243,38 +241,6 @@ local function fillEnvironment(world: Instance)
 	folder.Parent = world
 end
 
--- Starfall Castle rides a sea of night clouds: soft lavender clouds drift below and around the rooms (well under the
--- floors, non-colliding), so the top-down view looks down onto a sky instead of an empty void.
-local CLOUD_DESIGN = Vector3.new(22, 8, 12) -- CastleCloud skin
-local function cloudSea(world: Instance, apply: (BasePart, string) -> boolean)
-	local folder = world:FindFirstChild("Environment") or world
-	local rng = Random.new(1997)
-	for z = -60, 1560, 26 do
-		for _ = 1, 3 do
-			local side = if rng:NextNumber() < 0.5 then -1 else 1
-			local x = side * rng:NextNumber(18, 140)
-			local scale = rng:NextNumber(1.6, 3.4)
-			local holder = art(
-				folder,
-				"NightCloud",
-				CLOUD_DESIGN * scale,
-				CFrame.new(x, rng:NextNumber(-58, -30), z + rng:NextNumber(-10, 10))
-					* CFrame.Angles(0, math.rad(rng:NextNumber(0, 360)), 0),
-				{ Transparency = 1 }
-			)
-			if apply(holder, "CastleCloud") then
-				for _, mesh in holder:GetChildren() do
-					if mesh:IsA("MeshPart") then
-						mesh.CastShadow = false
-					end
-				end
-			else
-				holder:Destroy()
-			end
-		end
-	end
-end
-
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	for _, part in world:GetDescendants() do
 		local surface = part:IsA("BasePart") and not part:IsA("MeshPart") and SURFACES[part.Material]
@@ -286,7 +252,8 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		end
 	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
-	task.spawn(cloudSea, world, apply)
+	-- (the cotton cloud sea below the castle was removed, user Oct 1: "don't like the cloud"; what goes there instead
+	-- is to be decided with the user)
 	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)
 	for _, pad in world:GetDescendants() do
 		if pad:IsA("BasePart") and CollectionService:HasTag(pad, "Checkpoint") then
