@@ -2071,8 +2071,8 @@ local function buildStarfallCastle(world: Model)
 		flame.CanQuery = false
 		local light = Instance.new("PointLight")
 		light.Color = P.Torch
-		light.Range = 22
-		light.Brightness = 1.4
+		light.Range = 14 -- small warm pools (user, Oct 1: torches were too bright and reached too far)
+		light.Brightness = 0.7
 		light.Shadows = true
 		light.Parent = flame
 	end

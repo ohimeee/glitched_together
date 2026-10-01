@@ -20,7 +20,7 @@ Every call needs `studio_id` from `list_roblox_studios`.
 | `start_stop_play` | Solo play test | Only 1 player; 2-player test needs the user (Test → Clients and Servers → 2) |
 | `screen_capture` | Screenshot | During play, camera params are ignored: on the client, `RunService:BindToRenderStep("ShotCam", Enum.RenderPriority.Last.Value + 10, …)` to set the camera, hide ScreenGuis, and move the character near the target (StreamingEnabled) |
 | `get_console_output` | Output log | |
-| `generate_mesh` | AI textured mesh (the graphics baseline) | **Only in Edit mode** (fails while playing). 2–3 at a time (`async: true` + `wait_job_finished`). Avoid words like "fangs"/"menacing" (moderation). Result is a Model tagged `Assistant-…`: read its MeshPart `MeshId`/`TextureID`/`Size`, check facing, then delete it |
+| `generate_mesh` | AI textured mesh (the graphics baseline) | **Only in Edit mode**, and don't start a playtest while jobs run (they fail with "PreviewAssets not found"). Moderation also rejects "gunpowder", "wick", "skull". 2–3 at a time (`async: true` + `wait_job_finished`). Avoid words like "fangs"/"menacing" (moderation). Result is a Model tagged `Assistant-…`: read its MeshPart `MeshId`/`TextureID`/`Size`, check facing, then delete it |
 | `generate_material` | AI MaterialVariant | Results were too heavy for Pixel Plains; we hand-make maps instead (`textures/make_pixelplains.py`) |
 | `upload_image` | Upload PNGs, returns `rbxassetid://` (Image type) | Needs **http URLs**: run `python -m http.server 8765 --bind 127.0.0.1` in `textures/` (background) and pass `http://127.0.0.1:8765/<file>.png`. New uploads can take a few seconds to render |
 | `search_asset` / `insert_asset` | Creator Store search/insert (models, audio…) | Audio rules and every other sound source: §3b |
@@ -71,6 +71,9 @@ See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-lik
 - `asset_type`: `hdris` (skies, lighting), `textures` (PBR sets: diffuse, normal, roughness, displacement), `models` (rocks, plants, furniture, …).
 - Use for: real stone, wood, dirt, metal and fabric surfaces on Blender kit pieces (keep maps ≤1024 for Roblox SurfaceAppearance; normal maps must be OpenGL), environment props, lighting reference. Restyle to the world (e.g. castle stone tinted toward `#6E6A80`).
 - Site: https://polyhaven.com
+
+**Direct download (faster than through Blender):** `curl -s https://api.polyhaven.com/files/<id>` (Python urllib gets a 403 from the API; the `dl.polyhaven.org` file URLs work from Python) → `[Diffuse|nor_gl|Rough]['1k']['png']['url']`. Convert every map to 8-bit RGB with Pillow (some rough maps are 16-bit `I;16` or grey `L`), save in `textures/polyhaven/`, serve the repo (`python -m http.server 8767`) and `upload_image`. Then a MaterialVariant in `adventure.project.json` (BaseMaterial = the grey-box part's material; part Color tints the map). A MaterialVariant's maps CAN be set live in the Edit datamodel through `execute_luau` (good for testing before a rebuild).
+**Upload gotchas:** `upload_image` dedups by image content: a broken/blank asset keeps coming back for the same pixels, so change the pixels (a slight grade) and the file name to get a fresh id. A fresh image can render blank for a minute.
 
 ### Sketchfab (huge model library; license per model)
 - Through Blender MCP (token in `C:\Users\User\tools\blender-mcp\keys.env` as `BLENDERMCP_SKETCHFAB_API_KEY`, loaded by `autostart.py`): `get_sketchfab_status`, `search_sketchfab_models(query, categories, count, downloadable)`, `get_sketchfab_model_preview(uid)`, `download_sketchfab_model(uid)` (imports into Blender; check `world_bounding_box` and rescale).

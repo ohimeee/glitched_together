@@ -146,6 +146,10 @@ Skins.CrackedWallSkin = { -- three cracked sandstone columns across the wall Mik
 		C = { Id = CRACK, TextureId = CRACK_TEX, Offset = v(3.33, 0, 0), Size = v(3.5, 6, 2), Material = SMOOTH },
 	},
 }
+Skins.CastleCloud = -- cotton-wool cloud, flattened into a drifting bank
+	enemy(v(22, 8, 12), "rbxassetid://124097749579889", "rbxassetid://74359789809174", v(22, 7, 14), 0, 0)
+Skins.CheckpointBanner =
+	enemy(v(3, 8, 3), "rbxassetid://77877113311583", "rbxassetid://94044277911094", v(3, 8, 3), 0, 0)
 Skins.BarricadeSkin =
 	enemy(v(10, 5, 1.5), "rbxassetid://96691084781583", "rbxassetid://124296174769582", v(10, 5.2, 2), -0.1, 0)
 
@@ -241,7 +245,7 @@ end
 
 -- Starfall Castle rides a sea of night clouds: soft lavender clouds drift below and around the rooms (well under the
 -- floors, non-colliding), so the top-down view looks down onto a sky instead of an empty void.
-local CLOUD_DESIGN = Vector3.new(22, 8, 8) -- PixelPlains Cloud skin
+local CLOUD_DESIGN = Vector3.new(22, 8, 12) -- CastleCloud skin
 local function cloudSea(world: Instance, apply: (BasePart, string) -> boolean)
 	local folder = world:FindFirstChild("Environment") or world
 	local rng = Random.new(1997)
@@ -258,12 +262,9 @@ local function cloudSea(world: Instance, apply: (BasePart, string) -> boolean)
 					* CFrame.Angles(0, math.rad(rng:NextNumber(0, 360)), 0),
 				{ Transparency = 1 }
 			)
-			if apply(holder, "Cloud") then
+			if apply(holder, "CastleCloud") then
 				for _, mesh in holder:GetChildren() do
 					if mesh:IsA("MeshPart") then
-						mesh.MaterialVariant = "" -- soft, not Pixel Plains' pixel plastic
-						mesh.Material = Enum.Material.SmoothPlastic
-						mesh.Color = Color3.fromRGB(150, 128, 200)
 						mesh.CastShadow = false
 					end
 				end
@@ -286,6 +287,22 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
 	task.spawn(cloudSea, world, apply)
+	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)
+	for _, pad in world:GetDescendants() do
+		if pad:IsA("BasePart") and CollectionService:HasTag(pad, "Checkpoint") then
+			pad.Transparency = 0.85
+			local banner = art(
+				pad.Parent or world,
+				"CheckpointBanner",
+				Vector3.new(3, 8, 3),
+				CFrame.new(pad.Position.X + pad.Size.X / 2 - 1, pad.Position.Y - pad.Size.Y / 2 + 4, pad.Position.Z),
+				{ Transparency = 1 }
+			)
+			if not apply(banner, "CheckpointBanner") then
+				banner:Destroy()
+			end
+		end
+	end
 	-- every pressure plate: a stone plate in a brass frame with a star rune
 	for _, plate in world:GetDescendants() do
 		if plate:IsA("BasePart") and CollectionService:HasTag(plate, "PressurePlate") then
@@ -336,7 +353,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	for _, flame in world:GetDescendants() do
 		if flame.Name == "Flame" and flame:IsA("BasePart") and flame.Parent and flame.Parent.Name == "Torch" then
 			flame.Transparency = 1
-			CombatFx.Emit(flame, "Flame", 1.1, 22)
+			CombatFx.Emit(flame, "Flame", 0.8, 14)
 			CombatFx.Emit(flame, "Stars", 0.5, 3, CombatFx.Gold)
 		end
 	end
