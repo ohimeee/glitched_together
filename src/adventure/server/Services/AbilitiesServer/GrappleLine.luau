@@ -101,7 +101,7 @@ function GrappleLine.Use(p: Player, useIndex: number, target: Instance?)
 			toolResult:FireClient(p, "GrappleDrop")
 			return
 		end
-		if (Tags.position(anchor) - root.Position).Magnitude > T.Range + Tuning.SlackRange then
+		if Tags.distance(anchor, root.Position) > T.Range + Tuning.SlackRange then
 			toolResult:FireClient(p, "GrappleDrop")
 			return
 		end
@@ -112,7 +112,7 @@ function GrappleLine.Use(p: Player, useIndex: number, target: Instance?)
 		if not pullable then
 			return
 		end
-		if (Tags.position(pullable) - root.Position).Magnitude > T.PullRange + Tuning.SlackRange then
+		if Tags.distance(pullable, root.Position) > T.PullRange + Tuning.SlackRange then
 			return
 		end
 		if massOf(pullable) > T.MaxMass then

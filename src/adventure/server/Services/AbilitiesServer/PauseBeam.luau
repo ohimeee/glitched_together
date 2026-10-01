@@ -58,7 +58,7 @@ function PauseBeam.Use(player: Player, useIndex: number, target: Instance?)
 	if not root then
 		return
 	end
-	if (Tags.position(freezable) - root.Position).Magnitude > Tuning.PauseBeam.Range + Tuning.SlackRange then
+	if Tags.distance(freezable, root.Position) > Tuning.PauseBeam.Range + Tuning.SlackRange then
 		return
 	end
 

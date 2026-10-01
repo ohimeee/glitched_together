@@ -67,7 +67,7 @@ function CopyPaste.Use(p: Player, useIndex: number, target: Instance?, aim: any)
 
 	if useIndex == 1 then
 		local source = copyableOf(target)
-		if not source or (Tags.position(source) - root.Position).Magnitude > T.CopyRange + Tuning.SlackRange then
+		if not source or Tags.distance(source, root.Position) > T.CopyRange + Tuning.SlackRange then
 			return
 		end
 		local old = copied[p]

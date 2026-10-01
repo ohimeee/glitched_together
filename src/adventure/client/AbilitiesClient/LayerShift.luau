@@ -21,7 +21,7 @@ function LayerShift:Start()
 	trove:Add(Input.action("W3Tools", "Tool2").Pressed:Connect(function()
 		local target = Aim.best({ "CodeLayer" }, T.PullRange, 8, function(inst)
 			return inst:GetAttribute("PulledOut") ~= true
-		end)
+		end, "MikoShifted") -- Code Layer pieces only stop rays that act as shifted Miko
 		if target then
 			toolUse:FireServer(2, target)
 		end

@@ -43,7 +43,7 @@ function LayerShift.Use(p: Player, useIndex: number, target: Instance?)
 	if not (code and root) or code:GetAttribute("PulledOut") then
 		return
 	end
-	if (Tags.position(code) - root.Position).Magnitude > T.PullRange + Tuning.SlackRange then
+	if Tags.distance(code, root.Position) > T.PullRange + Tuning.SlackRange then
 		return
 	end
 

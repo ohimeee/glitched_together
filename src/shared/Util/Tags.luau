@@ -39,6 +39,27 @@ function Tags.list(tag: string): { Instance }
 	return list
 end
 
+-- Distance from a point to the nearest point of a tagged thing's box (a part, or a model's bounding box), so big
+-- objects count as in range at their near end, not only at their center.
+function Tags.distance(inst: Instance, pos: Vector3): number
+	local cf: CFrame, size: Vector3
+	if inst:IsA("BasePart") then
+		cf, size = inst.CFrame, inst.Size
+	elseif inst:IsA("Model") then
+		cf, size = inst:GetBoundingBox()
+	else
+		return (Tags.position(inst) - pos).Magnitude
+	end
+	local p = cf:PointToObjectSpace(pos)
+	local half = size / 2
+	local nearest = Vector3.new(
+		math.clamp(p.X, -half.X, half.X),
+		math.clamp(p.Y, -half.Y, half.Y),
+		math.clamp(p.Z, -half.Z, half.Z)
+	)
+	return (p - nearest).Magnitude
+end
+
 -- World position of a tagged thing (part or model).
 function Tags.position(inst: Instance): Vector3
 	if inst:IsA("BasePart") then
