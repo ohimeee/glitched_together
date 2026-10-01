@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local Greybox = {}
 
@@ -483,6 +484,30 @@ local function buildPixelPlains(world: Model)
 			attrs = { Group = group, OpenOffset = Vector3.new(0, rise, 0), Solid = true, OpenTime = 2.5, Latch = false },
 		})
 	end
+	-- a crank Station (StationService): hold E, forward / back drives the linked Driven movers; it glows in the color
+	-- of the only player who can use it (art-direction.md §6)
+	local function crank(owner: string, x: number, top: number, z: number, drives: { Instance })
+		platform(P, Vector3.new(1.2, 3, 1.2), x, top + 3, z, {
+			name = "CrankPost",
+			color = METAL,
+			material = Enum.Material.Metal,
+		})
+		local wheel = block(P, Vector3.new(0.6, 4, 4), CFrame.new(x, top + 4.5, z), {
+			name = "Crank",
+			color = if owner == "Kai" then KAI else MIKO,
+			material = NEON,
+			shape = Enum.PartType.Cylinder,
+			collide = false,
+			tags = { "Station" },
+			attrs = { Owner = owner },
+		})
+		for _, d in drives do
+			local link = Instance.new("ObjectValue")
+			link.Name = "Drives"
+			link.Value = d
+			link.Parent = wheel
+		end
+	end
 	local function conveyor(size: Vector3, x: number, top: number, z: number, speed: number)
 		-- LookVector -Z: carries players back toward where they came from
 		block(P, size, CFrame.new(x, top - size.Y / 2, z), {
@@ -634,6 +659,58 @@ local function buildPixelPlains(world: Model)
 	plate("T1b", 9, 0, 198)
 	gate(P, "T1b", Vector3.new(30, 20, 2), CFrame.new(0, 10, 206))
 	grass(Vector3.new(14, 6, 10), 0, 0, 212, "MillExit")
+
+	-- 1-1 continued: SPRING YARD (obstacles.md 2.2). Two new jobs for the tools. Spring Snap: Release is a launcher.
+	-- Kai freezes a pumping spring while it's squashed, Miko steps on, Kai releases and she's flung up a 26-stud
+	-- cliff (a Release never launches the player releasing, so it can't be done alone); up top she pulls the lever
+	-- for Kai's lift. Crank Ferry (operator and runner): a ferry crosses a chasm under a crusher only while someone
+	-- holds a crank. Miko cranks Kai across while he freezes the crusher; then Kai cranks her over from his side.
+	section("SpringYard", Vector3.zero, Vector3.new(0, 26, 200))
+	grass(Vector3.new(14, 6, 20), 0, 0, 10, "YardPath")
+	checkpoint(P, nextOrder(), 0, 0, 8, W, {
+		"Kai: freeze the spring while it's squashed. Miko: stand on it. Kai: release (right click)!",
+		"The spring launches whoever stands on it when Kai lets it go. Then Miko pulls the lever up top.",
+	})
+	sign(P, "SPRING YARD", CFrame.new(0, 9, 19), Vector3.new(16, 3, 0.4))
+	grass(Vector3.new(40, 6, 30), 0, 0, 35, "Yard") -- z 20..50
+	grass(Vector3.new(40, 6, 16), 0, -6, 58, "SpringPit") -- 6 deep: falling in is safe, the spring is the only way up
+	-- the spring pumps between flush with the yard and 4 down; frozen low + released = a launch up the cliff
+	local springUp, springDown = CFrame.new(0, -0.5, 56), CFrame.new(0, -4.5, 56)
+	mover("SpringPad", Vector3.new(8, 1, 8), springUp, springDown, {
+		Period = 1.1,
+		LaunchVelocity = Vector3.new(0, Tuning.JumpVelocity(34), 20), -- lands ~6 onto the cliff top
+	})
+	platform(P, Vector3.new(40, 32, 30), 0, 26, 81, { color = GRASS, name = "Cliff" }) -- z 66..96, 26 up
+	lift("SP1", Vector3.new(8, 1, 8), 16, 0.5, 54, 25.5, "Lift") -- Kai's ride once Miko pulls the lever
+	pullLever("SP1", -14, 31, 72)
+	checkpoint(P, nextOrder(), 0, 26, 86, W, {
+		"Miko: hold E at the teal crank and press W to send the ferry. Kai: freeze the crusher as you go!",
+		"Kai, call out when to stop. Then Kai cranks Miko over from the orange crank.",
+	})
+
+	-- the crank ferry: home against this cliff, out against the far one; it drifts home when nobody cranks
+	local ferryHome, ferryOut = CFrame.new(0, 25.5, 102), CFrame.new(0, 25.5, 150)
+	local ferry = block(P, Vector3.new(10, 1, 10), ferryHome, {
+		name = "Ferry",
+		color = NEUTRAL,
+		tags = { "Mover" },
+		attrs = { Driven = true, Period = 7, Ease = "Linear", ReturnRate = 0.5 }, -- 3.5 s across at full crank
+	})
+	waypoints(ferry, { ferryHome, ferryOut })
+	crusher(0, 126, 26.5, { Period = 1.6 }) -- slams down to just over the ferry (no rigid-on-rigid fight)
+	block(P, Vector3.new(16, 2, 14), CFrame.new(0, 26 + 22.5, 126), { -- the girder it hangs from
+		name = "FactoryRoof",
+		color = METAL,
+		material = Enum.Material.Metal,
+	})
+	crank("Miko", -14, 26, 92, { ferry })
+	grass(Vector3.new(40, 6, 30), 0, 26, 171, "FarCliff") -- z 156..186: a 60-stud chasm, nothing jumps it
+	crank("Kai", -14, 26, 160, { ferry })
+	checkpoint(P, nextOrder(), 0, 26, 176, W)
+	plate("SP2", -9, 26, 182)
+	plate("SP2", 9, 26, 182)
+	gate(P, "SP2", Vector3.new(40, 20, 2), CFrame.new(0, 36, 187))
+	grass(Vector3.new(14, 6, 12), 0, 26, 194, "YardExit")
 
 	-- 1-2 CLOUD CLIMB -------------------------------------------------------------------------------
 	section("CloudClimb", Vector3.new(0, 0, 210), Vector3.new(0, 62, 437))

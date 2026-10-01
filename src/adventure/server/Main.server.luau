@@ -22,6 +22,7 @@ for _, name in
 		"RespawnMash",
 		"LevelUp",
 		"LevelPick",
+		"StationInput",
 	}
 do
 	Net.event(name)
@@ -37,6 +38,7 @@ local HealthService = require(Services.HealthService)
 local InteractableService = require(Services.InteractableService)
 local MoverService = require(Services.MoverService)
 local ContraptionService = require(Services.ContraptionService)
+local StationService = require(Services.StationService)
 local RelayService = require(Services.RelayService)
 local HintService = require(Services.HintService)
 local CutsceneService = require(Services.CutsceneService)
@@ -58,6 +60,7 @@ HealthService.Init()
 InteractableService.Init()
 MoverService.Init()
 ContraptionService.Init()
+StationService.Init()
 RelayService.Init()
 HintService.Init()
 CutsceneService.Init()

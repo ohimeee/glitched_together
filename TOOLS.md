@@ -26,7 +26,9 @@ Every call needs `studio_id` from `list_roblox_studios`.
 | `search_asset` / `insert_asset` | Creator Store search/insert (models, audio…) | Audio rules and every other sound source: §3b |
 | `generate_texture`, `generate_procedural_model`, `inspect_instance`, `search_game_tree`, `script_read/grep/search`, `multi_edit`, `character_navigation`, `user_keyboard_input`, `user_mouse_input`, `segment_mesh`, `store_image`, `http_get`, `subagent`, `skill` | Available, rarely needed | |
 
-**Hot-patch code without a restart:** serve the repo (`python -m http.server 8766 --bind 127.0.0.1`, background), then run `tools/hotpatch.luau` through `execute_luau` (Edit) with its `FILES` list set to the changed paths (`git status --short`). It turns Studio's HttpService on just for the fetch, sets each script's `Source` (creating new ones), and restores the setting. Then Play again.
+**Hot-patch code without a restart:** serve the repo (`python -m http.server 8766 --bind 127.0.0.1`, background), then run `tools/hotpatch.luau` through `execute_luau` (Edit) with its `FILES` list set to the changed paths (`git status --short`). It turns Studio's HttpService on just for the fetch, sets each script's `Source` (creating new ones), and restores the setting. Then Play again. Shortcut once per Studio session: install it as `ServerStorage.HotPatch` (a module returning `function(FILES)`), then each patch is `return require(game.ServerStorage.HotPatch)({ "src/..." })`.
+
+**Scripted playtests can't press ProximityPrompts** (prompts never show while Studio is driven from the MCP, even a fresh one). Test prompt-driven pieces through a Studio-only hook instead, e.g. a Station's `DebugOccupant` attribute (StationService).
 
 **Can't do:** Studio UI clicks (File → Import 3D). MCPControl can't bring Studio to the front while VS Code holds focus → ask the user to import FBX files (batch them). Scripts can't set a MaterialVariant's maps at runtime → declare variants in `adventure.project.json` (MaterialService).
 

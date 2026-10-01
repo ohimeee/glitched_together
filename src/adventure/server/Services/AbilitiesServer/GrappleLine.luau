@@ -122,6 +122,11 @@ function GrappleLine.Use(p: Player, useIndex: number, target: Instance?)
 	end
 end
 
+-- The anchor this player is swinging from (a ring or a frozen object), if any.
+function GrappleLine.SwingTarget(p: Player): Instance?
+	return swinging[p]
+end
+
 function GrappleLine.Init()
 	-- If Kai's freeze runs out mid-swing, the line snaps.
 	MoverService.Resumed:Connect(function(inst: Instance)

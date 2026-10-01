@@ -4,6 +4,9 @@
 -- holding parts named 1, 2, 3… Attributes: Period (s per full cycle, default 4), Mode ("PingPong" | "Loop"),
 -- Ease ("Sine" | "Linear"), Spin (deg/s around its own Y, for gears).
 -- Each mover keeps its own time `t`; freezing = not advancing `t`, so it resumes exactly where it paused.
+-- Driven = true: the mover doesn't run on its own. A Station (InteractableService) drives it between waypoint 1
+-- (t = 0) and its last waypoint (t = Period / 2) with MoverService.Drive; nobody driving = it eases back to 1 at
+-- ReturnRate (x real time, default 0.5). Freezing a driven mover holds it wherever it is.
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -21,6 +24,9 @@ type Mover = {
 	sine: boolean,
 	spin: number,
 	pausedUntil: number,
+	driven: boolean,
+	drive: number, -- -1..1 from the Station (0 = nobody cranking: ease back)
+	returnRate: number,
 	alignPos: AlignPosition,
 	alignRot: AlignOrientation,
 }
@@ -134,6 +140,9 @@ local function register(inst: Instance)
 		sine = inst:GetAttribute("Ease") ~= "Linear",
 		spin = (inst:GetAttribute("Spin") or 0) :: number,
 		pausedUntil = 0,
+		driven = inst:GetAttribute("Driven") == true,
+		drive = 0,
+		returnRate = (inst:GetAttribute("ReturnRate") or 0.5) :: number,
 		alignPos = alignPos,
 		alignRot = alignRot,
 	}
@@ -220,6 +229,24 @@ function MoverService.Resume(inst: Instance)
 	end
 end
 
+-- Station input for a Driven mover: -1..1 (0 = let go, it eases back).
+function MoverService.Drive(inst: Instance, axis: number)
+	local m = movers[inst]
+	if m then
+		m.drive = math.clamp(axis, -1, 1)
+	end
+end
+
+-- How far a mover is along its path, 0..1 (Driven movers: 0 = home, 1 = fully out).
+function MoverService.Progress(inst: Instance): number
+	local m = movers[inst]
+	if not m then
+		return 0
+	end
+	local phase = (m.t / m.period) % 1
+	return if phase <= 0.5 then phase * 2 else 2 - phase * 2
+end
+
 function MoverService.IsFrozen(inst: Instance): boolean
 	return inst:GetAttribute("Frozen") == true
 end
@@ -240,7 +267,12 @@ function MoverService.Init()
 				end
 				MoverService.Resume(inst)
 			end
-			m.t += dt
+			if m.driven then
+				local rate = if m.drive ~= 0 then m.drive else -m.returnRate
+				m.t = math.clamp(m.t + rate * dt, 0, m.period / 2)
+			else
+				m.t += dt
+			end
 			local cf = pose(m)
 			m.alignPos.Position = cf.Position
 			m.alignRot.CFrame = cf.Rotation

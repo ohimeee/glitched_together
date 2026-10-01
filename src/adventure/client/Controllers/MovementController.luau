@@ -85,7 +85,9 @@ local function onCharacter(character: Model)
 	end
 
 	local function blocked(): boolean
-		return player:GetAttribute("InCutscene") == true or player:GetAttribute("Picking") == true
+		return player:GetAttribute("InCutscene") == true
+			or player:GetAttribute("Picking") == true
+			or player:GetAttribute("Station") ~= nil -- cranking a Station roots you
 	end
 
 	local function resetAir()
@@ -622,14 +624,39 @@ local function onCharacter(character: Model)
 		end
 	end))
 
-	-- Bounce-pad launch from the server ----------------------------------------------------
-	trove:Add(Net.event("Launch").OnClientEvent:Connect(function(velocity: Vector3)
-		Audio.play("BouncePad", root)
+	-- Launches from the server (bounce pads, Release-launchers) ----------------------------------
+	-- Straight up keeps your run speed; a launch with its own horizontal part replaces it and holds it through the
+	-- flight (the humanoid's air control would brake it to walk speed at once), like the long jump.
+	trove:Add(Net.event("Launch").OnClientEvent:Connect(function(velocity: Vector3, sound: string?)
+		Audio.play(sound or "BouncePad", root)
 		stopSwing(false)
 		stopGrind(false)
 		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		local side = flat(velocity)
 		task.defer(function()
-			setVelocity(flat(root.AssemblyLinearVelocity) + velocity)
+			setVelocity(if side.Magnitude > 0.1 then velocity else flat(root.AssemblyLinearVelocity) + velocity)
+			if side.Magnitude <= 0.1 then
+				return
+			end
+			local lv = Instance.new("LinearVelocity")
+			lv.Attachment0 = attachment
+			lv.MaxForce = math.huge
+			lv.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+			lv.RelativeTo = Enum.ActuatorRelativeTo.World
+			lv.PrimaryTangentAxis = Vector3.xAxis
+			lv.SecondaryTangentAxis = Vector3.zAxis
+			lv.PlaneVelocity = Vector2.new(side.X, side.Z)
+			lv.Parent = root
+			local start = os.clock()
+			local conn: RBXScriptConnection
+			conn = RunService.Heartbeat:Connect(function()
+				local t = os.clock() - start
+				local landed = t > 0.2 and humanoid.FloorMaterial ~= Enum.Material.Air
+				if landed or t > Tuning.ReleaseLaunch.MaxHold or not lv.Parent or swing or grind then
+					conn:Disconnect()
+					lv:Destroy()
+				end
+			end)
 		end)
 		resetAir()
 	end))

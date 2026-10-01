@@ -43,6 +43,7 @@ local Sfx: { [string]: Def } = {
 	PoundDebris = { Id = pse(9118685591), Volume = 0.5, PitchVar = 0.08 }, -- dirt/rock hit under it
 	Swing = { Id = pse(9118722980), Volume = 0.4, PitchVar = 0.08 }, -- rope pull
 	BouncePad = { Id = pse(9113537815), Volume = 0.55, Pitch = 0.9, PitchVar = 0.05 }, -- hollow boink pop
+	ReleaseLaunch = { Id = pse(12222124), Volume = 0.6, Pitch = 0.85, PitchVar = 0.05 }, -- RBLX short spring boing
 
 	-- World 1 tools
 	PauseBeamFire = { Id = pse(9120984892), Volume = 0.5, PitchVar = 0.04 }, -- glassy reversed zap

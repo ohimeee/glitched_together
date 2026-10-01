@@ -7,6 +7,7 @@ end
 
 return {
 	Gravity = GRAVITY,
+	JumpVelocity = jumpVelocity, -- launch speed for a height in studs (level builders use it for launchers)
 
 	-- Lobby
 	LockTime = 5,
@@ -132,6 +133,17 @@ return {
 		ChaseSpeed = 30, -- Glitch Chase wall; grinding is 40, so the duo stays ahead if they keep moving
 		ChaseRetryDelay = 2,
 		ChaseWarmup = 1.5, -- seconds between the duo stepping onto the start and the wall moving
+	},
+	-- Release as a launcher (obstacles.md Part 3): Kai releasing a Freezable with a LaunchVelocity attribute flings
+	-- whoever stands on it or swings from it
+	ReleaseLaunch = {
+		RideDepth = 4.5, -- studs below the root that still count as standing on it
+		MaxHold = 1.6, -- s: horizontal launch speed is held (no air-control braking) until landing, at most this long
+	},
+	-- Stations (StationService): hold E at a crank, forward / back drives a linked Driven mover
+	Station = {
+		Reach = 8, -- studs to grab the crank; walking (or being knocked) 4 further lets go
+		WheelSpin = 4, -- rad/s the crank wheel turns while cranking
 	},
 	GrappleLine = {
 		Range = 45,

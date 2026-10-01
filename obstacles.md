@@ -77,7 +77,8 @@ The big unused idea: **Release is a launcher.** Today Release only unfreezes ear
 
 | Name | Pattern | Who does what | Formula | Fits |
 | --- | --- | --- | --- | --- |
-| **Spring Snap** | P4 | A giant coil spring bounces on a cycle. Kai freezes it squashed; Miko stands on the plate; Kai **Releases** → she's flung 30 up to a ledge with a rope ring she uses to reel Kai's lift down | E, T | 1-1 teach: "Release = launch" |
+| **Spring Snap** ✅ | P4 | A spring pumps on a cycle. Kai freezes it squashed; Miko stands on it; Kai **Releases** → she's flung up a 26-stud cliff and pulls the lever for Kai's lift (Spring Yard). A Release never launches the releaser | E, T | 1-1 teach: "Release = launch" |
+| **Crank Ferry** ✅ | P5 + P9 | A ferry crosses a 60-stud chasm under a crusher only while someone cranks. Miko cranks Kai over while he freezes the crusher; Kai cranks her over from his side (or freezes the crusher so she can swing on it) | E, T | Spring Yard |
 | **Pendulum Fling** | P4 + P9 | A pixel wrecking ball swings over a pit. Kai freezes it at the back of its swing; Miko grapples onto it; Kai Releases and the swing carries her across (jump off at the far peak) | E, T (jump at the peak) | 1-2 combine |
 | **Crusher Elevator** | P4 + P1 | Kai freezes a crusher at the bottom; Miko stands on its head; Release → it rises and carries her to a high pipe. The reverse of "freeze to run under" | E | 1-3 twist |
 | **Switch Blocks** | P6 + P5 | Retro ON/OFF switch blocks. Miko's side has the switch (Pull it) but a wall hides Kai's course; Kai runs a course of orange/teal blocks that swap solid/ghost each pull and calls "now!" | I, E, T | 1-2, side-on camera |
@@ -128,8 +129,8 @@ This is our Cuckoo Clock: the planning chapter. The unused idea: **Pull Out is a
 
 | Piece | What | Unlocks |
 | --- | --- | --- |
-| **Release-launch** | MoverService: when a frozen mover is Released, any character standing on or grappled to it gets that mover's current velocity × `Tuning.ReleaseLaunch`, plus a vertical floor | Spring Snap, Pendulum Fling, Crusher Elevator |
-| **Station** (crank / dial / terminal) | InteractableService: hold E to occupy (you're rooted, P2); move input drives a linked mover's `t` or angle; let go and it eases back (P1 "fade") | Switch Blocks, Balance Scale, Unloaded Chunk, castle shelf maze |
+| **Release-launch** ✅ built Oct 1 (Spring Yard) | MoverService: when a frozen mover is Released, any character standing on or grappled to it gets that mover's current velocity × `Tuning.ReleaseLaunch`, plus a vertical floor | Spring Snap, Pendulum Fling, Crusher Elevator |
+| **Station** (crank / dial / terminal) ✅ built Oct 1 (`StationService`, crank ferry) | InteractableService: hold E to occupy (you're rooted, P2); move input drives a linked mover's `t` or angle; let go and it eases back (P1 "fade") | Switch Blocks, Balance Scale, Unloaded Chunk, castle shelf maze |
 | **Cycle part** | Generic on/off or rotate-on-a-beat part (`Period`, `Phase`, `OnTime`), freezable | Firebar, Frame Counter, Spring Snap, switch blocks |
 | **Mirror / reflector** | CombatService: tagged reflector parts bounce projectiles like the shield | Ricochet Relay, Mirror Gate |
 | **Weight scale** | Two-pan lift whose height follows the mass on each pan | Balance Scale, Counterweight |
