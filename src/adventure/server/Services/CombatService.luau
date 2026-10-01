@@ -827,6 +827,13 @@ function CombatService.Ignite(inst: Instance)
 		light.Range = 24
 		light.Brightness = 3
 		light.Parent = flame
+		-- Torch Run braziers (`BurnOut`) go dark again after Tuning.TorchRun.BurnTime and can be relit
+		if inst:GetAttribute("BurnOut") then
+			task.delay(Tuning.TorchRun.BurnTime, function()
+				inst:SetAttribute("Lit", nil)
+				flame:Destroy()
+			end)
+		end
 		local switch = Tags.find(inst, "FireSwitch")
 		if switch then
 			InteractableService.Activate(switch)
@@ -1160,6 +1167,36 @@ function CombatService.Init()
 							MoverService.Hold(hazard, 0.2)
 						end
 					end
+				end
+			end
+		end
+	end)
+
+	-- Torch Run: a FireTrap tile's red mark (a disabled SurfaceGui) shows only within firelight of a lit brazier
+	task.spawn(function()
+		while true do
+			task.wait(0.15)
+			local traps = Tags.list("FireTrap")
+			if #traps == 0 then
+				continue
+			end
+			local lit = {}
+			for _, brazier in Tags.list("Brazier") do
+				if brazier:GetAttribute("Lit") and brazier:IsA("BasePart") then
+					table.insert(lit, brazier.Position)
+				end
+			end
+			for _, trap in traps do
+				local mark = trap:FindFirstChild("Mark")
+				if trap:IsA("BasePart") and mark and mark:IsA("SurfaceGui") then
+					local seen = false
+					for _, at in lit do
+						if flat(at - trap.Position).Magnitude <= Tuning.TorchRun.Reveal then
+							seen = true
+							break
+						end
+					end
+					mark.Enabled = seen
 				end
 			end
 		end

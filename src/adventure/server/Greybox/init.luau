@@ -1694,24 +1694,114 @@ local function buildStarfallCastle(world: Model)
 		torch(spot[1], spot[2])
 	end
 
+	-- J: Torch Run (2-2, obstacles.md 2.3). A dark reading hall whose floor is spike traps except one winding path.
+	-- A trap's red mark only shows within firelight, and these braziers burn out after a few seconds
+	-- (Tuning.TorchRun). Miko walks the floor; Kai walks a gallery behind iron bars (only his Blink gets in) and keeps
+	-- lighting the braziers ahead of her with Ignite (E reaches across the wall). Both plates open the way on.
+	floor(-25, 340, 25, 410, "TorchHall")
+	checkpoint(world, 7, 0, 0, 343, W, {
+		"Miko walks the dark floor. Kai: blink into the gallery and keep the braziers lit ahead of her (E)!",
+		"Red marks are spike traps. They only show near a lit brazier, and braziers burn out fast.",
+	})
+	wall(-25, 340, -25, 410)
+	wall(25, 340, 25, 410)
+	wall(-8, 346, -8, 404) -- Miko's lane: x -8..12
+	wall(-25, 346, -8, 346)
+	wall(12, 346, 12, 404) -- the gallery wall: Kai lights over it
+	local function ironBars(x0: number, x1: number, z: number)
+		local model = Instance.new("Model")
+		model.Name = "IronBars"
+		for x = x0 + 0.6, x1 - 0.4, 1.1 do
+			block(model, Vector3.new(0.4, WALL_H, 0.4), CFrame.new(x, WALL_H / 2, z), {
+				name = "Bar",
+				color = rgb(90, 90, 100),
+				material = Enum.Material.Metal,
+			})
+		end
+		model.Parent = world
+		CollectionService:AddTag(model, "IronBars")
+	end
+	ironBars(12, 25, 346) -- Kai's gallery, x 12..25
+	ironBars(12, 25, 404)
+	flatSign("SHIFT = BLINK", 18, 343, 10)
+	-- the floor: 5 columns x 14 rows of 4-stud tiles; every tile off the path is a trap
+	local path = { 0, 0, 1, 1, 0, 0, 1, 3, 4, 4, 3, 3, 4, 4 } -- the safe column per row
+	local braziers = { [1] = true, [4] = true, [7] = true, [10] = true, [13] = true } -- rows with a brazier (col 2)
+	for row = 0, 13 do
+		local z = 348 + row * 4
+		local c, nextC = path[row + 1], path[row + 2] or path[row + 1]
+		for col = 0, 4 do
+			local x = -6 + col * 4
+			local onPath = col >= math.min(c, nextC) and col <= math.max(c, nextC)
+			if braziers[row] and col == 2 then
+				block(world, Vector3.new(2, 3, 2), CFrame.new(x, 1.5, z), {
+					name = "Brazier",
+					color = P.Gold,
+					material = Enum.Material.Metal,
+					tags = { "Brazier" },
+					attrs = { BurnOut = true },
+				})
+			elseif not onPath then
+				local trap = platform(world, Vector3.new(3.9, 0.2, 3.9), x, 0.1, z, {
+					name = "TrapTile",
+					color = P.Stone,
+					material = Enum.Material.Cobblestone,
+					tags = { "Hazard", "FireTrap" },
+					attrs = { Damage = Tuning.TorchRun.TrapDamage },
+				})
+				local mark = Instance.new("SurfaceGui")
+				mark.Name = "Mark"
+				mark.Face = Enum.NormalId.Top
+				mark.Enabled = false -- CombatService shows it in firelight
+				mark.LightInfluence = 0
+				mark.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+				mark.PixelsPerStud = 30
+				mark.Parent = trap
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.fromScale(1, 1)
+				label.BackgroundTransparency = 1
+				label.Font = Enum.Font.FredokaOne
+				label.TextScaled = true
+				label.TextColor3 = Palette.Danger
+				label.Text = "✕"
+				label.Parent = mark
+			end
+		end
+	end
+	platform(world, Vector3.new(4, 0.6, 4), 18, 0.6, 399, {
+		color = NEUTRAL,
+		tags = { "PressurePlate" },
+		attrs = { Group = "C6" },
+		name = "GalleryPlate",
+	})
+	platform(world, Vector3.new(4, 0.6, 4), -4, 0.6, 407, {
+		color = NEUTRAL,
+		tags = { "PressurePlate" },
+		attrs = { Group = "C6" },
+		name = "TorchPlate",
+	})
+	wall(-25, 410, -7, 410)
+	wall(7, 410, 25, 410)
+	gate(world, "C6", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 410))
+
 	-- J: Golem Hall (2-3 opener; obstacles.md 2.3 Golem Lure). An iron golem nothing can hurt. Kai burns the wooden
 	-- pillar braces (Ignite, E); Miko raises her shield to draw its charge and dodges (Dash) at the last moment, so it
 	-- smashes the burned pillar behind her. The third pillar brings the ceiling down on it and opens the gate.
-	floor(-10, 340, 10, 350, "GolemCorridor")
-	wall(-10, 340, -10, 350)
-	wall(10, 340, 10, 350)
-	floor(-30, 350, 30, 410, "GolemHall")
-	checkpoint(world, 7, 0, 0, 356, W, {
+	floor(-10, 410, 10, 420, "GolemCorridor")
+	wall(-10, 410, -10, 420)
+	wall(10, 410, 10, 420)
+	floor(-30, 420, 30, 480, "GolemHall")
+	checkpoint(world, 8, 0, 0, 426, W, {
 		"The golem can't be hurt. Kai: burn the pillars (E). Miko: shield up in front of a burned pillar, dash aside!",
 		"Its charge smashes burned pillars. Break all three and the ceiling falls on it.",
 	})
-	wall(-30, 350, -10, 350)
-	wall(10, 350, 30, 350)
-	wall(-30, 350, -30, 410)
-	wall(30, 350, 30, 410)
-	wall(-30, 410, -7, 410)
-	wall(7, 410, 30, 410)
-	for _, spot in { { -18, 370 }, { 18, 378 }, { -4, 396 } } do
+	wall(-30, 420, -10, 420)
+	wall(10, 420, 30, 420)
+	wall(-30, 420, -30, 480)
+	wall(30, 420, 30, 480)
+	wall(-30, 480, -7, 480)
+	wall(7, 480, 30, 480)
+	for _, spot in { { -18, 440 }, { 18, 448 }, { -4, 466 } } do
 		block(world, Vector3.new(4, WALL_H + 4, 4), CFrame.new(spot[1], (WALL_H + 4) / 2, spot[2]), {
 			name = "GolemPillar",
 			color = KAI, -- Kai's target: burn it first
@@ -1720,8 +1810,8 @@ local function buildStarfallCastle(world: Model)
 			attrs = { Group = "C5" },
 		})
 	end
-	enemy(world, "IronGolem", 6, 400)
-	local trigger = block(world, Vector3.new(1, 1, 1), CFrame.new(0, -5, 405), { -- fired when the golem falls
+	enemy(world, "IronGolem", 6, 470)
+	local trigger = block(world, Vector3.new(1, 1, 1), CFrame.new(0, -5, 475), { -- fired when the golem falls
 		name = "GolemTrigger",
 		transparency = 1,
 		collide = false,
@@ -1729,16 +1819,16 @@ local function buildStarfallCastle(world: Model)
 		attrs = { Group = "C5", GolemTrigger = true },
 	})
 	trigger.CanQuery = false
-	gate(world, "C5", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 410))
-	for _, spot in { { -30, 362 }, { 30, 362 }, { -30, 392 }, { 30, 392 } } do
+	gate(world, "C5", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 480))
+	for _, spot in { { -30, 432 }, { 30, 432 }, { -30, 462 }, { 30, 462 } } do
 		torch(spot[1], spot[2])
 	end
 
 	-- exit
-	floor(-10, 410, 10, 436, "CastleExit")
-	wall(-10, 410, -10, 436)
-	wall(10, 410, 10, 436)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 430), {
+	floor(-10, 480, 10, 506, "CastleExit")
+	wall(-10, 480, -10, 506)
+	wall(10, 480, 10, 506)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 500), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
@@ -1746,7 +1836,7 @@ local function buildStarfallCastle(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 420, 16)
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 490, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.

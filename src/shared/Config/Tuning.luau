@@ -170,6 +170,8 @@ return {
 		Blink = { Distance = 10, Cooldown = 3 },
 		Meteor = { Damage = 40, Charge = 300, Radius = 12, Cast = 1.2 },
 	},
+	-- castle Torch Run: braziers burn out, spike traps show only in their firelight
+	TorchRun = { BurnTime = 6, Reveal = 12, TrapDamage = 30 },
 	ShieldKnight = {
 		Sword = { Damage = { 8, 8, 14 } },
 		Charge = { Damage = 12, Cooldown = 6, Distance = 16 },
