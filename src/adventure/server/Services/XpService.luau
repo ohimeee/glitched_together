@@ -49,6 +49,7 @@ local function finishPick(p: Player, choice: string)
 		for _, q in DuoService.Players() do
 			q:SetAttribute("Picking", nil)
 		end
+		workspace:SetAttribute("Paused", nil)
 	end
 end
 
@@ -59,6 +60,9 @@ local function startPick(level: number)
 		if options then
 			pending[p] = options
 			p:SetAttribute("Picking", true)
+			-- the whole world holds still while anyone picks (playtest Oct 1: the Siege Cart kept rolling into
+			-- barricades): movers, contraptions and the cart read this; CombatService already pauses on Picking
+			workspace:SetAttribute("Paused", true)
 			levelUpEvent:FireClient(p, level, options)
 			-- never soft-lock the duo: auto-pick the first option after 30 s
 			task.delay(30, function()
@@ -116,6 +120,7 @@ function XpService.Reset()
 		end
 	end
 	table.clear(pending)
+	workspace:SetAttribute("Paused", nil)
 	for _, orb in orbs do
 		orb.part:Destroy()
 	end

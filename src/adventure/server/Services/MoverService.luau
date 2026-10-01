@@ -265,6 +265,14 @@ function MoverService.Init()
 
 	RunService.Heartbeat:Connect(function(dt)
 		local now = os.clock()
+		if workspace:GetAttribute("Paused") then
+			for _, m in movers do -- a level-up picker is open: hold still, and freezes don't run out meanwhile
+				if m.pausedUntil > 0 then
+					m.pausedUntil += dt
+				end
+			end
+			return
+		end
 		for inst, m in movers do
 			if not m.root.Parent then
 				movers[inst] = nil

@@ -604,6 +604,13 @@ function ContraptionService.Init()
 	end)
 
 	RunService.Heartbeat:Connect(function(dt)
+		if workspace:GetAttribute("Paused") then
+			-- a level-up picker is open: everything holds (the cart's timers move on with the clock)
+			for _, r in rides do
+				r.goAt += dt
+			end
+			return
+		end
 		for part in conveyors do
 			if not part.Parent then
 				conveyors[part] = nil
