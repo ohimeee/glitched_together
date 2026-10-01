@@ -1795,7 +1795,14 @@ local function buildStarfallCastle(world: Model)
 					tags = { "Brazier" },
 					attrs = { BurnOut = true },
 				})
-			elseif not onPath then
+			elseif onPath then
+				-- the same tile without a trap, so the tile seams don't give the path away
+				platform(world, Vector3.new(3.9, 0.2, 3.9), x, 0.1, z, {
+					name = "SafeTile",
+					color = P.Stone,
+					material = Enum.Material.Cobblestone,
+				})
+			else
 				local trap = platform(world, Vector3.new(3.9, 0.2, 3.9), x, 0.1, z, {
 					name = "TrapTile",
 					color = P.Stone,
@@ -1817,7 +1824,7 @@ local function buildStarfallCastle(world: Model)
 				label.Font = Enum.Font.FredokaOne
 				label.TextScaled = true
 				label.TextColor3 = Palette.Danger
-				label.Text = "✕"
+				label.Text = "X" -- FredokaOne has no "✕" glyph (it rendered nothing)
 				label.Parent = mark
 			end
 		end
