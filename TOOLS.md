@@ -64,7 +64,7 @@ See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-lik
   - Rigging: `/animations/rig-check`, `/animations/rig`, `/animations/retarget` (a full game-ready character pipeline costs about 85 credits).
   - Docs: https://developers.tripo3d.ai/en/docs/quick-start and https://docs.tripo3d.ai
 - **Pipeline:** download the GLB to the scratchpad → import into Blender → clean up (tri budget, one mesh per material, bottom-center origin, stud scale) → export FBX into `blender_assets/` → the user imports it in Studio. Credit Tripo in a credits file if their terms ask for it.
-- **All 4 keys were out of credit on Oct 1, 2026 (8th session).**
+- **All 4 keys were out of credit on Oct 1, 2026 (8th session).** Tried for a realistic courtyard tower: every key returned `code 2010 "You don't have enough credit to create this task"` on both `v3.1-20260211` and `v3.0-20250812` (8 attempts), so no task started and no model, render or PNG exists. **Tripo has never produced an asset in this project**: every generated mesh so far (castle courtyard included) is Studio `generate_mesh`. Don't plan on Tripo until a key has credit again (free monthly refill or a new free account; never buy). Test a key first with one cheap call.
 - No Tripo script exists in the repo yet: write one in Python (read `.env`, `urllib`/`requests`) the first time it's needed.
 
 ### Poly Haven (CC0: free for anything, no credit needed)
