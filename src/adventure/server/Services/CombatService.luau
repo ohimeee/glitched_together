@@ -9,6 +9,9 @@
 --            "Direct" (Kai's own fireball) or "Reflected" (teal: only a shot off Miko's shield), and a `Window` (s) to
 --            stay lit only that long (two crystals in one group = both lit at once).
 --   ShieldStop hazards (a Mover, e.g. the spike roller) stall while a blocking Miko faces them up close.
+--   Iron Golem: immune to damage. It charges in a straight line at its target (a blocking Miko taunts it); a charge
+--            into a GolemPillar that Kai has burned (Ignite) smashes the pillar and dazes it. When the last pillar of
+--            its `Group` falls, the ceiling comes down on it and the group's trigger (a hidden FireSwitch) fires.
 --   Area effects used by the tools: flame walls, meteor, rally burst, sword box, shield-charge line, ignite.
 --   Ultimate charge: player attribute `Ultimate` 0..1 (Kai from damage dealt, Miko from damage blocked).
 local Players = game:GetService("Players")
@@ -44,6 +47,8 @@ type Foe = {
 	nextShot: number,
 	teleportNext: boolean,
 	stunUntil: number,
+	chargeDir: Vector3?,
+	charged: number,
 	chargedUntil: number,
 	shieldDownUntil: number,
 	color: Color3,
@@ -287,6 +292,8 @@ local function register(inst: Instance)
 		nextShot = os.clock() + math.random() * 1.5,
 		teleportNext = false,
 		stunUntil = 0,
+		chargeDir = nil,
+		charged = 0,
 		chargedUntil = 0,
 		shieldDownUntil = 0,
 		color = part.Color,
@@ -351,6 +358,13 @@ end
 function CombatService.DamageEnemy(part: BasePart, amount: number, source: Player?, fromPos: Vector3?): number
 	local foe = foes[part]
 	if not foe or foe.dead or amount <= 0 then
+		return 0
+	end
+	if foe.spec.Immune then
+		local at = CFrame.new(fromPos or part.Position)
+		effect({ Size = Vector3.new(1.5, 1.5, 1.5), CFrame = at, Color = Color3.new(1, 1, 1) }, 0.15)
+		Audio.play("ShieldBlock", part, 0.6) -- clang: nothing hurts it
+		foe.awake = true
 		return 0
 	end
 	if foe.kind == "ShieldGuard" and fromPos and os.clock() >= foe.shieldDownUntil then
@@ -817,6 +831,17 @@ function CombatService.Ignite(inst: Instance)
 		if switch then
 			InteractableService.Activate(switch)
 		end
+	elseif Tags.has(inst, "GolemPillar") and inst:IsA("BasePart") then
+		if inst:GetAttribute("Weakened") then
+			return
+		end
+		inst:SetAttribute("Weakened", true) -- burned through: the golem's charge breaks it now
+		inst.Material = Enum.Material.Neon
+		inst.Color = FIRE
+		Audio.play("Ignite", inst)
+		local fire = CombatFx.Emit(inst, "Flame", 2, 20)
+		fire.Shape = Enum.ParticleEmitterShape.Box
+		CombatFx.Emit(inst, "Smoke", 1.4, 3, Color3.fromRGB(90, 80, 100))
 	elseif Tags.has(inst, "Burnable") and inst:IsA("BasePart") and inst.Parent then
 		inst.Color = FIRE
 		inst.Material = Enum.Material.Neon
@@ -932,6 +957,117 @@ local function stepMage(foe: Foe, target: Player, dist: number, now: number)
 	foe.teleportNext = not foe.teleportNext
 end
 
+local function golemDone(group: string)
+	for _, inst in Tags.list("FireSwitch") do
+		if inst:GetAttribute("Group") == group and inst:GetAttribute("GolemTrigger") then
+			InteractableService.Activate(inst)
+		end
+	end
+end
+
+local function smashPillar(foe: Foe, pillar: BasePart)
+	local group = pillar:GetAttribute("Group")
+	local gray = Color3.fromRGB(120, 110, 130)
+	CombatFx.Burst(pillar.Position, { { "Smoke", 14, 3, gray }, { "Stars", 12, 1.4, CombatFx.Gold } })
+	Audio.play("MeteorImpact", pillar.Position)
+	pillar:Destroy()
+	for _, other in Tags.list("GolemPillar") do
+		if other:GetAttribute("Group") == group then
+			return -- pillars still standing
+		end
+	end
+	-- the last pillar: the ceiling comes down on the golem
+	local rock = effect({
+		Name = "Ceiling",
+		Size = Vector3.new(14, 4, 14),
+		CFrame = CFrame.new(foe.part.Position + Vector3.new(0, 30, 0)),
+		Color = Palette.Castle.Stone,
+	}, 1.2)
+	rock.Material = Enum.Material.Slate
+	TweenService:Create(rock, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		CFrame = CFrame.new(foe.part.Position + Vector3.new(0, 2, 0)),
+	}):Play()
+	task.delay(0.5, function()
+		CombatFx.Burst(foe.part.Position, { { "Smoke", 20, 4, gray } })
+		Audio.play("MeteorImpact", foe.part.Position)
+		if not foe.dead then
+			kill(foe)
+		end
+		if type(group) == "string" then
+			golemDone(group)
+		end
+	end)
+end
+
+local function stepGolem(foe: Foe, target: Player, dist: number, now: number, dt: number)
+	local spec = foe.spec
+	local part = foe.part
+	local r = rootOf(target) :: BasePart
+	if foe.state == "Charge" then
+		local dir = foe.chargeDir :: Vector3
+		local step = spec.ChargeSpeed * dt
+		local radius = math.max(part.Size.X, part.Size.Z) / 2
+		local hit = workspace:Raycast(part.Position, dir * (step + radius), worldParams(characters()))
+		-- anyone in the way gets run over (a shield facing it takes the hit)
+		for _, p in DuoService.Players() do
+			local pr = standing(p)
+			if pr and flat(pr.Position - part.Position).Magnitude <= radius + 1.5 then
+				local blocked = p:GetAttribute("Blocking") and shieldCovers(p, part.Position)
+				if not blocked and ((p:GetAttribute("GolemHitAt") or 0) :: number) < now - 1 then
+					p:SetAttribute("GolemHitAt", now)
+					CombatService.HitPlayer(p, spec.Damage, part.Position)
+				end
+			end
+		end
+		if hit then
+			local stop = part.Position + dir * math.max(0, hit.Distance - radius - 0.1)
+			part.CFrame = CFrame.lookAt(stop, stop + dir)
+			local pillar = Tags.find(hit.Instance, "GolemPillar")
+			if pillar and pillar:IsA("BasePart") and pillar:GetAttribute("Weakened") then
+				smashPillar(foe, pillar)
+				foe.stunUntil = now + spec.Daze
+			else
+				Audio.play("ShieldBlock", part, 0.5)
+				foe.stunUntil = now + spec.Bonk
+			end
+			tint(part, nil, foe.color)
+			foe.state = "Recover"
+			foe.stateUntil = foe.stunUntil
+			return
+		end
+		local nextPos = part.Position + dir * step
+		part.CFrame = CFrame.lookAt(nextPos, nextPos + dir)
+		foe.charged += step
+		if foe.charged >= spec.ChargeMax then
+			tint(part, nil, foe.color)
+			foe.state = "Recover"
+			foe.stateUntil = now + 0.8
+		end
+	elseif foe.state == "Windup" then
+		face(foe, r.Position)
+		if now >= foe.stateUntil then
+			foe.chargeDir = unitOr(flat(r.Position - part.Position), flat(part.CFrame.LookVector))
+			foe.charged = 0
+			foe.state = "Charge"
+			Audio.play("EnemySwing", part, 0.6)
+		end
+	elseif foe.state == "Recover" then
+		if now >= foe.stateUntil then
+			foe.state = "Chase"
+		end
+	else
+		face(foe, r.Position)
+		if dist <= spec.ChargeRange then
+			foe.state = "Windup"
+			foe.stateUntil = now + spec.Windup
+			tint(part, DANGER, foe.color:Lerp(Color3.new(1, 1, 1), 0.5)) -- telegraph (red = danger)
+			Audio.play("EnemySwing", part, 0.4)
+		else
+			tryMove(foe, unitOr(flat(r.Position - part.Position), Vector3.zAxis), spec.Speed * dt)
+		end
+	end
+end
+
 local function stepFoes(dt: number)
 	local now = os.clock()
 	for part, foe in foes do
@@ -961,6 +1097,8 @@ local function stepFoes(dt: number)
 			stepArcher(foe, target, dist, now, dt)
 		elseif foe.kind == "StaticMage" then
 			stepMage(foe, target, dist, now)
+		elseif foe.kind == "IronGolem" then
+			stepGolem(foe, target, dist, now, dt)
 		else
 			stepMelee(foe, target, dist, now, dt)
 		end

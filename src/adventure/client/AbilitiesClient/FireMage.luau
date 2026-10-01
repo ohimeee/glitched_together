@@ -87,7 +87,7 @@ local function nearestIgnitable(): Instance?
 	end
 	local aim = TopDownAim.point()
 	local best: Instance?, bestD = nil, math.huge
-	for _, tag in { "Brazier", "Burnable" } do
+	for _, tag in { "Brazier", "Burnable", "GolemPillar" } do
 		for _, inst in CollectionService:GetTagged(tag) do
 			if inst:IsDescendantOf(workspace) and not inst:GetAttribute("Lit") then
 				local pos = Tags.position(inst)

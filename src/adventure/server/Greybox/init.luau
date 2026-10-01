@@ -1317,6 +1317,7 @@ local function enemy(parent: Instance, kind: string, x: number, z: number)
 		StaticArcher = { Vector3.new(3, 5, 2), rgb(170, 165, 200) },
 		ShieldGuard = { Vector3.new(4, 6, 3), rgb(140, 145, 160) },
 		StaticMage = { Vector3.new(3, 6, 3), Palette.Castle.Royal },
+		IronGolem = { Vector3.new(6, 7, 5), rgb(85, 88, 100) },
 	}
 	local look = looks[kind]
 	local size = look[1] :: Vector3
@@ -1623,11 +1624,51 @@ local function buildStarfallCastle(world: Model)
 		torch(spot[1], spot[2])
 	end
 
+	-- J: Golem Hall (2-3 opener; obstacles.md 2.3 Golem Lure). An iron golem nothing can hurt. Kai burns the wooden
+	-- pillar braces (Ignite, E); Miko raises her shield to draw its charge and dodges (Dash) at the last moment, so it
+	-- smashes the burned pillar behind her. The third pillar brings the ceiling down on it and opens the gate.
+	floor(-10, 340, 10, 350, "GolemCorridor")
+	wall(-10, 340, -10, 350)
+	wall(10, 340, 10, 350)
+	floor(-30, 350, 30, 410, "GolemHall")
+	checkpoint(world, 7, 0, 0, 356, W, {
+		"The golem can't be hurt. Kai: burn the pillars (E). Miko: shield up in front of a burned pillar, dash aside!",
+		"Its charge smashes burned pillars. Break all three and the ceiling falls on it.",
+	})
+	wall(-30, 350, -10, 350)
+	wall(10, 350, 30, 350)
+	wall(-30, 350, -30, 410)
+	wall(30, 350, 30, 410)
+	wall(-30, 410, -7, 410)
+	wall(7, 410, 30, 410)
+	for _, spot in { { -18, 370 }, { 18, 378 }, { -4, 396 } } do
+		block(world, Vector3.new(4, WALL_H + 4, 4), CFrame.new(spot[1], (WALL_H + 4) / 2, spot[2]), {
+			name = "GolemPillar",
+			color = KAI, -- Kai's target: burn it first
+			material = Enum.Material.WoodPlanks,
+			tags = { "GolemPillar" },
+			attrs = { Group = "C5" },
+		})
+	end
+	enemy(world, "IronGolem", 6, 400)
+	local trigger = block(world, Vector3.new(1, 1, 1), CFrame.new(0, -5, 405), { -- fired when the golem falls
+		name = "GolemTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "FireSwitch" },
+		attrs = { Group = "C5", GolemTrigger = true },
+	})
+	trigger.CanQuery = false
+	gate(world, "C5", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 410))
+	for _, spot in { { -30, 362 }, { 30, 362 }, { -30, 392 }, { 30, 392 } } do
+		torch(spot[1], spot[2])
+	end
+
 	-- exit
-	floor(-10, 340, 10, 366, "CastleExit")
-	wall(-10, 340, -10, 366)
-	wall(10, 340, 10, 366)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 360), {
+	floor(-10, 410, 10, 436, "CastleExit")
+	wall(-10, 410, -10, 436)
+	wall(10, 410, 10, 436)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 430), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
@@ -1635,7 +1676,7 @@ local function buildStarfallCastle(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 350, 16)
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 420, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.

@@ -209,6 +209,20 @@ return {
 		},
 		ShieldGuard = { HP = 60, Speed = 7, Reach = 5, Windup = 0.7, Damage = 15, Recover = 1, XP = 20, Arc = 120 },
 		StaticMage = { HP = 35, Speed = 0, Every = 3, Teleport = 5, OrbSpeed = 30, Damage = 12, XP = 15, Range = 40 },
+		-- can't be hurt: lure its charge into the pillars Kai has burned (obstacles.md 2.3 Golem Lure)
+		IronGolem = {
+			HP = 1,
+			Immune = true,
+			Speed = 6,
+			ChargeRange = 30, -- winds up a charge at its target from this close
+			Windup = 0.9,
+			ChargeSpeed = 50,
+			ChargeMax = 45, -- studs per charge
+			Damage = 25,
+			Daze = 3, -- s stunned after smashing a burned pillar
+			Bonk = 1.2, -- s stunned after hitting a wall or a sound pillar
+			XP = 40,
+		},
 	},
 
 	-- World 3

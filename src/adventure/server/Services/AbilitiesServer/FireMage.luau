@@ -73,7 +73,7 @@ end
 local function ignite(p: Player, root: BasePart, target: Instance?)
 	local range = T.Ignite.Range + SLACK
 	local function ok(inst: Instance): boolean
-		return (Tags.has(inst, "Brazier") or Tags.has(inst, "Burnable"))
+		return (Tags.has(inst, "Brazier") or Tags.has(inst, "Burnable") or Tags.has(inst, "GolemPillar"))
 			and inst:IsDescendantOf(workspace)
 			and (Tags.position(inst) - root.Position).Magnitude <= range
 	end
@@ -83,9 +83,9 @@ local function ignite(p: Player, root: BasePart, target: Instance?)
 	end
 	-- no (valid) target sent: light the nearest thing in range
 	local best: Instance?, bestD = nil, math.huge
-	for _, tag in { "Brazier", "Burnable" } do
+	for _, tag in { "Brazier", "Burnable", "GolemPillar" } do
 		for _, inst in game:GetService("CollectionService"):GetTagged(tag) do
-			if ok(inst) and not inst:GetAttribute("Lit") then
+			if ok(inst) and not inst:GetAttribute("Lit") and not inst:GetAttribute("Weakened") then
 				local d = (Tags.position(inst) - root.Position).Magnitude
 				if d < bestD then
 					best, bestD = inst, d
