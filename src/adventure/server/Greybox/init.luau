@@ -1302,6 +1302,60 @@ local function buildGlitchedCore(world: Model)
 	gate(P, "C2", Vector3.new(12, 14, 2), CFrame.new(0, 7, 247))
 	floor(Vector3.new(12, 4, 14), 0, 0, 255, "CircuitExit") -- z 248..262
 
+	-- 3-1 twist: PASTE PAST THE DOOR (obstacles.md 2.4, P8 marker shortcut). A door opens while someone stands on
+	-- its plate, and that plate only counts players: whoever holds it can't go through. Through the open door, only
+	-- shifted Miko sees a second plate in the Code Layer. She pulls it out, Kai pastes his crate copy on it, and the
+	-- pasted plate holds the door (AnyOf) so Miko can step off and follow. NoPaste volumes cover everything but the
+	-- far room, so Kai can't paste stairs over the walls alone.
+	section("PastePast", Vector3.zero, Vector3.new(0, 0, 97))
+	floor(Vector3.new(24, 4, 41), 0, 0, 20.5, "DoorRoom") -- z 0..41
+	checkpoint(P, nextOrder(), 0, 0, 5, W, {
+		"Miko: stand on the plate to open the door, then shift and look through. Kai: copy the orange crate first!",
+		"Miko: pull the hidden plate out (right click). Kai: paste the crate on it so the door stays open for her.",
+	})
+	sign(P, "DOOR.EXE (NOT RESPONDING)", CFrame.new(0, 18, 40), Vector3.new(20, 3, 0.4))
+	copySource(Vector3.new(4, 4, 4), -8, 4, 14, "Crate")
+	platform(P, Vector3.new(6, 0.6, 6), 3, 0.6, 30, {
+		color = NEUTRAL,
+		tags = { "PressurePlate" },
+		attrs = { Group = "P1", PlayersOnly = true },
+		name = "Plate",
+	})
+	wall(Vector3.new(2, 34, 84), -13, 30, 41) -- side walls z -1..83
+	wall(Vector3.new(2, 34, 84), 13, 30, 41)
+	wall(Vector3.new(9, 34, 2), -7.5, 30, 42) -- the door wall, door at x -3..3
+	wall(Vector3.new(9, 34, 2), 7.5, 30, 42)
+	wall(Vector3.new(6, 16, 2), 0, 30, 42)
+	gate(P, "P1", Vector3.new(6, 14, 2), CFrame.new(0, 7, 42), false)
+	local door = P:FindFirstChild("Gate_P1")
+	if door then
+		door:SetAttribute("AnyOf", "P1,P2") -- held by Miko on her plate, or by a paste on the code plate
+	end
+	floor(Vector3.new(24, 4, 40), 0, 0, 63, "FarRoom") -- z 43..83
+	platform(P, Vector3.new(6, 0.6, 6), -4, 0.6, 58, { -- seen through the door from Miko's plate, 29 away
+		color = MIKO,
+		name = "CodePlate",
+		tags = { "CodeLayer", "PressurePlate" },
+		attrs = { Group = "P2", PastedOnly = true },
+	})
+	plate("P3", -6, 0, 76)
+	plate("P3", 6, 0, 76)
+	gate(P, "P3", Vector3.new(24, 20, 2), CFrame.new(0, 10, 84))
+	floor(Vector3.new(12, 4, 14), 0, 0, 90, "PasteExit") -- z 83..97
+	for _, zone in
+		{
+			{ Vector3.new(140, 120, 53), Vector3.new(0, 20, 15.5) }, -- the door room and all round it
+			{ Vector3.new(57, 120, 42), Vector3.new(-41.5, 20, 63) }, -- either side of the far room
+			{ Vector3.new(57, 120, 42), Vector3.new(41.5, 20, 63) },
+			{ Vector3.new(26, 68, 42), Vector3.new(0, 50, 63) }, -- above it
+		}
+	do
+		local z = block(P, zone[1], CFrame.new(zone[2]), { name = "NoPaste", transparency = 1, collide = false })
+		z.CanQuery = false
+		z.CanTouch = false
+		CollectionService:AddTag(z, "NoPaste")
+	end
+
 	-- 3-2 THE WIRE MAZE ----------------------------------------------------------------------------
 	section("WireMaze", Vector3.zero, Vector3.new(0, 0, 330))
 	floor(Vector3.new(30, 4, 30), 0, 0, 15, "MazeStart") -- z 0..30

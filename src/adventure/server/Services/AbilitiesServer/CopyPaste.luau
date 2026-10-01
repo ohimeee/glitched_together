@@ -93,6 +93,18 @@ function CopyPaste.Use(p: Player, useIndex: number, target: Instance?, aim: any)
 		return
 	end
 
+	-- `NoPaste` volumes: rooms where pastes would let Kai build round a puzzle alone (paste stairs over a wall)
+	for _, zone in Tags.list("NoPaste") do
+		if zone:IsA("BasePart") then
+			local lp = zone.CFrame:PointToObjectSpace(cf.Position)
+			local half = zone.Size / 2
+			if math.abs(lp.X) <= half.X and math.abs(lp.Y) <= half.Y and math.abs(lp.Z) <= half.Z then
+				toolResult:FireClient(p, "PasteBlocked")
+				return
+			end
+		end
+	end
+
 	local paste = stored:Clone()
 	if paste:IsA("BasePart") then
 		paste.CFrame = cf

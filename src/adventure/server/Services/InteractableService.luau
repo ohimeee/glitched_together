@@ -154,6 +154,25 @@ local function evaluateGroups()
 		end
 	end
 	for _, gate in CollectionService:GetTagged("DuoGate") do
+		-- `AnyOf` ("A,B"): the gate opens while ANY of those groups is active (two ways to hold one door)
+		local anyOf = gate:GetAttribute("AnyOf")
+		if type(anyOf) == "string" then
+			local known, active = false, false
+			for _, g in string.split(anyOf, ",") do
+				if groups[g] ~= nil then
+					known = true
+					active = active or groups[g]
+				end
+			end
+			if known then
+				if active then
+					setGateOpen(gate, true)
+				elseif gate:GetAttribute("Latch") == false then
+					setGateOpen(gate, false)
+				end
+			end
+			continue
+		end
 		local group = gate:GetAttribute("Group")
 		if group and groups[group] ~= nil then
 			local latch = gate:GetAttribute("Latch") ~= false
@@ -172,10 +191,16 @@ local plateOverlap = OverlapParams.new()
 plateOverlap.FilterType = Enum.RaycastFilterType.Exclude
 
 -- `PastedOnly` plates (Glitched Core sockets) only count Kai's pastes, not players or crates.
+-- `PlayersOnly` plates ignore crates and pastes (a door you have to hold yourself). A plate still in the Code Layer
+-- isn't there for anyone until Miko pulls it out.
 local function platePressed(plate: BasePart): boolean
+	if Tags.has(plate, "CodeLayer") and not plate:GetAttribute("PulledOut") then
+		return false
+	end
 	plateOverlap.FilterDescendantsInstances = { plate }
 	local cf = plate.CFrame * CFrame.new(0, plate.Size.Y / 2 + 1.5, 0)
 	local pastedOnly = plate:GetAttribute("PastedOnly") == true
+	local playersOnly = plate:GetAttribute("PlayersOnly") == true
 	for _, part in workspace:GetPartBoundsInBox(cf, Vector3.new(plate.Size.X, 3, plate.Size.Z), plateOverlap) do
 		local model = part:FindFirstAncestorOfClass("Model")
 		if pastedOnly then
@@ -187,7 +212,7 @@ local function platePressed(plate: BasePart): boolean
 			if not p:GetAttribute("Downed") then
 				return true
 			end
-		elseif Tags.find(part, "Pullable") or Tags.find(part, "Pasted") then
+		elseif not playersOnly and (Tags.find(part, "Pullable") or Tags.find(part, "Pasted")) then
 			return true
 		end
 	end
