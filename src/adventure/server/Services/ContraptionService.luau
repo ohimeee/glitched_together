@@ -9,6 +9,10 @@
 --             `On` attribute for the look; a Freeze holds it as it is. Glitched Core phantom steps are Blinkers that
 --             are also CodeVisual (drawn only in Miko's Code Layer), so only she sees which step is solid.
 --   FrameSign (part with sign SurfaceGuis): shows the current frame ("FRAME 3"); CodeVisual = only Miko reads it.
+--   BonkBlock (teal "?" block, also Pullable): Miko's Pull bonks it (GrappleLine → ContraptionService.Bonk) and it pops
+--             out a coin step that sinks at `FallSpeed` for `FallDistance` studs, then vanishes. The step is Freezable
+--             and stops while Frozen, so Kai freezes it at the height they need (Coin Bonk Stairs). A new bonk
+--             replaces that block's last step unless it's frozen.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -88,6 +92,50 @@ local function runDropper(dropper: BasePart)
 			task.wait(0.2)
 		end
 	end
+end
+
+-- Coin Bonk Stairs ----------------------------------------------------------------------------
+local lastCoin: { [BasePart]: BasePart } = {}
+local sinking: { [BasePart]: { left: number, speed: number } } = {}
+
+function ContraptionService.Bonk(inst: Instance)
+	if not inst:IsA("BasePart") then
+		return
+	end
+	local bonk = inst :: BasePart
+	local home = bonk:GetAttribute("HomeCFrame") :: CFrame?
+	if not home then
+		home = bonk.CFrame
+		bonk:SetAttribute("HomeCFrame", home)
+	end
+	-- the block hops up a stud and back, like being hit from below
+	bonk.CFrame = home :: CFrame
+	TweenService:Create(bonk, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {
+		CFrame = (home :: CFrame) + Vector3.new(0, 1, 0),
+	}):Play()
+	Audio.play("PoundImpact", bonk, 0.5)
+
+	local old = lastCoin[bonk]
+	if old and old.Parent and not frozen(old) then
+		old:Destroy()
+	end
+	local size = (bonk:GetAttribute("CoinSize") or T.CoinSize) :: Vector3
+	local coin = Instance.new("Part")
+	coin.Name = "CoinStep"
+	coin.Size = size
+	coin.CFrame = (home :: CFrame) * CFrame.new(0, -(bonk.Size.Y + size.Y) / 2 - 0.3, 0)
+	coin.Anchored = true
+	coin.Color = Color3.fromRGB(150, 98, 52) -- a spent block's brown; Kai's orange highlight shows it's freezable
+	coin.Material = Enum.Material.SmoothPlastic
+	coin.TopSurface = Enum.SurfaceType.Smooth
+	coin.BottomSurface = Enum.SurfaceType.Smooth
+	CollectionService:AddTag(coin, "Freezable")
+	coin.Parent = bonk.Parent
+	lastCoin[bonk] = coin
+	sinking[coin] = {
+		left = (bonk:GetAttribute("FallDistance") or T.CoinFall) :: number,
+		speed = (bonk:GetAttribute("FallSpeed") or T.CoinFallSpeed) :: number,
+	}
 end
 
 -- Respawning loose parts ----------------------------------------------------------------------
@@ -296,6 +344,19 @@ function ContraptionService.Init()
 		for _, c in chases do
 			if c.wall.Parent then
 				stepChase(c, dt)
+			end
+		end
+		for coin, s in sinking do
+			if not coin.Parent then
+				sinking[coin] = nil
+			elseif not frozen(coin) then
+				local step = math.min(s.speed * dt, s.left)
+				coin.CFrame -= Vector3.new(0, step, 0)
+				s.left -= step
+				if s.left <= 0 then
+					sinking[coin] = nil
+					coin:Destroy()
+				end
 			end
 		end
 	end)

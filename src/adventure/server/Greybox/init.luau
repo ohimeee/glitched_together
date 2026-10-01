@@ -1160,6 +1160,59 @@ local function buildPixelPlains(world: Model)
 	gate(P, "F2", Vector3.new(24, 20, 2), CFrame.new(3, 32, 214))
 	grass(Vector3.new(14, 4, 13), 0, 22, 221.5, "FireExit")
 
+	-- 1-3 continued: COIN BONK STAIRS (obstacles.md 2.2, P3 set then use). Teal "?" blocks hang over two climbs.
+	-- Miko's Pull bonks one and a coin step pops out and sinks slowly (ContraptionService.Bonk); Kai freezes it at
+	-- the height they need. Climb 1: one step up a 20-stud wall. Climb 2, the chain: they stand on a frozen step,
+	-- Miko bonks the next block (only reachable from the step), and when Kai freezes the new step the old one lets
+	-- go under them, so they jump as he freezes. The far ledge is 19 above the highest first step: no skipping.
+	local function bonkBlock(x: number, y: number, z: number)
+		local b = block(P, Vector3.new(4, 4, 4), CFrame.new(x, y, z), {
+			name = "BonkBlock",
+			color = MIKO,
+			material = NEON,
+			tags = { "BonkBlock", "Pullable" },
+			attrs = { Mass = 1 },
+		})
+		for _, face in Enum.NormalId:GetEnumItems() do
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = face
+			gui.LightInfluence = 0
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 30
+			gui.Parent = b
+			local mark = Instance.new("TextLabel")
+			mark.Size = UDim2.fromScale(1, 1)
+			mark.BackgroundTransparency = 1
+			mark.Font = Enum.Font.FredokaOne
+			mark.TextScaled = true
+			mark.TextColor3 = Color3.new(1, 1, 1)
+			mark.TextStrokeTransparency = 0.4
+			mark.Text = "?"
+			mark.Parent = gui
+		end
+	end
+	section("CoinBonk", Vector3.zero, Vector3.new(0, 52, 147))
+	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "BonkPath")
+	checkpoint(P, nextOrder(), 0, 0, 6, W, {
+		"Miko: pull the ? block (right click). Kai: freeze the step that pops out at the right height!",
+		"Freeze it low enough to jump on, high enough to reach the ledge.",
+	})
+	sign(P, "COIN BONK STAIRS", CFrame.new(0, 9, 14), Vector3.new(18, 3, 0.4))
+	grass(Vector3.new(30, 4, 30), 0, 0, 30, "BonkBase") -- z 15..45
+	bonkBlock(0, 30, 48) -- its step sinks through the 6-stud slot between the base and the wall
+	grass(Vector3.new(30, 24, 24), 0, 20, 63, "BonkLedge") -- z 51..75, 20 up
+	checkpoint(P, nextOrder(), 0, 20, 66, W, {
+		"Freeze a step, both hop on, then Miko bonks the next ? block from up there.",
+		"Kai: when you freeze the new step the old one drops, so jump as you freeze!",
+	})
+	bonkBlock(0, 44, 84) -- step 2: freeze it at about 26..33 high
+	bonkBlock(0, 62, 94) -- step 3: only in Pull range from step 2; freeze it at about 39..46
+	grass(Vector3.new(30, 56, 30), 0, 52, 120, "BonkTop") -- z 105..135, 52 up
+	plate("K1", -6, 52, 126)
+	plate("K1", 6, 52, 126)
+	gate(P, "K1", Vector3.new(30, 20, 2), CFrame.new(0, 62, 134))
+	grass(Vector3.new(14, 4, 12), 0, 52, 141, "BonkExit")
+
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
 	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))
 	grass(Vector3.new(30, 4, 20), 0, 62, 756, "ChaseStart")

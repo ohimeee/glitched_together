@@ -8,6 +8,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Net = require(ReplicatedStorage.Shared.Net)
 local MoverService = require(script.Parent.Parent.MoverService)
 local InteractableService = require(script.Parent.Parent.InteractableService)
+local ContraptionService = require(script.Parent.Parent.ContraptionService)
 
 local T = Tuning.GrappleLine
 local GrappleLine = { BlockedBy = { "Downed", "InCutscene" }, Cooldowns = { [2] = T.PullCooldown } }
@@ -36,6 +37,13 @@ local function pull(p: Player, target: Instance, root: BasePart)
 	if lever then
 		toolResult:FireAllClients("PullStart", p, lever)
 		InteractableService.Toggle(lever)
+		return
+	end
+	-- "?" blocks (Coin Bonk Stairs): a pull bonks it and a coin step pops out; the block stays put
+	local bonk = Tags.find(target, "BonkBlock")
+	if bonk then
+		toolResult:FireAllClients("PullStart", p, bonk)
+		ContraptionService.Bonk(bonk)
 		return
 	end
 	local part = if target:IsA("BasePart") then target else (target :: any).PrimaryPart
