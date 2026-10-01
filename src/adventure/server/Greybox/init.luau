@@ -835,6 +835,75 @@ local function buildPixelPlains(world: Model)
 	gate(P, "C2", Vector3.new(30, 20, 2), CFrame.new(0, 52, 220))
 	grass(Vector3.new(14, 4, 10), 0, 42, 225, "TowerExit")
 
+	-- 1-2 continued: SWING WORKS (obstacles.md 2.2). Release as a launcher, twice more. Swing Cradle: a cradle swings
+	-- out over a 56-stud chasm and back; Kai freezes it at the ledge, Miko steps in, Kai releases and she's thrown
+	-- across, then pulls a crate onto the plate that raises Kai's drawbridge. Spin Cannon: a cannon turns on the far
+	-- ledge; Kai freezes it pointing at the island (where it points is where she flies), Miko climbs on, Kai releases.
+	section("SwingWorks", Vector3.zero, Vector3.new(0, 0, 250))
+	grass(Vector3.new(14, 6, 20), 0, 0, 10, "WorksPath")
+	checkpoint(P, nextOrder(), 0, 0, 8, W, {
+		"Kai: freeze the cradle when it swings back to the ledge. Miko: step in. Kai: release it to throw her across!",
+		"On the far side, Miko pulls the crate onto the plate to raise Kai's bridge.",
+	})
+	sign(P, "SWING WORKS", CFrame.new(0, 9, 19), Vector3.new(16, 3, 0.4))
+	grass(Vector3.new(30, 6, 30), 0, 0, 35, "WorksLedge") -- z 20..50; the chasm runs z 50..106
+	local cradleBack, cradleFront = CFrame.new(0, -0.5, 55), CFrame.new(0, -0.5, 85)
+	mover("SwingCradle", Vector3.new(8, 1, 8), cradleBack, cradleFront, {
+		Period = 3,
+		LaunchVelocity = Vector3.new(0, Tuning.JumpVelocity(24), 62), -- ~61 studs: lands ~10 onto the far ledge
+	})
+	block(P, Vector3.new(30, 2, 2), CFrame.new(0, 24, 70), { -- the beam the cradle hangs from (decor)
+		name = "CradleBeam",
+		color = WOOD,
+		material = Enum.Material.Wood,
+		collide = false,
+	})
+	grass(Vector3.new(30, 6, 30), 0, 0, 121, "WorksFar") -- z 106..136
+	block(P, Vector3.new(4, 4, 4), CFrame.new(9, 2, 128), {
+		name = "Crate",
+		color = WOOD,
+		material = Enum.Material.WoodPlanks,
+		anchored = false,
+		tags = { "Pullable", "Respawn" },
+		attrs = { Mass = 20 },
+	})
+	plate("SW1", -8, 0, 114)
+	lift("SW1", Vector3.new(8, 1, 56), -10, -20, 78, 20, "Bridge") -- Kai's drawbridge, up while the crate holds it
+	checkpoint(P, nextOrder(), 0, 0, 122, W, {
+		"Kai: freeze the cannon when it points at the island. Miko: climb on. Kai: release!",
+		"Where the cannon points when it's frozen is where Miko flies. Then she pulls the lever for Kai's bridge.",
+	})
+	-- the spin cannon: a turntable with a barrel, turning once every 6 s
+	local cannon = Instance.new("Model")
+	cannon.Name = "SpinCannon"
+	local base = block(cannon, Vector3.new(8, 2, 8), CFrame.new(0, 1, 131), { name = "CannonBase", color = STONE })
+	local barrel = block(cannon, Vector3.new(2.4, 2.4, 6), CFrame.new(0, 3.2, 128), {
+		name = "CannonBarrel",
+		color = METAL,
+		material = Enum.Material.Metal,
+		collide = false,
+	})
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = base
+	weld.Part1 = barrel
+	weld.Parent = barrel
+	cannon.PrimaryPart = base
+	for k, v in { Spin = 60, LaunchSpeed = 70, LaunchHeight = 30 } :: { [string]: number } do
+		cannon:SetAttribute(k, v)
+	end
+	waypoints(cannon, { base.CFrame })
+	CollectionService:AddTag(cannon, "Mover")
+	CollectionService:AddTag(cannon, "Freezable")
+	cannon.Parent = P
+	-- the island: ~77 studs out along the cannon's aim, 59 past the ledge (no jump or dash reaches it)
+	grass(Vector3.new(30, 6, 30), 0, 0, 210, "CannonIsland") -- z 195..225
+	pullLever("SW2", 8, 8, 214)
+	lift("SW2", Vector3.new(8, 1, 59), -10, -20, 165.5, 20, "Bridge")
+	plate("SW3", -9, 0, 220)
+	plate("SW3", 9, 0, 220)
+	gate(P, "SW3", Vector3.new(30, 20, 2), CFrame.new(0, 10, 226))
+	grass(Vector3.new(14, 6, 24), 0, 0, 238, "WorksExit") -- z 226..250
+
 	-- 1-3 COIN FACTORY ------------------------------------------------------------------------------
 	section("CoinFactory", Vector3.new(0, 62, 437), Vector3.new(0, 62, 747))
 	local function factoryWalls(z0: number, z1: number)
@@ -1106,10 +1175,21 @@ local function buildGlitchedCore(world: Model)
 	sign(P, "▲ KAI", CFrame.new(-20, 6, 16), Vector3.new(10, 3, 0.4))
 	sign(P, "MIKO ●", CFrame.new(20, 6, 16), Vector3.new(10, 3, 0.4))
 
-	-- Kai's trial: a 60-stud void and one block to copy. Only two pastes live at once: paste, hop, paste again
-	-- (the oldest vanishes behind you).
+	-- Kai's trial: a 60-stud void and one long plank to copy. Only two pastes live at once: paste, hop, paste again
+	-- (the oldest vanishes behind you). Two blocks of Glitch static hang in the way (playtest Oct 1: a straight
+	-- line of pastes took 4 seconds), so he zigzags round them, turning the plank with R to fit the diagonals.
 	floor(Vector3.new(20, 4, 25), -30, 0, 27.5, "KaiLedge") -- z 15..40
-	copySource(Vector3.new(8, 1, 8), -34, 1, 32, "PlatformBlock")
+	copySource(Vector3.new(4, 1, 14), -36, 1, 30, "PlankBlock")
+	for _, spot in { Vector3.new(-26, 0, 58), Vector3.new(-35, 0, 82) } do
+		block(P, Vector3.new(14, 16, 6), CFrame.new(spot.X, 2, spot.Z), {
+			name = "GlitchStatic",
+			color = GLITCH,
+			material = NEON,
+			transparency = 0.25,
+			tags = { "Hazard" },
+			attrs = { Damage = 1 },
+		})
+	end
 	floor(Vector3.new(20, 4, 20), -30, 0, 110, "KaiEnd") -- z 100..120
 	plate("C1", -30, 0, 112)
 	-- Miko's trial: code stones over the same void, only solid for her while she's shifted

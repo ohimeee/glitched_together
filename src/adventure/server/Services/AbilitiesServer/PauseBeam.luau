@@ -17,10 +17,26 @@ local frozenBy: { [Player]: Instance } = {}
 -- Release as a launcher (obstacles.md Part 3, It Takes Two's "partner launcher"): a Freezable with a LaunchVelocity
 -- attribute (world studs/s) flings his partner when she stands on it or swings from it and Kai releases it early. A
 -- freeze that just runs out doesn't, so the launch is always Kai's call; like a Bounce Pad it never launches the
--- player who triggers it, so it can't be solved alone.
-local function launchRiders(inst: Instance, releaser: Player)
+-- player who triggers it, so it can't be solved alone. Cannons aim instead: LaunchSpeed (studs/s along the way the
+-- object faces, flattened) + LaunchHeight (studs up), so where it points when Kai freezes it is where she flies.
+local function launchVelocity(inst: Instance): Vector3?
 	local velocity = inst:GetAttribute("LaunchVelocity")
-	if typeof(velocity) ~= "Vector3" then
+	if typeof(velocity) == "Vector3" then
+		return velocity
+	end
+	local speed = inst:GetAttribute("LaunchSpeed")
+	local root = if inst:IsA("BasePart") then inst elseif inst:IsA("Model") then inst.PrimaryPart else nil
+	if type(speed) ~= "number" or not root then
+		return nil
+	end
+	local look = root.CFrame.LookVector * Vector3.new(1, 0, 1)
+	local up = Tuning.JumpVelocity((inst:GetAttribute("LaunchHeight") or 0) :: number)
+	return (if look.Magnitude > 0.01 then look.Unit else Vector3.zAxis) * speed + Vector3.new(0, up, 0)
+end
+
+local function launchRiders(inst: Instance, releaser: Player)
+	local velocity = launchVelocity(inst)
+	if not velocity then
 		return
 	end
 	local params = RaycastParams.new()

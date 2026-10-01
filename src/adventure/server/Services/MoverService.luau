@@ -158,8 +158,8 @@ local function register(inst: Instance)
 	alignRot.CFrame = start.Rotation
 
 	for _, part in (if inst:IsA("Model") then inst:GetDescendants() else { root }) :: { Instance } do
-		if part:IsA("BasePart") then
-			part.Anchored = false
+		if part:IsA("BasePart") and not (folder and part:IsDescendantOf(folder)) then
+			part.Anchored = false -- (a Model's own Waypoints markers stay put)
 		end
 	end
 	task.defer(function()
