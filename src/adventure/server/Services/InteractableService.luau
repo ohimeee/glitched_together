@@ -154,12 +154,18 @@ InteractableService.Evaluate = evaluateGroups
 local plateOverlap = OverlapParams.new()
 plateOverlap.FilterType = Enum.RaycastFilterType.Exclude
 
+-- `PastedOnly` plates (Glitched Core sockets) only count Kai's pastes, not players or crates.
 local function platePressed(plate: BasePart): boolean
 	plateOverlap.FilterDescendantsInstances = { plate }
 	local cf = plate.CFrame * CFrame.new(0, plate.Size.Y / 2 + 1.5, 0)
+	local pastedOnly = plate:GetAttribute("PastedOnly") == true
 	for _, part in workspace:GetPartBoundsInBox(cf, Vector3.new(plate.Size.X, 3, plate.Size.Z), plateOverlap) do
 		local model = part:FindFirstAncestorOfClass("Model")
-		if model and Players:GetPlayerFromCharacter(model) then
+		if pastedOnly then
+			if Tags.find(part, "Pasted") then
+				return true
+			end
+		elseif model and Players:GetPlayerFromCharacter(model) then
 			local p = Players:GetPlayerFromCharacter(model) :: Player
 			if not p:GetAttribute("Downed") then
 				return true

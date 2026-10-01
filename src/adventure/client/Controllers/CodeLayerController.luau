@@ -1,7 +1,8 @@
 -- Code Layer visibility (implementation.md §8): hidden for Kai always, and for Miko unless she's shifted.
 -- Shifted Miko sees them as teal wireframes (her color, art-direction.md §6/§8) and the real world desaturates, with
 -- a teal scanline wipe across her screen on each shift (§12) and faint scanlines while shifted. Pulled-out objects
--- show for everyone.
+-- show for everyone. `CodeVisual` parts are real (solid for everyone) but drawn only in the Code Layer: hidden wires,
+-- sockets, phantom steps, frame counters. Signs on either kind hide their text too.
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
@@ -43,6 +44,11 @@ local function refresh(inst: Instance)
 	for _, part in partsOf(inst) do
 		part.LocalTransparencyModifier = if visible then 0 else 1
 	end
+	for _, d in inst:GetDescendants() do
+		if d:IsA("SurfaceGui") or d:IsA("BillboardGui") then
+			d.Enabled = visible
+		end
+	end
 	local hl = inst:FindFirstChild("CodeLayerLook") :: Highlight?
 	if not hl then
 		local newHl = Instance.new("Highlight")
@@ -55,7 +61,8 @@ local function refresh(inst: Instance)
 	end
 	local h = hl :: Highlight
 	h.Enabled = visible
-	h.FillTransparency = if pulled then 0.85 else 0.6
+	h.FillTransparency = if pulled then 0.85 elseif inst:GetAttribute("On") == false then 0.95 else 0.6
+	h.OutlineTransparency = if inst:GetAttribute("On") == false then 0.6 else 0
 end
 
 local function refreshAll()
@@ -139,15 +146,20 @@ local function shiftWipe()
 end
 
 function CodeLayerController.Init()
-	Tags.each("CodeLayer", function(inst)
-		tracked[inst] = true
-		inst:GetAttributeChangedSignal("PulledOut"):Connect(function()
+	for _, tag in { "CodeLayer", "CodeVisual" } do
+		Tags.each(tag, function(inst)
+			tracked[inst] = true
+			inst:GetAttributeChangedSignal("PulledOut"):Connect(function()
+				refresh(inst)
+			end)
+			inst:GetAttributeChangedSignal("On"):Connect(function() -- blinking phantom steps (ContraptionService)
+				refresh(inst)
+			end)
 			refresh(inst)
+		end, function(inst)
+			tracked[inst] = nil
 		end)
-		refresh(inst)
-	end, function(inst)
-		tracked[inst] = nil
-	end)
+	end
 	player:GetAttributeChangedSignal("Shifted"):Connect(function()
 		refreshAll()
 		shiftWipe()

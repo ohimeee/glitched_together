@@ -5,6 +5,10 @@
 --   GlitchWall (part, child ObjectValue `Trigger` → a zone part): once the whole duo is in the zone, sweeps along its
 --             LookVector at `Speed` for `Distance` studs; anyone behind its front face falls (HealthService.Fall)
 --             and the wall resets so the duo can retry. Pause Beam freezes are read from the Frozen attribute.
+--   Blinker   (part): solid only on its `Frames` ("1,2") of a shared clock (Tuning FrameTime x FrameCount), with an
+--             `On` attribute for the look; a Freeze holds it as it is. Glitched Core phantom steps are Blinkers that
+--             are also CodeVisual (drawn only in Miko's Code Layer), so only she sees which step is solid.
+--   FrameSign (part with sign SurfaceGuis): shows the current frame ("FRAME 3"); CodeVisual = only Miko reads it.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -157,7 +161,70 @@ local function stepChase(c: Chase, dt: number)
 	end
 end
 
+local function currentFrame(): number
+	return math.floor(workspace:GetServerTimeNow() / T.FrameTime) % T.FrameCount + 1
+end
+
+local function setBlinker(part: BasePart, on: boolean)
+	if part:GetAttribute("On") == on then
+		return
+	end
+	part:SetAttribute("On", on)
+	part.CanCollide = on
+	if not CollectionService:HasTag(part, "CodeVisual") then
+		part.Transparency = if on then 0 else 0.85
+	end
+end
+
 function ContraptionService.Init()
+	local blinkers: { [BasePart]: { [number]: boolean } } = {}
+	local frameSigns: { [BasePart]: boolean } = {}
+	Tags.each("Blinker", function(inst)
+		if inst:IsA("BasePart") then
+			local frames = {}
+			for _, f in string.split(tostring(inst:GetAttribute("Frames") or "1"), ",") do
+				local n = tonumber(f)
+				if n then
+					frames[n] = true
+				end
+			end
+			blinkers[inst] = frames
+		end
+	end, function(inst)
+		blinkers[inst :: BasePart] = nil
+	end)
+	Tags.each("FrameSign", function(inst)
+		if inst:IsA("BasePart") then
+			frameSigns[inst] = true
+		end
+	end, function(inst)
+		frameSigns[inst :: BasePart] = nil
+	end)
+	task.spawn(function()
+		local shown = 0
+		while true do
+			local frame = currentFrame()
+			for part, frames in blinkers do
+				if not part.Parent then
+					blinkers[part] = nil
+				elseif not frozen(part) then
+					setBlinker(part, frames[frame] == true)
+				end
+			end
+			if frame ~= shown then
+				shown = frame
+				for sign in frameSigns do
+					for _, label in sign:GetDescendants() do
+						if label:IsA("TextLabel") then
+							label.Text = `FRAME {frame}`
+						end
+					end
+				end
+			end
+			task.wait(0.05)
+		end
+	end)
+
 	Tags.each("Conveyor", function(inst)
 		if inst:IsA("BasePart") then
 			conveyors[inst] = true

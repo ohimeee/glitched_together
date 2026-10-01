@@ -1019,35 +1019,213 @@ local function buildPixelPlains(world: Model)
 	end
 end
 
--- Glitched Core: a tiny Code Layer + Copy/Paste demo.
+-- Glitched Core (Story Line World 3; obstacles.md 2.4): the planning world. Kai builds (Copy/Paste), Miko sees the
+-- Code Layer (Layer Shift) and has to say what's there. Built in chained sections like Pixel Plains. Every
+-- checkpoint clears Kai's clipboard and pastes (CopyPaste), so each puzzle brings its own copy source.
+--   3-1 MISSING TEXTURES: split trials (Kai leapfrogs two pastes over a void, Miko walks code stones only she can
+--       stand on), then the Wire Circuit (sockets only Miko sees; only Kai's pastes power them).
+--   3-2 THE WIRE MAZE: Ghost Bridge (Miko pulls a code plank out, Kai crosses and copies it, then pastes the copy
+--       over the next void, which neither can cross alone), then Phantom Steps (steps solid on a 4-frame beat,
+--       drawn only in the Code Layer: Miko calls the beat and the way, Kai jumps blind).
 local function buildGlitchedCore(world: Model)
 	local W = "GlitchedCore"
 	killFloor(world, -40)
 	workspace:SetAttribute("KillY", -60)
 	local GREY = Palette.Core.Grey -- default-looking grey on purpose (art-direction.md §8); the void stays dark
-	platform(world, Vector3.new(40, 4, 40), 0, 0, 0, { color = GREY, name = "MissingTextures" })
-	spawnAt(world, 0, 0, -8)
-	checkpoint(world, 1, 0, 0, 0, W, {
-		"Miko: left click to see the Code Layer.",
-		"Miko pulls the hidden bridge out (right click). Kai copies and pastes it.",
+	local DARK = Palette.Core.Dark
+	local NEON = Enum.Material.Neon
+
+	local P: Instance = world
+	local chunks: { { model: Model, entry: Vector3, exit: Vector3 } } = {}
+	local function section(name: string, entry: Vector3, exit: Vector3)
+		local m = Instance.new("Model")
+		m.Name = name
+		m.Parent = world
+		P = m
+		table.insert(chunks, { model = m, entry = entry, exit = exit })
+	end
+	local order = 0
+	local function nextOrder(): number
+		order += 1
+		return order
+	end
+	local function floor(size: Vector3, x: number, top: number, z: number, name: string?): Part
+		return platform(P, size, x, top, z, { color = GREY, name = name or "CoreBlock" })
+	end
+	local function wall(size: Vector3, x: number, top: number, z: number)
+		platform(P, size, x, top, z, { color = DARK, name = "CoreWall" })
+	end
+	-- a Code Layer piece: only shifted Miko sees it and stands on it, until she pulls it out (LayerShift)
+	local function code(size: Vector3, x: number, top: number, z: number, name: string): Part
+		return platform(P, size, x, top, z, { color = MIKO, name = name, tags = { "CodeLayer" } })
+	end
+	-- real (solid for everyone) but drawn only in the Code Layer: wires, sockets, phantom steps, signs
+	local function codeVisual(
+		size: Vector3,
+		cf: CFrame,
+		name: string,
+		tags: { string }?,
+		attrs: { [string]: any }?
+	): Part
+		local list = { "CodeVisual" }
+		for _, tag in tags or {} do
+			table.insert(list, tag)
+		end
+		return block(P, size, cf, { color = MIKO, material = NEON, name = name, tags = list, attrs = attrs })
+	end
+	local function plate(group: string, x: number, top: number, z: number)
+		platform(P, Vector3.new(6, 0.6, 6), x, top + 0.6, z, {
+			color = NEUTRAL,
+			tags = { "PressurePlate" },
+			attrs = { Group = group },
+			name = "Plate",
+		})
+	end
+	-- a bridge that rises into place when its group is active (both trial plates)
+	local function lift(group: string, size: Vector3, x: number, top: number, z: number, rise: number)
+		platform(P, size, x, top, z, {
+			name = "Bridge",
+			color = NEUTRAL,
+			tags = { "DuoGate" },
+			attrs = { Group = group, OpenOffset = Vector3.new(0, rise, 0), Solid = true, OpenTime = 2.5 },
+		})
+	end
+	local function copySource(size: Vector3, x: number, top: number, z: number, name: string)
+		platform(P, size, x, top, z, { color = KAI, name = name, tags = { "Copyable" } })
+	end
+
+	-- 3-1 MISSING TEXTURES -------------------------------------------------------------------------
+	section("MissingTextures", Vector3.zero, Vector3.new(0, 0, 262))
+	floor(Vector3.new(40, 4, 30), 0, 0, 0, "MissingTextures")
+	spawnAt(P, 0, 0, -8)
+	checkpoint(P, nextOrder(), 0, 0, -6, W, {
+		"Split up! Kai takes the left trial, Miko the right. Each of you ends on a plate.",
+		"Kai: copy the orange block (left click), paste it ahead (hold right click). Miko: shift (left click) and walk the teal stones.",
+	})
+	sign(P, "3-1 MISSING TEXTURES", CFrame.new(0, 9, 14), Vector3.new(20, 3, 0.4))
+	sign(P, "▲ KAI", CFrame.new(-20, 6, 16), Vector3.new(10, 3, 0.4))
+	sign(P, "MIKO ●", CFrame.new(20, 6, 16), Vector3.new(10, 3, 0.4))
+
+	-- Kai's trial: a 60-stud void and one block to copy. Only two pastes live at once: paste, hop, paste again
+	-- (the oldest vanishes behind you).
+	floor(Vector3.new(20, 4, 25), -30, 0, 27.5, "KaiLedge") -- z 15..40
+	copySource(Vector3.new(8, 1, 8), -34, 1, 32, "PlatformBlock")
+	floor(Vector3.new(20, 4, 20), -30, 0, 110, "KaiEnd") -- z 100..120
+	plate("C1", -30, 0, 112)
+	-- Miko's trial: code stones over the same void, only solid for her while she's shifted
+	floor(Vector3.new(20, 4, 25), 30, 0, 27.5, "MikoLedge")
+	for i, step in { { 28, 48 }, { 33, 59 }, { 28, 70 }, { 32, 81 }, { 28, 92 } } do
+		code(Vector3.new(6, 1, 6), step[1], i * 0.8, step[2], "CodeStone")
+	end
+	floor(Vector3.new(20, 4, 20), 30, 0, 110, "MikoEnd")
+	plate("C1", 30, 0, 112)
+	-- both plates: two bridges rise over a 56-stud gap to the plaza (no jump, dash or paste-free way across)
+	lift("C1", Vector3.new(8, 1, 56), -30, -20, 148, 20)
+	lift("C1", Vector3.new(8, 1, 56), 30, -20, 148, 20)
+	floor(Vector3.new(80, 4, 30), 0, 0, 191, "Plaza") -- z 176..206
+	checkpoint(P, nextOrder(), 0, 0, 184, W, {
+		"Miko: shift and look at the floor. Tell Kai where the two sockets are.",
+		"Kai: copy the orange conductor and paste it onto each socket Miko finds. Only pastes power them.",
 	})
 
-	-- Hidden bridge piece only Miko sees until pulled out.
-	block(world, Vector3.new(10, 1, 14), CFrame.new(0, -0.5, 28), {
-		name = "HiddenBridge",
-		color = MIKO,
-		tags = { "CodeLayer" },
+	-- The Wire Circuit: a door wired to two sockets in the floor that only Miko can see; only pastes power them
+	-- (players and crates don't), and Kai has exactly two pastes.
+	floor(Vector3.new(40, 4, 40), 0, 0, 226, "CircuitRoom") -- z 206..246
+	copySource(Vector3.new(4, 4, 4), 15, 4, 212, "Conductor")
+	for _, at in { Vector3.new(-12, 0, 230), Vector3.new(9, 0, 239) } do
+		codeVisual(Vector3.new(5, 0.3, 5), CFrame.new(at.X, 0.15, at.Z), "Socket", { "PressurePlate" }, {
+			Group = "C2",
+			PastedOnly = true,
+		})
+		-- the wire from the socket to the door, drawn flat on the floor
+		local door = Vector3.new(0, 0.12, 246)
+		local from = Vector3.new(at.X, 0.12, at.Z)
+		local wire =
+			codeVisual(Vector3.new(0.5, 0.1, (door - from).Magnitude), CFrame.lookAt((from + door) / 2, door), "Wire")
+		wire.CanCollide = false
+	end
+	wall(Vector3.new(2, 20, 40), -21, 20, 226)
+	wall(Vector3.new(2, 20, 40), 21, 20, 226)
+	wall(Vector3.new(24, 20, 2), -18, 20, 247) -- the back wall runs 10 past the floor so nobody jumps round it
+	wall(Vector3.new(24, 20, 2), 18, 20, 247)
+	wall(Vector3.new(12, 6, 2), 0, 20, 247)
+	gate(P, "C2", Vector3.new(12, 14, 2), CFrame.new(0, 7, 247))
+	floor(Vector3.new(12, 4, 14), 0, 0, 255, "CircuitExit") -- z 248..262
+
+	-- 3-2 THE WIRE MAZE ----------------------------------------------------------------------------
+	section("WireMaze", Vector3.zero, Vector3.new(0, 0, 330))
+	floor(Vector3.new(30, 4, 30), 0, 0, 15, "MazeStart") -- z 0..30
+	checkpoint(P, nextOrder(), 0, 0, 12, W, {
+		"Miko: shift, find the hidden plank and pull it out (right click) so Kai can cross.",
+		"Kai: copy the plank while it's out, then paste it over the next gap. Neither of you crosses that one alone.",
 	})
-	block(world, Vector3.new(4, 4, 4), CFrame.new(12, 2, 8), { name = "CopyCrate", color = KAI, tags = { "Copyable" } })
-	platform(world, Vector3.new(30, 4, 30), 0, 0, 60, { color = GREY, name = "WireMaze" })
-	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 6, 70), {
+	sign(P, "3-2 THE WIRE MAZE", CFrame.new(0, 9, 4), Vector3.new(20, 3, 0.4))
+	-- Ghost Bridge: a code plank over gap 1; gap 2 has none at all
+	code(Vector3.new(10, 1, 56), 0, 0, 58, "GhostPlank") -- z 30..86
+	floor(Vector3.new(24, 4, 24), 0, 0, 98, "Island") -- z 86..110
+	floor(Vector3.new(30, 4, 30), 0, 0, 181, "MazeFar") -- z 166..196: gap 2 is 56 wide
+	checkpoint(P, nextOrder(), 0, 0, 186, W, {
+		"Miko: shift and watch the steps light up on the beat. Call it out: Kai can't see them!",
+		"Each step stays solid for two beats. Hop with the beat, left and right as Miko says.",
+	})
+	-- Phantom Steps: six steps over a 70-stud void, each solid for two of four frames (consecutive steps overlap
+	-- by one, so you hop every beat). Drawn only in the Code Layer, with a frame counter only Miko can read.
+	for k = 1, 6 do
+		local frames = `{(k - 1) % 4 + 1},{k % 4 + 1}`
+		local x = if k % 2 == 1 then -5 else 5
+		codeVisual(Vector3.new(7, 1, 7), CFrame.new(x, -0.5, 196 + k * 10), "PhantomStep", { "Blinker" }, {
+			Frames = frames,
+		})
+	end
+	local frameSign = codeVisual(Vector3.new(14, 4, 0.4), CFrame.new(0, 12, 199), "FrameSign", { "FrameSign" })
+	frameSign.CanCollide = false
+	local frameGui = Instance.new("SurfaceGui") -- the frame counter, written by ContraptionService
+	frameGui.Face = Enum.NormalId.Front -- faces the players coming up the maze
+	frameGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	frameGui.PixelsPerStud = 30
+	local frameLabel = Instance.new("TextLabel")
+	frameLabel.Size = UDim2.fromScale(1, 1)
+	frameLabel.BackgroundTransparency = 1
+	frameLabel.Font = signTheme.SignFont
+	frameLabel.TextScaled = true
+	frameLabel.TextColor3 = Palette.Core.Void
+	frameLabel.Text = "FRAME 1"
+	frameLabel.Parent = frameGui
+	frameGui.Parent = frameSign
+	floor(Vector3.new(30, 4, 30), 0, 0, 281, "MazeEnd") -- z 266..296
+	checkpoint(P, nextOrder(), 0, 0, 275, W, {
+		"Ground-pound the white button together!",
+		"Both pound at the same time.",
+	})
+	platform(P, Vector3.new(12, 1, 8), 0, 1, 288, {
+		color = DUO,
+		tags = { "DuoPound" },
+		attrs = { Group = "C3" },
+		name = "DuoPound",
+	})
+	gate(P, "C3", Vector3.new(30, 20, 2), CFrame.new(0, 10, 297))
+	floor(Vector3.new(40, 4, 30), 0, 0, 313, "CoreExit") -- z 298..328
+	block(P, Vector3.new(12, 12, 3), CFrame.new(0, 6, 326), {
 		name = "WorldExit",
 		color = DUO,
-		material = Enum.Material.Neon,
+		material = NEON,
 		transparency = 0.65,
 		collide = false,
 		tags = { "WorldExit" },
 	})
+	sign(P, "3-3 MEMORY LANE + THE UNFINISHED (M6)", CFrame.new(0, 16, 326), Vector3.new(26, 3, 0.4))
+
+	-- chain: each section's entry snaps onto the previous section's exit
+	local cursor = chunks[1].entry
+	for _, c in chunks do
+		local shift = cursor - c.entry
+		c.model:SetAttribute("Shift", shift)
+		if shift.Magnitude > 0 then
+			c.model.WorldPivot = CFrame.new(c.entry)
+			c.model:PivotTo(CFrame.new(cursor))
+		end
+		cursor = c.exit + shift
+	end
 end
 
 -- Starfall Castle, section 2-1 "Castle Gates" (Story Line, mechanics.md §4 World 2): top-down combat. Floors carry

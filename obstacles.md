@@ -109,9 +109,11 @@ This is our Cuckoo Clock: the planning chapter. The unused idea: **Pull Out is a
 
 | Name | Pattern | Who does what | Formula | Fits |
 | --- | --- | --- | --- | --- |
-| **Paste Past the Door** | P8 | Our clone-teleport. A door closes 2 s after its plate is released. Kai copies a crate, Miko pulls the plate's twin out of the Code Layer on the far side, Kai pastes the crate on it, and the door stays open | E, T | 3-1 twist |
-| **Wire Circuit** | P6 + P10 | Only Miko sees the code wires (teal). Kai pastes copied conductor blocks to close the gaps she calls out. The circuit lights the bridge | I, E | 3-1 teach |
-| **Frame Counter** | P9 + P6 | Platforms are solid only on their frame (1, 2, 3, 4). The frame counter on the wall is visible only in the Code Layer. Miko calls the beat while Kai hops | I, T | 3-2 |
+| **Paste Past the Door** (todo) | P8 | Our clone-teleport. A door closes 2 s after its plate is released. Kai copies a crate, Miko pulls the plate's twin out of the Code Layer on the far side, Kai pastes the crate on it, and the door stays open | E, T | 3-1 twist |
+| **Wire Circuit** ✅ | P6 + P10 | Two sockets in the floor that only Miko sees (wires run to the door). Only pastes power them, and Kai has exactly two: she calls where, he pastes the conductor copies | I, E | 3-1 |
+| **Phantom Steps** ✅ (Frame Counter) | P9 + P6 | Steps are solid on two of four frames (overlapping, so you hop every beat) and drawn only in the Code Layer, with a frame counter only Miko reads. Kai jumps blind on her calls | I, T | 3-2 |
+| **Ghost Bridge** ✅ | P10 + P3 | Miko pulls a code plank out over gap 1 so Kai can cross; he copies it while it's out and pastes it mid-air over gap 2, which has no plank at all (neither crosses it alone) | E | 3-2 |
+| **Split trials** ✅ | P3 | 3-1 opener: Kai leapfrogs two pastes over a 60-stud void; Miko walks code stones only she can stand on; both plates raise the bridges | E | 3-1 |
 | **Layer Hop** | P12 | Alternating stepping stones: real ones (Kai) and code ones (Miko, shifted). Miko pulls out one code stone at a time so Kai can follow on it, then lets it drop back when she needs the next | I, E | 3-2 Wire Maze |
 | **Counterweight** | P10 + P4 | A scale lift: Kai pastes copies of a heavy block on one side to lift Miko on the other; too many copies and she's flung off the top (max 2 pastes, so the third removes the first: real decisions) | E | 3-2 |
 | **Unloaded Chunk** | P5 | A dark "unrendered" zone: the floor only loads inside the white scan cone of Kai's copier. Kai aims the cone (he stands at a terminal); Miko runs, shifted, and pulls out the missing floor pieces | I, E | 3-3 Memory Lane |

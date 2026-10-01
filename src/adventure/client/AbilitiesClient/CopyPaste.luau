@@ -1,5 +1,7 @@
 -- Kai's Copy/Paste, client half: Tool1 copies the Copyable under the crosshair; hold Tool2 to show a ghost
--- preview (R rotates), release to paste within 40 studs.
+-- preview (R rotates), release to paste within 40 studs: on what the crosshair hits, or floating in mid-air ahead
+-- of Kai when it hits nothing in range (bridges over the void): level with his feet, far enough out that it clears
+-- him (FloatDistance, or half its length for long planks).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -45,11 +47,24 @@ function CopyPaste:Start()
 
 	local function pasteCFrame(): CFrame?
 		local root = Aim.root()
-		local hit = Aim.hit(T.PasteRange + 40)
-		if not (root and hit and copiedSize) then
+		if not (root and copiedSize) then
 			return nil
 		end
-		local pos = hit.Position + hit.Normal * (copiedSize.Y / 2)
+		local hit = Aim.hit(T.PasteRange + 40)
+		local pos: Vector3
+		if hit and (hit.Position - root.Position).Magnitude <= T.PasteRange then
+			pos = hit.Position + hit.Normal * (copiedSize.Y / 2)
+		else
+			local ray = Aim.centerRay()
+			local flatDir = ray.Direction * Vector3.new(1, 0, 1)
+			if flatDir.Magnitude < 0.01 then
+				return nil
+			end
+			local size = copiedSize :: Vector3
+			local reach = math.max(T.FloatDistance, math.max(size.X, size.Z) / 2 + 3)
+			local feet = root.Position.Y - 3
+			pos = Vector3.new(root.Position.X, feet - size.Y / 2, root.Position.Z) + flatDir.Unit * reach
+		end
 		if (pos - root.Position).Magnitude > T.PasteRange then
 			return nil
 		end
@@ -100,7 +115,11 @@ function CopyPaste:Start()
 	end))
 
 	trove:Add(toolResult.OnClientEvent:Connect(function(kind: string)
-		if kind == "PasteBlocked" then
+		if kind == "ClipboardCleared" then
+			copiedSize = nil
+			previewing = false
+			ghost.Transparency = 1
+		elseif kind == "PasteBlocked" then
 			ghost.Color = Color3.fromRGB(255, 80, 80)
 			task.delay(0.4, function()
 				ghost.Color = Color3.new(1, 1, 1)

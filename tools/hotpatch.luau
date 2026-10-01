@@ -1,5 +1,5 @@
 -- Hot-patch script sources into the open Studio place without a rebuild or restart (memory: studio-restart-wait).
--- 1. Serve the repo: `python -m http.server 8766 --bind 127.0.0.1` (repo root, background).
+-- 1. Serve the repo: `python -m http.server 8767 --bind 127.0.0.1` (repo root, background).
 -- 2. Run this through Studio MCP `execute_luau` (Edit datamodel) with FILES set to repo-relative paths
 --    (e.g. from `git diff --name-only`). Missing scripts are created; init.luau patches its folder module.
 -- Mirrors adventure.project.json: src/shared → ReplicatedStorage.Shared, src/adventure/server →
@@ -7,7 +7,7 @@
 local FILES = {
 	-- "src/shared/Config/Tuning.luau",
 }
-local BASE = "http://127.0.0.1:8766/"
+local BASE = "http://127.0.0.1:8767/"
 
 local HttpService = game:GetService("HttpService")
 local ROOTS = {

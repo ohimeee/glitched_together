@@ -133,6 +133,9 @@ return {
 		ChaseSpeed = 30, -- Glitch Chase wall; grinding is 40, so the duo stays ahead if they keep moving
 		ChaseRetryDelay = 2,
 		ChaseWarmup = 1.5, -- seconds between the duo stepping onto the start and the wall moving
+		-- Blinkers (Glitched Core phantom steps): solid only on their frames of a shared 4-frame clock
+		FrameTime = 1.2,
+		FrameCount = 4,
 	},
 	-- Release as a launcher (obstacles.md Part 3): Kai releasing a Freezable with a LaunchVelocity attribute flings
 	-- whoever stands on it or swings from it
@@ -207,7 +210,7 @@ return {
 	},
 
 	-- World 3
-	CopyPaste = { CopyRange = 50, PasteRange = 40, MaxPastes = 2 },
+	CopyPaste = { CopyRange = 50, PasteRange = 40, MaxPastes = 2, FloatDistance = 14 }, -- float: mid-air paste ahead of Kai
 	LayerShift = { Transition = 0.3, PullRange = 35 },
 
 	-- Pip, the floating companion (client-side)

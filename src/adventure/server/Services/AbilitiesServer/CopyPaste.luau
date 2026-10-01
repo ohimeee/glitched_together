@@ -5,6 +5,7 @@ local CollectionService = game:GetService("CollectionService")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Net = require(ReplicatedStorage.Shared.Net)
+local CheckpointService = require(script.Parent.Parent.CheckpointService)
 
 local T = Tuning.CopyPaste
 local CopyPaste = { BlockedBy = { "Downed", "InCutscene" }, Cooldowns = { [1] = 0.3, [2] = 0.4 } }
@@ -126,6 +127,25 @@ function CopyPaste.Use(p: Player, useIndex: number, target: Instance?, aim: any)
 		end
 	end
 	toolResult:FireAllClients("Pasted", p, paste)
+end
+
+-- Every checkpoint is a save: the clipboard and all pastes clear, so each section's puzzles bring their own copy
+-- sources (and Kai can't carry a platform through the whole world to cross every gap alone).
+function CopyPaste.Init()
+	CheckpointService.Reached:Connect(function()
+		for p, stored in copied do
+			stored:Destroy()
+			copied[p] = nil
+			p:SetAttribute("CopiedName", nil)
+		end
+		for p, list in pastes do
+			for _, paste in list do
+				paste:Destroy()
+			end
+			pastes[p] = nil
+		end
+		toolResult:FireAllClients("ClipboardCleared")
+	end)
 end
 
 return CopyPaste
