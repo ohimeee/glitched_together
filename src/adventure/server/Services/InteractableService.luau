@@ -124,6 +124,17 @@ local function setGateOpen(gate: Instance, open: boolean)
 	end
 end
 
+-- Switch blocks (obstacles.md "Switch Blocks"): retro ON/OFF blocks. `Phase = true` blocks are solid while their
+-- Group is active (the lever thrown), `Phase = false` blocks while it isn't; the other set is a see-through ghost.
+local function setSwitchBlock(block: BasePart, solid: boolean)
+	if block:GetAttribute("SwitchSolid") == solid then
+		return
+	end
+	block:SetAttribute("SwitchSolid", solid)
+	block.CanCollide = solid
+	block.Transparency = if solid then 0 else Tuning.SwitchGhost
+end
+
 local function evaluateGroups()
 	local groups: { [string]: boolean } = {}
 	for _, tag in TRIGGER_TAGS do
@@ -134,6 +145,12 @@ local function evaluateGroups()
 					groups[group] = (groups[group] ~= false) and isActive(inst)
 				end
 			end
+		end
+	end
+	for _, block in CollectionService:GetTagged("SwitchBlock") do
+		local group = block:GetAttribute("Group")
+		if block:IsA("BasePart") and group then
+			setSwitchBlock(block, (block:GetAttribute("Phase") == true) == (groups[group] == true))
 		end
 	end
 	for _, gate in CollectionService:GetTagged("DuoGate") do
@@ -287,6 +304,11 @@ function InteractableService.Init()
 	Tags.each("HeavyLever", setupLever)
 	Tags.each("DuoGate", function(gate)
 		gate:SetAttribute("Open", false)
+	end)
+	Tags.each("SwitchBlock", function(block)
+		if block:IsA("BasePart") then -- levers start off: the Phase = false set starts solid
+			setSwitchBlock(block, block:GetAttribute("Phase") ~= true)
+		end
 	end)
 
 	task.spawn(function()

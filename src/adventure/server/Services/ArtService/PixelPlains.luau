@@ -577,6 +577,10 @@ for _, name in
 		"WorksFar",
 		"CannonIsland",
 		"WorksExit",
+		-- Switch Towers (Oct 1, 5th session)
+		"TowerWalk",
+		"TowerYard",
+		"SwitchPillar", -- (TowerTop / TowerExit are already listed with Cloud Tower)
 	}
 do
 	Dressing[name] = "GrassBlock"

@@ -902,6 +902,78 @@ local function buildPixelPlains(world: Model)
 	gate(P, "SW3", Vector3.new(30, 20, 2), CFrame.new(0, 10, 226))
 	grass(Vector3.new(14, 6, 24), 0, 0, 238, "WorksExit") -- z 226..250
 
+	-- 1-2 continued: SWITCH TOWERS (obstacles.md 2.2 Switch Blocks: split information + operator and runner). A
+	-- 70-stud wall splits two climbs of retro ON/OFF blocks. ON blocks are solid only while their switch is on, OFF
+	-- blocks only while it's off. Every safe pillar is 18 up from the last (past any jump), so each step needs the
+	-- right flip. Kai's tower is flipped by Miko's teal lever on her side of the wall: she can't see his blocks, so
+	-- he calls the flips. Up top the roles swap: Kai stands on / steps off a plate that flips Miko's tower, and he
+	-- can't see hers. The last hop of each tower needs a flip while the climber is in the air.
+	section("SwitchTowers", Vector3.zero, Vector3.new(0, 63, 146))
+	grass(Vector3.new(14, 6, 20), 0, 0, 10, "TowerWalk")
+	checkpoint(P, nextOrder(), 0, 0, 8, W, {
+		"Kai climbs the left tower, Miko the right. ON blocks are solid only while their switch is on.",
+		"Miko: pull the teal lever whenever Kai calls. Kai: up top, the plate flips Miko's blocks.",
+	})
+	sign(P, "SWITCH TOWERS", CFrame.new(0, 9, 19), Vector3.new(16, 3, 0.4))
+	grass(Vector3.new(50, 6, 20), 0, 0, 30, "TowerYard") -- z 20..40
+	dirtWall(Vector3.new(2, 76, 86), 0, 70, 63) -- z 20..106: neither climber sees the other tower
+	sign(P, "▲ KAI", CFrame.new(-13, 6, 22), Vector3.new(8, 3, 0.4))
+	sign(P, "MIKO ●", CFrame.new(13, 6, 22), Vector3.new(8, 3, 0.4))
+	local function switchTower(group: string, x: number, axis: Vector3)
+		local function switchBlock(phase: boolean, top: number, z: number)
+			local b = platform(P, Vector3.new(6, 2, 6), x, top, z, {
+				name = "SwitchBlock",
+				color = if phase then Palette.PixelPlains.Gold else Palette.PixelPlains.Sky, -- both read against the dirt wall
+				tags = { "SwitchBlock" },
+				attrs = { Group = group, Phase = phase },
+			})
+			for _, face in { Enum.NormalId.Top, Enum.NormalId.Left, Enum.NormalId.Right } do -- the side-on camera looks along X
+				local gui = Instance.new("SurfaceGui")
+				gui.Face = face
+				gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+				gui.PixelsPerStud = 30
+				gui.LightInfluence = 0.3
+				gui.Parent = b
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.fromScale(1, 1)
+				label.BackgroundTransparency = 1
+				label.Font = Enum.Font.Arcade
+				label.TextScaled = true
+				label.TextColor3 = Color3.new(1, 1, 1)
+				label.TextStrokeTransparency = 0.4
+				label.Text = if phase then "ON" else "OFF"
+				label.Parent = gui
+			end
+		end
+		switchBlock(true, 9, 46)
+		grass(Vector3.new(8, 6, 8), x, 18, 56, "SwitchPillar")
+		switchBlock(false, 27, 66)
+		grass(Vector3.new(8, 6, 8), x, 36, 76, "SwitchPillar")
+		switchBlock(true, 45, 86)
+		switchBlock(false, 54, 96) -- the last hop: flip while the climber is in the air
+		local zone = block(P, Vector3.new(24, 90, 70), CFrame.new(x, 35, 70), { -- side-on, from the open side
+			name = "SideOnZone",
+			transparency = 1,
+			collide = false,
+			tags = { "CameraZone" },
+			attrs = { Mode = "SideOn", Axis = axis },
+		})
+		zone.CanQuery = false
+		zone.CanTouch = false
+	end
+	switchTower("SB1", -13, Vector3.new(-1, 0, 0))
+	switchTower("SB2", 13, Vector3.new(1, 0, 0))
+	pullLever("SB1", 13, 2.5, 34) -- stands on Miko's side; the wall blocks her view and her Pull from Kai's side
+	sign(P, "PULL = ON / OFF", CFrame.new(19, 6, 36), Vector3.new(10, 2.5, 0.4))
+	grass(Vector3.new(50, 6, 30), 0, 63, 117, "TowerTop") -- z 102..132
+	plate("SB2", -19, 63, 110, "PlateSwitch")
+	sign(P, "STAND HERE = ON", CFrame.new(-19, 69, 114), Vector3.new(12, 2.5, 0.4))
+	plate("SB3", -9, 63, 124)
+	plate("SB3", 9, 63, 124)
+	gate(P, "SB3", Vector3.new(50, 20, 2), CFrame.new(0, 73, 132))
+	grass(Vector3.new(14, 6, 14), 0, 63, 139, "TowerExit") -- z 132..146
+	checkpoint(P, nextOrder(), 0, 63, 140, W)
+
 	-- 1-3 COIN FACTORY ------------------------------------------------------------------------------
 	section("CoinFactory", Vector3.new(0, 62, 437), Vector3.new(0, 62, 747))
 	local function factoryWalls(z0: number, z1: number)
