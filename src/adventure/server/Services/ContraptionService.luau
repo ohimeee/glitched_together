@@ -13,6 +13,12 @@
 --             out a coin step that sinks at `FallSpeed` for `FallDistance` studs, then vanishes. The step is Freezable
 --             and stops while Frozen, so Kai freezes it at the height they need (Coin Bonk Stairs). A new bonk
 --             replaces that block's last step unless it's frozen.
+--   SiegeRide (Model: `Cart` Model with a PrimaryPart and welded walls incl. `CartRear` / `CartFront`, a `Track` folder
+--             of parts named 1, 2, 3... at cart-centre height, a `Barricades` folder of Burnable parts): the castle set
+--             piece (mechanics.md §4). Once both players stand in the cart it rolls along the track at `Speed`; Kai
+--             burns the barricades ahead (Ignite), Miko blocks the archers' arrows. Reaching an unburned barricade, or
+--             a player leaving the cart, crashes it: after a beat the cart, the barricades and the duo go back to the
+--             start. At the end it stops and drops its front wall.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -136,6 +142,228 @@ function ContraptionService.Bonk(inst: Instance)
 		left = (bonk:GetAttribute("FallDistance") or T.CoinFall) :: number,
 		speed = (bonk:GetAttribute("FallSpeed") or T.CoinFallSpeed) :: number,
 	}
+end
+
+-- Siege Cart ----------------------------------------------------------------------------------
+type Ride = {
+	model: Model,
+	cart: Model,
+	root: BasePart,
+	path: { Vector3 },
+	length: number,
+	speed: number,
+	s: number,
+	state: string, -- "Wait" | "Warmup" | "Run" | "Crash" | "Done"
+	goAt: number,
+	template: Folder?,
+	alignPos: AlignPosition,
+	alignRot: AlignOrientation,
+}
+local rides: { [Model]: Ride } = {}
+
+local function trackPoint(r: Ride, s: number): Vector3
+	local d = math.clamp(s, 0, r.length)
+	for i = 1, #r.path - 1 do
+		local a, b = r.path[i], r.path[i + 1]
+		local seg = (b - a).Magnitude
+		if d <= seg or i == #r.path - 1 then
+			return a + (b - a).Unit * math.min(d, seg)
+		end
+		d -= seg
+	end
+	return r.path[1]
+end
+
+-- the cart's pose at distance s; it faces along a short chord so corners turn smoothly
+local function trackPose(r: Ride, s: number): CFrame
+	local p = trackPoint(r, s)
+	local dir = trackPoint(r, s + 3) - trackPoint(r, s - 3)
+	if dir.Magnitude < 0.01 then
+		dir = r.path[2] - r.path[1]
+	end
+	return CFrame.lookAt(p, p + dir.Unit)
+end
+
+local function setCartWall(r: Ride, name: string, solid: boolean)
+	local wall = r.cart:FindFirstChild(name)
+	if wall and wall:IsA("BasePart") then
+		wall.CanCollide = solid
+		wall.Transparency = if solid then 0 else 0.7
+	end
+end
+
+local function aboard(r: Ride, p: Player): boolean
+	local root = rootOf(p)
+	if not root then
+		return false
+	end
+	local lp = r.root.CFrame:PointToObjectSpace(root.Position)
+	local half = r.root.Size / 2
+	return math.abs(lp.X) <= half.X + 0.5 and math.abs(lp.Z) <= half.Z + 0.5 and lp.Y > 0 and lp.Y < 8
+end
+
+local function placeCart(r: Ride, cf: CFrame)
+	r.cart:PivotTo(cf * r.root.CFrame:ToObjectSpace(r.cart:GetPivot()))
+	r.alignPos.Position = cf.Position
+	r.alignRot.CFrame = cf.Rotation
+end
+
+local function resetRide(r: Ride)
+	r.s = 0
+	r.state = "Wait"
+	r.model:SetAttribute("Running", nil)
+	local start = trackPose(r, 0)
+	placeCart(r, start)
+	setCartWall(r, "CartRear", false)
+	setCartWall(r, "CartFront", true)
+	local old = r.model:FindFirstChild("Barricades")
+	if old and r.template then
+		old:Destroy()
+		local fresh = r.template:Clone()
+		fresh.Parent = r.model
+	end
+	for _, p in Players:GetPlayers() do
+		if not p:GetAttribute("Downed") and p.Character then
+			local side = if p:GetAttribute("Role") == "Miko" then 2 else -2
+			p.Character:PivotTo(start * CFrame.new(side, 3.5, 0))
+		end
+	end
+end
+
+local function crashed(r: Ride): boolean
+	local front = r.root.Size.Z / 2
+	local barricades = r.model:FindFirstChild("Barricades")
+	for _, b in if barricades then barricades:GetChildren() else {} do
+		if b:IsA("BasePart") and not b:GetAttribute("Burning") then
+			local lp = r.root.CFrame:PointToObjectSpace(b.Position)
+			if lp.Z < 0 and lp.Z > -(front + 1.5 + b.Size.Z / 2) and math.abs(lp.X) < r.root.Size.X / 2 + 1 then
+				return true
+			end
+		end
+	end
+	for _, p in Players:GetPlayers() do
+		local root = rootOf(p)
+		if root and not p:GetAttribute("Downed") and (root.Position - r.root.Position).Magnitude > 14 then
+			return true -- stay in the cart (Kai's Blink can take him out of it)
+		end
+	end
+	return false
+end
+
+local function stepRide(r: Ride, dt: number)
+	local now = os.clock()
+	local players = Players:GetPlayers()
+	if r.state == "Wait" or r.state == "Warmup" then
+		local all = #players > 0
+		for _, p in players do
+			if not aboard(r, p) then
+				all = false
+			end
+		end
+		if r.state == "Wait" and all then
+			r.state = "Warmup"
+			r.goAt = now + 1.5
+			setCartWall(r, "CartRear", true) -- shut the back: you're riding now
+		elseif r.state == "Warmup" and not all then
+			r.state = "Wait"
+			setCartWall(r, "CartRear", false)
+		elseif r.state == "Warmup" and now >= r.goAt then
+			r.state = "Run"
+			r.model:SetAttribute("Running", true)
+		end
+	elseif r.state == "Run" then
+		r.s = math.min(r.s + r.speed * dt, r.length)
+		local cf = trackPose(r, r.s)
+		r.alignPos.Position = cf.Position
+		r.alignRot.CFrame = cf.Rotation
+		if crashed(r) then
+			r.state = "Crash"
+			r.goAt = now + 1.2
+			r.model:SetAttribute("Running", nil)
+			Audio.play("PoundImpact", r.root)
+		elseif r.s >= r.length then
+			r.state = "Done"
+			r.model:SetAttribute("Running", nil)
+			r.model:SetAttribute("Done", true)
+			setCartWall(r, "CartFront", false)
+		end
+	elseif r.state == "Crash" and now >= r.goAt then
+		resetRide(r)
+	end
+end
+
+local function registerRide(model: Instance)
+	if not model:IsA("Model") or rides[model] then
+		return
+	end
+	local cart = model:FindFirstChild("Cart")
+	local track = model:FindFirstChild("Track")
+	if not (cart and cart:IsA("Model") and cart.PrimaryPart and track) then
+		warn(
+			"[ContraptionService] SiegeRide needs a Cart model with a PrimaryPart and a Track folder:",
+			model:GetFullName()
+		)
+		return
+	end
+	local list = track:GetChildren()
+	table.sort(list, function(a, b)
+		return (tonumber(a.Name) or 0) < (tonumber(b.Name) or 0)
+	end)
+	local path = {}
+	for _, wp in list do
+		if wp:IsA("BasePart") then
+			table.insert(path, wp.Position)
+			wp.Transparency = 1
+			wp.CanCollide = false
+			wp.CanQuery = false
+			wp.CanTouch = false
+		end
+	end
+	local length = 0
+	for i = 1, #path - 1 do
+		length += (path[i + 1] - path[i]).Magnitude
+	end
+	local root = cart.PrimaryPart :: BasePart
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = root
+	local alignPos = Instance.new("AlignPosition")
+	alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
+	alignPos.Attachment0 = attachment
+	alignPos.RigidityEnabled = true
+	alignPos.Parent = root
+	local alignRot = Instance.new("AlignOrientation")
+	alignRot.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	alignRot.Attachment0 = attachment
+	alignRot.RigidityEnabled = true
+	alignRot.Parent = root
+	local barricades = model:FindFirstChild("Barricades")
+	local r: Ride = {
+		model = model,
+		cart = cart,
+		root = root,
+		path = path,
+		length = length,
+		speed = (model:GetAttribute("Speed") or T.CartSpeed) :: number,
+		s = 0,
+		state = "Wait",
+		goAt = 0,
+		template = if barricades and barricades:IsA("Folder") then barricades:Clone() else nil,
+		alignPos = alignPos,
+		alignRot = alignRot,
+	}
+	rides[model] = r
+	placeCart(r, trackPose(r, 0))
+	for _, part in cart:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Anchored = false
+		end
+	end
+	setCartWall(r, "CartRear", false)
+	task.defer(function()
+		if root:IsDescendantOf(workspace) and root:CanSetNetworkOwnership() then
+			root:SetNetworkOwner(nil)
+		end
+	end)
 end
 
 -- Respawning loose parts ----------------------------------------------------------------------
@@ -287,6 +515,10 @@ function ContraptionService.Init()
 		end
 	end)
 
+	Tags.each("SiegeRide", registerRide, function(inst)
+		rides[inst :: Model] = nil
+	end)
+
 	Tags.each("Respawn", function(inst)
 		if inst:IsA("BasePart") then
 			homes[inst] = inst.CFrame
@@ -344,6 +576,13 @@ function ContraptionService.Init()
 		for _, c in chases do
 			if c.wall.Parent then
 				stepChase(c, dt)
+			end
+		end
+		for model, r in rides do
+			if not model.Parent then
+				rides[model] = nil
+			else
+				stepRide(r, dt)
 			end
 		end
 		for coin, s in sinking do

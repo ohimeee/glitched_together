@@ -102,7 +102,7 @@ ITT's dungeon used freeze-the-lava and blink-through-bars. We already have bars;
 | **Golem Lure** ✅ (Golem Hall: Kai burns 3 pillars, Miko draws the charge into them) | P11 | An iron golem that weapons can't hurt. Miko's Taunt draws its charge; she sidesteps and it smashes a support pillar; Kai Meteors the falling ceiling onto it when it's stunned | E, T | 2-3 mini-boss |
 | **Mirror Gate** ✅ (orange + teal crystals, 1.5 s windows, a corner mirror into the teal nook) | P7 + P3 | A door with two crystal eyes: one takes a straight fireball, the other a reflected one, within 1 s of each other | E, T | sync point |
 | **Spike Roller Hall** ✅ (built as: the roller stalls on Miko's shield, Kai blinks through it to the plate that opens her side passage) | P9 + P12 | A spiked roller sweeps a corridor; the alcoves are too small for two. Miko holds Shield Block in front and the roller stalls on the shield for 2 s while Kai blinks past | E, T | 2-1 twist |
-| **Siege Cart** | P13 | (Already in mechanics.md.) Kai burns barricades, Miko blocks arrow volleys | E | set piece |
+| **Siege Cart** ✅ (after Golem Hall, castle checkpoints 9–10; solo-verified ride, crash + reset, full run) | P13 + P14 | Both board a cart (`SiegeRide`) that rolls a 320-stud track over the void at 11 studs/s. Kai burns 7 barricades ahead (Ignite); Miko shields arrows from 5 rooted archers on posts. Hitting a barricade or leaving the cart crashes it and the ride restarts | E | set piece |
 
 ### 2.4 World 3 — Glitched Core (Copy/Paste / Layer Shift)
 
@@ -140,6 +140,7 @@ This is our Cuckoo Clock: the planning chapter. The unused idea: **Pull Out is a
 | **Switch blocks** ✅ built Oct 1 (`SwitchBlock`, `Group` + `Phase`) | Solid only while their group's state matches their phase; ghost otherwise | Switch Towers |
 | **Gate AnyOf / PlayersOnly / NoPaste** ✅ built Oct 1 | Gate opens on any of several groups; plates that only count players; volumes where pastes are refused | Paste Past the Door |
 | **Burn-out braziers + fire traps** ✅ built Oct 1 (`BurnOut`, `FireTrap`) | Braziers go dark after a few seconds; trap marks show only in firelight | Torch Run |
+| **Siege ride** ✅ built Oct 1 (`SiegeRide`, `Cart` tag, archer `Rooted`) | A cart on a track that starts when both are aboard, crashes on unburned barricades or a rider leaving, resets everything | Siege Cart |
 | **Bonk blocks** ✅ built Oct 1 (`BonkBlock`, ContraptionService.Bonk) | Miko's Pull pops a sinking, freezable coin step out of a ? block | Coin Bonk Stairs |
 | **Safe-side respawn** | HealthService: if your partner crossed this obstacle's `SafeSide` part, you respawn there | every hard timing obstacle |
 | **Next-piece camera hint** | CameraController: a short look-at toward a level-placed `Hint` part when you enter its zone | operator/runner rooms |

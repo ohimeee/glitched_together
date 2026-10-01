@@ -142,6 +142,7 @@ return {
 		CoinSize = Vector3.new(6, 2, 6),
 		CoinFallSpeed = 9, -- studs/s: a 9-stud band of useful heights = about a second to freeze in
 		CoinFall = 40, -- studs it sinks before it vanishes
+		CartSpeed = 11, -- castle Siege Cart (studs/s): Ignite reaches 30, so ~2.5 s to burn the barricade ahead
 	},
 	-- Release as a launcher (obstacles.md Part 3): Kai releasing a Freezable with a LaunchVelocity attribute flings
 	-- whoever stands on it or swings from it

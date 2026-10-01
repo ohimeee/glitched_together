@@ -2031,11 +2031,133 @@ local function buildStarfallCastle(world: Model)
 		torch(spot[1], spot[2])
 	end
 
-	-- exit
-	floor(-10, 480, 10, 506, "CastleExit")
-	wall(-10, 480, -10, 506)
-	wall(10, 480, 10, 506)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 500), {
+	-- K: SIEGE CART (the castle set piece, mechanics.md §4; ContraptionService SiegeRide). Both step into the cart from
+	-- the dock and it rolls a 320-stud track over the void. Kai burns the barricades ahead with Ignite (E) before the
+	-- cart reaches them; Miko blocks the arrows from archers on posts beside the track. A barricade hit, or anyone
+	-- leaving the cart, crashes it and the ride starts over.
+	floor(-10, 480, 10, 494, "CartDock")
+	wall(-10, 480, -10, 494)
+	wall(10, 480, 10, 494)
+	checkpoint(world, 9, 0, 0, 486, W, {
+		"Both get in the cart! Kai: burn the barricades ahead (E). Miko: shield the arrows.",
+		"If the cart hits a barricade, the ride starts over. Stay in the cart!",
+	})
+	local ride = Instance.new("Model")
+	ride.Name = "SiegeRide"
+	ride.Parent = world
+	local track = Instance.new("Folder")
+	track.Name = "Track"
+	track.Parent = ride
+	local points = {
+		Vector3.new(0, 0.75, 500),
+		Vector3.new(0, 0.75, 590),
+		Vector3.new(30, 0.75, 630),
+		Vector3.new(30, 0.75, 700),
+		Vector3.new(0, 0.75, 740),
+		Vector3.new(0, 0.75, 800),
+	}
+	for i, p in points do
+		block(track, Vector3.new(1, 1, 1), CFrame.new(p), { name = tostring(i), transparency = 1, collide = false })
+		-- the track bed: a plank road over the void, with a round pad at each bend
+		if i < #points then
+			local q = points[i + 1]
+			local mid = (p + q) / 2
+			block(world, Vector3.new(10, 1, (q - p).Magnitude), CFrame.lookAt(mid, q) - Vector3.new(0, 1.25, 0), {
+				name = "TrackBed",
+				color = WOOD,
+				material = Enum.Material.WoodPlanks,
+			})
+		end
+		block(
+			world,
+			Vector3.new(1, 10, 10),
+			CFrame.new(p - Vector3.new(0, 1.25, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			{
+				name = "TrackBend",
+				color = WOOD,
+				material = Enum.Material.WoodPlanks,
+				shape = Enum.PartType.Cylinder,
+			}
+		)
+	end
+	-- a point (and its forward direction) at distance s along the track
+	local function at(s: number): (Vector3, Vector3)
+		for i = 1, #points - 1 do
+			local a, b = points[i], points[i + 1]
+			local seg = (b - a).Magnitude
+			if s <= seg or i == #points - 1 then
+				return a + (b - a).Unit * s, (b - a).Unit
+			end
+			s -= seg
+		end
+		return points[1], Vector3.zAxis
+	end
+	local barricades = Instance.new("Folder")
+	barricades.Name = "Barricades"
+	barricades.Parent = ride
+	for _, s in { 50, 85, 115, 170, 205, 235, 290 } do -- 30+ apart: about 3 s between burns
+		local p, dir = at(s)
+		block(barricades, Vector3.new(10, 5, 1.5), CFrame.lookAt(p, p + dir) + Vector3.new(0, 1.75, 0), {
+			name = "Barricade",
+			color = KAI, -- Kai's target: burn it
+			material = Enum.Material.WoodPlanks,
+			tags = { "Burnable" },
+		})
+	end
+	-- archers on posts beside the track, alternating sides; rooted so they stay up there and just shoot
+	for i, s in { 70, 130, 190, 250, 300 } do
+		local p, dir = at(s)
+		local side = dir:Cross(Vector3.yAxis).Unit * (if i % 2 == 0 then 16 else -16)
+		local spot = p + side
+		platform(world, Vector3.new(6, 2, 6), spot.X, 0, spot.Z, {
+			color = P.NightPurple,
+			material = Enum.Material.Slate,
+			name = "ArcherPost",
+		})
+		local archer = enemy(world, "StaticArcher", spot.X, spot.Z)
+		archer:SetAttribute("Rooted", true)
+	end
+	-- the cart: a plank floor with low walls (CanQuery off, so arrows fly over them at the riders); the back opens
+	-- for boarding and shuts when the ride starts, the front drops at the end
+	local cart = Instance.new("Model")
+	cart.Name = "Cart"
+	CollectionService:AddTag(cart, "Cart")
+	local startCf = CFrame.lookAt(points[1], points[2])
+	local base = block(cart, Vector3.new(8, 1, 12), startCf, {
+		name = "CartBase",
+		color = WOOD,
+		material = Enum.Material.WoodPlanks,
+	})
+	cart.PrimaryPart = base
+	for _, w in
+		{
+			{ "CartLeft", Vector3.new(0.6, 3, 12), CFrame.new(-3.7, 2, 0) },
+			{ "CartRight", Vector3.new(0.6, 3, 12), CFrame.new(3.7, 2, 0) },
+			{ "CartFront", Vector3.new(8, 3, 0.6), CFrame.new(0, 2, -5.7) },
+			{ "CartRear", Vector3.new(8, 3, 0.6), CFrame.new(0, 2, 5.7) },
+		}
+	do
+		local part = block(cart, w[2], startCf * w[3], {
+			name = w[1],
+			color = P.Gold,
+			material = Enum.Material.Metal,
+		})
+		part.CanQuery = false
+		part.Massless = true
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = base
+		weld.Part1 = part
+		weld.Parent = part
+	end
+	cart.Parent = ride
+	CollectionService:AddTag(ride, "SiegeRide")
+
+	-- exit: the end of the line
+	floor(-10, 806, 10, 836, "CartEnd")
+	checkpoint(world, 10, 0, 0, 812, W)
+	wall(-10, 806, -10, 836)
+	wall(10, 806, 10, 836)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 830), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
@@ -2043,7 +2165,7 @@ local function buildStarfallCastle(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 490, 16)
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 820, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.

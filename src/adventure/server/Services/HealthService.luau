@@ -280,6 +280,7 @@ local UNSAFE = {
 	"Blinker",
 	"CodeLayer",
 	"SwitchBlock",
+	"Cart", -- the Siege Cart: it moves (and a crash puts everyone back on it anyway)
 }
 
 local function trackSafeGround()

@@ -574,6 +574,11 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 	if shot.friendly then
 		exclude = characters() -- friendly shots pass through players
 	end
+	-- shots fly over the Siege Cart's low walls both ways (playtest Oct 1: Kai couldn't shoot out of the cart, and
+	-- the archers' arrows never reached the riders)
+	for _, cart in Tags.list("Cart") do
+		table.insert(exclude, cart)
+	end
 	local hit = workspace:Raycast(pos, move, worldParams(exclude))
 	if hit and Tags.find(hit.Instance, "Mirror") then
 		local n = unitOr(flat(hit.Normal), -shot.dir)
@@ -912,7 +917,9 @@ local function stepArcher(foe: Foe, target: Player, dist: number, now: number, d
 	local r = rootOf(target) :: BasePart
 	local to = unitOr(flat(r.Position - foe.part.Position), Vector3.zAxis)
 	face(foe, r.Position)
-	if dist < foe.spec.KeepAway then
+	if foe.part:GetAttribute("Rooted") then
+		-- stays put (Siege Cart wall archers would slide off their posts onto the track otherwise)
+	elseif dist < foe.spec.KeepAway then
 		tryMove(foe, -to, foe.spec.Speed * dt)
 		face(foe, r.Position)
 	elseif dist > foe.spec.Range then
