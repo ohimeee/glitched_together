@@ -1104,6 +1104,62 @@ local function buildPixelPlains(world: Model)
 	sign(P, "COIN VAULT", CFrame.new(0, 10, 206), Vector3.new(14, 3, 0.4))
 	grass(Vector3.new(14, 4, 13), 0, 0, 213.5, "VaultExit")
 
+	-- 1-3 continued: FIRE BAR RUN (obstacles.md 2.2 Firebar Spin: operator and runner). Four red fire bars spin
+	-- down a corridor that only Miko reaches (a 56-stud grapple chasm). Each bar is 16 tall (no jumping it) and
+	-- spins fast enough that running past one takes a lucky half-second; Kai walks a glass gallery alongside and
+	-- freezes the bar ahead of her when it points down the corridor (one freeze at a time, so he stays a bar ahead).
+	-- At the end she swings up an 18-stud cliff and pulls the lever that lifts Kai off the gallery; both plates open
+	-- the way on. The gallery glass is solid but CanQuery off, so the Pause Beam aims straight through it.
+	section("FirebarRun", Vector3.zero, Vector3.new(0, 22, 228))
+	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "FirePath")
+	checkpoint(P, nextOrder(), 0, 0, 6, W, {
+		"Miko: swing over to the fire bars. Kai: take the glass gallery and freeze the bar in front of her!",
+		"Kai: freeze a bar when it points down the corridor, so Miko can slip past it.",
+	})
+	sign(P, "FIRE BARS", CFrame.new(0, 9, 14), Vector3.new(14, 3, 0.4))
+	grass(Vector3.new(40, 4, 20), 0, 0, 25, "FireYard") -- z 15..35; Miko's chasm runs z 35..91
+	ring(0, 18, 63)
+	grass(Vector3.new(8, 4, 142), -12, 4, 106, "Gallery") -- Kai's walk, x -16..-8, z 35..177
+	local glass = block(P, Vector3.new(1, 40, 133), CFrame.new(-7.5, 12, 101.5), { -- z 35..168
+		name = "GalleryGlass",
+		color = rgb(200, 230, 255),
+		material = Enum.Material.Glass,
+		transparency = 0.8,
+	})
+	glass.CanQuery = false
+	grass(Vector3.new(14, 4, 81), 0, 0, 131.5, "FireCorridor") -- z 91..172
+	dirtWall(Vector3.new(2, 34, 81), 8, 30, 131.5)
+	dirtWall(Vector3.new(2, 26, 10), -6, 22, 173) -- plugs the gallery end: Kai can't drop into the corridor there
+	for i, z in { 104, 122, 140, 158 } do
+		local cf = CFrame.new(0, 8.2, z)
+		local bar = block(P, Vector3.new(1.5, 16, 13), cf, {
+			name = "FireBar",
+			color = Palette.Danger,
+			material = NEON,
+			tags = { "Mover", "Freezable", "Hazard" },
+			attrs = { Spin = if i % 2 == 0 then 150 else -150, Offset = i * 0.37, Damage = 1 },
+		})
+		waypoints(bar, { cf })
+		local post = block(P, Vector3.new(2, 18, 2), CFrame.new(0, 9, z), {
+			name = "FirePost",
+			color = METAL,
+			material = Enum.Material.Metal,
+		})
+		post.CanCollide = false -- the bar turns through it
+	end
+	grass(Vector3.new(20, 26, 43), 5, 22, 193.5, "FireCliff") -- x -5..15, z 172..215: 18 above the gallery
+	ring(3, 32, 170)
+	lift("F1", Vector3.new(8, 1, 8), -12, 4.5, 181, 18, "KaiLift")
+	pullLever("F1", 12, 32, 208) -- ~42 from the nearest gallery spot: no pulling it from there (Aim's cone has no sight check)
+	checkpoint(P, nextOrder(), 5, 22, 190, W, {
+		"Miko: pull the teal lever to lift Kai up.",
+		"Both on the plates to open the gate.",
+	})
+	plate("F2", -1, 22, 200)
+	plate("F2", 11, 22, 200)
+	gate(P, "F2", Vector3.new(24, 20, 2), CFrame.new(3, 32, 214))
+	grass(Vector3.new(14, 4, 13), 0, 22, 221.5, "FireExit")
+
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
 	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))
 	grass(Vector3.new(30, 4, 20), 0, 62, 756, "ChaseStart")
