@@ -60,7 +60,8 @@ local function register(part: Instance)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "StationPrompt"
 	prompt.ActionText = "Crank"
-	prompt.ObjectText = "W / S to crank"
+	local owner = part:GetAttribute("Owner")
+	prompt.ObjectText = if owner then `{owner}'s crank: W / S` else "Crank: W / S"
 	prompt.HoldDuration = 0
 	prompt.RequiresLineOfSight = false
 	prompt.MaxActivationDistance = T.Reach
