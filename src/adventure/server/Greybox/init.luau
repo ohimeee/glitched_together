@@ -1304,17 +1304,18 @@ local function buildGlitchedCore(world: Model)
 
 	-- 3-1 twist: PASTE PAST THE DOOR (obstacles.md 2.4, P8 marker shortcut). A door opens while someone stands on
 	-- its plate, and that plate only counts players: whoever holds it can't go through. Through the open door, only
-	-- shifted Miko sees a second plate in the Code Layer. She pulls it out, Kai pastes his crate copy on it, and the
-	-- pasted plate holds the door (AnyOf) so Miko can step off and follow. NoPaste volumes cover everything but the
-	-- far room, so Kai can't paste stairs over the walls alone.
+	-- shifted Miko sees a second plate in the Code Layer, and the only crate is in there too. She can pull out one
+	-- thing at a time, so the order matters (playtest Oct 1: "kinda easy" with a real crate in the door room): crate
+	-- out, Kai copies it, plate out (the crate drops back), Kai pastes on the plate, and the pasted plate holds the
+	-- door (AnyOf) so Miko can step off and follow. NoPaste volumes cover everything but the far room, so Kai can't
+	-- paste stairs over the walls alone.
 	section("PastePast", Vector3.zero, Vector3.new(0, 0, 97))
 	floor(Vector3.new(24, 4, 41), 0, 0, 20.5, "DoorRoom") -- z 0..41
 	checkpoint(P, nextOrder(), 0, 0, 5, W, {
-		"Miko: stand on the plate to open the door, then shift and look through. Kai: copy the orange crate first!",
-		"Miko: pull the hidden plate out (right click). Kai: paste the crate on it so the door stays open for her.",
+		"Miko: stand on the plate to open the door, then shift and look through. What can you pull out for Kai?",
+		"You can only pull out one thing at a time. Crate first, so Kai can copy it, then the hidden plate for his paste.",
 	})
 	sign(P, "DOOR.EXE (NOT RESPONDING)", CFrame.new(0, 18, 40), Vector3.new(20, 3, 0.4))
-	copySource(Vector3.new(4, 4, 4), -8, 4, 14, "Crate")
 	local doorPlate = platform(P, Vector3.new(6, 0.6, 6), 3, 0.6, 30, {
 		color = NEUTRAL,
 		tags = { "PressurePlate" },
@@ -1349,6 +1350,7 @@ local function buildGlitchedCore(world: Model)
 		door:SetAttribute("AnyOf", "P1,P2") -- held by Miko on her plate, or by a paste on the code plate
 	end
 	floor(Vector3.new(24, 4, 40), 0, 0, 63, "FarRoom") -- z 43..83
+	code(Vector3.new(4, 4, 4), 7, 4, 64, "CodeCrate") -- the only crate: in the Code Layer, ~29 from Miko's plate
 	platform(P, Vector3.new(6, 0.6, 6), -4, 0.6, 58, { -- seen through the door from Miko's plate, 29 away
 		color = MIKO,
 		name = "CodePlate",
