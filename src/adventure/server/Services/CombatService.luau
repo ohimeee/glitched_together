@@ -570,6 +570,31 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 		end
 	end
 
+	-- hostile shots hit a body they pass close to (a ray only finds the collidable torso/head, so arrows slipped past
+	-- arms and legs: "make the archers more accurate", playtest Oct 1)
+	if not shot.friendly then
+		for _, p in DuoService.Players() do
+			local r = rootOf(p)
+			if r and not p:GetAttribute("Downed") and math.abs(r.Position.Y - pos.Y) <= 3.5 then
+				local seg = flat(move)
+				local rel = flat(r.Position - pos)
+				local along = if seg.Magnitude > 1e-3 then math.clamp(rel:Dot(seg.Unit), 0, seg.Magnitude) else 0
+				if
+					(rel - (if seg.Magnitude > 1e-3 then seg.Unit * along else Vector3.zero)).Magnitude
+					<= C.BodyHitRadius
+				then
+					CombatService.HitPlayer(p, shot.damage, pos)
+					if shot.slow then
+						p:SetAttribute("SlowUntil", workspace:GetServerTimeNow() + 2)
+					end
+					CombatFx.Impact(r.Position, false, shot.part.Color)
+					Audio.play(if shot.kind:find("Arrow") then "ArrowHit" else "GlitchStatic", r.Position)
+					return false
+				end
+			end
+		end
+	end
+
 	local exclude = { fx }
 	if shot.friendly then
 		exclude = characters() -- friendly shots pass through players
@@ -926,12 +951,18 @@ local function stepArcher(foe: Foe, target: Player, dist: number, now: number, d
 		tryMove(foe, to, foe.spec.Speed * dt)
 	end
 	if now >= foe.nextShot and dist <= foe.spec.Range + 6 then
-		foe.nextShot = now + foe.spec.Every
+		foe.nextShot = now + ((foe.part:GetAttribute("Every") or foe.spec.Every) :: number)
+		-- loosed at the target's torso height: shots fly flat, and from chest height they passed under riders on the
+		-- raised Siege Cart (playtest Oct 1)
+		local from = foe.part.Position + to * (foe.part.Size.Z / 2 + 1)
+		-- and led: aimed where the target will be when the arrow arrives (riders move 11 studs/s)
+		local speed = (foe.part:GetAttribute("ArrowSpeed") or foe.spec.ArrowSpeed) :: number
+		local lead = r.Position + flat(r.AssemblyLinearVelocity) * (dist / speed)
 		CombatService.Fire({
-			origin = foe.part.Position + to * (foe.part.Size.Z / 2 + 1),
-			dir = to,
-			speed = foe.spec.ArrowSpeed,
-			damage = foe.spec.Damage,
+			origin = Vector3.new(from.X, r.Position.Y, from.Z),
+			dir = unitOr(flat(lead - from), to),
+			speed = speed,
+			damage = (foe.part:GetAttribute("Damage") or foe.spec.Damage) :: number,
 			friendly = false,
 			kind = "Arrow",
 			size = 0.8,
@@ -1102,7 +1133,11 @@ local function stepFoes(dt: number)
 			continue
 		end
 		if not foe.awake then
-			if dist > Tuning.Combat.Aggro then
+			-- posted (Rooted) archers watch the whole reach of their bow, not just the usual aggro ring
+			local wake = if part:GetAttribute("Rooted")
+				then (foe.spec.Range or Tuning.Combat.Aggro) + 6
+				else Tuning.Combat.Aggro
+			if dist > wake then
 				continue
 			end
 			foe.awake = true

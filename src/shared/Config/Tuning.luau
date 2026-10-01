@@ -143,6 +143,8 @@ return {
 		CoinFallSpeed = 9, -- studs/s: a 9-stud band of useful heights = about a second to freeze in
 		CoinFall = 40, -- studs it sinks before it vanishes
 		CartSpeed = 11, -- castle Siege Cart (studs/s): Ignite reaches 30, so ~2.5 s to burn the barricade ahead
+		CartStationPause = 2.5, -- s the cart rests at a midway station (crashes after it restart there)
+		CartStationHeal = 50, -- HP back for both at the station
 	},
 	-- Release as a launcher (obstacles.md Part 3): Kai releasing a Freezable with a LaunchVelocity attribute flings
 	-- whoever stands on it or swings from it
@@ -193,6 +195,7 @@ return {
 		ChargedWindow = 1.5, -- enemies shoved by a charge take double Flame Wall damage for this long
 		ShieldDown = 3, -- a charged Shield Guard drops its shield for this long
 		ShieldHitRadius = 3.5, -- projectiles this close to a blocking Miko hit the shield
+		BodyHitRadius = 1.8, -- enemy shots passing this close (flat) to a player's middle hit them
 		ShieldStopRange = 7, -- a ShieldStop hazard (spike roller) this close in front of a raised shield stalls
 		MeteorAim = 60, -- max range from Kai
 		ReflectBoost = 2, -- Reflect Boost upgrade multiplier

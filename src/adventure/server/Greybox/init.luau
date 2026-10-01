@@ -2055,6 +2055,20 @@ local function buildStarfallCastle(world: Model)
 		Vector3.new(30, 0.75, 700),
 		Vector3.new(0, 0.75, 740),
 		Vector3.new(0, 0.75, 800),
+		-- the second half (playtest Oct 1: "make it longer"): ~610 studs in all, about 55 s
+		Vector3.new(-30, 0.75, 840),
+		Vector3.new(-30, 0.75, 920),
+		Vector3.new(10, 0.75, 960),
+		Vector3.new(10, 0.75, 1020),
+		Vector3.new(0, 0.75, 1040),
+		Vector3.new(0, 0.75, 1060),
+		-- the third leg (playtest Oct 1: "make it longer and more skeletons"): ~975 studs in all, about 90 s
+		Vector3.new(35, 0.75, 1100),
+		Vector3.new(35, 0.75, 1200),
+		Vector3.new(-20, 0.75, 1250),
+		Vector3.new(-20, 0.75, 1330),
+		Vector3.new(0, 0.75, 1350),
+		Vector3.new(0, 0.75, 1380),
 	}
 	for i, p in points do
 		block(track, Vector3.new(1, 1, 1), CFrame.new(p), { name = tostring(i), transparency = 1, collide = false })
@@ -2095,20 +2109,63 @@ local function buildStarfallCastle(world: Model)
 	local barricades = Instance.new("Folder")
 	barricades.Name = "Barricades"
 	barricades.Parent = ride
-	for _, s in { 50, 85, 115, 170, 205, 235, 290 } do -- 30+ apart: about 3 s between burns
+	local barricadeAt = { 50, 85, 115, 170, 205, 235, 290, 330, 370, 410, 450, 485, 525, 565 }
+	for _, s in { 640, 675, 710, 745, 780, 815, 850, 880, 910, 940 } do
+		table.insert(barricadeAt, s)
+	end
+	for _, s in barricadeAt do -- 30+ apart: ~3 s per burn
 		local p, dir = at(s)
-		block(barricades, Vector3.new(10, 5, 1.5), CFrame.lookAt(p, p + dir) + Vector3.new(0, 1.75, 0), {
+		local b = block(barricades, Vector3.new(10, 5, 1.5), CFrame.lookAt(p, p + dir) + Vector3.new(0, 1.75, 0), {
 			name = "Barricade",
 			color = KAI, -- Kai's target: burn it
 			material = Enum.Material.WoodPlanks,
 			tags = { "Burnable" },
 		})
+		b:SetAttribute("S", s) -- its track distance: a station restart skips the ones already passed
 	end
-	-- archers on posts beside the track, alternating sides; rooted so they stay up there and just shoot
-	for i, s in { 70, 130, 190, 250, 300 } do
-		local p, dir = at(s)
-		local side = dir:Cross(Vector3.yAxis).Unit * (if i % 2 == 0 then 16 else -16)
-		local spot = p + side
+	-- archers on posts beside the track, alternating sides, with a pair (both sides) at 160 and 280 so Miko has to
+	-- pick which way to shield; rooted so they stay up there and just shoot (playtest Oct 1: "make the skeleton more")
+	local posts = {}
+	-- they thicken toward the end (playtest Oct 1: "more when I'm reaching the end", "more skeletons"): every 30
+	-- studs, then every 20, then every 30 on the third leg, with pairs (both sides) so Miko has to pick a side
+	-- (every 18 + 6 pairs on the third leg was a wall of arrows nobody survived; user: "lessen them nearing the end")
+	local postAt = { 40, 70, 100, 130, 160, 190, 220, 250, 280, 305 }
+	for s = 330, 590, 20 do
+		table.insert(postAt, s)
+	end
+	for s = 630, 940, 30 do
+		table.insert(postAt, s)
+	end
+	for i, s in postAt do
+		table.insert(posts, { s, if i % 2 == 0 then 1 else -1 })
+	end
+	for _, s in { 160, 280, 410, 470, 530, 570, 720, 840 } do
+		local i = 0
+		for _, p in posts do
+			if p[1] == s then
+				i = p[2]
+			end
+		end
+		if i ~= 0 then
+			table.insert(posts, { s, -i })
+		end
+	end
+	local function nearTrack(spot: Vector3): boolean
+		for i = 1, #points - 1 do
+			local a, b = points[i], points[i + 1]
+			local t = math.clamp((spot - a):Dot((b - a).Unit), 0, (b - a).Magnitude)
+			if (spot - (a + (b - a).Unit * t)).Magnitude < 11 then
+				return true
+			end
+		end
+		return false
+	end
+	for _, post in posts do
+		local p, dir = at(post[1])
+		local spot = p + dir:Cross(Vector3.yAxis).Unit * 16 * post[2]
+		if nearTrack(spot) then
+			continue -- inside a bend: it would stand on the track
+		end
 		platform(world, Vector3.new(6, 2, 6), spot.X, 0, spot.Z, {
 			color = P.NightPurple,
 			material = Enum.Material.Slate,
@@ -2116,6 +2173,8 @@ local function buildStarfallCastle(world: Model)
 		})
 		local archer = enemy(world, "StaticArcher", spot.X, spot.Z)
 		archer:SetAttribute("Rooted", true)
+		archer:SetAttribute("Every", 1.4) -- a riding target is only in range ~5 s: shoot faster than the usual 2 s
+		archer:SetAttribute("Damage", 14) -- Kai alone can't soak the whole ride: Miko's shield is needed
 	end
 	-- the cart: a plank floor with low walls (CanQuery off, so arrows fly over them at the riders); the back opens
 	-- for boarding and shuts when the ride starts, the front drops at the end
@@ -2150,14 +2209,17 @@ local function buildStarfallCastle(world: Model)
 		weld.Parent = part
 	end
 	cart.Parent = ride
+	ride:SetAttribute("Stations", "600") -- halfway: a breather, and crashes after it restart there
+	local station = at(600)
+	flatSign("STATION", station.X + 9, station.Z, 8)
 	CollectionService:AddTag(ride, "SiegeRide")
 
 	-- exit: the end of the line
-	floor(-10, 806, 10, 836, "CartEnd")
-	checkpoint(world, 10, 0, 0, 812, W)
-	wall(-10, 806, -10, 836)
-	wall(10, 806, 10, 836)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 830), {
+	floor(-10, 1386, 10, 1416, "CartEnd")
+	checkpoint(world, 10, 0, 0, 1392, W)
+	wall(-10, 1386, -10, 1416)
+	wall(10, 1386, 10, 1416)
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1410), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
@@ -2165,7 +2227,7 @@ local function buildStarfallCastle(world: Model)
 		collide = false,
 		tags = { "WorldExit" },
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 820, 16)
+	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 1400, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.

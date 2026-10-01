@@ -18,7 +18,8 @@
 --             piece (mechanics.md §4). Once both players stand in the cart it rolls along the track at `Speed`; Kai
 --             burns the barricades ahead (Ignite), Miko blocks the archers' arrows. Reaching an unburned barricade, or
 --             a player leaving the cart, crashes it: after a beat the cart, the barricades and the duo go back to the
---             start. At the end it stops and drops its front wall.
+--             start. At the end it stops and drops its front wall. `Stations` ("600,..." track distances): the cart
+--             pauses there for a breather, and a crash after a station restarts the ride from it, not the dock.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -156,6 +157,8 @@ type Ride = {
 	state: string, -- "Wait" | "Warmup" | "Run" | "Crash" | "Done"
 	goAt: number,
 	template: Folder?,
+	stations: { number },
+	home: number, -- where a crash restarts from (0 = the dock, else the last station passed)
 	alignPos: AlignPosition,
 	alignRot: AlignOrientation,
 }
@@ -209,10 +212,10 @@ local function placeCart(r: Ride, cf: CFrame)
 end
 
 local function resetRide(r: Ride)
-	r.s = 0
+	r.s = r.home
 	r.state = "Wait"
 	r.model:SetAttribute("Running", nil)
-	local start = trackPose(r, 0)
+	local start = trackPose(r, r.home)
 	placeCart(r, start)
 	setCartWall(r, "CartRear", false)
 	setCartWall(r, "CartFront", true)
@@ -220,6 +223,11 @@ local function resetRide(r: Ride)
 	if old and r.template then
 		old:Destroy()
 		local fresh = r.template:Clone()
+		for _, b in fresh:GetChildren() do
+			if ((b:GetAttribute("S") or math.huge) :: number) < r.home then
+				b:Destroy() -- already passed before the station
+			end
+		end
 		fresh.Parent = r.model
 	end
 	for _, p in Players:GetPlayers() do
@@ -271,8 +279,29 @@ local function stepRide(r: Ride, dt: number)
 			r.state = "Run"
 			r.model:SetAttribute("Running", true)
 		end
+	elseif r.state == "Stop" then
+		if now >= r.goAt then
+			r.state = "Run"
+			r.model:SetAttribute("Running", true)
+		end
 	elseif r.state == "Run" then
 		r.s = math.min(r.s + r.speed * dt, r.length)
+		for _, station in r.stations do
+			if r.home < station and r.s >= station then
+				r.s = station
+				r.home = station -- crashes from here on restart at the station
+				r.state = "Stop"
+				r.goAt = now + T.CartStationPause
+				r.model:SetAttribute("Running", nil)
+				Audio.play("Checkpoint", r.root)
+				for _, p in Players:GetPlayers() do -- a breather: patch up for the last leg
+					if not p:GetAttribute("Downed") then
+						HealthService.Restore(p, ((p:GetAttribute("Health") or 0) :: number) + T.CartStationHeal)
+					end
+				end
+				break
+			end
+		end
 		local cf = trackPose(r, r.s)
 		r.alignPos.Position = cf.Position
 		r.alignRot.CFrame = cf.Rotation
@@ -337,6 +366,14 @@ local function registerRide(model: Instance)
 	alignRot.RigidityEnabled = true
 	alignRot.Parent = root
 	local barricades = model:FindFirstChild("Barricades")
+	local stations = {}
+	for _, v in string.split(tostring(model:GetAttribute("Stations") or ""), ",") do
+		local n = tonumber(v)
+		if n then
+			table.insert(stations, n)
+		end
+	end
+	table.sort(stations)
 	local r: Ride = {
 		model = model,
 		cart = cart,
@@ -348,6 +385,8 @@ local function registerRide(model: Instance)
 		state = "Wait",
 		goAt = 0,
 		template = if barricades and barricades:IsA("Folder") then barricades:Clone() else nil,
+		stations = stations,
+		home = 0,
 		alignPos = alignPos,
 		alignRot = alignRot,
 	}
