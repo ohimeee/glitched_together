@@ -1023,6 +1023,83 @@ local function dressPieces(world: Instance, apply: (BasePart, string) -> boolean
 	end
 end
 
+-- Environment fill (Oct 2): the route floated over an empty blue void. Layered sky islands (a grass block on a dirt
+-- cliff, sometimes a tree) and clouds drift below and beside it, so there's depth under every jump (It Takes Two's
+-- layered foreground/background). Nothing collides, and none sit where a falling player could see a "landing".
+local ISLANDS = 48
+local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
+	local floors = {}
+	for _, d in world:GetDescendants() do
+		if d:IsA("BasePart") and d:GetAttribute("Skin") == "GrassBlock" and d.Size.X * d.Size.Z >= 600 then
+			table.insert(floors, d)
+		end
+	end
+	if #floors == 0 then
+		return
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "SkyIslands"
+	folder.Parent = world
+	local rng = Random.new(1985)
+	local function piece(skin: string, size: Vector3, cf: CFrame): Part?
+		local p = hiddenPart("Island", size, cf, folder)
+		if apply(p, skin) then
+			return p
+		end
+		p:Destroy()
+		return nil
+	end
+	for i = 1, ISLANDS do
+		local f = floors[rng:NextInteger(1, #floors)]
+		local side = if i % 2 == 0 then -1 else 1
+		-- two bands: near islands below the route, and big far ones around its height (the skyline)
+		local far = i % 3 == 0
+		local w = if far then rng:NextNumber(2.6, 4.2) else rng:NextNumber(1.2, 2.6)
+		local base = f.Position
+			+ Vector3.new(
+				side * (if far then rng:NextNumber(260, 460) else rng:NextNumber(85, 220)),
+				if far then rng:NextNumber(-60, 40) else -rng:NextNumber(40, 120),
+				rng:NextNumber(-60, 60)
+			)
+		local yaw = CFrame.Angles(0, math.rad(rng:NextInteger(0, 3) * 90), 0)
+		local top = piece("GrassBlock", v(20 * w, 6, 20 * w), CFrame.new(base) * yaw)
+		if not top then
+			continue
+		end
+		-- the dirt underside narrows downward: one or two cliff chunks
+		local depth = rng:NextNumber(14, 30)
+		piece("Cliff", v(18 * w, depth, 18 * w), CFrame.new(base - Vector3.new(0, 3 + depth / 2, 0)) * yaw)
+		if rng:NextNumber() < 0.5 then
+			local d2 = depth * 0.6
+			piece("Cliff", v(11 * w, d2, 11 * w), CFrame.new(base - Vector3.new(0, 3 + depth + d2 / 2, 0)) * yaw)
+		end
+		if rng:NextNumber() < 0.6 then
+			local s = rng:NextNumber(0.8, 1.3)
+			piece(
+				"Tree",
+				v(12, 16, 12) * s,
+				CFrame.new(base + Vector3.new(rng:NextNumber(-4, 4) * w, 3 + 8 * s, rng:NextNumber(-4, 4) * w))
+					* CFrame.Angles(0, math.rad(rng:NextNumber(0, 360)), 0)
+			)
+		end
+		if rng:NextNumber() < 0.45 then
+			local s = rng:NextNumber(1.6, 3)
+			piece(
+				"Cloud",
+				v(22, 8, 8) * s,
+				CFrame.new(
+					base + Vector3.new(side * rng:NextNumber(10, 40), -rng:NextNumber(10, 35), rng:NextNumber(-30, 30))
+				) * CFrame.Angles(0, math.rad(rng:NextNumber(-30, 30)), 0)
+			)
+		end
+	end
+	for _, d in folder:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CastShadow = false -- far scenery: no shadow cost
+		end
+	end
+end
+
 -- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the
 -- board's ends so they never cover the lettering).
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
@@ -1033,6 +1110,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	rootSprings(world, params)
 	rigGantries(world, params, apply)
 	dressPieces(world, apply)
+	skyIslands(world, apply)
 	for _, sign in world:GetDescendants() do
 		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then
 			continue
