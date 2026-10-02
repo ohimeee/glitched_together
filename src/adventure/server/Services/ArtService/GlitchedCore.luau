@@ -355,6 +355,79 @@ local function dressEchoes(world: Instance, apply: (BasePart, string) -> boolean
 	end
 end
 
+-- Environment fill: the void around the route is full of debris from the earlier worlds and the unfinished model
+-- (art-direction §3 key image: "a half-built wireframe world with pieces of the earlier worlds floating in it"):
+-- faded grass blocks, castle stones, tilted primer blocks and wire cubes, well clear of the route (no collision).
+local DEBRIS = 46
+local function debris(world: Instance, apply: (BasePart, string) -> boolean)
+	local floors = {}
+	for _, d in world:GetDescendants() do
+		if d:IsA("BasePart") and d:GetAttribute("CoreSurface") == "Floor" then
+			table.insert(floors, d)
+		end
+	end
+	if #floors == 0 then
+		return
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Debris"
+	folder.Parent = world
+	local rng = Random.new(77)
+	for _ = 1, DEBRIS do
+		local f = floors[rng:NextInteger(1, #floors)]
+		local side = if rng:NextNumber() < 0.5 then -1 else 1
+		local pos = f.Position
+			+ Vector3.new(side * rng:NextNumber(70, 170), rng:NextNumber(-50, 30), rng:NextNumber(-30, 30))
+		local tilt = CFrame.Angles(
+			math.rad(rng:NextNumber(-25, 25)),
+			math.rad(rng:NextNumber(0, 360)),
+			math.rad(rng:NextNumber(-25, 25))
+		)
+		local kind = rng:NextNumber()
+		if kind < 0.3 then -- a broken-off Pixel Plains grass block
+			local s = rng:NextNumber(0.5, 1)
+			local p = holder("Debris", v(20, 6, 20) * s, CFrame.new(pos) * tilt, folder)
+			if apply(p, "GrassBlock") then
+				fade(p)
+			else
+				p:Destroy()
+			end
+		elseif kind < 0.5 then -- a chunk of castle wall
+			local p = holder(
+				"Debris",
+				v(rng:NextNumber(6, 14), rng:NextNumber(4, 9), rng:NextNumber(3, 6)),
+				CFrame.new(pos) * tilt,
+				folder
+			)
+			p.Transparency = 0
+			p.Material = Enum.Material.Slate
+			p.MaterialVariant = "CastleWall"
+			p.Color = Palette.Castle.NightPurple:Lerp(GREY, 0.55)
+		elseif kind < 0.82 then -- an unfinished primer block
+			local p = holder(
+				"Debris",
+				v(rng:NextNumber(4, 16), rng:NextNumber(3, 10), rng:NextNumber(4, 16)),
+				CFrame.new(pos) * tilt,
+				folder
+			)
+			p.Transparency = 0
+			p.Material = Enum.Material.Concrete
+			p.MaterialVariant = "CoreWall"
+			p.Color = Color3.fromRGB(200, 202, 208)
+		elseif Skins.WireCube then -- a wire armature where something should have been
+			local p = holder("Debris", KIT.WireCube.Design * rng:NextNumber(1.5, 3), CFrame.new(pos) * tilt, folder)
+			if not apply(p, "WireCube") then
+				p:Destroy()
+			end
+		end
+	end
+	for _, d in folder:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CastShadow = false -- far debris: shadows cost and never read in the dark
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	dressEchoes(world, apply) -- first, so the Core's own surfaces below skip the skinned echo floors
 	for _, part in world:GetDescendants() do
@@ -429,6 +502,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	dressTerminal(world, apply)
 	savePoints(world, apply)
 	wireCubes(world, apply)
+	debris(world, apply)
 end
 
 return { Skins = Skins, Dressing = Dressing, Decor = {}, Extras = Extras }

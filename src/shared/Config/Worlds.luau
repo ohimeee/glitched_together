@@ -104,9 +104,9 @@ local ByName: { [string]: World } = {
 		Look = {
 			-- cold and dim, but the grey blocks must still read (art-direction §9: saturation −0.4, dense grey haze)
 			ClockTime = 0,
-			Brightness = 1.2,
-			Ambient = rgb(118, 120, 132),
-			OutdoorAmbient = rgb(128, 130, 142),
+			Brightness = 1.5,
+			Ambient = rgb(138, 140, 152), -- lifted Oct 2 so the primer/concrete surfaces read
+			OutdoorAmbient = rgb(150, 152, 164),
 			AtmosphereDensity = 0.32,
 			AtmosphereHaze = 0.8,
 			AtmosphereColor = rgb(96, 98, 108),
