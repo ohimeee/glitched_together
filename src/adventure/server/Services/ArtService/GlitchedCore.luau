@@ -9,6 +9,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
+local StateInlay = require(script.Parent.StateInlay)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local SMOOTH = Enum.Material.SmoothPlastic
@@ -413,19 +414,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			end
 		elseif CollectionService:HasTag(part, "PressurePlate") and apply(part, "ButtonPad") then
 			-- the same toy push button as Pixel Plains; an inlay shows held (green) / free (yellow)
-			local inlay = holder(
-				"StateInlay",
-				v(part.Size.X * 0.42, 0.06, part.Size.Z * 0.42),
-				part.CFrame * CFrame.new(0, part.Size.Y / 2 + 0.12, 0),
-				part
-			)
-			inlay.Transparency = 0.25
-			inlay.Material = Enum.Material.Neon
-			local function show()
-				inlay.Color = if part:GetAttribute("Active") then Color3.fromRGB(90, 255, 140) else Palette.Glow.Neutral
-			end
-			part:GetAttributeChangedSignal("Active"):Connect(show)
-			show()
+			StateInlay(part)
 		elseif part.Name == "PlankBlock" then
 			part.Material = Enum.Material.WoodPlanks
 			part.MaterialVariant = "CastlePlanks"

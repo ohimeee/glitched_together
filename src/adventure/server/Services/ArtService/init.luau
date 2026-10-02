@@ -29,7 +29,49 @@ local Worlds: { [string]: WorldArt } = {
 	GlitchedCore = require(script.GlitchedCore),
 }
 
-local Skins: { [string]: MeshAssets.Skin } = {}
+local StateInlay = require(script.StateInlay)
+
+-- Pieces every world shares (Oct 2): realism-first generations (generate_mesh)
+local SHARED: { [string]: MeshAssets.Skin } = {
+	ExitArch = { -- weathered marble arch with brass stars around each world's exit portal
+		Design = Vector3.new(11.39, 12.27, 4),
+		Meshes = {
+			Body = {
+				Id = "rbxassetid://128798624249939",
+				TextureId = "rbxassetid://137527623890235",
+				Offset = Vector3.zero,
+				Size = Vector3.new(11.39, 12.27, 4),
+				Material = Enum.Material.SmoothPlastic,
+			},
+		},
+	},
+	DuoButton = { -- a big white two-hands push button in a steel box (white = both players)
+		Design = Vector3.new(12, 1, 8),
+		Meshes = {
+			Body = {
+				Id = "rbxassetid://136391215703584",
+				TextureId = "rbxassetid://90355549126238",
+				Offset = Vector3.new(0, 0.1, 0),
+				Size = Vector3.new(12, 1.6, 8),
+				Material = Enum.Material.SmoothPlastic,
+			},
+		},
+	},
+	HeavyLeverSkin = { -- a steel lever with a white grip on a bolted iron base
+		Design = Vector3.new(1, 5, 1),
+		Meshes = {
+			Body = {
+				Id = "rbxassetid://100071213028508",
+				TextureId = "rbxassetid://116749620177938",
+				Offset = Vector3.zero,
+				Size = Vector3.new(2.6, 5, 2.6),
+				Material = Enum.Material.SmoothPlastic,
+			},
+		},
+	},
+}
+
+local Skins: { [string]: MeshAssets.Skin } = table.clone(SHARED)
 for _, art in Worlds do
 	for name, skin in art.Skins do
 		Skins[name] = skin
@@ -108,6 +150,37 @@ local function placeDecor(world: Instance, skinName: string, cf: CFrame, scale: 
 	end
 end
 
+-- Shared pieces in every world: exit arches, Duo Pound buttons and Heavy Levers (their state shows on an inlay,
+-- since the grey-box part that turned green is hidden under the skin)
+local EXIT_ARCH_SCALE = 2.6 -- the arch's opening must clear the 12×12 portal field
+local function dressShared(world: Instance)
+	for _, part in world:GetDescendants() do
+		if not part:IsA("BasePart") or part:GetAttribute("Skinned") then
+			continue
+		end
+		if CollectionService:HasTag(part, "WorldExit") then
+			local design = SHARED.ExitArch.Design * EXIT_ARCH_SCALE
+			local arch = Instance.new("Part")
+			arch.Name = "ExitArch"
+			arch.Size = design
+			arch.CFrame = part.CFrame * CFrame.new(0, -part.Size.Y / 2 + design.Y / 2, 0)
+			arch.Anchored = true
+			arch.CanCollide = false
+			arch.CanQuery = false
+			arch.CanTouch = false
+			arch.Transparency = 1
+			arch.Parent = part.Parent
+			if not ArtService.Apply(arch, "ExitArch") then
+				arch:Destroy()
+			end
+		elseif CollectionService:HasTag(part, "DuoPound") and ArtService.Apply(part, "DuoButton") then
+			StateInlay(part, Palette.Glow.Duo, nil, CFrame.new(0, part.Size.Y / 2 + 0.75, 0))
+		elseif CollectionService:HasTag(part, "HeavyLever") and ArtService.Apply(part, "HeavyLeverSkin") then
+			StateInlay(part, Palette.Glow.Duo, Vector3.new(1.6, 0.06, 1.6), CFrame.new(0, -part.Size.Y / 2 + 0.9, 0))
+		end
+	end
+end
+
 -- Dresses a freshly built grey-box world. Runs in the background: shells pop in once the meshes load.
 function ArtService.Dress(world: Instance, worldName: string)
 	local art = Worlds[worldName]
@@ -131,6 +204,9 @@ function ArtService.Dress(world: Instance, worldName: string)
 		end
 		if art.Extras and world.Parent then
 			art.Extras(world, ArtService.Apply)
+		end
+		if world.Parent then
+			dressShared(world)
 		end
 	end)
 	-- parts spawned later (dropper blocks) get their skin too

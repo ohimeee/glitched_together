@@ -5,6 +5,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
+local StateInlay = require(script.Parent.StateInlay)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local CombatFx = require(script.Parent.Parent.CombatFx)
@@ -987,19 +988,7 @@ local function dressPieces(world: Instance, apply: (BasePart, string) -> boolean
 			part:SetAttribute("ArtHidden", true)
 		elseif CollectionService:HasTag(part, "PressurePlate") and apply(part, "ButtonPad") then
 			-- the plate's state used to show on the grey-box part (green neon while held): an inlay carries it now
-			local inlay = hiddenPart(
-				"StateInlay",
-				v(part.Size.X * 0.42, 0.06, part.Size.Z * 0.42),
-				part.CFrame * CFrame.new(0, part.Size.Y / 2 + 0.12, 0),
-				part
-			)
-			inlay.Transparency = 0.25
-			inlay.Material = NEON
-			local function show()
-				inlay.Color = if part:GetAttribute("Active") then Color3.fromRGB(90, 255, 140) else Palette.Glow.Neutral
-			end
-			part:GetAttributeChangedSignal("Active"):Connect(show)
-			show()
+			StateInlay(part)
 		elseif CollectionService:HasTag(part, "Checkpoint") then
 			-- a yellow star flag on a chrome pole at the pad's edge; the pad itself goes faint
 			part.Transparency = 0.7
