@@ -467,7 +467,7 @@ local function modelStands(world: Instance)
 				break
 			end
 			local part = hit.Instance :: BasePart
-			if part.Transparency < 0.5 and isStatic(part) then
+			if (part.Transparency < 0.5 or part:GetAttribute("Skinned")) and isStatic(part) then
 				bottom = hit.Position.Y
 				break
 			end
@@ -500,10 +500,15 @@ local function modelStands(world: Instance)
 	for _, f in world:GetDescendants() do
 		if
 			f:IsA("BasePart")
-			and f:GetAttribute("CoreSurface") == "Floor"
-			and isStatic(f)
+			and not f:IsA("MeshPart")
+			and f.CanCollide
+			and (f.Transparency < 0.5 or f:GetAttribute("Skinned")) -- skinned Memory Lane echo floors are invisible colliders
+			and f.Size.Y <= 8
 			and f.Size.X >= 6
 			and f.Size.Z >= 6
+			and f:GetAttribute("CoreSurface") ~= "Wall"
+			and not f:IsDescendantOf(folder)
+			and isStatic(f)
 		then
 			local bottom = f.Position.Y - f.Size.Y / 2
 			local under = bottom
