@@ -36,6 +36,8 @@ Every call needs `studio_id` from `list_roblox_studios`.
 
 ## 2. Blender
 
+- **Skyboxes rendered in Blender** (Oct 2, 2026): recipe + gotchas in BLENDER_PLAYBOOK §10, helper `tools/blender_sky.py` (face mapping, render_faces, add_haze). Roblox dims custom skyboxes at night (keep a day ClockTime, aim the sun at the baked moon with GeographicLatitude). Never call `bpy.ops.wm.read_factory_settings` / `read_homefile` through the MCP: it kills the add-on's server (relaunch Blender); add scenes with `bpy.data.scenes.new`. Cycles isn't listed in the engine enum (add-on engine): set `scene.render.engine = 'CYCLES'` anyway; GPU = OptiX on the RTX 4050.
+
 - **Blender 5.2.2** at `D:\Blender\blender.exe`. Start with the MCP server already running: `cmd //c start "" "D:\Blender\blender.exe" --python "C:\Users\User\tools\blender-mcp\autostart.py"` (port 9876, also enables Poly Haven, loads the Sketchfab key).
 - **Blender MCP** (`mcp__blender__*`): `execute_blender_code` (main tool, bpy/bmesh), `get_scene_info`, `get_object_info`, `get_viewport_screenshot`, `bpy_api_lookup`, `describe_node_type`, `export_scene`, `set_texture`, `get_addon_status`, `disable_telemetry` (keep telemetry off). Asset integrations: §3 (Poly Haven and Sketchfab on; Poly Pizza, Hyper3D, Hunyuan and add-on Tripo off). Add-on protocol is behind (11 vs 13) but works; `uvx mcp-for-blender install-addon` would update it.
 - Pipeline and scripting rules: `BLENDER_PLAYBOOK.md` §6–7 (stud scale, Blender (x,y,z) → Roblox (−x,z,y), FBX export flags, offsets computed from bbox centers, save a `.blend` copy + `.fbx` in `blender_assets/`).

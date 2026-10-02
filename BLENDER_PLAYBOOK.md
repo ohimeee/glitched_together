@@ -219,3 +219,32 @@ All in Blender: sidebar **N → MCP for Blender**, then reconnect.
 | Hyper3D Rodin / Hunyuan3D / Tripo | AI 3D generation | Their API keys, or paid MCP for Blender Premium |
 
 Recommended first: **Poly Haven** (free, no key), useful for textures and lighting HDRIs.
+
+## 10. It Takes Two environment pass: how it was done (Oct 2, 2026, 10th session)
+
+**What the user asked (their words) → what it means for every future art task:**
+- "search for it takes two environment ... every detail and the users think this is even roblox? ... render/animate the environment in blender" → the world around the level is rendered in Blender (Cycles) and shipped as the Roblox skybox; the level itself gets dense real-looking dressing.
+- "not just environment but assets around it" → props on and around every platform (foliage, roots, supports), not only a backdrop.
+- "the obstacles should naturally connected to the environment or it has purpose" (memory obstacles-belong) → every lever/bridge/lift/platform is part of a structure: posts, hoists, cranes, islands.
+- "make the created environment match our design" + "we go with your plan" → never change obstacle gameplay or layout for art; re-skin and dress around it.
+- "we can safely remove/replace the backgrounds of all 3 worlds" → old in-level backdrops (castle courtyard) may be deleted when the panorama replaces them.
+- Rejected: the castle courtyard (clashed with the render), farmland/crop patchwork (Voronoi cells: "ugly, not realistic"). Keep ground natural: soft noise variation, no tiles/patterns.
+
+**Reference pass (Brave, Google Images "it takes two environment screenshot garden level"):** warm low sun with god rays, cool purple shadows, layered depth (foreground foliage → midground set → hazy far backdrop), dense clustered props with wear, nothing flat-colored, huge scale contrast.
+
+**Skybox pipeline (per world):**
+1. Blender (MCP): one scene per world in `blender_assets/PixelPlainsSky.blend` (`Scene` = Pixel Plains, `CastleSky` = castle). Make a new scene with `bpy.data.scenes.new` + `bpy.context.window.scene = sc`; **never `read_factory_settings`/`read_homefile`** (kills the MCP server; relaunch Blender if it happens).
+2. Build the world procedurally in Python (bmesh): terrain from `mathutils.noise` heights (Pixel Plains: 60-stud voxel columns, quantized 30; castle: smooth 100-stud grid), trees/houses/landmarks as boxes, cones, gables in one mesh per kind, material per face index. Camera at the origin = the level's height; ground ~420–650 below; mountains far out (r > 5k) so the skyline has peaks.
+3. Materials: Principled BSDF in the world palette (art-direction §16; sRGB→linear), plus `tools/blender_sky.py add_haze` (camera-distance fade to a haze color) for aerial perspective; AgX view + "Punchy"/"Medium High Contrast" look. Sky: Pixel Plains = Sky Texture `MULTIPLE_SCATTERING`, sun disc OFF (Roblox draws the crayon sun), multiplied toward the palette's blue; castle = custom world shader (normalized Generated direction → color ramp, Voronoi stars, noise Milky Way band) + an emissive moon sphere.
+4. Lights: a Sun lamp along the in-game sun direction. Get it in Studio: `Lighting:GetSunDirection()` at the world's ClockTime; Roblox (x,y,z) → Blender (−x,z,y); Sky Texture `sun_rotation = atan2(bx, by)` (rotation 0 = +Y). **Set `visible_shadow = False` on a moon/sun mesh that sits on the light's path** (it shadowed the whole castle valley).
+5. Render with `tools/blender_sky.py render_faces` (cycles GPU OptiX, 1024², 128 samples, denoise; previews at 384²/24 samples with `faces=[...]`). Convert to RGB with Pillow (drop alpha), keep files in `textures/sky/`.
+6. Upload: `python -m http.server 8765 --bind 127.0.0.1` in `textures/`, Studio MCP `upload_image` with `http://127.0.0.1:8765/sky/<file>.png`; put the 6 ids in `Worlds.luau` `Look.Skybox` (applyLook writes Sky.SkyboxBk..Dn, default sky when nil).
+7. Night worlds: **Roblox dims custom skyboxes at night** (black at ClockTime 21). Keep a day clock and fake night with lighting: brute-force `GeographicLatitude` × `ClockTime` in Studio so `GetSunDirection()` points at the baked moon (castle: 8.9 at latitude 78), Brightness ~0.45, purple Ambient/OutdoorAmbient, `Look.Latitude`, `Look.BakedSky = true` (hides Roblox's sun/moon/stars). Atmosphere `Haze = 0` (it paints over the panorama).
+8. Check in play from the real gameplay camera (castle is top-down: the Dn face is what players see most; keep it detailed and readable, no bright reflections right below). Lower the level's brightness/ambient until its colors sit in the render.
+- Gotchas: camera `clip_end` default 100 hides everything; Generated coords in a world shader must be normalized (else cube seams); test-face mapping is in `tools/blender_sky.py`'s docstring.
+
+**In-level dressing recipes (ArtService/PixelPlains.luau Extras, all non-colliding, CanQuery off):**
+- `islandUndersides`: every `GrassBlock` slab ≥ 8 wide gets 3 shrinking dirt/dirt/stone tiers below, vines/roots off the edges, Flowers/Bush skins along free edges (an edge is "joined" if a ray 2.4 out hits floor). Skips slabs resting on something, and any tier overlapping a moving piece's sweep (Mover waypoints, DuoGate open offset, Pullables, dropper lanes) or solid level geometry; foliage keeps 7 studs from gameplay parts.
+- `rigHoists`: DuoGate bridges/lifts with an upward `OpenOffset` that hang over nothing: bridges get posts + davit arms on both ledges and Beam ropes to the deck corners; lifts get a crane post on the ledge they rise to, a jib, a pulley, 4 ropes. Beams follow moving attachments, so ropes stay taut.
+- Lever posts (`PullLever`), vent fans (`VentFan.luau` shared, client spin in `FanController`), gallery glass frame: see the code comments.
+- Castle (`StarfallCastle.luau` fillEnvironment): foundations end at y −90 on 3 jittered rock tiers ("Crag"), trestles on rock piers.
