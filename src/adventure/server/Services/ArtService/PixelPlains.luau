@@ -1027,7 +1027,7 @@ end
 -- cliff, sometimes a tree) and clouds drift below and beside it, so there's depth under every jump (It Takes Two's
 -- layered foreground/background). Nothing collides, and none sit where a falling player could see a "landing".
 local ISLANDS = 48
-local HAZE = Color3.fromRGB(214, 226, 236) -- pale and neutral: a sky-blue tint turned the grass teal (Miko's color)
+local HAZE = Color3.fromRGB(232, 228, 210) -- warm pale: sky-blue and grey-blue hazes turned the grass teal/mint (Miko's color)
 local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 	local floors = {}
 	for _, d in world:GetDescendants() do
