@@ -61,18 +61,47 @@ local Skins: { [string]: MeshAssets.Skin } = {
 }
 
 -- Blender kit: filled from the imported MeshIds (Offsets in Roblox axes from each piece's bbox center)
+local PLASTIC_DARK, STEEL, PAPER = Color3.fromHex("#3A3D44"), Color3.fromHex("#B9BDC4"), Color3.fromHex("#EDE8DA")
+local STAND, WIRE, BASEWOOD, BRASS =
+	Color3.fromHex("#5B5F67"), Color3.fromHex("#A7ABB2"), Color3.fromHex("#B58B5C"), Color3.fromHex("#B8913F")
+local function kit(
+	id: string,
+	offset: Vector3,
+	size: Vector3,
+	material: Enum.Material,
+	color: Color3
+): MeshAssets.MeshInfo
+	return { Id = id, Offset = offset, Size = size, Material = material, Color = color }
+end
 local KIT = {
-	SavePoint = {
+	SavePoint = { -- a 3.5" floppy disk standing in a metal clip stand; front (label, shutter) faces -Z
 		Design = v(5.8, 5.5, 1.6),
-		Meshes = {} :: { [string]: MeshAssets.MeshInfo },
+		Meshes = {
+			Body = kit("rbxassetid://75639189184243", v(0, 0.15, 0), v(5, 5.2, 0.35), SMOOTH, PLASTIC_DARK),
+			Label = kit("rbxassetid://84149193219149", v(0.15, 1.2, -0.01), v(4.1, 2.5, 0.37), SMOOTH, PAPER),
+			ShutterL = kit("rbxassetid://97012726657325", v(0.675, -1.5, 0), v(1.45, 1.9, 0.39), METAL, STEEL),
+			ShutterR = kit("rbxassetid://135102777080430", v(-1.075, -1.5, 0), v(0.65, 1.9, 0.39), METAL, STEEL),
+			ShutterB = kit("rbxassetid://130914185156909", v(-0.4, -2.275, 0), v(0.7, 0.35, 0.39), METAL, STEEL),
+			ShutterT = kit("rbxassetid://120687466852858", v(-0.4, -0.725, 0), v(0.7, 0.35, 0.39), METAL, STEEL),
+			Stand = kit("rbxassetid://115379732701343", v(0, -2.6, 0), v(5.8, 0.3, 1.6), METAL, STAND),
+			ClipF = kit("rbxassetid://138322880564162", v(0, -2.2, -0.275), v(5.4, 0.6, 0.15), METAL, STAND),
+			ClipB = kit("rbxassetid://89144337421441", v(0, -2.2, 0.275), v(5.4, 0.6, 0.15), METAL, STAND),
+		} :: { [string]: MeshAssets.MeshInfo },
 	},
-	WireCube = {
+	WireCube = { -- hand-bent steel wire cube with twisted corners on a wooden base block
 		Design = v(4.8, 4.74, 4.8),
-		Meshes = {} :: { [string]: MeshAssets.MeshInfo },
+		Meshes = {
+			Wire = kit("rbxassetid://78705981496181", v(-0.002, 0.158, 0.028), v(4.316, 4.245, 4.324), METAL, WIRE),
+			Knots = kit("rbxassetid://77035605949694", v(0.017, 0.138, 0.057), v(4.487, 4.466, 4.453), METAL, WIRE),
+			Base = kit("rbxassetid://133761210726199", v(0, -2.121, 0), v(4.8, 0.5, 4.8), Enum.Material.Wood, BASEWOOD),
+		} :: { [string]: MeshAssets.MeshInfo },
 	},
-	ScalePan = {
-		Design = v(10.1, 1.6, 10.1),
-		Meshes = {} :: { [string]: MeshAssets.MeshInfo },
+	ScalePan = { -- a brass dish; its inner floor sits at the pan part's top (players stand there), lugs on the rim
+		Design = v(10, 1, 10),
+		Meshes = {
+			Dish = kit("rbxassetid://72330904195126", v(0, 0.82, -0.013), v(10.1, 1, 10.1), METAL, BRASS),
+			Lugs = kit("rbxassetid://131464620008906", v(0, 1.57, 1.11), v(9.117, 0.723, 7.905), METAL, BRASS),
+		} :: { [string]: MeshAssets.MeshInfo },
 	},
 }
 for name, skin in KIT do
@@ -124,7 +153,8 @@ local function hangPans(world: Instance)
 			for k = 0, 2 do
 				local a = math.rad(90 + 120 * k)
 				local lug = Instance.new("Attachment")
-				lug.Position = v(r * math.cos(a), pan.Size.Y / 2 + 0.6, r * math.sin(a))
+				-- on the dish's rim lugs (ScalePan: 1.57 up; Blender's x is mirrored in Roblox)
+				lug.Position = v(-r * math.cos(a), 1.6, r * math.sin(a))
 				lug.Parent = pan
 				local chain = Instance.new("Beam")
 				chain.Attachment0 = top
@@ -275,7 +305,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			part:SetAttribute("CoreSurface", "Floor")
 		elseif part.Name == "ScalePost" or part.Name == "ScaleBeam" then
 			part.Material = METAL
-			part.Color = Color3.fromRGB(184, 145, 63) -- brass, like the pans
+			part.Color = Color3.fromRGB(214, 172, 84) -- brass, like the pans
 		elseif part.Name == "TerminalDesk" then
 			part.Material = Enum.Material.DiamondPlate
 			part.Color = Color3.fromRGB(160, 163, 170)
