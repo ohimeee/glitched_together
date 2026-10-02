@@ -136,20 +136,35 @@ local ByName: { [string]: World } = {
 		-- grey, void, Miko teal, Glitch magenta: the only strong colors are the Code Layer and the Glitch (art-direction §8, §16)
 		Palette = { rgb(122, 125, 133), rgb(20, 21, 24), rgb(31, 199, 182), rgb(255, 43, 214) },
 		Look = {
-			-- cold and dim, but the grey blocks must still read (art-direction §9: saturation −0.4, dense grey haze)
-			ClockTime = 0,
-			Brightness = 1.5,
-			Ambient = rgb(138, 140, 152), -- lifted Oct 2 so the primer/concrete surfaces read
-			OutdoorAmbient = rgb(150, 152, 164),
-			AtmosphereDensity = 0.32,
-			AtmosphereHaze = 0.8,
-			AtmosphereColor = rgb(96, 98, 108),
-			AtmosphereDecay = rgb(70, 110, 120),
+			-- the unfinished level as a real scale model: grey primer chunks of the earlier worlds on brass rods over an
+			-- endless pencil-gridded drafting sheet, a pencil-sketched sky, a few magenta Glitch tears (Blender panorama,
+			-- tools/core_sky). Overcast work-lamp light; Roblox dims skyboxes at night, so a day clock aims the light
+			-- where the render's key light came from (ClockTime 13.6 at latitude -7). Saturation -0.4 (art-direction §9)
+			ClockTime = 13.6,
+			Latitude = -7,
+			Brightness = 1.6,
+			EnvDiffuse = 0.7,
+			EnvSpecular = 0.4,
+			Ambient = rgb(118, 121, 130),
+			OutdoorAmbient = rgb(140, 143, 152),
+			AtmosphereDensity = 0.28,
+			AtmosphereHaze = 0, -- the panorama has its own haze; Roblox's would paint over it
+			AtmosphereColor = rgb(158, 162, 169), -- the render's haze (#9EA2A9), so far geometry melts into the sheet
+			AtmosphereDecay = rgb(140, 146, 156),
 			BloomIntensity = 1.2,
 			BloomThreshold = 1.1,
 			Saturation = -0.4,
 			Contrast = 0.1,
-			Tint = rgb(235, 242, 248),
+			Tint = rgb(240, 244, 250),
+			Skybox = {
+				Bk = "rbxassetid://138941382806679",
+				Ft = "rbxassetid://121540696844585",
+				Lf = "rbxassetid://109539663859465",
+				Rt = "rbxassetid://84423646772581",
+				Up = "rbxassetid://138758600631870",
+				Dn = "rbxassetid://134879075833502",
+			},
+			BakedSky = true,
 		},
 	},
 	Epilogue = {

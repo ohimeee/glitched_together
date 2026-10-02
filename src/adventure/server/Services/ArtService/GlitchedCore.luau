@@ -428,6 +428,124 @@ local function debris(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 end
 
+-- Model stands (Oct 3): the Core is the unfinished level as a real scale model, and its panorama (blender_assets/
+-- PixelPlainsSky.blend scene CoreSky, tools/core_sky) shows grey chunks on brass rods rising from a drafting sheet
+-- 900 studs below. The level matches it: every static floor gets a stepped clay underside and brass rods down to the
+-- sheet (or to whatever floor is below it), with a foot disk, so nothing floats. Debris chunks stand on rods too.
+local SHEET_Y = -900
+local BRASS = Color3.fromRGB(176, 148, 90)
+local CLAY = Color3.fromRGB(150, 152, 158)
+local STATIC_ATTRS = { CoreSurface = true, Skin = true, Skinned = true }
+local function isStatic(part: BasePart): boolean
+	if not part.Anchored or #CollectionService:GetTags(part) > 0 or part.Name:match("^Gate_") then
+		return false
+	end
+	for k in part:GetAttributes() do
+		if not STATIC_ATTRS[k] then
+			return false
+		end
+	end
+	return true
+end
+
+local function modelStands(world: Instance)
+	local folder = Instance.new("Folder")
+	folder.Name = "ModelStands"
+	folder.Parent = world
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	overlap.FilterDescendantsInstances = { folder }
+	local ray = RaycastParams.new()
+	ray.FilterType = Enum.RaycastFilterType.Exclude
+	local function rod(x: number, top: number, z: number, radius: number, self: Instance)
+		local skip: { Instance } = { folder, self }
+		ray.FilterDescendantsInstances = skip
+		local bottom = SHEET_Y
+		for _ = 1, 6 do -- stand on the first visible, static surface below (invisible colliders don't count)
+			local hit = workspace:Raycast(Vector3.new(x, top, z), Vector3.new(0, SHEET_Y - top, 0), ray)
+			if not hit then
+				break
+			end
+			local part = hit.Instance :: BasePart
+			if part.Transparency < 0.5 and isStatic(part) then
+				bottom = hit.Position.Y
+				break
+			end
+			table.insert(skip, part)
+			ray.FilterDescendantsInstances = skip
+		end
+		local length = top - bottom
+		if length < 2 then
+			return
+		end
+		local r = holder(
+			"ModelRod",
+			v(length, radius * 2, radius * 2),
+			CFrame.new(x, bottom + length / 2, z) * CFrame.Angles(0, 0, math.rad(90)),
+			folder
+		)
+		r.Transparency, r.Shape, r.Material, r.Color = 0, Enum.PartType.Cylinder, METAL, BRASS
+		local foot = holder(
+			"ModelRodFoot",
+			v(1.2, radius * 9, radius * 9),
+			CFrame.new(x, bottom + 0.6, z) * CFrame.Angles(0, 0, math.rad(90)),
+			folder
+		)
+		foot.Transparency, foot.Shape, foot.Material, foot.Color = 0, Enum.PartType.Cylinder, METAL, BRASS
+	end
+	local function clear(cf: CFrame, size: Vector3, self: Instance): boolean
+		overlap.FilterDescendantsInstances = { folder, self }
+		return #workspace:GetPartBoundsInBox(cf, size, overlap) == 0
+	end
+	for _, f in world:GetDescendants() do
+		if
+			f:IsA("BasePart")
+			and f:GetAttribute("CoreSurface") == "Floor"
+			and isStatic(f)
+			and f.Size.X >= 6
+			and f.Size.Z >= 6
+		then
+			local bottom = f.Position.Y - f.Size.Y / 2
+			local under = bottom
+			for i, shrink in { 0.82, 0.55 } do -- a stepped clay underside, like the panorama's chunks
+				local size = v(f.Size.X * shrink, 3.5, f.Size.Z * shrink)
+				local cf = CFrame.new(f.Position.X, under - 1.75, f.Position.Z) * f.CFrame.Rotation
+				if not clear(cf, size * 0.98, f) then
+					break
+				end
+				local tier = holder("ModelUnderside", size, cf, folder)
+				tier.Transparency, tier.Material, tier.MaterialVariant = 0, Enum.Material.Concrete, "CoreWall"
+				tier.Color = if i == 1 then Color3.fromRGB(176, 178, 184) else CLAY
+				under -= 3.5
+			end
+			local long = math.max(f.Size.X, f.Size.Z)
+			local radius = math.clamp(long / 40, 0.5, 1.1)
+			if long < 26 then
+				rod(f.Position.X, under, f.Position.Z, radius, f)
+			else
+				local axis = if f.Size.X >= f.Size.Z then f.CFrame.RightVector else f.CFrame.LookVector
+				for _, s in { -0.3, 0.3 } do
+					local p = f.Position + axis * long * s
+					rod(p.X, under, p.Z, radius, f)
+				end
+			end
+		end
+	end
+	local debrisFolder = world:FindFirstChild("Debris")
+	if debrisFolder then
+		for _, d in debrisFolder:GetChildren() do
+			if d:IsA("BasePart") then
+				rod(d.Position.X, d.Position.Y, d.Position.Z, 0.5, d)
+			end
+		end
+	end
+	for _, d in folder:GetChildren() do
+		if d:IsA("BasePart") then
+			d.CastShadow = d.Name == "ModelUnderside"
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	dressEchoes(world, apply) -- first, so the Core's own surfaces below skip the skinned echo floors
 	for _, part in world:GetDescendants() do
@@ -503,6 +621,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	savePoints(world, apply)
 	wireCubes(world, apply)
 	debris(world, apply)
+	modelStands(world)
 end
 
 -- SavePoints: the Prologue (a title screen) uses the same floppy-disk save points
