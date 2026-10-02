@@ -84,6 +84,26 @@
           "RoughnessMap": "rbxassetid://127538538980026",
           "StudsPerTile": 24
         }
+      },
+      "CoreFloor": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Concrete",
+          "ColorMap": "rbxassetid://82226138696141",
+          "NormalMap": "rbxassetid://137069114797048",
+          "RoughnessMap": "rbxassetid://118921528308495",
+          "StudsPerTile": 16
+        }
+      },
+      "CoreWall": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Concrete",
+          "ColorMap": "rbxassetid://78475527510685",
+          "NormalMap": "rbxassetid://97742092406333",
+          "RoughnessMap": "rbxassetid://121778544971756",
+          "StudsPerTile": 12
+        }
       }
     },
     "SoundService": {

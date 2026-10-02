@@ -43,7 +43,8 @@ local function template(source: Instance): Instance
 		if part:IsA("BasePart") then
 			part.CollisionGroup = "Default"
 			part.Anchored = true
-			part.Transparency = math.min(part.Transparency, 0.1)
+			-- a skinned source keeps its grey-box hidden: the welded art shell comes along in the clone
+			part.Transparency = if part:GetAttribute("Skinned") then 1 else math.min(part.Transparency, 0.1)
 		end
 	end
 	return clone
