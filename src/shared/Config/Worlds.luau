@@ -22,6 +22,10 @@ export type Look = {
 	Skybox: { Bk: string, Ft: string, Lf: string, Rt: string, Up: string, Dn: string }?,
 	Latitude: number?, -- Lighting.GeographicLatitude (default 41.73): with ClockTime, aims the light at a baked moon
 	BakedSky: boolean?, -- the skybox already has its moon/sun and stars: hide Roblox's own celestial bodies and stars
+	-- cinematic depth of field (It Takes Two's soft background): the far panorama and distant level pieces blur a
+	-- little, which also hides the skybox's pixels. Default { Far = 0.15, Focus = 40, Radius = 70 }
+	Dof: { Far: number, Focus: number, Radius: number }?,
+	SunRays: number?, -- SunRaysEffect intensity (0 = off), for worlds with a visible sun
 }
 
 export type World = {
@@ -98,6 +102,7 @@ local ByName: { [string]: World } = {
 			SunTexture = "rbxassetid://120731124856629", -- a kid's crayon sun (textures/PP_CrayonSun2.png, art-direction §8)
 			SunSize = 30,
 			EnvSpecular = 0.25, -- the plastic kit reflected so much sky that the grass read pale mint
+			SunRays = 0.05, -- soft god rays from the crayon sun (It Takes Two's warm low sun)
 			Skybox = { -- voxel valley far below, lakes, villages, floating islands, the Starfall castle ahead on the skyline
 				Bk = "rbxassetid://115564504494293",
 				Ft = "rbxassetid://124076922050746",
@@ -145,6 +150,7 @@ local ByName: { [string]: World } = {
 				Dn = "rbxassetid://100676855591730",
 			},
 			BakedSky = true,
+			Dof = { Far = 0.22, Focus = 62, Radius = 45 }, -- the top-down camera sits ~63 studs from the floor
 		},
 	},
 	GlitchedCore = {
@@ -240,6 +246,18 @@ local function applyLook(look: Look)
 	bloom.Intensity = look.BloomIntensity
 	bloom.Threshold = look.BloomThreshold
 	bloom.Size = 28
+
+	local dofLook = look.Dof or { Far = 0.15, Focus = 40, Radius = 70 }
+	local dof = child("DepthOfFieldEffect", "WorldDof")
+	dof.FarIntensity = dofLook.Far
+	dof.FocusDistance = dofLook.Focus
+	dof.InFocusRadius = dofLook.Radius
+	dof.NearIntensity = 0
+
+	local rays = child("SunRaysEffect", "WorldSunRays")
+	rays.Intensity = look.SunRays or 0
+	rays.Spread = 0.7
+	rays.Enabled = (look.SunRays or 0) > 0
 
 	local cc = child("ColorCorrectionEffect", "WorldColor")
 	cc.Saturation = look.Saturation

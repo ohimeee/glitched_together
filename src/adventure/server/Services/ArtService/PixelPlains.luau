@@ -992,7 +992,8 @@ local function dressPieces(world: Instance, apply: (BasePart, string) -> boolean
 			StateInlay(part)
 		elseif CollectionService:HasTag(part, "Checkpoint") then
 			-- a yellow star flag on a chrome pole at the pad's edge; the pad itself goes faint
-			part.Transparency = 0.7
+			part.Transparency = 0.75
+			part.Material = Enum.Material.SmoothPlastic -- Neon still glared as a flat yellow square at 0.7
 			local design = Skins.CheckpointFlag.Design * 1.8
 			local flag = hiddenPart(
 				"CheckpointFlag",
