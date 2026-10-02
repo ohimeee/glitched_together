@@ -349,6 +349,135 @@ local function dressFoundations(folder: Instance, foundations: { BasePart })
 	end
 end
 
+-- Corner turrets: round towers at every exposed room corner give the long castle a real silhouette from the wide
+-- shots (cutscenes, the panorama-side view). The top-down camera sits on the +Z side, so only the far (−Z) corners
+-- get tall stepped slate roofs; near corners stop at a crenellated ring just above the wall tops.
+local TURRET_R = 5.5
+local SLATE_ROOF = Color3.fromRGB(122, 112, 156)
+local function turrets(folder: Instance, foundations: { BasePart })
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Include
+	overlap.FilterDescendantsInstances = foundations
+	local function stone(name: string, size: Vector3, cf: CFrame, color: Color3?, cylinder: boolean?)
+		return art(folder, name, size, cf, {
+			Material = Enum.Material.Slate,
+			MaterialVariant = "CastleWall",
+			Color = color or Color3.fromRGB(184, 166, 202),
+			Shape = if cylinder then Enum.PartType.Cylinder else Enum.PartType.Block,
+		})
+	end
+	local placed: { Vector3 } = {}
+	for _, f in foundations do
+		if f.Size.X < 20 or f.Size.Z < 20 then
+			continue -- tiles and small pads inside rooms
+		end
+		local top = f.Position.Y + f.Size.Y / 2 + 1.5 -- the floor's top
+		for _, sx in { -1, 1 } do
+			for _, sz in { -1, 1 } do
+				local corner = Vector3.new(f.Position.X + sx * f.Size.X / 2, 0, f.Position.Z + sz * f.Size.Z / 2)
+				local out = Vector3.new(sx, 0, sz).Unit
+				-- an outer corner: the corner itself and the ground just outside it on all three sides are free of
+				-- every other foundation (else it's a joint between rooms or inside a bigger room)
+				local covered = false
+				for _, d in { Vector3.zero, out * 4, Vector3.new(sx * 4, 0, 0), Vector3.new(0, 0, sz * 4) } do
+					local probe = corner + d * 1 + Vector3.new(0, top - 10, 0) - out * 0.5
+					if d ~= Vector3.zero then
+						probe += out * 0.5
+					end
+					for _, other in workspace:GetPartBoundsInBox(CFrame.new(probe), Vector3.one, overlap) do
+						if other ~= f then
+							covered = true
+						end
+					end
+				end
+				for _, p in placed do
+					if (p - corner).Magnitude < 14 then
+						covered = true
+					end
+				end
+				if covered then
+					continue
+				end
+				table.insert(placed, corner)
+				local c = corner + out * 3.2
+				local far = sz < 0
+				local height = if far then 9 else 7.5
+				local bottomY = ROCK_TOP - 4
+				local shaftH = top + height - bottomY
+				stone(
+					"Turret",
+					Vector3.new(shaftH, TURRET_R * 2, TURRET_R * 2),
+					CFrame.new(c.X, bottomY + shaftH / 2, c.Z) * CFrame.Angles(0, 0, math.rad(90)),
+					nil,
+					true
+				)
+				-- corbelled parapet ring + merlons
+				stone(
+					"TurretParapet",
+					Vector3.new(1.4, TURRET_R * 2 + 1.6, TURRET_R * 2 + 1.6),
+					CFrame.new(c.X, top + height - 0.3, c.Z) * CFrame.Angles(0, 0, math.rad(90)),
+					WALL_TRIM,
+					true
+				)
+				for k = 0, 7 do
+					local a = k / 8 * math.pi * 2
+					local p = c + Vector3.new(math.cos(a), 0, math.sin(a)) * (TURRET_R + 0.3)
+					stone(
+						"TurretMerlon",
+						Vector3.new(1.6, 1.8, 1.2),
+						CFrame.new(p.X, top + height + 1.3, p.Z) * CFrame.Angles(0, -a, 0),
+						WALL_TRIM
+					)
+				end
+				-- arrow slits up the shaft, one lit
+				for y = top - 10, bottomY + 14, -18 do
+					local a = math.atan2(out.Z, out.X)
+					local p = c + out * (TURRET_R - 0.05)
+					art(
+						folder,
+						"ArrowSlit",
+						Vector3.new(0.3, 4, 1),
+						CFrame.new(p.X, y, p.Z) * CFrame.Angles(0, -a, 0),
+						{
+							Material = Enum.Material.Slate,
+							Color = if y == top - 10 then SLIT_LIT else SLIT_DARK,
+							CastShadow = false,
+						}
+					)
+				end
+				if far then -- a stepped slate cone roof with a little banner pole
+					local steps = 7
+					for k = 0, steps - 1 do
+						local r = (TURRET_R + 1.2) * (1 - k / steps)
+						stone(
+							"TurretRoof",
+							Vector3.new(1.6, r * 2, r * 2),
+							CFrame.new(c.X, top + height + 0.8 + k * 1.5, c.Z) * CFrame.Angles(0, 0, math.rad(90)),
+							SLATE_ROOF,
+							true
+						)
+					end
+					local poleTop = top + height + 0.8 + steps * 1.5 + 4
+					art(folder, "TurretPole", Vector3.new(0.3, 5, 0.3), CFrame.new(c.X, poleTop - 2.5, c.Z), {
+						Material = Enum.Material.Metal,
+						Color = Color3.fromRGB(60, 58, 70),
+					})
+					art(
+						folder,
+						"TurretPennant",
+						Vector3.new(2.4, 1.2, 0.1),
+						CFrame.new(c.X + 1.25, poleTop - 0.8, c.Z),
+						{
+							Material = Enum.Material.Fabric,
+							Color = Color3.fromRGB(110, 70, 160), -- castle night purple (not an owner color)
+						}
+					)
+				end
+			end
+		end
+	end
+end
+
 local function fillEnvironment(world: Instance)
 	local folder = Instance.new("Folder")
 	folder.Name = "Environment"
@@ -413,6 +542,7 @@ local function fillEnvironment(world: Instance)
 	end
 	folder.Parent = world
 	dressFoundations(folder, foundations)
+	turrets(folder, foundations)
 	task.spawn(function() -- in the background: the rest of the dressing doesn't wait for the rock
 		for _, c in columns do
 			if not world.Parent then
