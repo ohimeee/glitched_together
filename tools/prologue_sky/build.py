@@ -117,7 +117,7 @@ DARK = mat("P_Dark", lin("0A0F24"), 0.4)
 GLITCH = mat("P_Glitch", lin("FF2BD6"), 0.5, emit=lin("FF2BD6"), estr=3.0)
 CYAN = mat("P_GlitchCyan", lin("2BF2FF"), 0.5, emit=lin("2BF2FF"), estr=2.0)
 for m in (ACRYL, ACRYL2, DARK):
-    add_haze(m, HAZE, start=1500, end=18000, strength=0.75)
+    add_haze(m, HAZE, start=1200, end=11000, strength=0.8)
 FLOOR = mat("P_Floor", lin("0B1230"), 0.12)
 FLOOR.node_tree.nodes  # glossy mirror stage; faint grid of UI-white lines
 fnt = FLOOR.node_tree
@@ -242,20 +242,20 @@ def at(az, el, dist):
 
 
 # azimuth 90 = +Y = straight ahead along the level
-PANELS = [
-    ("NEW GAME", 62, 6, 3200, 1500, 360, 0.08, 0.03, False),
-    ("LOAD GAME", 118, 2, 3600, 1550, 360, -0.05, -0.04, False),
-    ("OPTIONS", 40, -6, 2600, 1300, 330, 0.15, 0.06, True),
-    ("CREDITS", 140, -9, 2400, 1200, 300, -0.1, 0.1, False),
-    ("QUIT", 168, 10, 4200, 1000, 300, 0.05, -0.12, False),
-    ("CONTINUE?", 15, 14, 5200, 1900, 420, 0.0, 0.05, False),
-    ("SETTINGS", 215, 4, 3000, 1400, 330, 0.1, -0.08, False),
-    ("PLAYER 2", 250, -4, 2700, 1300, 330, -0.12, 0.05, False),
-    ("SAVE SLOT 1", 290, 8, 3800, 1700, 360, 0.06, 0.02, True),
-    ("SAVE SLOT 2", 320, -2, 3300, 1700, 360, -0.04, -0.06, False),
-    ("", 345, 20, 6000, 2200, 500, 0.0, 0.1, False),
-    ("", 190, 18, 6500, 2000, 480, 0.1, 0.0, False),
-    ("PRESS START", 95, -14, 1900, 1300, 300, 0.2, 0.0, False),
+PANELS = [  # all above the horizon and far: below it they read like platforms the players could reach
+    ("NEW GAME", 62, 9, 4600, 1500, 360, 0.08, 0.03, False),
+    ("LOAD GAME", 118, 6, 5000, 1550, 360, -0.05, -0.04, False),
+    ("OPTIONS", 38, 4, 4200, 1300, 330, 0.15, 0.06, True),
+    ("CREDITS", 145, 3, 4000, 1200, 300, -0.1, 0.1, False),
+    ("QUIT", 168, 13, 5600, 1000, 300, 0.05, -0.12, False),
+    ("CONTINUE?", 15, 16, 6200, 1900, 420, 0.0, 0.05, False),
+    ("SETTINGS", 215, 7, 4400, 1400, 330, 0.1, -0.08, False),
+    ("PLAYER 2", 250, 4, 4100, 1300, 330, -0.12, 0.05, False),
+    ("SAVE SLOT 1", 290, 11, 5000, 1700, 360, 0.06, 0.02, True),
+    ("SAVE SLOT 2", 322, 5, 4600, 1700, 360, -0.04, -0.06, False),
+    ("", 345, 22, 7000, 2200, 500, 0.0, 0.1, False),
+    ("", 190, 20, 7400, 2000, 480, 0.1, 0.0, False),
+    ("PRESS START", 96, 4, 3800, 1300, 300, 0.2, 0.0, False),
 ]
 for i, (label, az, el, dist, w_, h_, tilt, roll, broken) in enumerate(PANELS):
     x, y, z = at(az, el, dist)
@@ -272,7 +272,7 @@ cyl(bm, (420, -40, 0), (420, 40, 0), 130, seg=24, mi=1)
 bm.transform(R)
 pobj("PSlider", bm, [DARK, RIM])
 text("PSliderLabel", "VOLUME", FONT_UI, 160, LABEL, (0, 0, 0), (0, 0, 0)).matrix_world = R @ Matrix.Translation(Vector((-500, -40, 220))) @ Matrix.Rotation(math.radians(90), 4, "X")
-for k, (az, el, dist, on) in enumerate(((150, 25, 4500, True), (30, 28, 5000, False), (200, -12, 3000, True))):
+for k, (az, el, dist, on) in enumerate(((150, 25, 4500, True), (30, 28, 5000, False), (200, 8, 4200, True))):
     x, y, z = at(az, el, dist)
     R = Matrix.Translation(Vector((x, y, z))) @ Matrix.Rotation(facing(x, y), 4, "Z") @ Matrix.Rotation(random.uniform(-0.3, 0.3), 4, "Y")
     bm = bmesh.new()
@@ -374,7 +374,7 @@ PLANETS = [  # az, el, dist, radius, colors, ring
     (40, 30, 7000, 700, ("7B6FD6", "C3B8FF"), False),
     (230, 20, 6000, 1200, ("4A7FD0", "9FD0F2"), True),
     (305, 32, 8000, 600, ("F2C46B", "D9824A"), False),
-    (175, -6, 3800, 380, ("B57BE0", "6C4AA8"), False),
+    (175, 7, 4800, 380, ("B57BE0", "6C4AA8"), False),
 ]
 for k, (az, el, dist, rad, cols, ring) in enumerate(PLANETS):
     x, y, z = at(az, el, dist)
