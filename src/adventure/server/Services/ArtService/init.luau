@@ -30,6 +30,7 @@ local Worlds: { [string]: WorldArt } = {
 }
 
 local StateInlay = require(script.StateInlay)
+local VentFan = require(script.VentFan)
 
 -- Pieces every world shares (Oct 2): realism-first generations (generate_mesh)
 local SHARED: { [string]: MeshAssets.Skin } = {
@@ -154,6 +155,10 @@ end
 -- since the grey-box part that turned green is hidden under the skin)
 local EXIT_ARCH_SCALE = 2.6 -- the arch's opening must clear the 12×12 portal field
 local function dressShared(world: Instance)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { world }
+	params.RespectCanCollide = true
 	for _, part in world:GetDescendants() do
 		if
 			not part:IsA("BasePart")
@@ -178,6 +183,8 @@ local function dressShared(world: Instance)
 			if not ArtService.Apply(arch, "ExitArch") then
 				arch:Destroy()
 			end
+		elseif CollectionService:HasTag(part, "JumpVent") then
+			VentFan(part, params)
 		elseif CollectionService:HasTag(part, "PressurePlate") and ArtService.Apply(part, "ButtonPad") then
 			StateInlay(part) -- any plate a world didn't dress itself: the toy push button (Pixel Plains kit)
 		elseif CollectionService:HasTag(part, "DuoPound") and ArtService.Apply(part, "DuoButton") then

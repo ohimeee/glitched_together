@@ -9,6 +9,7 @@ local StateInlay = require(script.Parent.StateInlay)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local CombatFx = require(script.Parent.Parent.CombatFx)
+local ToolFx = require(ReplicatedStorage.Shared.Config.ToolFx)
 
 local PP = Palette.PixelPlains
 local SMOOTH = Enum.Material.SmoothPlastic
@@ -1105,6 +1106,145 @@ local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 end
 
+-- Lever bridges and lifts wait below the path until their group is on, and hung in mid-air there. Now they're
+-- hoisted: a bridge hangs on ropes from posts on the ledges at both ends, a lift from a crane jib on the ledge it
+-- rises to. The ropes are Beams between attachments, so they stay taut while the piece rises and lowers.
+local HOIST_POST = 7 -- bridge posts stand this tall above the ledge
+local HOIST_ARM = 2.8 -- their arms reach this far out over the gap
+local JIB_CLEAR = 12 -- a lift's jib runs this high above its raised top (riders and jumps pass under it)
+
+local function rope(a: Attachment, b: Attachment)
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = a
+	beam.Attachment1 = b
+	beam.Texture = ToolFx.Textures.Rope
+	beam.TextureMode = Enum.TextureMode.Static
+	beam.TextureLength = 2
+	beam.Width0 = 0.3
+	beam.Width1 = 0.3
+	beam.FaceCamera = true
+	beam.LightInfluence = 1
+	beam.Color = ColorSequence.new(Color3.fromHex("#CDB98A"))
+	beam.Segments = 1
+	beam.Parent = b
+end
+
+local function attach(part: BasePart, at: Vector3): Attachment
+	local a = Instance.new("Attachment")
+	a.Position = at
+	a.Parent = part
+	return a
+end
+
+local function rigHoists(world: Instance, params: RaycastParams, apply: (BasePart, string) -> boolean)
+	-- the ledge top near height `y` under point `p` (within 4 studs), or nil
+	local function ledgeAt(p: Vector3, y: number): number?
+		local hit = workspace:Raycast(Vector3.new(p.X, y + 4, p.Z), Vector3.new(0, -8, 0), params)
+		return hit and not hit.Instance:HasTag("DuoGate") and hit.Position.Y or nil
+	end
+	local function wood(name: string, size: Vector3, cf: CFrame, parent: Instance): Part
+		local p = hiddenPart(name, size, cf, parent)
+		apply(p, "SignPost")
+		return p
+	end
+	for _, piece in world:GetDescendants() do
+		local off = piece:GetAttribute("OpenOffset")
+		if
+			not piece:IsA("BasePart")
+			or not piece:HasTag("DuoGate")
+			or typeof(off) ~= "Vector3"
+			or off.Y <= 0
+			or not piece:GetAttribute("Solid")
+		then
+			continue
+		end
+		local half = piece.Size / 2
+		local below =
+			workspace:Raycast(piece.Position - Vector3.new(0, half.Y + 0.05, 0), Vector3.new(0, -2, 0), params)
+		if below then
+			continue -- rests on the floor while lowered
+		end
+		local openTop = piece.Position.Y + half.Y + off.Y
+		local holder = Instance.new("Folder")
+		holder.Name = "Hoist"
+		holder.Parent = piece.Parent
+		local cf = piece.CFrame
+		if math.max(piece.Size.X, piece.Size.Z) > 20 then
+			-- a bridge: posts on the ledge beyond each end, ropes to the deck's corners
+			local long = if piece.Size.Z >= piece.Size.X then cf.LookVector else cf.RightVector
+			local across = if piece.Size.Z >= piece.Size.X then cf.RightVector else cf.LookVector
+			local len = math.max(piece.Size.X, piece.Size.Z) / 2
+			local wide = math.min(piece.Size.X, piece.Size.Z) / 2
+			for _, dir in { -1, 1 } do
+				for _, side in { -1, 1 } do
+					local foot = piece.Position + long * dir * (len + 1.2) + across * side * (wide + 0.8)
+					local ground = ledgeAt(foot, openTop)
+					if not ground then
+						continue
+					end
+					wood(
+						"HoistPost",
+						v(0.9, HOIST_POST, 0.9),
+						CFrame.new(foot.X, ground + HOIST_POST / 2, foot.Z),
+						holder
+					)
+					-- a davit arm reaches out over the gap so the rope hangs clear of the ledge's face
+					local top = Vector3.new(foot.X, ground + HOIST_POST - 0.4, foot.Z)
+					local tip = top - long * dir * HOIST_ARM
+					local arm = wood(
+						"HoistArm",
+						v(0.7, HOIST_ARM + 0.5, 0.7),
+						CFrame.lookAt((top + tip) / 2, tip) * CFrame.Angles(math.rad(90), 0, 0),
+						holder
+					)
+					local corner = piece.CFrame:PointToObjectSpace(
+						piece.Position + long * dir * (len - 0.4) + across * side * (wide - 0.4)
+					)
+					rope(
+						attach(arm, arm.CFrame:PointToObjectSpace(tip - Vector3.new(0, 0.35, 0))),
+						attach(piece, Vector3.new(corner.X, half.Y, corner.Z))
+					)
+				end
+			end
+		else
+			-- a lift: find the ledge it rises to, stand a crane post there and swing a jib out over the lift
+			local best: { dir: Vector3, d: number, ground: number }? = nil
+			for _, dir in { cf.LookVector, -cf.LookVector, cf.RightVector, -cf.RightVector } do
+				local reach = math.abs(dir:Dot(cf.LookVector)) * half.Z + math.abs(dir:Dot(cf.RightVector)) * half.X
+				for d = reach + 1, reach + 14 do
+					local ground = ledgeAt(piece.Position + dir * d, openTop)
+					if ground and math.abs(ground - openTop) < 3 then
+						if not best or d < best.d then
+							best = { dir = dir, d = d + 1.5, ground = ground }
+						end
+						break
+					end
+				end
+			end
+			if not best then
+				holder:Destroy()
+				continue
+			end
+			local jibY = openTop + JIB_CLEAR
+			local base = piece.Position + best.dir * best.d
+			local h = jibY + 1 - best.ground
+			wood("CranePost", v(1.4, h, 1.4), CFrame.new(base.X, best.ground + h / 2, base.Z), holder)
+			local tip = Vector3.new(piece.Position.X, jibY, piece.Position.Z)
+			local mid = (Vector3.new(base.X, jibY, base.Z) + tip) / 2
+			local jibLen = best.d + 1
+			wood("CraneJib", v(1.2, jibLen, 1.2), CFrame.lookAt(mid, tip) * CFrame.Angles(math.rad(90), 0, 0), holder)
+			local block = hiddenPart("Pulley", v(1, 1.2, 1), CFrame.new(tip - Vector3.new(0, 1.2, 0)), holder)
+			block.Transparency = 0
+			block.Material = Enum.Material.Metal
+			block.Color = IRON
+			local hook = attach(block, v(0, -0.6, 0))
+			for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+				rope(hook, attach(piece, v(c[1] * (half.X - 0.4), half.Y, c[2] * (half.Z - 0.4))))
+			end
+		end
+	end
+end
+
 -- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the
 -- board's ends so they never cover the lettering).
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
@@ -1114,6 +1254,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	params.RespectCanCollide = true
 	rootSprings(world, params)
 	rigGantries(world, params, apply)
+	rigHoists(world, params, apply)
 	dressPieces(world, apply)
 	skyIslands(world, apply)
 	-- a girder hanging over a chasm (the Spring Yard ferry crusher) stood on nothing: two steel beams run from it to
@@ -1175,6 +1316,82 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 				break
 			end
 		end
+	end
+	-- the Fire Bar Run gallery glass was a bare pale slab: now real glass in a wooden frame (posts, sill, top rail),
+	-- starting at the gallery floor instead of hanging below it. Frame pieces don't collide or block aim rays.
+	for _, glass in world:GetDescendants() do
+		if glass.Name ~= "GalleryGlass" or not glass:IsA("BasePart") then
+			continue
+		end
+		local cf, size = glass.CFrame, glass.Size
+		local long = if size.Z >= size.X then cf.LookVector else cf.RightVector
+		local length = math.max(size.X, size.Z)
+		local thick = math.min(size.X, size.Z)
+		local top = glass.Position.Y + size.Y / 2
+		-- the floor on the gallery side (the glass stands on the walk's edge)
+		local side = (if size.Z >= size.X then cf.RightVector else cf.LookVector) * (thick / 2 + 0.6)
+		local floorY
+		for _, s in { -1, 1 } do
+			local hit = workspace:Raycast(
+				glass.Position + side * s + Vector3.new(0, size.Y / 2, 0),
+				Vector3.new(0, -size.Y, 0),
+				params
+			)
+			if hit and (not floorY or hit.Position.Y > floorY) then
+				floorY = hit.Position.Y
+			end
+		end
+		if not floorY then
+			continue
+		end
+		local h = top - floorY
+		glass.Size = if size.Z >= size.X then v(thick, h, length) else v(length, h, thick)
+		glass.CFrame = cf.Rotation + Vector3.new(glass.Position.X, floorY + h / 2, glass.Position.Z)
+		glass.Material = Enum.Material.Glass
+		glass.Color = Color3.fromRGB(215, 235, 245)
+		glass.Transparency = 0.85
+		glass.Reflectance = 0.12
+		local frame = Instance.new("Folder")
+		frame.Name = "GlassFrame"
+		frame.Parent = glass.Parent
+		local function iron(name: string, sz: Vector3, at: CFrame)
+			local p = hiddenPart(name, sz, at, frame)
+			p.Transparency = 0
+			p.Material = Enum.Material.Wood -- painted metal read navy under the sky; warm wood like the gantries
+			p.Color = Color3.fromHex("#7A4E2A")
+		end
+		local base = CFrame.lookAt(
+			Vector3.new(glass.Position.X, floorY, glass.Position.Z),
+			Vector3.new(glass.Position.X, floorY, glass.Position.Z) + long
+		)
+		local posts = math.ceil(length / 11)
+		for i = 0, posts do
+			local z = -length / 2 + i * length / posts
+			iron("GlassPost", v(thick + 0.5, h, 0.6), base * CFrame.new(0, h / 2, -z))
+		end
+		iron("GlassSill", v(thick + 0.9, 0.8, length + 0.6), base * CFrame.new(0, 0.4, 0))
+		iron("GlassRail", v(thick + 0.7, 0.6, length + 0.6), base * CFrame.new(0, h - 0.3, 0))
+		iron("GlassRail", v(thick + 0.5, 0.4, length), base * CFrame.new(0, 9, 0))
+	end
+	-- Miko's pull levers sit up high (only her Pull reaches them) and hung in mid-air: a wooden post now runs from
+	-- the ground to the lever's foot, capped with an iron plate the lever pivots on (it throws over on its foot)
+	for _, lever in world:GetDescendants() do
+		if lever.Name ~= "PullLever" or not lever:IsA("BasePart") then
+			continue
+		end
+		local foot = lever.CFrame * Vector3.new(0, -lever.Size.Y / 2, 0)
+		local hit = workspace:Raycast(foot - Vector3.new(0, 0.1, 0), Vector3.new(0, -60, 0), params)
+		local h = hit and foot.Y - 0.3 - hit.Position.Y
+		if not (hit and h and h > 0.5) then
+			continue
+		end
+		local post =
+			hiddenPart("LeverPost", v(1.1, h, 1.1), CFrame.new(foot.X, hit.Position.Y + h / 2, foot.Z), lever.Parent)
+		apply(post, "SignPost")
+		local cap = hiddenPart("LeverCap", v(2.2, 0.4, 2.2), CFrame.new(foot.X, foot.Y - 0.5, foot.Z), lever.Parent)
+		cap.Transparency = 0
+		cap.Material = Enum.Material.Metal
+		cap.Color = IRON
 	end
 	for _, sign in world:GetDescendants() do
 		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then

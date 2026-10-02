@@ -88,9 +88,18 @@ local function runDropper(dropper: BasePart)
 			block:SetNetworkOwner(nil)
 		end
 		task.spawn(function()
-			task.wait(life)
-			while block.Parent and frozen(block) do
-				task.wait(0.25) -- never pull a block out from under a grapple
+			-- gone at the end of its life, or once it falls past the kill floor (missed blocks fell for their whole
+			-- lifetime and hung as orange specks far below the level)
+			local killY = ((workspace:GetAttribute("KillY") or -60) :: number) - 10
+			local born = os.clock()
+			while block.Parent do
+				if frozen(block) then
+					task.wait(0.25) -- never pull a block out from under a grapple
+				elseif os.clock() - born >= life or block.Position.Y < killY then
+					break
+				else
+					task.wait(0.25)
+				end
 			end
 			block:Destroy()
 		end)

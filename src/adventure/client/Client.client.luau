@@ -19,6 +19,7 @@ local order = {
 	"PipController",
 	"BeltController",
 	"SpringController",
+	"FanController",
 	"ToolFxController",
 	"AudioController",
 }
