@@ -400,7 +400,17 @@ local function turrets(folder: Instance, foundations: { BasePart })
 				end
 				table.insert(placed, corner)
 				local c = corner + out * 3.2
+				-- roofs only where nothing of the castle lies behind the turret (on screen, above it): at room joints a
+				-- roof would sit in the middle of the top-down view
 				local far = sz < 0
+				if far then
+					local behind = CFrame.new(c.X, top - 10, c.Z - 30)
+					for _, other in workspace:GetPartBoundsInBox(behind, Vector3.new(12, 4, 56), overlap) do
+						if other ~= f then
+							far = false
+						end
+					end
+				end
 				local height = if far then 9 else 7.5
 				local bottomY = ROCK_TOP - 4
 				local shaftH = top + height - bottomY
@@ -446,18 +456,18 @@ local function turrets(folder: Instance, foundations: { BasePart })
 					)
 				end
 				if far then -- a stepped slate cone roof with a little banner pole
-					local steps = 7
+					local steps = 14
 					for k = 0, steps - 1 do
 						local r = (TURRET_R + 1.2) * (1 - k / steps)
 						stone(
 							"TurretRoof",
-							Vector3.new(1.6, r * 2, r * 2),
-							CFrame.new(c.X, top + height + 0.8 + k * 1.5, c.Z) * CFrame.Angles(0, 0, math.rad(90)),
+							Vector3.new(0.9, r * 2, r * 2),
+							CFrame.new(c.X, top + height + 0.8 + k * 0.8, c.Z) * CFrame.Angles(0, 0, math.rad(90)),
 							SLATE_ROOF,
 							true
 						)
 					end
-					local poleTop = top + height + 0.8 + steps * 1.5 + 4
+					local poleTop = top + height + 0.8 + steps * 0.8 + 4
 					art(folder, "TurretPole", Vector3.new(0.3, 5, 0.3), CFrame.new(c.X, poleTop - 2.5, c.Z), {
 						Material = Enum.Material.Metal,
 						Color = Color3.fromRGB(60, 58, 70),

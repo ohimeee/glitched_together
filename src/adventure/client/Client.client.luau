@@ -22,6 +22,7 @@ local order = {
 	"FanController",
 	"ToolFxController",
 	"AudioController",
+	"AmbientController",
 }
 
 for _, name in order do
