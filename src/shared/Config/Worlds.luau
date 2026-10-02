@@ -17,6 +17,9 @@ export type Look = {
 	SunTexture: string?, -- nil = Roblox's default sun
 	SunSize: number?, -- degrees (Sky.SunAngularSize), default 21
 	EnvSpecular: number?, -- Lighting.EnvironmentSpecularScale, default 1 (lower = less sky sheen on glossy toys)
+	EnvDiffuse: number?, -- Lighting.EnvironmentDiffuseScale, default 1
+	-- a Blender-rendered panorama around the level (blender_assets/<World>Sky.blend → textures/sky); nil = default sky
+	Skybox: { Bk: string, Ft: string, Lf: string, Rt: string, Up: string, Dn: string }?,
 }
 
 export type World = {
@@ -57,12 +60,15 @@ local ByName: { [string]: World } = {
 		Title = "Pixel Plains",
 		Palette = { rgb(88, 200, 72), rgb(110, 190, 255), rgb(255, 205, 40) }, -- bright green, sky blue, coin gold
 		Look = {
-			ClockTime = 13,
-			Brightness = 2.4,
+			-- Oct 2 (10th session): afternoon sun to match the Blender panorama (blender_assets/PixelPlainsSky.blend,
+			-- rendered with the sun at this ClockTime's direction); lower light so the level sits in that world
+			ClockTime = 15,
+			Brightness = 1.6,
 			Ambient = rgb(120, 130, 150),
-			OutdoorAmbient = rgb(150, 170, 200),
-			AtmosphereDensity = 0.18, -- light haze only: more and the grass washes out to mint
-			AtmosphereHaze = 0.5,
+			OutdoorAmbient = rgb(110, 120, 140),
+			EnvDiffuse = 0.6,
+			AtmosphereDensity = 0.12, -- the panorama carries its own aerial haze; this only softens far level pieces
+			AtmosphereHaze = 0,
 			AtmosphereColor = rgb(200, 230, 255),
 			AtmosphereDecay = rgb(120, 180, 255),
 			BloomIntensity = 0.6,
@@ -73,6 +79,14 @@ local ByName: { [string]: World } = {
 			SunTexture = "rbxassetid://120731124856629", -- a kid's crayon sun (textures/PP_CrayonSun2.png, art-direction §8)
 			SunSize = 30,
 			EnvSpecular = 0.25, -- the plastic kit reflected so much sky that the grass read pale mint
+			Skybox = { -- voxel valley far below, lakes, villages, floating islands, the Starfall castle ahead on the skyline
+				Bk = "rbxassetid://115564504494293",
+				Ft = "rbxassetid://124076922050746",
+				Lf = "rbxassetid://134819212004535",
+				Rt = "rbxassetid://106272469387845",
+				Up = "rbxassetid://123368559944337",
+				Dn = "rbxassetid://135599544937063",
+			},
 		},
 	},
 	StarfallCastle = {
@@ -159,7 +173,7 @@ local function applyLook(look: Look)
 	Lighting.Brightness = look.Brightness
 	Lighting.Ambient = look.Ambient
 	Lighting.OutdoorAmbient = look.OutdoorAmbient
-	Lighting.EnvironmentDiffuseScale = 1
+	Lighting.EnvironmentDiffuseScale = look.EnvDiffuse or 1
 	Lighting.EnvironmentSpecularScale = look.EnvSpecular or 1
 
 	local atmosphere = child("Atmosphere", "WorldAtmosphere")
@@ -182,6 +196,13 @@ local function applyLook(look: Look)
 	local sky = child("Sky", "WorldSky")
 	sky.SunTextureId = look.SunTexture or "rbxasset://sky/sun.jpg"
 	sky.SunAngularSize = look.SunSize or 21
+	local box = look.Skybox
+	sky.SkyboxBk = if box then box.Bk else "rbxasset://textures/sky/sky512_bk.tex"
+	sky.SkyboxFt = if box then box.Ft else "rbxasset://textures/sky/sky512_ft.tex"
+	sky.SkyboxLf = if box then box.Lf else "rbxasset://textures/sky/sky512_lf.tex"
+	sky.SkyboxRt = if box then box.Rt else "rbxasset://textures/sky/sky512_rt.tex"
+	sky.SkyboxUp = if box then box.Up else "rbxasset://textures/sky/sky512_up.tex"
+	sky.SkyboxDn = if box then box.Dn else "rbxasset://textures/sky/sky512_dn.tex"
 end
 
 return { Order = Order, ByName = ByName, ApplyLook = applyLook }

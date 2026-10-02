@@ -1100,7 +1100,230 @@ local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 		if d:IsA("BasePart") then
 			d.CastShadow = false -- far scenery: no shadow cost
 			if d:IsA("MeshPart") then
-				d.Color = d.Color:Lerp(HAZE, 0.35)
+				d.Color = d.Color:Lerp(HAZE, 0.15) -- lighter since the Blender panorama carries the depth
+			end
+		end
+	end
+end
+
+-- The route's grass slabs were thin plates hanging in the sky. Now each is the top of a floating island like the
+-- ones in the Blender panorama around the level: a stepped dirt-and-stone underside narrowing downward, with roots
+-- and grass vines hanging off it. Undersides never collide, and one is skipped (or kept shallow) wherever a moving
+-- piece travels below its slab (lifts, ferries, cradles, falling blocks' lanes).
+local ROOT = Color3.fromHex("#6B4423")
+local VINE = Color3.fromHex("#3FA34D")
+
+local function islandUndersides(world: Instance, params: RaycastParams, apply: (BasePart, string) -> boolean)
+	-- where moving pieces sweep: current pose, every waypoint, and the open pose of lifts and bridges
+	local sweeps: { { min: Vector3, max: Vector3 } } = {}
+	local function addBox(cf: CFrame, size: Vector3)
+		local half = size / 2 + Vector3.new(2, 2, 2)
+		table.insert(sweeps, { min = cf.Position - half, max = cf.Position + half })
+	end
+	for _, d in world:GetDescendants() do
+		if not d:IsA("BasePart") then
+			continue
+		end
+		if d:HasTag("Mover") or d:HasTag("DuoGate") or d:HasTag("Pullable") or d.Name == "Dropper" then
+			local off = d:GetAttribute("OpenOffset")
+			local lo, hi = d.Position, d.Position + (if typeof(off) == "Vector3" then off else Vector3.zero)
+			local mid = (lo + hi) / 2
+			addBox(CFrame.new(mid), d.Size + Vector3.new(0, math.abs(hi.Y - lo.Y), 0))
+			local wps = d:FindFirstChild("Waypoints")
+			for _, w in (wps and wps:GetChildren() or {}) do
+				if w:IsA("BasePart") then
+					addBox(w.CFrame, d.Size)
+				end
+			end
+			if d.Name == "Dropper" then -- blocks fall straight down from it
+				addBox(CFrame.new(d.Position - Vector3.new(0, 60, 0)), Vector3.new(d.Size.X, 120, d.Size.Z))
+			end
+		end
+	end
+	local function clear(cf: CFrame, size: Vector3, own: BasePart): boolean
+		local half = size / 2
+		local lo, hi = cf.Position - half, cf.Position + half
+		for _, s in sweeps do
+			if
+				lo.X < s.max.X
+				and hi.X > s.min.X
+				and lo.Y < s.max.Y
+				and hi.Y > s.min.Y
+				and lo.Z < s.max.Z
+				and hi.Z > s.min.Z
+			then
+				return false
+			end
+		end
+		-- and nothing solid of the level in the way (a lower path running under this slab)
+		local overlap = OverlapParams.new()
+		overlap.FilterType = Enum.RaycastFilterType.Include
+		overlap.FilterDescendantsInstances = { world }
+		overlap.RespectCanCollide = true
+		for _, hit in workspace:GetPartBoundsInBox(cf, size, overlap) do
+			if hit ~= own then
+				return false
+			end
+		end
+		return true
+	end
+	-- gameplay pieces keep a clear ring around them (plates, levers, checkpoints, gates, rings, pipes...)
+	local keepout: { Vector3 } = {}
+	for _, d in world:GetDescendants() do
+		if
+			d:IsA("BasePart")
+			and (
+				d:HasTag("PressurePlate")
+				or d:HasTag("Checkpoint")
+				or d:HasTag("DuoPound")
+				or d:HasTag("HeavyLever")
+				or d:HasTag("Pullable")
+				or d:HasTag("GrappleRing")
+				or d:HasTag("Station")
+				or d:HasTag("DuoGate")
+				or d:HasTag("Mover")
+				or d:HasTag("Hazard")
+				or d:HasTag("JumpVent")
+				or d:HasTag("VentButton")
+				or d:HasTag("WorldExit")
+				or d.Name == "Sign"
+				or d.Name == "WarpPipe"
+			)
+		then
+			table.insert(keepout, d.Position)
+		end
+	end
+	local rng = Random.new(2026)
+	local folder = Instance.new("Folder")
+	folder.Name = "IslandUndersides"
+	folder.Parent = world
+	local function block(size: Vector3, cf: CFrame, color: Color3)
+		local p = hiddenPart("Underside", size, cf, folder)
+		p.Transparency = 0
+		p.Material = SMOOTH
+		p.MaterialVariant = PLASTIC
+		p.Color = color
+		p.CastShadow = false
+		return p
+	end
+	for _, floor in world:GetDescendants() do
+		if
+			not floor:IsA("BasePart")
+			or floor:GetAttribute("Skin") ~= "GrassBlock"
+			or floor:HasTag("Mover")
+			or floor:HasTag("DuoGate")
+			or floor.Parent == folder
+			or floor:FindFirstAncestor("SkyIslands")
+		then
+			continue
+		end
+		local size = floor.Size
+		local w = math.min(size.X, size.Z)
+		if w < 8 then
+			continue
+		end
+		local bottom = floor.Position.Y - size.Y / 2
+		-- resting on something already (a slab on a cliff or on the ground): nothing hangs below it
+		if
+			workspace:Raycast(
+				Vector3.new(floor.Position.X, bottom - 0.05, floor.Position.Z),
+				Vector3.new(0, -3, 0),
+				params
+			)
+		then
+			continue
+		end
+		local rot = floor.CFrame.Rotation
+		local depth = math.clamp(w * 0.55, 6, 20)
+		local layers = {
+			{ k = 0.86, d = depth * 0.45, color = PP.Dirt },
+			{ k = 0.62, d = depth * 0.35, color = Color3.fromHex("#8F5E33") },
+			{ k = 0.36, d = depth * 0.3, color = Color3.fromHex("#8C8C96") },
+		}
+		local y = bottom
+		local placed: { { size: Vector3, cf: CFrame } } = {}
+		for _, layer in layers do
+			local s = Vector3.new(size.X * layer.k, layer.d, size.Z * layer.k)
+			local cf = CFrame.new(floor.Position.X, y - layer.d / 2 + 0.2, floor.Position.Z) * rot
+			if not clear(cf, s, floor) then
+				break
+			end
+			table.insert(placed, { size = s, cf = cf })
+			y -= layer.d - 0.2
+		end
+		for i, pl in placed do
+			block(pl.size, pl.cf, layers[i].color)
+		end
+		-- flowers and bushes along the slab's free edges (never near a gameplay piece, never where the path goes on)
+		local topY = floor.Position.Y + size.Y / 2
+		local function freeSpot(at: Vector3): boolean
+			for _, k in keepout do
+				if (k - at).Magnitude < 7 then
+					return false
+				end
+			end
+			return true
+		end
+		for _, side in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+			local alongX = side[1] == 0
+			local len = if alongX then size.X else size.Z
+			local spacing = 4.5
+			for t = -len / 2 + 2.5, len / 2 - 2.5, spacing do
+				if rng:NextNumber() > 0.5 then
+					continue
+				end
+				local lx = if alongX then t else side[1] * (size.X / 2 - 1.6)
+				local lz = if alongX then side[2] * (size.Z / 2 - 1.6) else t
+				local at = floor.CFrame * Vector3.new(lx, size.Y / 2, lz)
+				local out = floor.CFrame * Vector3.new(lx + side[1] * 2.4, size.Y / 2, lz + side[2] * 2.4)
+				-- the edge continues into more floor (a joined path): leave it open
+				if workspace:Raycast(out + Vector3.new(0, 3, 0), Vector3.new(0, -6, 0), params) or not freeSpot(at) then
+					continue
+				end
+				local bush = rng:NextNumber() < 0.4
+				local skin = if bush then "Bush" else "Flowers"
+				local design = if bush then v(2.9, 4, 2.9) else v(3.3, 3, 2.2)
+				local scale = if bush then rng:NextNumber(0.9, 1.5) else rng:NextNumber(0.8, 1.2)
+				local sz = design * scale
+				local p = hiddenPart(
+					"Foliage",
+					sz,
+					CFrame.new(at.X, topY + sz.Y / 2 - 0.1, at.Z) * CFrame.Angles(0, rng:NextNumber(0, 2 * math.pi), 0),
+					folder
+				)
+				if not apply(p, skin) then
+					p:Destroy()
+				end
+			end
+		end
+		-- roots and grass vines hanging off the island's edges
+		if #placed > 0 then
+			local top = placed[1]
+			local count = math.floor(math.clamp((size.X + size.Z) / 8, 2, 10))
+			for _ = 1, count do
+				local along = rng:NextNumber(-0.45, 0.45)
+				local edge = rng:NextInteger(1, 4)
+				local hx, hz = top.size.X / 2 - 0.4, top.size.Z / 2 - 0.4
+				local lx, lz
+				if edge == 1 then
+					lx, lz = hx, along * top.size.Z
+				elseif edge == 2 then
+					lx, lz = -hx, along * top.size.Z
+				elseif edge == 3 then
+					lx, lz = along * top.size.X, hz
+				else
+					lx, lz = along * top.size.X, -hz
+				end
+				local len = rng:NextNumber(1.5, 4.5)
+				local start = top.cf * CFrame.new(lx, -top.size.Y / 2, lz)
+				local cf = start * CFrame.new(0, -len / 2 + 0.3, 0)
+				if clear(cf, Vector3.new(1.4, len, 1.4), floor) then
+					local vine = rng:NextNumber() < 0.55
+					block(Vector3.new(1.2, len, 1.2), cf, if vine then VINE else ROOT)
+					if vine and len > 2.5 then -- a leafy tip
+						block(Vector3.new(1.8, 1.2, 1.8), cf * CFrame.new(0, -len / 2, 0), Color3.fromHex("#58B848"))
+					end
+				end
 			end
 		end
 	end
@@ -1317,6 +1540,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			end
 		end
 	end
+	islandUndersides(world, params, apply)
 	-- the Fire Bar Run gallery glass was a bare pale slab: now real glass in a wooden frame (posts, sill, top rail),
 	-- starting at the gallery floor instead of hanging below it. Frame pieces don't collide or block aim rays.
 	for _, glass in world:GetDescendants() do
