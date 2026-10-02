@@ -25,10 +25,10 @@ FACES = {
 }
 
 
-def render_faces(scene, cam, out_dir, prefix, size=1024, samples=128, faces=None):
-    """faces: optional subset, e.g. ['Dn', 'Ft'] for quick low-res previews (size=384, samples=24)."""
+def render_faces(scene, cam, out_dir, prefix, size=1024, samples=128, faces=None, origin=(0, 0, 0)):
+    """faces: optional subset, e.g. ['Dn', 'Ft'] for quick low-res previews (size=384, samples=24).
+    origin: camera position; raise z to make the ground read further below the level (castle: z 700)."""
     os.makedirs(out_dir, exist_ok=True)
-    cam.location = (0, 0, 0)
     cam.data.angle = 1.5707963  # 90 degrees
     cam.data.clip_start = 1
     cam.data.clip_end = max(cam.data.clip_end, 200000)
@@ -41,7 +41,7 @@ def render_faces(scene, cam, out_dir, prefix, size=1024, samples=128, faces=None
             continue
         L, U = Vector(look), Vector(up)
         R = L.cross(U)
-        cam.matrix_world = Matrix((R, U, -L)).transposed().to_4x4()  # camera X = right, Y = up, Z = -look
+        cam.matrix_world = Matrix.Translation(Vector(origin)) @ Matrix((R, U, -L)).transposed().to_4x4()  # X right, Y up, Z -look
         scene.render.filepath = os.path.join(out_dir, f"{prefix}_{name}.png")
         bpy.ops.render.render(write_still=True, scene=scene.name)
 

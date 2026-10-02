@@ -115,15 +115,17 @@ local ByName: { [string]: World } = {
 			Saturation = 0.15,
 			Contrast = 0.15,
 			Tint = rgb(255, 235, 220),
-			-- the castle stands on a crag over a moonlit kingdom: a river with a lantern road and hamlets right below (the
-			-- top-down camera sees mostly this), snowy mountains, a lake with the moon's glimmer, villages, Milky Way (blender_assets/PixelPlainsSky.blend, scene CastleSky)
+			-- the castle stands on a crag over a moonlit kingdom: right below (the top-down camera sees mostly the Dn face) a
+			-- river valley with a stone bridge, a lantern road, a village with a chapel and a watermill, pine forest; further
+			-- out snowy mountains, a lake, villages, Milky Way; rendered from 700 up so the valley reads far below, with valley
+			-- mist (blender_assets/PixelPlainsSky.blend, scene CastleSky, collection DnSet)
 			Skybox = {
-				Bk = "rbxassetid://110197999459355",
-				Ft = "rbxassetid://122474194171431",
-				Lf = "rbxassetid://72651284641325",
-				Rt = "rbxassetid://110193913027580",
-				Up = "rbxassetid://81474752675523",
-				Dn = "rbxassetid://121130221770536",
+				Bk = "rbxassetid://76482591344110",
+				Ft = "rbxassetid://129799494219118",
+				Lf = "rbxassetid://76374802988677",
+				Rt = "rbxassetid://111055250742013",
+				Up = "rbxassetid://111236374199370",
+				Dn = "rbxassetid://100676855591730",
 			},
 			BakedSky = true,
 		},

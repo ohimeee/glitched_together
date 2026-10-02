@@ -186,14 +186,21 @@ local SURFACES: { [Enum.Material]: { any } } = {
 
 -- Environment fill: the top-down camera looks DOWN, so what's below the rooms fills the frame. Every room floor gets a
 -- brick foundation down to the castle's rock (the rooms read as one castle mass, not tiles in a void), the cart track
--- gets timber trestle legs, and under it all a crag of dark rock steps down into the valley of the Blender panorama
--- (Oct 2: replaced the moonlit courtyard, which clashed with the rendered kingdom around it).
-local GROUND_Y = -90 -- where the foundations meet the crag (below KillY, so a fall never lands on it)
-local ROCK = Color3.fromRGB(92, 86, 108)
-local CRAG = { -- tiers under every floor: { grow (studs per side), height, shrink factor }
-	{ 10, 110, 1.0 },
-	{ 4, 140, 0.72 },
-	{ 0, 180, 0.45 },
+-- gets timber trestle legs, and under it all a mountain of real Terrain rock widens down toward the valley of the
+-- Blender panorama, so the castle reads as standing on a peak high above the kingdom (Oct 3: replaced box-tier crags).
+local GROUND_Y = -90 -- where the brick foundations end, buried in the rock
+local ROCK_TOP = -66 -- the rock's crown: just under KillY (-60), so it hugs the foundations but never catches a fall
+local MOUNTAIN = {
+	Depth = 640, -- how far below the crown the rock reaches (the panorama's valley mist hides the rest)
+	Step = 22, -- one faceted block (+ a jutting ledge) per step down
+	Spread = 0.15, -- extra half-width per stud of depth: the peak widens into a ridge
+	Wander = 0.28, -- sideways noise (studs per stud of depth), so the rock leans and bulges like a real crag
+}
+-- terrain colors: cool purple-grey rock to sit in the moonlit render, darker slate seams
+local TERRAIN_COLORS = {
+	[Enum.Material.Rock] = Color3.fromRGB(122, 114, 134),
+	[Enum.Material.Slate] = Color3.fromRGB(96, 90, 110),
+	[Enum.Material.Basalt] = Color3.fromRGB(84, 78, 96),
 }
 local function art(parent: Instance, name: string, size: Vector3, cf: CFrame, props: { [string]: any }): Part
 	local p = Instance.new("Part")
@@ -211,32 +218,171 @@ local function art(parent: Instance, name: string, size: Vector3, cf: CFrame, pr
 	return p
 end
 
+-- A rock column under one footprint: rotated, slightly tilted blocks step down (angular cliff facets, not round
+-- lumps), growing and wandering with noise, each with a smaller ledge jutting out; neighboring columns merge into one
+-- ridge. Noise seeds keep it the same on every load.
+local function rockColumn(terrain: Terrain, x: number, z: number, radius: number)
+	local seedX, seedZ = x / 97 + 0.31, z / 89 + 0.17
+	local h = MOUNTAIN.Step * 1.8
+	for d = 0, MOUNTAIN.Depth, MOUNTAIN.Step do
+		local r = radius + d * MOUNTAIN.Spread * (1 + math.noise(seedX, d / 140, seedZ) * 0.6)
+		local cx = x + math.noise(seedX, d / 210, 1.7) * d * MOUNTAIN.Wander
+		local cz = z + math.noise(2.3, d / 210, seedZ) * d * MOUNTAIN.Wander
+		local n = math.noise(cx / 60, d / 45, cz / 60)
+		local material = if n > 0.25
+			then Enum.Material.Slate
+			elseif n < -0.3 then Enum.Material.Basalt
+			else Enum.Material.Rock
+		local yaw = math.noise(seedX, d / 37, seedZ) * math.pi * 2
+		local tilt = math.rad(math.noise(d / 29, seedX, seedZ) * 10)
+		local y = ROCK_TOP - h / 2 - d
+		terrain:FillBlock(
+			CFrame.new(cx, y, cz) * CFrame.Angles(tilt, yaw, -tilt * 0.6),
+			Vector3.new(r * 1.9, h, r * 1.6),
+			material
+		)
+		if d > 0 then -- a ledge or buttress of rock jutting out of the face
+			local out = math.noise(d / 23, seedZ, seedX) * math.pi * 2
+			local lr = r * (0.35 + (math.noise(seedZ, d / 19, 3.1) + 0.5) * 0.3)
+			terrain:FillBlock(
+				CFrame.new(cx + math.cos(out) * r * 0.85, y - h * 0.2, cz + math.sin(out) * r * 0.85)
+					* CFrame.Angles(tilt * 1.5, yaw + out, tilt),
+				Vector3.new(lr * 1.6, h * 1.3, lr * 1.2),
+				material
+			)
+		end
+	end
+end
+
+-- Outer walls: a bare brick cliff of a foundation reads as a Roblox block, so every face that looks out (not into a
+-- neighboring room's foundation) gets what a real castle wall has: a stone string course under the floor, buttresses
+-- with sloped caps, and arrow slits between them (a few lit warm from inside).
+local WALL_TRIM = Color3.fromRGB(214, 200, 222)
+local SLIT_DARK = Color3.fromRGB(26, 20, 36)
+local SLIT_LIT = Color3.fromRGB(235, 190, 130)
+local function dressFoundations(folder: Instance, foundations: { BasePart })
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Include
+	overlap.FilterDescendantsInstances = foundations
+	local function covered(f: BasePart, at: Vector3): boolean
+		for _, other in workspace:GetPartBoundsInBox(CFrame.new(at), Vector3.one, overlap) do
+			if other ~= f then
+				return true
+			end
+		end
+		return false
+	end
+	local count = 0
+	for _, f in foundations do
+		local top = f.Position.Y + f.Size.Y / 2
+		local height = f.Size.Y
+		for _, n in { Vector3.xAxis, -Vector3.xAxis, Vector3.zAxis, -Vector3.zAxis } do
+			local along = Vector3.new(math.abs(n.Z), 0, math.abs(n.X)) -- the face's horizontal direction
+			local length = if n.X ~= 0 then f.Size.Z else f.Size.X
+			local half = if n.X ~= 0 then f.Size.X / 2 else f.Size.Z / 2
+			local face = Vector3.new(f.Position.X, 0, f.Position.Z) + n * half
+			local function at(s: number, y: number, out: number): Vector3
+				return face + along * s + n * out + Vector3.new(0, y, 0)
+			end
+			if length >= 10 and not covered(f, at(0, top - 4, 1.5)) then
+				art(
+					folder,
+					"StringCourse",
+					Vector3.new(length + 1.2, 1.2, 1.4),
+					CFrame.lookAt(at(0, top - 3, 0.5), at(0, top - 3, 2)),
+					{
+						Material = Enum.Material.Slate,
+						MaterialVariant = "CastleWall",
+						Color = WALL_TRIM,
+					}
+				)
+				local bays = math.max(1, math.floor(length / 18))
+				local bay = length / bays
+				for i = 0, bays do
+					local s = -length / 2 + i * bay
+					if i > 0 and i < bays and not covered(f, at(s, top - 10, 1.5)) then
+						local h = height - 10
+						art(
+							folder,
+							"Buttress",
+							Vector3.new(3.2, h, 2.4),
+							CFrame.lookAt(at(s, top - 8 - h / 2, 1.2), at(s, top - 8 - h / 2, 3)),
+							{
+								Material = Enum.Material.Slate,
+								MaterialVariant = "CastleWall",
+								Color = Color3.fromRGB(176, 158, 194),
+							}
+						)
+						local cap = Instance.new("WedgePart")
+						cap.Size = Vector3.new(3.2, 3, 2.4)
+						cap.CFrame = CFrame.lookAt(at(s, top - 6.5, 1.2), at(s, top - 6.5, 3))
+						cap.Material = Enum.Material.Slate
+						cap.MaterialVariant = "CastleWall"
+						cap.Color = WALL_TRIM
+						cap.Anchored, cap.CanCollide, cap.CanQuery, cap.CanTouch = true, false, false, false
+						cap.Name = "ButtressCap"
+						cap.Parent = folder
+					end
+					if i < bays then -- arrow slits in the middle of the bay, one per 20 studs of wall height
+						local ms = s + bay / 2
+						for y = top - 14, top - height + 12, -20 do
+							if not covered(f, at(ms, y, 1.5)) then
+								count += 1
+								local lit = count % 5 == 0
+								art(
+									folder,
+									"ArrowSlit",
+									Vector3.new(1, 4.5, 0.3),
+									CFrame.lookAt(at(ms, y, 0.1), at(ms, y, 2)),
+									{
+										Material = if lit then Enum.Material.SmoothPlastic else Enum.Material.Slate,
+										Color = if lit then SLIT_LIT else SLIT_DARK,
+										CastShadow = false,
+									}
+								)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 local function fillEnvironment(world: Instance)
 	local folder = Instance.new("Folder")
 	folder.Name = "Environment"
+	local terrain = workspace.Terrain
+	for material, color in TERRAIN_COLORS do
+		terrain:SetMaterialColor(material, color)
+	end
+	local columns: { { number } } = {}
+	local foundations: { BasePart } = {}
+	local function column(x: number, z: number, radius: number)
+		for _, c in columns do -- a footprint already covered by a bigger column nearby: skip it (keeps the fill fast)
+			if (c[1] - x) ^ 2 + (c[2] - z) ^ 2 < (c[3] * 0.6) ^ 2 and c[3] >= radius * 0.8 then
+				return
+			end
+		end
+		table.insert(columns, { x, z, radius })
+	end
 	for _, floor in world:GetDescendants() do
 		if floor:IsA("BasePart") and floor.Material == Enum.Material.Cobblestone and floor.Size.Y <= 2.5 then
 			local bottom = floor.Position.Y - floor.Size.Y / 2
-			local depth = bottom - GROUND_Y -- every room stands on the courtyard (nothing floats)
-			-- the crag: wider than the room at the top, narrowing as it drops into the dark (jittered so the
-			-- tiers of neighboring rooms run together as one rock mass)
-			local y = GROUND_Y + 2
-			for i, tier in CRAG do
-				local sx = floor.Size.X * tier[3] + tier[1] * 2
-				local sz = floor.Size.Z * tier[3] + tier[1] * 2
-				local jitter =
-					Vector3.new(math.noise(floor.Position.X / 37, i) * 6, 0, math.noise(floor.Position.Z / 41, i) * 6)
-				art(
-					folder,
-					"Crag",
-					Vector3.new(sx, tier[2], sz),
-					CFrame.new(floor.Position + jitter + Vector3.new(0, y - tier[2] / 2 - floor.Position.Y, 0))
-						* CFrame.Angles(0, math.rad(math.noise(i, floor.Position.Z / 53) * 8), 0),
-					{ Material = Enum.Material.Rock, Color = ROCK, CastShadow = false }
-				)
-				y -= tier[2] - 6
+			local depth = bottom - GROUND_Y -- every room stands on the mountain (nothing floats)
+			-- rock under the whole footprint: one column per ~40 studs of floor
+			local nx = math.max(1, math.round(floor.Size.X / 40))
+			local nz = math.max(1, math.round(floor.Size.Z / 40))
+			local cell = math.max(floor.Size.X / nx, floor.Size.Z / nz)
+			for i = 1, nx do
+				for k = 1, nz do
+					local lx = (i - 0.5) / nx * floor.Size.X - floor.Size.X / 2
+					local lz = (k - 0.5) / nz * floor.Size.Z - floor.Size.Z / 2
+					local p = floor.CFrame * Vector3.new(lx, 0, lz)
+					column(p.X, p.Z, cell * 0.72 + 6)
+				end
 			end
-			art(
+			foundations[#foundations + 1] = art(
 				folder,
 				"Foundation",
 				Vector3.new(floor.Size.X, depth, floor.Size.Z),
@@ -250,13 +396,7 @@ local function fillEnvironment(world: Instance)
 		elseif floor:IsA("BasePart") and floor.Name == "TrackBend" then
 			local top = floor.Position.Y - 0.5
 			local depth = top - GROUND_Y
-			art( -- a rock pier under each trestle leg
-				folder,
-				"Crag",
-				Vector3.new(9, 160, 9),
-				CFrame.new(floor.Position.X, GROUND_Y + 2 - 80, floor.Position.Z) * CFrame.Angles(0, math.rad(20), 0),
-				{ Material = Enum.Material.Rock, Color = ROCK, CastShadow = false }
-			)
+			column(floor.Position.X, floor.Position.Z, 7) -- a rock spur under each trestle leg
 			art(
 				folder,
 				"Trestle",
@@ -272,6 +412,16 @@ local function fillEnvironment(world: Instance)
 		end
 	end
 	folder.Parent = world
+	dressFoundations(folder, foundations)
+	task.spawn(function() -- in the background: the rest of the dressing doesn't wait for the rock
+		for _, c in columns do
+			if not world.Parent then
+				return -- the world was unloaded mid-fill (ArtService clears the terrain on the next load)
+			end
+			rockColumn(terrain, c[1], c[2], c[3])
+			task.wait()
+		end
+	end)
 end
 
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)

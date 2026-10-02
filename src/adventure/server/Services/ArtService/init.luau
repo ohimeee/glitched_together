@@ -197,6 +197,7 @@ end
 
 -- Dresses a freshly built grey-box world. Runs in the background: shells pop in once the meshes load.
 function ArtService.Dress(world: Instance, worldName: string)
+	workspace.Terrain:Clear() -- terrain belongs to one world at a time (the castle's mountain)
 	local art = Worlds[worldName]
 	if not art then
 		return
