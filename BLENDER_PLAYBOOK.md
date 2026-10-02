@@ -243,6 +243,14 @@ Recommended first: **Poly Haven** (free, no key), useful for textures and lighti
 8. Check in play from the real gameplay camera (castle is top-down: the Dn face is what players see most; keep it detailed and readable, no bright reflections right below). Lower the level's brightness/ambient until its colors sit in the render.
 - Gotchas: camera `clip_end` default 100 hides everything; Generated coords in a world shader must be normalized (else cube seams); test-face mapping is in `tools/blender_sky.py`'s docstring.
 
+**Oct 3 (11th session) additions:**
+- Scenes now in `PixelPlainsSky.blend`: `Scene` (Pixel Plains), `CastleSky`, `CoreSky`, `PrologueSky`. Rebuild scripts: `tools/castle_valley/` (castle Dn valley), `tools/core_sky/build.py`, `tools/prologue_sky/build.py` (all exec'd through `execute_blender_code`).
+- **Depth trick:** when the ground below reads too close from the gameplay camera, render from higher up (`render_faces(..., origin=(0, 0, 700))`), not by moving the world.
+- **Check the gameplay camera, not only the faces:** the castle valley looked right on the Dn face but too close in play; mist planes looked fine top-down but turned into blue blotches at grazing angles (keep mist small and only near the centre).
+- Lamps in a scene with a glossy floor: `obj.visible_glossy = False`, or the mirror shows the sun as a blob.
+- Every panorama world gets a day clock aimed at the render's key light (brute-force `GeographicLatitude` × `ClockTime` in a running server against the light's Roblox direction: Blender (x, y, z) → Roblox (−x, z, y)).
+- Tie the level to the panorama: castle stands on Terrain rock that widens into the valley; Core floors stand on the same brass rods as the panorama's chunks.
+
 **In-level dressing recipes (ArtService/PixelPlains.luau Extras, all non-colliding, CanQuery off):**
 - `islandUndersides`: every `GrassBlock` slab ≥ 8 wide gets 3 shrinking dirt/dirt/stone tiers below, vines/roots off the edges, Flowers/Bush skins along free edges (an edge is "joined" if a ray 2.4 out hits floor). Skips slabs resting on something, and any tier overlapping a moving piece's sweep (Mover waypoints, DuoGate open offset, Pullables, dropper lanes) or solid level geometry; foliage keeps 7 studs from gameplay parts.
 - `rigHoists`: DuoGate bridges/lifts with an upward `OpenOffset` that hang over nothing: bridges get posts + davit arms on both ledges and Beam ropes to the deck corners; lifts get a crane post on the ledge they rise to, a jib, a pulley, 4 ropes. Beams follow moving attachments, so ropes stay taut.
