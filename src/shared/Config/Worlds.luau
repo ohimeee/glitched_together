@@ -42,19 +42,36 @@ local ByName: { [string]: World } = {
 		Title = "The Title Screen",
 		Palette = { rgb(20, 24, 58), rgb(240, 240, 250), rgb(255, 80, 170) }, -- dark navy, white UI, pink glitch
 		Look = {
-			ClockTime = 0,
-			Brightness = 1.5,
-			Ambient = rgb(60, 60, 110),
-			OutdoorAmbient = rgb(110, 110, 170),
-			AtmosphereDensity = 0.35,
-			AtmosphereHaze = 1.5,
-			AtmosphereColor = rgb(120, 110, 200),
-			AtmosphereDecay = rgb(255, 80, 170),
-			BloomIntensity = 0.8,
-			BloomThreshold = 1.4,
+			-- the title screen built for real (Blender panorama, tools/prologue_sky): a navy theater void with soft
+			-- stars, a glossy mirror floor with a UI grid far below, giant acrylic menu panels with neon rims, glossy
+			-- toy planets and floating toy blocks (It Takes Two's space chapter), the kid-handwritten "Starfall
+			-- Kingdom" logo glowing ahead. Day clock (Roblox dims skyboxes at night) aimed at the render's cool key
+			-- light (ClockTime 10.95 at latitude 61), at night-level brightness
+			ClockTime = 10.95,
+			Latitude = 61,
+			Brightness = 0.7,
+			EnvDiffuse = 0.6,
+			EnvSpecular = 0.8, -- the glossy menu plastic picks up the panorama's neon
+			Ambient = rgb(62, 68, 122),
+			OutdoorAmbient = rgb(74, 82, 146),
+			AtmosphereDensity = 0.2,
+			AtmosphereHaze = 0, -- the panorama has its own haze; Roblox's would paint over it
+			AtmosphereColor = rgb(26, 34, 82),
+			AtmosphereDecay = rgb(255, 95, 162),
+			BloomIntensity = 1,
+			BloomThreshold = 1.2,
 			Saturation = 0.15,
 			Contrast = 0.1,
 			Tint = rgb(235, 235, 255),
+			Skybox = {
+				Bk = "rbxassetid://133071942702128",
+				Ft = "rbxassetid://99972279466311",
+				Lf = "rbxassetid://114345424601219",
+				Rt = "rbxassetid://117595638886618",
+				Up = "rbxassetid://85625615938647",
+				Dn = "rbxassetid://120383211523524",
+			},
+			BakedSky = true,
 		},
 	},
 	PixelPlains = {
