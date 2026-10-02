@@ -20,6 +20,8 @@ export type Look = {
 	EnvDiffuse: number?, -- Lighting.EnvironmentDiffuseScale, default 1
 	-- a Blender-rendered panorama around the level (blender_assets/<World>Sky.blend → textures/sky); nil = default sky
 	Skybox: { Bk: string, Ft: string, Lf: string, Rt: string, Up: string, Dn: string }?,
+	Latitude: number?, -- Lighting.GeographicLatitude (default 41.73): with ClockTime, aims the light at a baked moon
+	BakedSky: boolean?, -- the skybox already has its moon/sun and stars: hide Roblox's own celestial bodies and stars
 }
 
 export type World = {
@@ -94,13 +96,18 @@ local ByName: { [string]: World } = {
 		Title = "Starfall Castle",
 		Palette = { rgb(59, 42, 90), rgb(255, 179, 71), rgb(232, 182, 76) }, -- night purple, torch amber, trim gold (art-direction §16)
 		Look = {
-			-- night interior, warm torch pools against cool purple (art-direction.md §8–9); the grey-box adds wall torches
-			ClockTime = 21,
-			Brightness = 1.5,
+			-- night interior, warm torch pools against cool purple (art-direction.md §8–9); the grey-box adds wall torches.
+			-- Roblox dims a custom skybox at night, so the clock stays at day and the "sun" is the baked moon: ClockTime
+			-- 8.9 at latitude 78 points it exactly at the moon in the panorama, at moonlight brightness
+			ClockTime = 8.9,
+			Latitude = 78,
+			Brightness = 0.45,
+			EnvDiffuse = 0.5,
+			EnvSpecular = 0.5,
 			Ambient = rgb(100, 80, 140),
 			OutdoorAmbient = rgb(120, 95, 160),
-			AtmosphereDensity = 0.2,
-			AtmosphereHaze = 1,
+			AtmosphereDensity = 0.15,
+			AtmosphereHaze = 0, -- the panorama has its own night haze; Roblox's would paint over it
 			AtmosphereColor = rgb(110, 80, 150),
 			AtmosphereDecay = rgb(255, 179, 71),
 			BloomIntensity = 1,
@@ -108,6 +115,17 @@ local ByName: { [string]: World } = {
 			Saturation = 0.15,
 			Contrast = 0.15,
 			Tint = rgb(255, 235, 220),
+			-- the castle stands on a crag over a moonlit kingdom: a river with a lantern road and hamlets right below (the
+			-- top-down camera sees mostly this), snowy mountains, a lake with the moon's glimmer, villages, Milky Way (blender_assets/PixelPlainsSky.blend, scene CastleSky)
+			Skybox = {
+				Bk = "rbxassetid://110197999459355",
+				Ft = "rbxassetid://122474194171431",
+				Lf = "rbxassetid://72651284641325",
+				Rt = "rbxassetid://110193913027580",
+				Up = "rbxassetid://81474752675523",
+				Dn = "rbxassetid://121130221770536",
+			},
+			BakedSky = true,
 		},
 	},
 	GlitchedCore = {
@@ -170,6 +188,7 @@ end
 -- Applies a world's lighting. Safe on server and client.
 local function applyLook(look: Look)
 	Lighting.ClockTime = look.ClockTime
+	Lighting.GeographicLatitude = look.Latitude or 41.7333
 	Lighting.Brightness = look.Brightness
 	Lighting.Ambient = look.Ambient
 	Lighting.OutdoorAmbient = look.OutdoorAmbient
@@ -196,6 +215,8 @@ local function applyLook(look: Look)
 	local sky = child("Sky", "WorldSky")
 	sky.SunTextureId = look.SunTexture or "rbxasset://sky/sun.jpg"
 	sky.SunAngularSize = look.SunSize or 21
+	sky.CelestialBodiesShown = not look.BakedSky
+	sky.StarCount = if look.BakedSky then 0 else 3000
 	local box = look.Skybox
 	sky.SkyboxBk = if box then box.Bk else "rbxasset://textures/sky/sky512_bk.tex"
 	sky.SkyboxFt = if box then box.Ft else "rbxasset://textures/sky/sky512_ft.tex"
