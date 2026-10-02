@@ -1116,6 +1116,66 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	rigGantries(world, params, apply)
 	dressPieces(world, apply)
 	skyIslands(world, apply)
+	-- a girder hanging over a chasm (the Spring Yard ferry crusher) stood on nothing: two steel beams run from it to
+	-- the ground on both sides, each ending in a leg (memory grounded-props). Roofs already resting on walls are left.
+	local STEEL = Color3.fromRGB(150, 152, 160)
+	local function steel(name: string, size: Vector3, cf: CFrame, parent: Instance)
+		local p = hiddenPart(name, size, cf, parent)
+		p.Transparency = 0
+		p.Material = Enum.Material.CorrodedMetal
+		p.Color = STEEL
+	end
+	for _, roof in world:GetDescendants() do
+		if roof.Name ~= "FactoryRoof" or not roof:IsA("BasePart") then
+			continue
+		end
+		-- supported if anything solid sits under a corner (walls along a lane); its own crusher doesn't count
+		local supported = false
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			local at = roof.CFrame * Vector3.new(c[1] * (roof.Size.X / 2 - 0.5), 0, c[2] * (roof.Size.Z / 2 - 0.5)) -- from mid-height: walls reach into the roof
+			local hit = workspace:Raycast(at, Vector3.new(0, -80, 0), params)
+			if hit and not CollectionService:HasTag(hit.Instance, "Mover") then
+				supported = true
+			end
+		end
+		if supported then
+			continue
+		end
+		for _, axis in { roof.CFrame.LookVector, roof.CFrame.RightVector } do
+			local half = if axis == roof.CFrame.LookVector then roof.Size.Z / 2 else roof.Size.X / 2
+			local ends = {}
+			for _, dir in { -1, 1 } do
+				for d = half + 2, half + 70, 2 do
+					local at = roof.Position + axis * dir * d
+					local hit = workspace:Raycast(at, Vector3.new(0, -80, 0), params)
+					if hit then
+						ends[dir] = { at = at + axis * dir * 2, ground = hit.Position.Y }
+						break
+					end
+				end
+			end
+			if ends[-1] and ends[1] then
+				local y = roof.Position.Y + roof.Size.Y / 2 + 0.6
+				local side = axis:Cross(Vector3.yAxis).Unit
+				for _, s in { -1, 1 } do
+					local offset = side * s * (math.min(roof.Size.X, roof.Size.Z) / 2 - 1)
+					local a, b = ends[-1].at + offset, ends[1].at + offset
+					local mid = (a + b) / 2
+					steel(
+						"Girder",
+						v(1.2, 1.2, (b - a).Magnitude),
+						CFrame.lookAt(Vector3.new(mid.X, y, mid.Z), Vector3.new(b.X, y, b.Z)),
+						roof
+					)
+					for _, e in { { a, ends[-1].ground }, { b, ends[1].ground } } do
+						local h = y - e[2]
+						steel("GirderLeg", v(1.2, h, 1.2), CFrame.new(e[1].X, e[2] + h / 2, e[1].Z), roof)
+					end
+				end
+				break
+			end
+		end
+	end
 	for _, sign in world:GetDescendants() do
 		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then
 			continue
