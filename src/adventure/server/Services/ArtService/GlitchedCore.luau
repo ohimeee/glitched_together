@@ -285,7 +285,77 @@ local function wireCubes(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 end
 
+-- 3-3 Memory Lane: broken copies of the earlier worlds wear those worlds' real kits, faded toward the Core's grey
+-- (art-direction §8: Glitch level 2, "players recognize them and feel how far they've come")
+local FADE = Color3.fromRGB(190, 190, 196)
+local function fade(part: BasePart)
+	for _, shell in part:GetChildren() do
+		if shell:IsA("MeshPart") then
+			shell.Color = if shell.TextureID ~= "" then FADE else shell.Color:Lerp(GREY, 0.45)
+		end
+	end
+end
+
+local ECHO_SKINS = { -- section → { part name → skin }
+	TitleEcho = { TitleStart = "UIPanel", TitleEnd = "UIPanel", TitleExit = "UIPanel" },
+	PlainsEcho = {
+		PlainsStart = "GrassBlock",
+		PlainsFar = "GrassBlock",
+		PlainsExit = "GrassBlock",
+		PixelCrusher = "Crusher",
+		PullLever = "PullLever",
+	},
+	CastleEcho = { Skeleton = "Skeleton", SplitSlime = "SplitSlime" },
+}
+
+local function dressEchoes(world: Instance, apply: (BasePart, string) -> boolean)
+	for section, map in ECHO_SKINS do
+		local model = world:FindFirstChild(section)
+		if not model then
+			continue
+		end
+		for _, part in model:GetDescendants() do
+			local skin = part:IsA("BasePart") and map[part.Name]
+			if skin and not part:GetAttribute("Skinned") and apply(part :: BasePart, skin) then
+				fade(part :: BasePart)
+			end
+		end
+		-- falling blocks spawn later: dress and fade them as they come
+		model.DescendantAdded:Connect(function(d)
+			if d.Name == "FallBlock" and d:IsA("BasePart") then
+				task.defer(function()
+					if d.Parent and apply(d, "FallBlock") then
+						fade(d)
+					end
+				end)
+			end
+		end)
+	end
+	local castle = world:FindFirstChild("CastleEcho")
+	for _, part in (castle and castle:GetDescendants() or {}) do
+		if not part:IsA("BasePart") or part:GetAttribute("Skinned") then
+			continue
+		end
+		if part.Material == Enum.Material.Cobblestone then
+			part.MaterialVariant = "CastleFloor" -- the real castle flagstones, still in their faded color
+		elseif part.Material == Enum.Material.Slate then
+			part.MaterialVariant = "CastleWall"
+		elseif part.Name == "Crystal" and apply(part, "CrystalTeal") then
+			local light = Instance.new("PointLight")
+			light.Color = Palette.Miko
+			light.Range = 12
+			light.Brightness = 2
+			light.Enabled = part:GetAttribute("Active") == true
+			light.Parent = part
+			part:GetAttributeChangedSignal("Active"):Connect(function()
+				light.Enabled = part:GetAttribute("Active") == true
+			end)
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
+	dressEchoes(world, apply) -- first, so the Core's own surfaces below skip the skinned echo floors
 	for _, part in world:GetDescendants() do
 		if not part:IsA("BasePart") or part:IsA("MeshPart") or part:GetAttribute("Skinned") then
 			continue
