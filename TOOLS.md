@@ -32,7 +32,7 @@ Every call needs `studio_id` from `list_roblox_studios`.
 
 **Scripted playtests can't press ProximityPrompts** (prompts never show while Studio is driven from the MCP, even a fresh one). Test prompt-driven pieces through a Studio-only hook instead, e.g. a Station's `DebugOccupant` attribute (StationService).
 
-**Can't do:** Studio UI clicks (File → Import 3D). MCPControl can't bring Studio to the front while VS Code holds focus → ask the user to import FBX files (batch them). Scripts can't set a MaterialVariant's maps at runtime → declare variants in `adventure.project.json` (MaterialService).
+**Studio UI clicks work (Oct 2, 2026):** MCPControl `press_key "alt"` first, then `focus_window "Adventure.rbxl - Roblox Studio"` (the Alt press lifts Windows' foreground lock), then `click_at` in real 1920×1080 pixels. Import 3D: Home → Import (~752, 100) → Open dialog: double-click `blender_assets`, File name `"A.fbx" "B.fbx"`, Open → Import Queue → Start Import (~1843, 842). Imports land ×100 in Workspace: read ids, divide by 100, delete. Capture dialogs with PowerShell `System.Drawing` `CopyFromScreen` (MCPControl screenshots miss them). Don't drive the mouse while the user is using the PC. Scripts can't set a MaterialVariant's maps at runtime → declare variants in `adventure.project.json` (MaterialService).
 
 ## 2. Blender
 
