@@ -423,8 +423,13 @@ local function buildPixelPlains(world: Model)
 		return order
 	end
 
+	-- `Skin` tells ArtService what to dress it with (no name lists): tall blocks are cliffs, the rest grass blocks
 	local function grass(size: Vector3, x: number, top: number, z: number, name: string?): Part
-		return platform(P, size, x, top, z, { color = GRASS, name = name or "Grass" })
+		return platform(P, size, x, top, z, {
+			color = GRASS,
+			name = name or "Grass",
+			attrs = { Skin = if size.Y >= 16 then "Cliff" else "GrassBlock" },
+		})
 	end
 	local function dirtWall(size: Vector3, x: number, top: number, z: number)
 		platform(P, size, x, top, z, { color = DIRT, name = "DirtWall" })
@@ -925,7 +930,7 @@ local function buildPixelPlains(world: Model)
 				name = "SwitchBlock",
 				color = if phase then Palette.PixelPlains.Gold else Palette.PixelPlains.Sky, -- both read against the dirt wall
 				tags = { "SwitchBlock" },
-				attrs = { Group = group, Phase = phase },
+				attrs = { Group = group, Phase = phase, Skin = if phase then "SwitchOn" else "SwitchOff" },
 			})
 			for _, face in { Enum.NormalId.Top, Enum.NormalId.Left, Enum.NormalId.Right } do -- the side-on camera looks along X
 				local gui = Instance.new("SurfaceGui")

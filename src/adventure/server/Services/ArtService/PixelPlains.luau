@@ -1,10 +1,13 @@
 -- Pixel Plains art (blender_assets/PixelPlains.*, briefs/PixelPlains.md). 1-stud voxels with small bevels, exact
 -- art-direction.md palette; gameplay pieces wear their OWNER's color (Kai orange frames on freezables, Miko teal
 -- ring and crate handles). Offsets/sizes are generated from Blender (studs, front = -Z) at each Design size.
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local CombatFx = require(script.Parent.Parent.CombatFx)
 
 local PP = Palette.PixelPlains
 local SMOOTH = Enum.Material.SmoothPlastic
@@ -505,8 +508,107 @@ Skins.CrankSkin = {
 	},
 }
 
+-- Oct 2 art pass (8th/9th session): the rest of the grey-box pieces, as real toys (references: retro platformer
+-- playsets: glossy molded plastic, bevelled edges, rolled pipe lips, cast-iron and painted-wood parts).
+Skins.FirePostSkin = gen( -- riveted cast-iron column with a brass gear hub (the fire bar's pivot)
+	"rbxassetid://113537937737960",
+	"rbxassetid://110304799388283",
+	v(2, 18, 2),
+	v(2.5, 18, 2.5)
+)
+Skins.WarpPipeSkin = gen( -- glossy white molded pipe (white = both players), the dark hole is where you pound in
+	"rbxassetid://84704856449664",
+	"rbxassetid://129553837547928",
+	v(6, 3, 6),
+	v(6.2, 3, 6.2)
+)
+-- ON/OFF blocks: the plastic block kit in each set's color (gold ON, sky OFF); their ON/OFF labels stay on the
+-- grey-box faces, and InteractableService ghosts the shell instead of the hidden part
+local function switchSkin(body: Color3, rim: Color3): MeshAssets.Skin
+	return {
+		Design = v(6, 2, 6),
+		Meshes = {
+			Body = {
+				Id = "rbxassetid://131819066639725",
+				Offset = v(0, 0, 0),
+				Size = v(5.8, 1.9, 5.8),
+				Material = SMOOTH,
+				Variant = PLASTIC,
+				Color = body,
+			},
+			Frame = {
+				Id = "rbxassetid://121713743901075",
+				Offset = v(0, 0, 0),
+				Size = v(6, 2, 6),
+				Material = SMOOTH,
+				Variant = PLASTIC,
+				Color = rim,
+			},
+		},
+	}
+end
+Skins.SwitchOn = switchSkin(PP.Gold, Color3.fromHex("#C8961E"))
+Skins.SwitchOff = switchSkin(PP.Sky, Color3.fromHex("#3E8FC8"))
+-- ? blocks: the coin-block kit in Miko's teal with her glowing rim (pullable); the "?" labels stay on the faces
+Skins.BonkSkin = {
+	Design = v(4, 4, 4),
+	Meshes = {
+		Body = {
+			Id = "rbxassetid://120682677424503",
+			Offset = v(0, 0, 0),
+			Size = v(3.7, 3.7, 3.7),
+			Material = SMOOTH,
+			Variant = PLASTIC,
+			Color = Color3.fromHex("#1A9E92"),
+		},
+		Frame = {
+			Id = "rbxassetid://139212127358567",
+			Offset = v(0, 0, 0),
+			Size = v(4, 4, 4),
+			Material = NEON,
+			Color = Palette.Glow.Miko,
+		},
+	},
+}
+-- the coin step a ? block pops out: a spent brown block with Kai's orange rim (freezable)
+Skins.CoinStepSkin = {
+	Design = v(6, 2, 6),
+	Meshes = {
+		Body = {
+			Id = "rbxassetid://131819066639725",
+			Offset = v(0, 0, 0),
+			Size = v(5.8, 1.9, 5.8),
+			Material = SMOOTH,
+			Variant = PLASTIC,
+			Color = Color3.fromHex("#96623A"),
+		},
+		Frame = {
+			Id = "rbxassetid://121713743901075",
+			Offset = v(0, 0, 0),
+			Size = v(6, 2, 6),
+			Material = NEON,
+			Color = Palette.Glow.Kai,
+		},
+	},
+}
+-- one panel of a white-painted toy fort gate (white = both players); Extras tiles panels along each gate
+Skins.GatePanel = gen("rbxassetid://78868320423660", "rbxassetid://115488721112651", v(8, 20, 2), v(8, 20, 2))
+-- fire bars: a riveted iron grate around the glowing red core (Extras keeps the core showing and adds flames)
+Skins.FireBarSkin =
+	gen("rbxassetid://116541654941008", "rbxassetid://86773366652974", v(1.5, 16, 13), v(13, 16, 1.6), nil, 90)
+-- pressure plates: a lemon-yellow push button in a steel frame (Extras adds the yellow → green status inlay)
+Skins.ButtonPad =
+	gen("rbxassetid://90355908254498", "rbxassetid://124486061906722", v(6, 0.6, 6), v(6.2, 0.75, 6.2), v(0, 0.05, 0))
+-- checkpoints: a chrome flagpole with a yellow star flag on a stone foot, beside a faint pad
+Skins.CheckpointFlag = gen("rbxassetid://102261413887397", "rbxassetid://98929759591630", v(2, 4.78, 3), v(2, 4.78, 3))
+
 local Dressing: { [string]: string } = {
 	MoveBlock = "MoveBlock",
+	FirePost = "FirePostSkin",
+	FireBar = "FireBarSkin",
+	WarpPipe = "WarpPipeSkin",
+	BonkBlock = "BonkSkin",
+	CoinStep = "CoinStepSkin",
 	SpringPad = "SpringPadSkin",
 	SwingCradle = "SwingSkin",
 	Ferry = "RaftSkin",
@@ -821,6 +923,117 @@ local function rigGantries(world: Instance, params: RaycastParams, apply: (BaseP
 	end
 end
 
+local function hiddenPart(name: string, size: Vector3, cf: CFrame, parent: Instance): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.CFrame = cf
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Transparency = 1
+	p.Parent = parent
+	return p
+end
+
+-- Oct 2 art pass: surfaces, gates, plates, checkpoints, fire bars and switch blocks (see the skins above).
+local SURFACES: { [string]: { any } } = { -- name → { material, variant?, color }: real surfaces, no mesh needed
+	Bridge = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(255, 222, 140) }, -- yellow-stained planks:
+	Lift = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(255, 222, 140) }, -- still read as the neutral
+	KaiLift = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(255, 222, 140) }, -- lever-driven pieces
+	WindmillArm = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(235, 215, 185) },
+	CrateIsland = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(225, 190, 150) },
+	CrateShelf = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(225, 190, 150) },
+	CannonBase = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(225, 190, 150) },
+	FactoryRoof = { Enum.Material.CorrodedMetal, nil, Color3.fromRGB(150, 152, 160) },
+	GrindRail = { Enum.Material.Metal, nil, Color3.fromRGB(205, 210, 220) },
+}
+
+local GATE_PANEL = 10 -- target panel width; each gate gets a whole number of panels
+local function dressPieces(world: Instance, apply: (BasePart, string) -> boolean)
+	for _, part in world:GetDescendants() do
+		if not part:IsA("BasePart") or part:GetAttribute("Skinned") then
+			continue
+		end
+		local surface = SURFACES[part.Name]
+		if surface then
+			part.Material = surface[1]
+			part.MaterialVariant = surface[2] or ""
+			part.Color = surface[3]
+		elseif part.Name:match("^Gate_") and part.Material == Enum.Material.Neon then
+			-- white toy fort panels along the gate, welded so they sink with it
+			local wide = part.Size.X >= part.Size.Z
+			local width = if wide then part.Size.X else part.Size.Z
+			local count = math.max(1, math.round(width / GATE_PANEL))
+			local w = width / count
+			local turn = if wide then CFrame.identity else CFrame.Angles(0, math.rad(90), 0)
+			for i = 1, count do
+				local panel = hiddenPart(
+					"GatePanel",
+					v(w, part.Size.Y, 2),
+					part.CFrame * turn * CFrame.new(-width / 2 + (i - 0.5) * w, 0, 0),
+					part
+				)
+				panel.Anchored = false
+				panel.Massless = true
+				local weld = Instance.new("WeldConstraint")
+				weld.Part0 = part
+				weld.Part1 = panel
+				weld.Parent = panel
+				apply(panel, "GatePanel")
+			end
+			part.Transparency = 1
+			part:SetAttribute("ArtHidden", true)
+		elseif CollectionService:HasTag(part, "PressurePlate") and apply(part, "ButtonPad") then
+			-- the plate's state used to show on the grey-box part (green neon while held): an inlay carries it now
+			local inlay = hiddenPart(
+				"StateInlay",
+				v(part.Size.X * 0.42, 0.06, part.Size.Z * 0.42),
+				part.CFrame * CFrame.new(0, part.Size.Y / 2 + 0.12, 0),
+				part
+			)
+			inlay.Transparency = 0.25
+			inlay.Material = NEON
+			local function show()
+				inlay.Color = if part:GetAttribute("Active") then Color3.fromRGB(90, 255, 140) else Palette.Glow.Neutral
+			end
+			part:GetAttributeChangedSignal("Active"):Connect(show)
+			show()
+		elseif CollectionService:HasTag(part, "Checkpoint") then
+			-- a yellow star flag on a chrome pole at the pad's edge; the pad itself goes faint
+			part.Transparency = 0.7
+			local design = Skins.CheckpointFlag.Design * 1.8
+			local flag = hiddenPart(
+				"CheckpointFlag",
+				design,
+				part.CFrame * CFrame.new(part.Size.X / 2 - 1.2, -part.Size.Y / 2 + design.Y / 2, part.Size.Z / 2 - 1.5),
+				part.Parent or world
+			)
+			if not apply(flag, "CheckpointFlag") then
+				flag:Destroy()
+			end
+		end
+	end
+	-- fire bars (grate skinned by Dressing): the red-hot core glows through the bars, flames lick off it
+	for _, bar in world:GetDescendants() do
+		if bar.Name == "FireBar" and bar:IsA("BasePart") and bar:GetAttribute("Skinned") then
+			bar.Transparency = 0.8 -- a faint red-hot glow: the grate and flames carry the look
+			CombatFx.Emit(bar, "Flame", 1.2, 40)
+		end
+	end
+	-- ON/OFF blocks: the shells start in the state the block is already in (the switch runs before the art loads)
+	for _, block in CollectionService:GetTagged("SwitchBlock") do
+		if block:IsDescendantOf(world) and block:GetAttribute("Skinned") then
+			for _, shell in block:GetChildren() do
+				if shell:IsA("MeshPart") then
+					shell.Transparency = if block:GetAttribute("SwitchSolid") == false then Tuning.SwitchGhost else 0
+				end
+			end
+		end
+	end
+end
+
 -- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the
 -- board's ends so they never cover the lettering).
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
@@ -830,6 +1043,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	params.RespectCanCollide = true
 	rootSprings(world, params)
 	rigGantries(world, params, apply)
+	dressPieces(world, apply)
 	for _, sign in world:GetDescendants() do
 		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then
 			continue

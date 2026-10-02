@@ -148,7 +148,16 @@ local function setSwitchBlock(block: BasePart, solid: boolean)
 	end
 	block:SetAttribute("SwitchSolid", solid)
 	block.CanCollide = solid
-	block.Transparency = if solid then 0 else Tuning.SwitchGhost
+	local look = if solid then 0 else Tuning.SwitchGhost
+	if block:GetAttribute("Skinned") then -- the art shell ghosts instead; the grey-box part stays hidden
+		for _, shell in block:GetChildren() do
+			if shell:IsA("MeshPart") then
+				shell.Transparency = look
+			end
+		end
+	else
+		block.Transparency = look
+	end
 end
 
 local function evaluateGroups()

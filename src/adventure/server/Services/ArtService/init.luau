@@ -52,6 +52,7 @@ local function moves(part: BasePart): boolean
 	return not part.Anchored
 		or CollectionService:HasTag(part, "Mover")
 		or CollectionService:HasTag(part, "Pullable")
+		or CollectionService:HasTag(part, "Freezable") -- e.g. coin steps sink by CFrame
 		or CollectionService:HasTag(part, "Enemy") -- CombatService moves enemies by CFrame
 		or CollectionService:HasTag(part, "Station") -- StationService turns cranks by CFrame
 		or CollectionService:HasTag(part, "DuoGate") -- InteractableService tweens gates and lifts
@@ -113,7 +114,7 @@ function ArtService.Dress(world: Instance, worldName: string)
 	end
 	task.spawn(function()
 		for _, d in world:GetDescendants() do
-			local skinName = art.Dressing[d.Name]
+			local skinName = d:GetAttribute("Skin") or art.Dressing[d.Name] -- a level part's own `Skin` wins
 			if skinName and d:IsA("BasePart") then
 				ArtService.Apply(d, skinName)
 			end
@@ -132,7 +133,7 @@ function ArtService.Dress(world: Instance, worldName: string)
 	end)
 	-- parts spawned later (dropper blocks) get their skin too
 	world.DescendantAdded:Connect(function(d)
-		local skinName = art.Dressing[d.Name]
+		local skinName = d:GetAttribute("Skin") or art.Dressing[d.Name]
 		if skinName and d:IsA("BasePart") and not d:GetAttribute("Skinned") then
 			task.defer(ArtService.Apply, d, skinName)
 		end
