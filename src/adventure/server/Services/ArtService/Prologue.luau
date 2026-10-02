@@ -98,4 +98,9 @@ local Dressing: { [string]: string } = {
 	TitleCard = "TitleCard",
 }
 
-return { Skins = Skins, Dressing = Dressing, Decor = {} }
+-- checkpoints: the floppy-disk save point from the Core kit (a title screen's SAVE)
+local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
+	require(script.Parent.GlitchedCore).SavePoints(world, apply)
+end
+
+return { Skins = Skins, Dressing = Dressing, Decor = {}, Extras = Extras }

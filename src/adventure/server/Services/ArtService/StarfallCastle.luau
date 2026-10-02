@@ -423,6 +423,17 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			end
 		end
 	end
+	-- textiles (Poly Haven CC0, textures/make_castle_fabric.py): the long royal rug is patterned jacquard, the
+	-- hanging sign banners are velvet; both keep their own color (the maps are grey and tintable)
+	for _, part in world:GetDescendants() do
+		if part:IsA("BasePart") and part.Material == Enum.Material.Fabric then
+			if part.Name == "Rug" then
+				part.MaterialVariant = "CastleRug"
+			elseif part.Name == "Sign" then
+				part.MaterialVariant = "CastleVelvet"
+			end
+		end
+	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
 	task.spawn(courtyard, world, apply) -- meshes load async; the rooms never wait on the backdrop
 	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)

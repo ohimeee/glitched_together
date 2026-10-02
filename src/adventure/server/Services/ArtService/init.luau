@@ -155,7 +155,12 @@ end
 local EXIT_ARCH_SCALE = 2.6 -- the arch's opening must clear the 12×12 portal field
 local function dressShared(world: Instance)
 	for _, part in world:GetDescendants() do
-		if not part:IsA("BasePart") or part:GetAttribute("Skinned") then
+		if
+			not part:IsA("BasePart")
+			or part:GetAttribute("Skinned")
+			or CollectionService:HasTag(part, "CodeLayer") -- Code Layer pieces keep their teal code look
+			or CollectionService:HasTag(part, "CodeVisual")
+		then
 			continue
 		end
 		if CollectionService:HasTag(part, "WorldExit") then
@@ -173,6 +178,8 @@ local function dressShared(world: Instance)
 			if not ArtService.Apply(arch, "ExitArch") then
 				arch:Destroy()
 			end
+		elseif CollectionService:HasTag(part, "PressurePlate") and ArtService.Apply(part, "ButtonPad") then
+			StateInlay(part) -- any plate a world didn't dress itself: the toy push button (Pixel Plains kit)
 		elseif CollectionService:HasTag(part, "DuoPound") and ArtService.Apply(part, "DuoButton") then
 			StateInlay(part, Palette.Glow.Duo, nil, CFrame.new(0, part.Size.Y / 2 + 0.75, 0))
 		elseif CollectionService:HasTag(part, "HeavyLever") and ArtService.Apply(part, "HeavyLeverSkin") then

@@ -85,6 +85,26 @@
           "StudsPerTile": 24
         }
       },
+      "CastleRug": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://118302308556286",
+          "NormalMap": "rbxassetid://117093538798141",
+          "RoughnessMap": "rbxassetid://105871132128816",
+          "StudsPerTile": 4
+        }
+      },
+      "CastleVelvet": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://128348157243303",
+          "NormalMap": "rbxassetid://136688146371671",
+          "RoughnessMap": "rbxassetid://73381672982441",
+          "StudsPerTile": 6
+        }
+      },
       "CoreFloor": {
         "$className": "MaterialVariant",
         "$properties": {

@@ -505,4 +505,5 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	debris(world, apply)
 end
 
-return { Skins = Skins, Dressing = Dressing, Decor = {}, Extras = Extras }
+-- SavePoints: the Prologue (a title screen) uses the same floppy-disk save points
+return { Skins = Skins, Dressing = Dressing, Decor = {}, Extras = Extras, SavePoints = savePoints }
