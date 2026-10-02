@@ -359,29 +359,22 @@ local function courtyard(world: Instance, apply: (BasePart, string) -> boolean)
 			if not apply(crown, "CourtTowerTop") then
 				crown:Destroy()
 			end
-			-- two warm slit windows facing the castle, one with a faint light
+			-- two warm slit windows facing the castle (neon only: a light per window cost more than it showed)
 			local face = if wx < x0 then 1 else -1
 			for k, wy in { 20, 38 } do
-				local win = art(
+				art(
 					folder,
 					"TowerWindow",
 					Vector3.new(0.4, 3.2, 1.6),
 					CFrame.new(wx + face * 12, GROUND_Y + wy, tz + (k - 1.5) * 4),
 					{ Material = Enum.Material.Neon, Color = Color3.fromRGB(190, 115, 45) }
 				)
-				if k == 2 then
-					local light = Instance.new("PointLight")
-					light.Color = Color3.fromRGB(255, 170, 90)
-					light.Range = 12
-					light.Brightness = 0.6
-					light.Parent = win
-				end
 			end
 		end
 	end
 	-- groves, lanterns along the lanes, wells and carts
 	local rng = Random.new(2026)
-	for _ = 1, 260 do
+	for _ = 1, 170 do
 		local x = rng:NextNumber(wx0 + 12, wx1 - 12)
 		local z = rng:NextNumber(cz - lz / 2, cz + lz / 2)
 		local nearLane = math.abs(x - (wx0 + 28)) < 14 or math.abs(x - (wx1 - 28)) < 14
@@ -395,9 +388,11 @@ local function courtyard(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 	for _, lx in { wx0 + 28, wx1 - 28 } do
 		local side = if lx < x0 then 1 else -1
+		local lit = false
 		for z = cz - lz / 2 + 20, cz + lz / 2 - 20, 60 do
 			local lantern = prop("Lantern", "CourtLantern", 1.4, lx + side * 10, z, 0)
-			if lantern then
+			lit = not lit
+			if lantern and lit then -- every other lantern glows: half the lights, the lanes still read
 				local light = Instance.new("PointLight")
 				light.Color = Color3.fromRGB(255, 175, 95)
 				light.Range = 12
@@ -409,6 +404,12 @@ local function courtyard(world: Instance, apply: (BasePart, string) -> boolean)
 			elseif rng:NextNumber() < 0.35 then
 				prop("HayCart", "CourtCart", 1.6, lx - side * 2, z + 30, rng:NextNumber(-20, 20))
 			end
+		end
+	end
+	-- the backdrop lies 90+ studs below in the dark: shadows there cost a lot and never show
+	for _, d in folder:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CastShadow = false
 		end
 	end
 end

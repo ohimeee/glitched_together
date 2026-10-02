@@ -2073,7 +2073,7 @@ local function buildStarfallCastle(world: Model)
 		light.Color = P.Torch
 		light.Range = 14 -- small warm pools (user, Oct 1: torches were too bright and reached too far)
 		light.Brightness = 0.7
-		light.Shadows = true
+		light.Shadows = false -- 40+ shadow-casting point lights under Future lighting lagged the castle
 		light.Parent = flame
 	end
 	local function flatSign(text: string, x: number, z: number, w: number)

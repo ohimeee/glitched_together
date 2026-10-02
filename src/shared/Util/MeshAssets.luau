@@ -29,7 +29,8 @@ local MeshAssets = {}
 local cache: { [string]: MeshPart } = {} -- id → loaded template (collision fidelity is part of the key)
 
 local function create(id: string, collision: Enum.CollisionFidelity): MeshPart
-	local options = { CollisionFidelity = collision, RenderFidelity = Enum.RenderFidelity.Precise }
+	-- Automatic = distance LOD (Precise kept full detail on hundreds of far backdrop meshes and lagged Studio)
+	local options = { CollisionFidelity = collision, RenderFidelity = Enum.RenderFidelity.Automatic }
 	local ok, result = pcall(function()
 		return AssetService:CreateMeshPartAsync(Content.fromUri(id), options)
 	end)
