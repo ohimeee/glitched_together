@@ -1027,6 +1027,7 @@ end
 -- cliff, sometimes a tree) and clouds drift below and beside it, so there's depth under every jump (It Takes Two's
 -- layered foreground/background). Nothing collides, and none sit where a falling player could see a "landing".
 local ISLANDS = 48
+local HAZE = Color3.fromRGB(214, 226, 236) -- pale and neutral: a sky-blue tint turned the grass teal (Miko's color)
 local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 	local floors = {}
 	for _, d in world:GetDescendants() do
@@ -1057,8 +1058,8 @@ local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 		local w = if far then rng:NextNumber(2.6, 4.2) else rng:NextNumber(1.2, 2.6)
 		local base = f.Position
 			+ Vector3.new(
-				side * (if far then rng:NextNumber(260, 460) else rng:NextNumber(85, 220)),
-				if far then rng:NextNumber(-60, 40) else -rng:NextNumber(40, 120),
+				side * (if far then rng:NextNumber(280, 480) else rng:NextNumber(130, 260)),
+				if far then rng:NextNumber(-70, 30) else -rng:NextNumber(70, 160),
 				rng:NextNumber(-60, 60)
 			)
 		local yaw = CFrame.Angles(0, math.rad(rng:NextInteger(0, 3) * 90), 0)
@@ -1093,9 +1094,13 @@ local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 			)
 		end
 	end
+	-- aerial haze: scenery leans toward the sky color so it never competes with the route (art-direction pillar 3)
 	for _, d in folder:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.CastShadow = false -- far scenery: no shadow cost
+			if d:IsA("MeshPart") then
+				d.Color = d.Color:Lerp(HAZE, 0.35)
+			end
 		end
 	end
 end
