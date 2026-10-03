@@ -244,14 +244,28 @@ local function buildPrologue(world: Model)
 
 	-- "Options slider": a 24-stud gap from the last button, past double jump (≤ 22), so it needs the air dash
 	platform(world, Vector3.new(20, 4, 20), 0, 11, 85, { color = NAVY, name = "OptionsSlider" })
-	platform(
-		world,
-		Vector3.new(3, 1.2, 20),
-		0,
-		11.6,
-		85,
-		{ color = Palette.Prologue.Pink, material = Enum.Material.Neon, collide = false }
-	)
+	-- the slider itself runs along the panel's right edge, clear of the save pad in the middle (user, Oct 4: the old
+	-- neon bar crossed SAVE SLOT 2): a rounded dark track, a pink fill up to a white knob, the panel's UI look
+	local along = CFrame.Angles(0, math.rad(90), 0) -- a Cylinder's axis is X: turn it to run along Z
+	block(world, Vector3.new(18, 1.2, 1.2), CFrame.new(7.5, 11.3, 85) * along, {
+		name = "SliderTrack",
+		color = rgb(28, 32, 58),
+		shape = Enum.PartType.Cylinder,
+		collide = false,
+	})
+	block(world, Vector3.new(11, 1.3, 1.3), CFrame.new(7.5, 11.3, 85 - 9 + 5.5) * along, {
+		name = "SliderFill",
+		color = Palette.Prologue.Pink,
+		material = Enum.Material.Neon,
+		shape = Enum.PartType.Cylinder,
+		collide = false,
+	})
+	block(world, Vector3.new(2.6, 2.6, 2.6), CFrame.new(7.5, 11.8, 85 + 2), {
+		name = "SliderKnob",
+		color = WHITE,
+		shape = Enum.PartType.Ball,
+		collide = false,
+	})
 	sign(world, "OPTIONS", CFrame.new(0, 17, 94), Vector3.new(14, 3, 0.4))
 	checkpoint(
 		world,
