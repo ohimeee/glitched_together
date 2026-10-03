@@ -28,6 +28,7 @@ local distance = C.Distance
 local shoulder = 0 -- 0..1, eased in while a tool is held (the crosshair sits beside the body, not on it)
 local stick = Vector2.zero
 local wasFollow = false
+local relockAt = 0 -- when the cursor last re-locked: the first mouse deltas after that are the cursor jumping to center
 local camParams = RaycastParams.new()
 camParams.FilterType = Enum.RaycastFilterType.Exclude
 camParams.RespectCanCollide = true
@@ -150,6 +151,9 @@ local function step(dt: number)
 	end
 	local m = if zone then (zone:GetAttribute("Mode") or mode) :: string else mode
 	local lock = wantsLock(m)
+	if lock and UserInputService.MouseBehavior ~= Enum.MouseBehavior.LockCenter then
+		relockAt = os.clock()
+	end
 	UserInputService.MouseBehavior = if lock then Enum.MouseBehavior.LockCenter else Enum.MouseBehavior.Default
 	-- with a tool out and the cursor free (side-on scenes, Alt), the HUD crosshair follows the cursor instead of the
 	-- mouse icon; menus and cutscenes (MenuContext) always get the normal cursor
@@ -213,7 +217,7 @@ function CameraController.Init()
 	UserInputService.InputChanged:Connect(function(input, processed)
 		local t = input.UserInputType
 		if t == Enum.UserInputType.MouseMovement then
-			if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
+			if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter and os.clock() - relockAt > 0.25 then
 				yaw -= input.Delta.X * C.MouseSensitivity
 				pitch = math.clamp(pitch - input.Delta.Y * C.MouseSensitivity, minPitch, maxPitch)
 			end

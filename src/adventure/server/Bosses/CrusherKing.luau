@@ -99,9 +99,11 @@ local function dropTile(self: any, tile: BasePart)
 	Audio.play("PoundDebris", tile.Position, 0.8)
 end
 
--- hide / show a tile's skin and chunks (the holder itself stays invisible under its skin)
+-- hide / show a tile with its grass cap and dirt chunks
 local function showTile(tile: BasePart, visible: boolean)
-	for _, d in tile:GetDescendants() do
+	local parts: { Instance } = tile:GetDescendants()
+	table.insert(parts, tile) -- the tile itself is the voxel dirt body now
+	for _, d in parts do
 		if d:IsA("BasePart") then
 			if visible then
 				local t = d:GetAttribute("ShownT")
@@ -198,6 +200,7 @@ local function parkFallen(self: any)
 	for tile in self.falling do
 		if not tile.Anchored and tile.Position.Y < self.floorTop - 120 then
 			tile.Anchored = true
+			CollectionService:RemoveTag(tile, "Freezable") -- no orange frame hanging in the void
 			showTile(tile, false) -- its skin and dirt chunk too: no floating island far below
 		end
 	end

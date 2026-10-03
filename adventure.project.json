@@ -35,6 +35,36 @@
       }
     },
     "MaterialService": {
+      "PPGrass": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "SmoothPlastic",
+          "ColorMap": "rbxassetid://133893697673627",
+          "NormalMap": "rbxassetid://101400798035898",
+          "RoughnessMap": "rbxassetid://128436289610332",
+          "StudsPerTile": 8
+        }
+      },
+      "PPDirt": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "SmoothPlastic",
+          "ColorMap": "rbxassetid://89611211122199",
+          "NormalMap": "rbxassetid://101400798035898",
+          "RoughnessMap": "rbxassetid://91238151835828",
+          "StudsPerTile": 8
+        }
+      },
+      "PPStone": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "SmoothPlastic",
+          "ColorMap": "rbxassetid://101435568374466",
+          "NormalMap": "rbxassetid://101400798035898",
+          "RoughnessMap": "rbxassetid://91072469260337",
+          "StudsPerTile": 8
+        }
+      },
       "PixelPlastic": {
         "$className": "MaterialVariant",
         "$properties": {

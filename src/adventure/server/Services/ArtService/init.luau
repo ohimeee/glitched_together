@@ -284,6 +284,14 @@ end
 -- Puts a skin over one grey-box part. Returns false (part untouched) if the meshes aren't available.
 function ArtService.Apply(part: BasePart, skinName: string): boolean
 	local skin = Skins[skinName]
+	if skin and skin.Build then
+		if not part.Parent then
+			return false
+		end
+		skin.Build(part, moves(part))
+		part:SetAttribute("Skinned", skinName)
+		return true
+	end
 	local templates = skin and templatesFor(skinName)
 	if not (skin and templates) or not part.Parent then
 		return false

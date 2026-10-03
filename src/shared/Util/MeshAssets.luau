@@ -22,7 +22,12 @@ export type MeshInfo = {
 }
 
 -- A set of meshes that dresses one grey-box part: offsets/sizes are at Design size and scale with the part.
-export type Skin = { Design: Vector3, Meshes: { [string]: MeshInfo } }
+-- `Build` instead dresses the part in code (any size, no stretching): Pixel Plains' voxel ground and cliffs.
+export type Skin = {
+	Design: Vector3,
+	Meshes: { [string]: MeshInfo },
+	Build: ((part: BasePart, weld: boolean) -> ())?,
+}
 
 local MeshAssets = {}
 

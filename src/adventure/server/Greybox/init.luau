@@ -65,6 +65,25 @@ local function block(parent: Instance, size: Vector3, cf: CFrame, opts: Opts?): 
 	return p
 end
 
+-- Section reveal (design.md §5 "show the next goal early", It Takes Two's arrival fly-overs): the first player to
+-- step into a new section gets a short fly-over of it, once per session. CutsceneService frames the shots from the
+-- section's own bounds, so no camera is placed by hand.
+local NO_REVEAL = { StarterMeadow = true, MissingTextures = true, GlitchChase = true } -- world intros / the chase
+local function revealTrigger(m: Model, entry: Vector3)
+	if NO_REVEAL[m.Name] then
+		return
+	end
+	local t = block(m, Vector3.new(50, 30, 24), CFrame.new(entry + Vector3.new(0, 12, 16)), {
+		name = "RevealTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "CutsceneTrigger" },
+		attrs = { Cutscene = "Reveal_" .. m.Name, Any = true, Once = true },
+	})
+	t.CanQuery = false
+	t.CanTouch = false
+end
+
 -- A platform whose TOP surface sits at `top`.
 local function platform(parent: Instance, size: Vector3, x: number, top: number, z: number, opts: Opts?): Part
 	return block(parent, size, CFrame.new(x, top - size.Y / 2, z), opts)
@@ -416,6 +435,7 @@ local function buildPixelPlains(world: Model)
 		m.Parent = world
 		P = m
 		table.insert(chunks, { model = m, entry = entry, exit = exit })
+		revealTrigger(m, entry)
 	end
 	local order = 0
 	local function nextOrder(): number
@@ -1420,6 +1440,35 @@ local function buildPixelPlains(world: Model)
 	})
 	bossTrigger.CanQuery = false
 	bossTrigger.CanTouch = false
+	-- the Crusher King's intro: the first player onto the landing pad gets a fly-up over his face (once a session)
+	local introTrigger = block(P, Vector3.new(30, 20, 16), CFrame.new(0, floorTop + 10, 1205), {
+		name = "BossIntroTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "CutsceneTrigger" },
+		attrs = { Cutscene = "W1_BossIntro", Any = true, Once = true },
+	})
+	introTrigger.CanQuery = false
+	introTrigger.CanTouch = false
+	local camPath = Instance.new("Folder")
+	camPath.Name = "CamPath_W1_BossIntro"
+	camPath.Parent = P
+	for i, shot in
+		{
+			{ Vector3.new(0, floorTop + 8, 1262), Vector3.new(0, floorTop + 40, 1320), 2.2 }, -- low, looking up at him
+			{ Vector3.new(6, floorTop + 50, 1291), Vector3.new(0, floorTop + 52, 1320), 3.0 }, -- his face
+			{ Vector3.new(38, floorTop + 46, 1222), Vector3.new(0, floorTop + 18, 1292), 2.6 }, -- the whole arena
+		}
+	do
+		local cam = block(camPath, Vector3.one, CFrame.lookAt(shot[1], shot[2]), {
+			name = tostring(i),
+			transparency = 1,
+			collide = false,
+			attrs = { Duration = shot[3] },
+		})
+		cam.CanQuery = false
+		cam.CanTouch = false
+	end
 
 	-- the rock his throne stands on (the rows in front of it can fall away; this never does)
 	grass(Vector3.new(52, 40, 50), 0, floorTop, 1323, "KingRock"):SetAttribute("Bare", true)
@@ -1599,6 +1648,7 @@ local function buildGlitchedCore(world: Model)
 		m.Parent = world
 		P = m
 		table.insert(chunks, { model = m, entry = entry, exit = exit })
+		revealTrigger(m, entry)
 	end
 	local order = 0
 	local function nextOrder(): number

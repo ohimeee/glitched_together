@@ -405,6 +405,68 @@ Skins.DirtWall = {
 		},
 	},
 }
+-- Voxel ground (Oct 3, 15th session; user: "remake the ground, the walls, the stone"): instead of one mesh stretched
+-- over every floor size, the grey-box part itself becomes a block of one-stud cubes through tiling MaterialVariants
+-- (PPGrass / PPDirt / PPStone, textures/make_pp_voxel_surfaces.py), with bands as thin shells just outside it:
+-- a grass cap on top, and on cliffs a dirt band under the grass over a stone body. Same look at any size.
+local WHITE = Color3.new(1, 1, 1)
+-- a soft multiply on the maps: direct sun made the grass read lime and the dirt orange (playtest shots, Oct 4)
+local VOXEL_TINT = {
+	PPGrass = Color3.fromRGB(214, 222, 204),
+	PPDirt = Color3.fromRGB(228, 218, 208),
+}
+local function shell(part: BasePart, name: string, height: number, fromTop: number, variant: string, weld: boolean)
+	local size = part.Size
+	local h = math.min(height, size.Y - fromTop)
+	if h <= 0.05 then
+		return
+	end
+	local grow = 0.08 * (1 + fromTop * 0.01) -- each band a hair wider than the one above it never z-fights
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = Vector3.new(size.X + grow, h + 0.04, size.Z + grow)
+	p.CFrame = part.CFrame * CFrame.new(0, size.Y / 2 - fromTop - h / 2 + 0.02, 0)
+	p.Material = SMOOTH
+	p.MaterialVariant = variant
+	p.Color = VOXEL_TINT[variant] or WHITE
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Anchored = not weld
+	p.Massless = true
+	if weld then
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = part
+		w.Part1 = p
+		w.Parent = p
+	end
+	p.Parent = part
+end
+local function body(part: BasePart, variant: string)
+	part.Material = SMOOTH
+	part.MaterialVariant = variant
+	part.Color = VOXEL_TINT[variant] or WHITE
+	part.Transparency = 0
+end
+local function voxelSkin(design: Vector3, build: (BasePart, boolean) -> ()): MeshAssets.Skin
+	return { Design = design, Meshes = {}, Build = build }
+end
+Skins.GrassBlock = voxelSkin(v(20, 6, 20), function(part, weld)
+	body(part, "PPDirt")
+	shell(part, "GrassCap", 1, 0, "PPGrass", weld)
+end)
+Skins.Cliff = voxelSkin(v(20, 20, 20), function(part, weld)
+	body(part, "PPStone")
+	shell(part, "GrassCap", 1, 0, "PPGrass", weld)
+	shell(part, "DirtBand", math.clamp(part.Size.Y * 0.2, 2, 5), 1, "PPDirt", weld)
+end)
+Skins.DirtWall = voxelSkin(v(4, 10, 20), function(part, weld)
+	body(part, "PPDirt")
+	shell(part, "GrassCap", 1, 0, "PPGrass", weld)
+end)
+
 Skins.Belt = {
 	Design = v(14, 2.45, 30),
 	Meshes = {
@@ -445,9 +507,26 @@ Skins.GlitchBlobSkin =
 Skins.BouncePadSkin =
 	gen("rbxassetid://127413358129106", "rbxassetid://86478495845252", v(8, 1, 8), v(7.6, 1.8, 7.6), v(0, 0.35, 0))
 Skins.StaticBatSkin = gen("rbxassetid://138838808176158", "rbxassetid://134256509753880", v(3, 2, 3), v(4.7, 2.5, 2.25))
-Skins.Tree = gen("rbxassetid://110637086239850", "rbxassetid://81380511005138", v(12, 16, 12), v(11.97, 15.89, 12))
-Skins.Flowers = gen("rbxassetid://97758112493229", "rbxassetid://84236852470382", v(3.3, 3, 2.2), v(3.28, 3, 2.21))
-Skins.Bush = gen("rbxassetid://97383134312851", "rbxassetid://132624303942108", v(2.9, 4, 2.9), v(2.85, 4, 2.86))
+-- Voxel trees and bushes (tools/pp_trees/trees.py, atlas textures/tree_palette.png): fitted into the old Tree / Bush
+-- design boxes, base on the box bottom, so every placement keeps working. Placements mix the variants (TREES/BUSHES).
+local TREE_ATLAS = "rbxassetid://130966209816773"
+Skins.Tree = gen("rbxassetid://72409509512406", TREE_ATLAS, v(12, 16, 12), v(12, 12.96, 11.52), v(0, -1.52, 0))
+Skins.TreeApple = gen("rbxassetid://114520128966291", TREE_ATLAS, v(12, 16, 12), v(12, 13.09, 11.45), v(0, -1.455, 0))
+Skins.TreePine = gen("rbxassetid://93784432245555", TREE_ATLAS, v(12, 16, 12), v(10.86, 16, 12))
+Skins.TreeBirch = gen("rbxassetid://130735768036343", TREE_ATLAS, v(12, 16, 12), v(8.26, 16, 7.23))
+-- voxel props (tools/pp_trees/trees.py: flowers / rock / tuft, same atlas family as the trees)
+local PROP_ATLAS = "rbxassetid://111423425443469"
+Skins.Flowers = gen("rbxassetid://138607135488831", PROP_ATLAS, v(3.3, 3, 2.2), v(3.3, 2.28, 2.03), v(0, -0.36, 0))
+Skins.Flowers2 = gen("rbxassetid://140248905620754", PROP_ATLAS, v(3.3, 3, 2.2), v(2.93, 2.2, 2.2), v(0, -0.4, 0))
+Skins.Flowers3 = gen("rbxassetid://95729661197876", PROP_ATLAS, v(3.3, 3, 2.2), v(3.3, 2.7, 2.1), v(0, -0.15, 0))
+Skins.Rock = gen("rbxassetid://126431877788942", PROP_ATLAS, v(2.5, 2.5, 3.5), v(2.5, 2.5, 3.5))
+Skins.Rock2 = gen("rbxassetid://105935790012403", PROP_ATLAS, v(4, 3, 4), v(4, 3, 4))
+Skins.Tuft = gen("rbxassetid://77719326350444", PROP_ATLAS, v(1.25, 1.25, 1.25), v(1.25, 1.25, 1.25))
+local FLOWERS = { "Flowers", "Flowers2", "Flowers3" }
+Skins.Bush = gen("rbxassetid://116906613547234", TREE_ATLAS, v(2.9, 4, 2.9), v(2.9, 2.54, 2.9), v(0, -0.73, 0))
+Skins.Bush2 = gen("rbxassetid://99808273007113", TREE_ATLAS, v(2.9, 4, 2.9), v(2.54, 2.9, 2.9), v(0, -0.55, 0))
+local TREES = { "Tree", "TreeApple", "TreePine", "TreeBirch" }
+local BUSHES = { "Bush", "Bush2" }
 
 -- Kit 3 (blender_assets/PixelPlainsKit3.*): signs, timed door, pull lever, dropper chute, "BY KAI + MIKO" letters.
 -- Real surfaces from Roblox materials (wood grain, metal); owner glow only on the gameplay part of each target.
@@ -882,8 +961,6 @@ local Decor: { { any } } = {
 	{ "Tree", CFrame.new(-87, 6.4, 12) * CFrame.Angles(0, math.rad(321), 0), 0.8, "StarterMeadow" },
 	{ "Tree", CFrame.new(87, 6.4, -12) * CFrame.Angles(0, math.rad(39), 0), 0.8, "StarterMeadow" },
 	{ "Tree", CFrame.new(-16, 5.6, 205) * CFrame.Angles(0, math.rad(357), 0), 0.7, "StarterMeadow" },
-	{ "Tree", CFrame.new(-24, 28, 1225) * CFrame.Angles(0, math.rad(18), 0), 1.0, "GlitchChase" },
-	{ "Tree", CFrame.new(24, 28.8, 1273) * CFrame.Angles(0, math.rad(330), 0), 1.1, "GlitchChase" },
 	-- kid details: the "BY KAI + MIKO" hill west of the meadow, facing the plaza; a floor fan under the vent;
 	-- the dropper's chute coming out of a cloud
 	-- a stepped voxel hill far out west (terraces, so it reads as a hill, not a wall); letters on the low front step
@@ -910,13 +987,22 @@ local Decor: { { any } } = {
 	{ "Cloud", CFrame.new(-40, 60, 60), 2.2, "CloudTower" },
 	{ "Cloud", CFrame.new(45, 80, 150) * CFrame.Angles(0, math.rad(-15), 0), 2.4, "CloudTower" },
 	{ "Flowers", CFrame.new(10, 43.8, 200) * CFrame.Angles(0, math.rad(40), 0), 1.2, "CloudTower" },
-	{ "Bush", CFrame.new(-11, 45, 196) * CFrame.Angles(0, math.rad(260), 0), 1.4, "CloudTower" },
 	-- Coin Press: the vault is stacked with coin blocks
 	{ "CoinBlock", CFrame.new(-10, 8, 200) * CFrame.Angles(0, math.rad(10), 0), 1.5, "CoinPress" },
 	{ "CoinBlock", CFrame.new(10, 8, 200) * CFrame.Angles(0, math.rad(-10), 0), 1.5, "CoinPress" },
 	{ "CoinBlock", CFrame.new(0, 14, 202), 2, "CoinPress" },
 	{ "Cloud", CFrame.new(40, 40, 110), 2, "CoinPress" },
 }
+-- mix the tree / bush variants through the hand-placed decor
+for i, item in Decor do
+	if item[1] == "Tree" then
+		item[1] = TREES[i % #TREES + 1]
+	elseif item[1] == "Bush" then
+		item[1] = BUSHES[i % #BUSHES + 1]
+	elseif item[1] == "Flowers" then
+		item[1] = FLOWERS[i % #FLOWERS + 1]
+	end
+end
 
 -- Spring pads: the coil stands on the pit floor and its board rides the pad, so the skin can't be welded (it
 -- floated over the floor at the top of the pump and sank through it at the bottom). It's anchored with its foot on
@@ -1077,7 +1163,6 @@ end
 -- underneath, welded to it: together they read as one jagged voxel island, and a falling tile takes its dirt along.
 local function bossTileChunks(world: Instance)
 	local rng = Random.new(1300)
-	local colors = { PP.Dirt, Color3.fromHex("#8F5E33"), Color3.fromHex("#8C8C96") }
 	for _, tile in world:GetDescendants() do
 		if not (tile:IsA("BasePart") and tile:HasTag("Crumble")) then
 			continue
@@ -1100,8 +1185,8 @@ local function bossTileChunks(world: Instance)
 			)
 			chunk.Transparency = 0
 			chunk.Material = SMOOTH
-			chunk.MaterialVariant = PLASTIC
-			chunk.Color = colors[i]
+			chunk.MaterialVariant = if i < 3 then "PPDirt" else "PPStone"
+			chunk.Color = VOXEL_TINT[chunk.MaterialVariant] or WHITE
 			chunk.CastShadow = false
 			chunk.Anchored = false
 			chunk.Massless = true
@@ -1273,7 +1358,7 @@ local function skyIslands(world: Instance, apply: (BasePart, string) -> boolean)
 		if rng:NextNumber() < 0.6 then
 			local s = rng:NextNumber(0.8, 1.3)
 			piece(
-				"Tree",
+				TREES[rng:NextInteger(1, #TREES)],
 				v(12, 16, 12) * s,
 				CFrame.new(base + Vector3.new(rng:NextNumber(-4, 4) * w, 3 + 8 * s, rng:NextNumber(-4, 4) * w))
 					* CFrame.Angles(0, math.rad(rng:NextNumber(0, 360)), 0)
@@ -1396,8 +1481,9 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 		local p = hiddenPart("Underside", size, cf, folder)
 		p.Transparency = 0
 		p.Material = SMOOTH
-		p.MaterialVariant = PLASTIC
-		p.Color = color
+		-- voxel dirt and stone like the ground above (the old flat colors only pick which one)
+		p.MaterialVariant = if color == PP.Dirt or color == Color3.fromHex("#8F5E33") then "PPDirt" else "PPStone"
+		p.Color = VOXEL_TINT[p.MaterialVariant] or WHITE
 		p.CastShadow = false
 		return p
 	end
@@ -1476,10 +1562,16 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 				if workspace:Raycast(out + Vector3.new(0, 3, 0), Vector3.new(0, -6, 0), params) or not freeSpot(at) then
 					continue
 				end
-				local bush = rng:NextNumber() < 0.4
-				local skin = if bush then "Bush" else "Flowers"
-				local design = if bush then v(2.9, 4, 2.9) else v(3.3, 3, 2.2)
-				local scale = if bush then rng:NextNumber(0.9, 1.5) else rng:NextNumber(0.8, 1.2)
+				-- edge dressing mix: bushes, flower patches, grass tufts, mossy rocks
+				local roll = rng:NextNumber()
+				local skin = if roll < 0.3
+					then BUSHES[rng:NextInteger(1, #BUSHES)]
+					elseif roll < 0.62 then FLOWERS[rng:NextInteger(1, #FLOWERS)]
+					elseif roll < 0.85 then "Tuft"
+					elseif roll < 0.95 then "Rock"
+					else "Rock2"
+				local design = Skins[skin].Design
+				local scale = if skin == "Tuft" then rng:NextNumber(1, 1.6) else rng:NextNumber(0.85, 1.3)
 				local sz = design * scale
 				local p = hiddenPart(
 					"Foliage",
@@ -1734,6 +1826,19 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 				end
 				break
 			end
+		end
+	end
+	-- anything still plain grey-box grass (the Miko-cliff ramp, corridor floors with no Skin) becomes voxel ground too
+	for _, d in world:GetDescendants() do
+		if
+			d:IsA("BasePart")
+			and not d:GetAttribute("Skinned")
+			and d.Transparency < 0.5
+			and #d:GetTags() == 0
+			and d.Material == SMOOTH
+			and (d.Color == PP.Grass or d.Color == PP.Dirt)
+		then
+			apply(d, if d.Color == PP.Grass then "GrassBlock" else "DirtWall")
 		end
 	end
 	islandUndersides(world, params, apply)
