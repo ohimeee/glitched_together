@@ -992,8 +992,27 @@ local function dressPieces(world: Instance, apply: (BasePart, string) -> boolean
 			StateInlay(part)
 		elseif CollectionService:HasTag(part, "Checkpoint") then
 			-- a yellow star flag on a chrome pole at the pad's edge; the pad itself goes faint
-			part.Transparency = 0.75
-			part.Material = Enum.Material.SmoothPlastic -- Neon still glared as a flat yellow square at 0.7
+			-- a faint yellow square still read as an obby checkpoint pad (13th session QA): the pad goes invisible and
+			-- only a thin painted outline stays on the grass, the flag does the talking
+			part.Transparency = 1
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = Enum.NormalId.Top
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 20
+			gui.LightInfluence = 1
+			gui.Parent = part
+			local line = Instance.new("Frame")
+			line.AnchorPoint = Vector2.new(0.5, 0.5)
+			line.Position = UDim2.fromScale(0.5, 0.5)
+			line.Size = UDim2.fromScale(0.9, 0.9)
+			line.BackgroundTransparency = 1
+			line.Parent = gui
+			Instance.new("UICorner", line).CornerRadius = UDim.new(0.08, 0)
+			local stroke = Instance.new("UIStroke")
+			stroke.Color = Palette.Neutral
+			stroke.Thickness = 5
+			stroke.Transparency = 0.25
+			stroke.Parent = line
 			local design = Skins.CheckpointFlag.Design * 1.8
 			local flag = hiddenPart(
 				"CheckpointFlag",
@@ -1210,7 +1229,7 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 	for _, floor in world:GetDescendants() do
 		if
 			not floor:IsA("BasePart")
-			or floor:GetAttribute("Skin") ~= "GrassBlock"
+			or (floor:GetAttribute("Skin") ~= "GrassBlock" and floor:GetAttribute("Skin") ~= "Cliff")
 			or floor:HasTag("Mover")
 			or floor:HasTag("DuoGate")
 			or floor.Parent == folder
@@ -1224,16 +1243,15 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 			continue
 		end
 		local bottom = floor.Position.Y - size.Y / 2
-		-- resting on something already (a slab on a cliff or on the ground): nothing hangs below it
-		if
-			workspace:Raycast(
-				Vector3.new(floor.Position.X, bottom - 0.05, floor.Position.Z),
-				Vector3.new(0, -3, 0),
-				params
-			)
-		then
-			continue
-		end
+		-- resting on something already (a slab on a cliff or on the ground), or a cliff (its skin has its own rock
+		-- sides): nothing hangs below it, but its top edges still get foliage (13th session: cliff tops were bare)
+		local rests = floor:GetAttribute("Skin") == "Cliff"
+			or workspace:Raycast(
+					Vector3.new(floor.Position.X, bottom - 0.05, floor.Position.Z),
+					Vector3.new(0, -3, 0),
+					params
+				)
+				~= nil
 		local rot = floor.CFrame.Rotation
 		local depth = math.clamp(w * 0.55, 6, 20)
 		local layers = {
@@ -1243,7 +1261,7 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 		}
 		local y = bottom
 		local placed: { { size: Vector3, cf: CFrame } } = {}
-		for _, layer in layers do
+		for _, layer in (if rests then {} else layers) do
 			local s = Vector3.new(size.X * layer.k, layer.d, size.Z * layer.k)
 			local cf = CFrame.new(floor.Position.X, y - layer.d / 2 + 0.2, floor.Position.Z) * rot
 			if not clear(cf, s, floor) then
@@ -1259,7 +1277,7 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 		local topY = floor.Position.Y + size.Y / 2
 		local function freeSpot(at: Vector3): boolean
 			for _, k in keepout do
-				if (k - at).Magnitude < 7 then
+				if (k - at).Magnitude < 9 then -- lever posts and plates stand a little off their grey-box part
 					return false
 				end
 			end
