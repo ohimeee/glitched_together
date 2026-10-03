@@ -99,8 +99,106 @@ local Dressing: { [string]: string } = {
 }
 
 -- checkpoints: the floppy-disk save point from the Core kit (a title screen's SAVE)
+-- a SurfaceGui with one centred label on both big faces of a part
+local function faceText(part: BasePart, text: string, color: Color3, font: Enum.Font, scale: number)
+	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = face
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 24
+		gui.LightInfluence = 0.3
+		gui.Parent = part
+		local t = Instance.new("TextLabel")
+		t.AnchorPoint = Vector2.new(0.5, 0.5)
+		t.Position = UDim2.fromScale(0.5, 0.5)
+		t.Size = UDim2.fromScale(0.86, scale)
+		t.BackgroundTransparency = 1
+		t.Font = font
+		t.TextScaled = true
+		t.TextColor3 = color
+		t.Text = text
+		t.Parent = gui
+	end
+end
+
+-- Gates (DuoGate) and the bounce pad were bare neon slabs that glared white. On a title screen a locked door is a
+-- modal dialog box: a slate panel with a white frame and a "LOCKED" line (white = both players), the frame and text
+-- ride along with the gate when it opens. The bounce pad becomes a white UI button with jump chevrons.
+local function dialogGates(world: Instance)
+	for _, gate in world:GetDescendants() do
+		if gate:IsA("BasePart") and gate.Name:match("^Gate_") and gate.Material == Enum.Material.Neon then
+			gate.Material = SMOOTH
+			gate.Color = SLATE
+			local frame = Instance.new("SelectionBox") -- crisp white rim, drawn on the gate's box (moves with it)
+			frame.Adornee = gate
+			frame.LineThickness = 0.35
+			frame.Color3 = WHITE
+			frame.SurfaceTransparency = 1
+			frame.Parent = gate
+			faceText(gate, "LOCKED\nboth players needed", WHITE, Enum.Font.GothamBold, 0.5)
+		end
+	end
+	for _, pad in world:GetDescendants() do
+		if pad:IsA("BasePart") and pad.Name == "BouncePad" and pad.Material == Enum.Material.Neon then
+			pad.Material = SMOOTH
+			pad.Color = WHITE
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = Enum.NormalId.Top
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 24
+			gui.LightInfluence = 0.3
+			gui.Parent = pad
+			local t = Instance.new("TextLabel")
+			t.Size = UDim2.fromScale(1, 1)
+			t.BackgroundTransparency = 1
+			t.Font = Enum.Font.GothamBlack
+			t.TextScaled = true
+			t.TextColor3 = Palette.Prologue.Pink
+			t.Text = "︽"
+			t.Parent = gui
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	require(script.Parent.GlitchedCore).SavePoints(world, apply)
+	dialogGates(world)
+	-- the chimney's cling walls were bare dark slabs: stand a menu panel on its edge over each one (a giant scrollbar
+	-- track with a white trim and a scroll thumb), the wall itself stays as the invisible clingable collider
+	for _, wall in world:GetDescendants() do
+		if wall:IsA("BasePart") and wall.Name == "ClingWall" then
+			local holder = Instance.new("Part")
+			holder.Name = "ClingPanel"
+			holder.Anchored = true
+			holder.CanCollide = false
+			holder.CanQuery = false
+			holder.CanTouch = false
+			holder.Transparency = 1
+			-- local X = the wall's height, local Y = its thickness: the panel lies on its edge
+			holder.Size = Vector3.new(wall.Size.Y, wall.Size.X + 0.2, wall.Size.Z)
+			holder.CFrame = wall.CFrame * CFrame.Angles(0, 0, math.rad(90))
+			holder.Parent = wall.Parent
+			if apply(holder, "UIPanel") then
+				wall.Transparency = 1
+				wall:SetAttribute("ArtHidden", true)
+				for _, side in { -1, 1 } do -- the scroll thumb, on both faces
+					local thumb = Instance.new("Part")
+					thumb.Name = "ScrollThumb"
+					thumb.Anchored = true
+					thumb.CanCollide = false
+					thumb.CanQuery = false
+					thumb.CanTouch = false
+					thumb.Material = SMOOTH
+					thumb.Color = WHITE
+					thumb.Size = Vector3.new(0.3, wall.Size.Y * 0.22, wall.Size.Z * 0.42)
+					thumb.CFrame = wall.CFrame * CFrame.new(side * (wall.Size.X / 2 + 0.2), wall.Size.Y * 0.2, 0)
+					thumb.Parent = holder
+				end
+			else
+				holder:Destroy()
+			end
+		end
+	end
 end
 
 return { Skins = Skins, Dressing = Dressing, Decor = {}, Extras = Extras }
