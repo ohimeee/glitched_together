@@ -91,6 +91,132 @@ local SHARED: { [string]: MeshAssets.Skin } = {
 			},
 		},
 	},
+	-- Pixel Plains voxel mine track (PieceKitPP.fbx): 4-stud track piece (two square iron rails, tops level with the
+	-- grind collider's top, on oak sleepers), a 6-stud trestle piece (stacked voxel log legs + plank ties), its cap beam
+	PPTrack = {
+		Design = Vector3.new(3, 0.82, 4),
+		Meshes = {
+			Iron = {
+				Id = "rbxassetid://76664065252292",
+				Offset = Vector3.new(0, 0.21, 0),
+				Size = Vector3.new(2.1, 0.4, 4),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(72, 74, 82),
+			},
+			Plank = {
+				Id = "rbxassetid://104108864430782",
+				Offset = Vector3.new(0, -0.19, 0),
+				Size = Vector3.new(3, 0.44, 2.8),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(176, 128, 80),
+			},
+		},
+	},
+	-- v2 after the user's It Takes Two refs (PieceKitPP2.fbx): one iron rail on a wooden ladder (stringers + rungs),
+	-- a chain (4 studs, tiled), and a side arm (beam + knee brace + hook) that hangs a rail piece off a tower
+	PPTrack2 = {
+		Design = Vector3.new(2.44, 1.175, 4),
+		Meshes = {
+			Iron = {
+				Id = "rbxassetid://113848660521582",
+				Offset = Vector3.new(0, 0.3325, 0),
+				Size = Vector3.new(0.8, 0.51, 4),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(72, 74, 82),
+			},
+			Plank = {
+				Id = "rbxassetid://81061613901671",
+				Offset = Vector3.new(0, -0.0675, 0),
+				Size = Vector3.new(2.4, 0.3, 3.21),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(176, 128, 80),
+			},
+			Log = {
+				Id = "rbxassetid://85435764289027",
+				Offset = Vector3.new(0, -0.3375, 0),
+				Size = Vector3.new(2.44, 0.5, 4),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(107, 74, 43),
+			},
+		},
+	},
+	PPChain = {
+		Design = Vector3.new(0.35, 3.95, 0.35),
+		Meshes = {
+			Iron = {
+				Id = "rbxassetid://133977897771817",
+				Offset = Vector3.zero,
+				Size = Vector3.new(0.35, 3.95, 0.35),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(72, 74, 82),
+			},
+		},
+	},
+	PPArm = { -- root at local +X end (x 2.8), hook under the -X tip (x -2.3, 0.9 below the beam centre)
+		Design = Vector3.new(5.6, 3.12, 1),
+		Meshes = {
+			Log = {
+				Id = "rbxassetid://91279585092876",
+				Offset = Vector3.new(0, 1.11, 0),
+				Size = Vector3.new(5.6, 0.9, 1),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(107, 74, 43),
+			},
+			Plank = {
+				Id = "rbxassetid://81926937182953",
+				Offset = Vector3.new(1, -0.19, 0),
+				Size = Vector3.new(3.28, 2.74, 0.5),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(176, 128, 80),
+			},
+			Iron = {
+				Id = "rbxassetid://114792282640277",
+				Offset = Vector3.new(-2.3, 0.45, 0),
+				Size = Vector3.new(0.5, 0.47, 0.5),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(72, 74, 82),
+			},
+		},
+	},
+	PPTrestle = {
+		Design = Vector3.new(4.4, 6, 1.8),
+		Meshes = {
+			Log = {
+				Id = "rbxassetid://98085318436899",
+				Offset = Vector3.zero,
+				Size = Vector3.new(4.4, 5.98, 1.2),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(107, 74, 43),
+			},
+			Plank = {
+				Id = "rbxassetid://73018591774373",
+				Offset = Vector3.new(0, -0.4, 0),
+				Size = Vector3.new(4.4, 2.6, 1.8),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(176, 128, 80),
+			},
+		},
+	},
+	PPTrestleCap = {
+		Design = Vector3.new(5, 0.9, 1.3),
+		Meshes = {
+			Plank = {
+				Id = "rbxassetid://75915912958974",
+				Offset = Vector3.zero,
+				Size = Vector3.new(5, 0.9, 1.3),
+				Material = Enum.Material.SmoothPlastic,
+				Variant = "PixelPlastic",
+				Color = Color3.fromRGB(176, 128, 80),
+			},
+		},
+	},
 	RailPole = {
 		Design = Vector3.new(0.76, 1, 0.76),
 		Meshes = {
@@ -251,8 +377,15 @@ local function dressShared(world: Instance, worldName: string)
 			end
 		elseif CollectionService:HasTag(part, "JumpVent") then
 			VentFan(part, params)
-		elseif CollectionService:HasTag(part, "GrindRail") then
-			Rails(part, worldName, Skins, ArtService.Apply)
+		elseif CollectionService:HasTag(part, "GrindRail") and not part:FindFirstChild("Prev") then
+			-- a rail is a chain of segments (Next links); dress it from its first segment
+			local chain = { part }
+			local link = part:FindFirstChild("Next") :: ObjectValue?
+			while link and link.Value and link.Value:IsA("BasePart") and #chain < 400 do
+				table.insert(chain, link.Value)
+				link = link.Value:FindFirstChild("Next") :: ObjectValue?
+			end
+			Rails(chain, worldName, Skins, ArtService.Apply)
 		elseif CollectionService:HasTag(part, "VentButton") and ArtService.Apply(part, "ButtonPad") then
 			StateInlay(part) -- pound it to flip the vent: the same toy push button as a plate
 		elseif CollectionService:HasTag(part, "PressurePlate") and ArtService.Apply(part, "ButtonPad") then

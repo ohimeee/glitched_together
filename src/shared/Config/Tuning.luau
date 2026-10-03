@@ -76,6 +76,7 @@ return {
 	SwingGroundGap = 5.5, -- studs: the rope is short enough that the bottom of the arc clears the floor by this
 	GrindSpeed = 40,
 	GrindGrabRange = 8,
+	GrindCatchRange = 3.5, -- falling onto a rail catches it within this (root to rail top; the grind pose sits ~3 up)
 	VentForce = 90,
 	DuoPoundWindow = 0.5,
 	HeavyLeverHold = 1,

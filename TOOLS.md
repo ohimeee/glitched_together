@@ -32,6 +32,8 @@ Every call needs `studio_id` from `list_roblox_studios`.
 
 **Background screenshots (Oct 3, 2026, 14th session):** `tools/screen/bgshot.ps1 [-Title Adventure] [-Out x.png] [-Viewport]` captures Studio with `PrintWindow(..., PW_RENDERFULLCONTENT)` while it sits behind other windows: works in Edit and during Play (verified), no focus, no mouse. Only fails if Studio is minimized. This replaces the focus + CopyFromScreen pattern for screenshots.
 
+**Scripted input without focus (Oct 3, 2026):** Studio MCP `user_keyboard_input` presses keys in play (F grabbed a grind rail) without taking the mouse; holding W + Space for a real jump wasn't tried. Param names: `start_stop_play(is_start)`, `execute_luau(datamodel_type)`, `screen_capture(capture_id)`. Imports can go into the open Lobby Studio (assets upload either way).
+
 **Asking for the mouse (Oct 3, 2026, user):** when the user is busy on the PC (e.g. watching a stream), never take the mouse/focus unasked: run `tools/screen/ping.ps1 -Msg "<why>"` (topmost popup + beep, blocks until answered, prints `OK`/`NO`). **Subagents** (`.claude/agents/`): `studio-operator` (Studio/Blender/Rojo, playtests, screenshots → text verdict; mode "no mouse" by default) and `code-scout` (read-only file:line answers), so the main context stays lean.
 
 **Hot-patch is blocked since Oct 2, 2026** (superseded by live sync above): Studio's MCP Luau now fails with "cannot read 'HttpEnabled' (lacking capability Network)", so `tools/hotpatch.luau` can't fetch. Use `rojo build` + reopen Studio (kill, build, start, poll `list_roblox_studios`: ~10 s). Old notes below in case it comes back.

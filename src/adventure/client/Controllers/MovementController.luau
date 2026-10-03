@@ -73,7 +73,7 @@ local function onCharacter(character: Model)
 	local movingSince: number? = nil
 	local stillSince: number? = nil
 	local cling: { normal: Vector3, started: number }? = nil
-	local grind: { rail: BasePart, dir: number }? = nil
+	local grind: { rail: BasePart, dir: number, z: number }? = nil
 	local lastLedgeAssist = 0
 	local swing: Swing? = nil
 
@@ -358,7 +358,8 @@ local function onCharacter(character: Model)
 		if flat(root.AssemblyLinearVelocity).Magnitude < 2 then
 			dir = if root.CFrame.LookVector:Dot(along) >= 0 then 1 else -1
 		end
-		grind = { rail = rail, dir = dir }
+		local _, z = railPoint(rail, root.Position)
+		grind = { rail = rail, dir = dir, z = z }
 		pounding = false
 		cling = nil
 		humanoid.PlatformStand = true
@@ -378,26 +379,34 @@ local function onCharacter(character: Model)
 	end
 
 	local function stepGrind(dt: number)
-		local g = grind :: { rail: BasePart, dir: number }
+		local g = grind :: { rail: BasePart, dir: number, z: number }
 		local rail = g.rail
 		if not rail.Parent then
 			stopGrind(false)
 			return
 		end
-		local _, z = railPoint(rail, root.Position)
-		z -= g.dir * Tuning.GrindSpeed * dt -- LookVector is -Z in object space
+		-- advance a stored position along the rail (re-reading root.Position double-counted the velocity set below,
+		-- so grinds ran at ~2x GrindSpeed)
+		local z = g.z - g.dir * Tuning.GrindSpeed * dt -- LookVector is -Z in object space
 		local half = rail.Size.Z / 2
 		if math.abs(z) > half then
-			local link = rail:FindFirstChild("Next") :: ObjectValue?
+			-- curved rails are chains of short segments: off the far end (local -Z) → Next, off the near end → Prev
+			local link = rail:FindFirstChild(if z < 0 then "Next" else "Prev") :: ObjectValue?
 			local nextRail = link and link.Value
 			if nextRail and nextRail:IsA("BasePart") then
-				g.rail = nextRail
 				g.dir = if nextRail.CFrame.LookVector:Dot(rail.CFrame.LookVector * g.dir) >= 0 then 1 else -1
+				g.rail = nextRail
+				rail = nextRail
+				-- keep riding this frame on the new segment: carry the overshoot past the old end (no hitch, no gain)
+				local over = math.abs(z) - half
+				local h2 = rail.Size.Z / 2
+				z = math.clamp(if g.dir == 1 then h2 - over else -h2 + over, -h2, h2)
+			else
+				stopGrind(false)
 				return
 			end
-			stopGrind(false)
-			return
 		end
+		g.z = z
 		local top = rail.CFrame * Vector3.new(0, rail.Size.Y / 2, z)
 		local pos = top + rail.CFrame.UpVector * (humanoid.HipHeight + root.Size.Y / 2)
 		local forward = rail.CFrame.LookVector * g.dir
@@ -720,10 +729,11 @@ local function onCharacter(character: Model)
 		local v = root.AssemblyLinearVelocity
 		local airborne = inAir()
 
-		-- Land on a rail from above.
-		if airborne and v.Y < 0 then
-			local rail = nearestRail(2.5)
-			if rail then
+		-- Land on a rail from above. A fast fall can touch down on the (solid) rail between two frames, so standing
+		-- on top of one catches it too (only from above: walking past a rail end at its height doesn't).
+		if (airborne and v.Y < 0) or not airborne then
+			local rail = nearestRail(Tuning.GrindCatchRange)
+			if rail and (airborne or root.Position.Y - railPoint(rail, root.Position).Y > 2) then
 				startGrind(rail)
 				return
 			end

@@ -740,16 +740,16 @@ local Decor: { { any } } = {
 	{ "Flowers", CFrame.new(10, 21.8, 250) * CFrame.Angles(0, math.rad(320), 0), 1.2, "CloudClimb" },
 	{ "Bush", CFrame.new(-10, 23, 342) * CFrame.Angles(0, math.rad(272), 0), 1.5, "CloudClimb" },
 	{ "Flowers", CFrame.new(12, 63.8, 414) * CFrame.Angles(0, math.rad(138), 0), 1.2, "CloudClimb" },
-	{ "Bush", CFrame.new(-12, 23.2, 1016) * CFrame.Angles(0, math.rad(212), 0), 1.6, "GlitchChase" },
-	{ "Flowers", CFrame.new(20, 22.1, 1060) * CFrame.Angles(0, math.rad(120), 0), 1.4, "GlitchChase" },
-	{ "Flowers", CFrame.new(-22, 22.1, 1090) * CFrame.Angles(0, math.rad(216), 0), 1.4, "GlitchChase" },
+	{ "Bush", CFrame.new(-12, 23.2, 1191) * CFrame.Angles(0, math.rad(212), 0), 1.6, "GlitchChase" },
+	{ "Flowers", CFrame.new(20, 22.1, 1235) * CFrame.Angles(0, math.rad(120), 0), 1.4, "GlitchChase" },
+	{ "Flowers", CFrame.new(-22, 22.1, 1265) * CFrame.Angles(0, math.rad(216), 0), 1.4, "GlitchChase" },
 	{ "Tree", CFrame.new(-25, 6.4, -15) * CFrame.Angles(0, math.rad(20), 0), 0.8, "StarterMeadow" },
 	{ "Tree", CFrame.new(25, 5.6, -16) * CFrame.Angles(0, math.rad(309), 0), 0.7, "StarterMeadow" },
 	{ "Tree", CFrame.new(-87, 6.4, 12) * CFrame.Angles(0, math.rad(321), 0), 0.8, "StarterMeadow" },
 	{ "Tree", CFrame.new(87, 6.4, -12) * CFrame.Angles(0, math.rad(39), 0), 0.8, "StarterMeadow" },
 	{ "Tree", CFrame.new(-16, 5.6, 205) * CFrame.Angles(0, math.rad(357), 0), 0.7, "StarterMeadow" },
-	{ "Tree", CFrame.new(-24, 28, 1050) * CFrame.Angles(0, math.rad(18), 0), 1.0, "GlitchChase" },
-	{ "Tree", CFrame.new(24, 28.8, 1098) * CFrame.Angles(0, math.rad(330), 0), 1.1, "GlitchChase" },
+	{ "Tree", CFrame.new(-24, 28, 1225) * CFrame.Angles(0, math.rad(18), 0), 1.0, "GlitchChase" },
+	{ "Tree", CFrame.new(24, 28.8, 1273) * CFrame.Angles(0, math.rad(330), 0), 1.1, "GlitchChase" },
 	-- kid details: the "BY KAI + MIKO" hill west of the meadow, facing the plaza; a floor fan under the vent;
 	-- the dropper's chute coming out of a cloud
 	-- a stepped voxel hill far out west (terraces, so it reads as a hill, not a wall); letters on the low front step

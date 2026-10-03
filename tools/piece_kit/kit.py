@@ -220,3 +220,147 @@ def build_all():
     for o in scene()[1].objects:
         o.location = (xs.get(o.name.split("_")[1], 0), 0, 0)
     return report()
+
+
+# ---------------------------------------------------------------- Pixel Plains voxel mine track (user pick, Oct 3)
+# Track = one 4-stud piece along Y (Roblox Z): two square iron rails (tops at z 0.5 = the grind collider's top, gauge 1.5)
+# on two chunky oak sleepers. Trestle = one 6-stud tower piece: two legs of stacked voxel log blocks + a plank tie.
+# Cap = the cross beam on top of a trestle that the track sits on.
+PLANK = mat("PC_Plank", (176, 128, 80), 0.8)
+LOG = mat("PC_Log", (107, 74, 43), 0.85)
+
+
+def vox(bm, c, s, b=0.06):
+    """A voxel block with a small bevel added later (bevel() on the whole object)."""
+    box(bm, c, s)
+
+
+def track():
+    rails = bmesh.new()
+    for x in (-0.75, 0.75):
+        box(rails, (x, 0, 0.3), (0.32, 4.0, 0.4))
+        for y in (-1, 1):  # tie plates + spikes where the rail meets a sleeper
+            box(rails, (x, y, 0.13), (0.6, 0.5, 0.06))
+            box(rails, (x + 0.22, y, 0.18), (0.1, 0.1, 0.1))
+            box(rails, (x - 0.22, y, 0.18), (0.1, 0.1, 0.1))
+    r = from_bm("PC_Track_Iron", rails, IRON)
+    bevel(r, 0.03, 1, 40)
+    sl = bmesh.new()
+    for y in (-1, 1):
+        box(sl, (0, y, -0.1), (3.0, 0.8, 0.4))
+        box(sl, (1.25, y, -0.1), (0.5, 0.7, 0.44))  # chunky pixel-step ends
+        box(sl, (-1.25, y, -0.1), (0.5, 0.7, 0.44))
+    o = from_bm("PC_Track_Plank", sl, PLANK)
+    bevel(o, 0.04, 1, 40)
+
+
+def trestle():
+    logs = bmesh.new()
+    for x in (-1.6, 1.6):
+        for k in range(6):  # 6 voxel log blocks, alternating a hair in width so the stack reads as blocks
+            w = 1.2 if k % 2 == 0 else 1.14
+            box(logs, (x, 0, -3 + 0.5 + k), (w, w, 0.98))
+    o = from_bm("PC_Trestle_Log", logs, LOG)
+    bevel(o, 0.06, 1, 40)
+    pl = bmesh.new()
+    box(pl, (0, 0.75, 0.6), (4.4, 0.3, 0.6))
+    box(pl, (0, -0.75, -1.4), (4.4, 0.3, 0.6))
+    o = from_bm("PC_Trestle_Plank", pl, PLANK)
+    bevel(o, 0.04, 1, 40)
+
+
+def trestle_cap():
+    bm = bmesh.new()
+    box(bm, (0, 0, 0), (5.0, 1.3, 0.7))
+    box(bm, (0, 0, 0.45), (3.4, 1.0, 0.2))
+    o = from_bm("PC_TrestleCap_Plank", bm, PLANK)
+    bevel(o, 0.05, 1, 40)
+
+
+def build_pp():
+    scene()
+    for o in list(scene()[1].objects):
+        if o.name.split("_")[1] in ("Track", "Trestle", "TrestleCap"):
+            remove(o.name)
+    track()
+    trestle()
+    trestle_cap()
+    xs = {"Track": 14, "Trestle": 20, "TrestleCap": 26}
+    for o in scene()[1].objects:
+        if o.name.split("_")[1] in xs:
+            o.location = (xs[o.name.split("_")[1]], 0, 0)
+    return [l for l in report().splitlines() if "Track" in l or "Trestle" in l]
+
+
+# ---------------------------------------------------------------- v2 after the user's It Takes Two refs (Oct 3):
+# a single iron rail on a wooden ladder (two side stringers + rungs), plus a gallows support: a side arm off a
+# trestle tower with a chain hanging down to a hanger under the rail.
+def track2():
+    rail = bmesh.new()
+    box(rail, (0, 0, 0.27), (0.5, 4.0, 0.46))  # rail top at z 0.5 (the grind collider's top)
+    for y in (-1.33, 0, 1.33):
+        box(rail, (0, y, 0.02), (0.8, 0.45, 0.06))  # base plate
+        for x in (-0.3, 0.3):
+            box(rail, (x, y, 0.08), (0.1, 0.1, 0.1))
+    o = from_bm("PC_Track2_Iron", rail, IRON)
+    bevel(o, 0.03, 1, 40)
+    rungs = bmesh.new()
+    for y in (-1.33, 0, 1.33):
+        box(rungs, (0, y, -0.15), (2.4, 0.55, 0.3))
+    o = from_bm("PC_Track2_Plank", rungs, PLANK)
+    bevel(o, 0.04, 1, 40)
+    st = bmesh.new()
+    for x in (-1.05, 1.05):
+        box(st, (x, 0, -0.42), (0.34, 4.0, 0.5))
+    o = from_bm("PC_Track2_Log", st, LOG)
+    bevel(o, 0.04, 1, 40)
+
+
+def chain():
+    bm = bmesh.new()
+    n = 8  # 4 studs: 8 links of 0.5
+    for k in range(n):
+        z = -2 + 0.25 + k * 0.5
+        if k % 2 == 0:  # link in the XZ plane
+            box(bm, (-0.14, 0, z), (0.07, 0.07, 0.42))
+            box(bm, (0.14, 0, z), (0.07, 0.07, 0.42))
+            box(bm, (0, 0, z - 0.19), (0.34, 0.07, 0.07))
+            box(bm, (0, 0, z + 0.19), (0.34, 0.07, 0.07))
+        else:  # turned 90 degrees
+            box(bm, (0, -0.14, z), (0.07, 0.07, 0.42))
+            box(bm, (0, 0.14, z), (0.07, 0.07, 0.42))
+            box(bm, (0, 0, z - 0.19), (0.07, 0.34, 0.07))
+            box(bm, (0, 0, z + 0.19), (0.07, 0.34, 0.07))
+    from_bm("PC_Chain_Iron", bm, IRON)
+
+
+def arm():
+    # beam along +X from the tower (x 0) to x 5.2, a diagonal brace under it, an iron hook block at the tip
+    logs = bmesh.new()
+    box(logs, (2.6, 0, 0), (5.6, 1.0, 0.9))
+    o = from_bm("PC_Arm_Log", logs, LOG)
+    bevel(o, 0.05, 1, 40)
+    pl = bmesh.new()
+    d = math.atan2(2.4, 3.0)
+    box(pl, (1.6, 0, -1.3), (3.9, 0.5, 0.45), rot=Matrix.Rotation(d, 3, "Y"))
+    o = from_bm("PC_Arm_Plank", pl, PLANK)
+    bevel(o, 0.04, 1, 40)
+    hk = bmesh.new()
+    box(hk, (4.9, 0, -0.55), (0.5, 0.5, 0.25))
+    box(hk, (4.9, 0, -0.75), (0.2, 0.2, 0.3))
+    from_bm("PC_Arm_Iron", hk, IRON)
+
+
+def build_v2():
+    scene()
+    for o in list(scene()[1].objects):
+        if o.name.split("_")[1] in ("Track2", "Chain", "Arm"):
+            remove(o.name)
+    track2()
+    chain()
+    arm()
+    xs = {"Track2": 32, "Chain": 37, "Arm": 40}
+    for o in scene()[1].objects:
+        if o.name.split("_")[1] in xs:
+            o.location = (xs[o.name.split("_")[1]], 0, 0)
+    return [l for l in report().splitlines() if any(k in l for k in ("Track2", "Chain", "Arm"))]

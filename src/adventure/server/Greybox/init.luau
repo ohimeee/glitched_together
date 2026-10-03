@@ -532,13 +532,62 @@ local function buildPixelPlains(world: Model)
 			attrs = { Type = "GlitchBlob", PatrolDistance = patrol, Speed = 5 },
 		})
 	end
-	local function rail(a: Vector3, b: Vector3)
-		block(P, Vector3.new(1, 1, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), {
-			color = rgb(170, 175, 190),
-			material = Enum.Material.Metal,
-			tags = { "GrindRail" },
-			name = "GrindRail",
-		})
+	-- a grind rail through `points` (rail centres): a Catmull-Rom curve cut into ~5-stud straight segments, each
+	-- linked to the next/previous one (`Next`/`Prev` ObjectValues) so a grind runs the whole curve. Returns the end
+	-- point and the direction it leaves in (for the next hop).
+	local function railPath(name: string, points: { Vector3 }, hang: boolean?): (Vector3, Vector3)
+		local n = #points
+		local ext = { points[1] * 2 - points[2] }
+		for _, p in points do
+			table.insert(ext, p)
+		end
+		table.insert(ext, points[n] * 2 - points[n - 1])
+		local samples = { points[1] }
+		for i = 2, n do
+			local p0, p1, p2, p3 = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+			local steps = math.max(1, math.ceil((p2 - p1).Magnitude / 5))
+			for k = 1, steps do
+				local t = k / steps
+				table.insert(
+					samples,
+					0.5
+						* (
+							2 * p1
+							+ (p2 - p0) * t
+							+ (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+							+ (3 * p1 - p0 - 3 * p2 + p3) * t * t * t
+						)
+				)
+			end
+		end
+		local folder = Instance.new("Model")
+		folder.Name = name
+		folder.Parent = P
+		local prev: BasePart? = nil
+		for i = 1, #samples - 1 do
+			local a, b = samples[i], samples[i + 1]
+			-- 0.2 longer so neighbours overlap (no seam to fall through at speed)
+			local seg = block(folder, Vector3.new(1, 1, (b - a).Magnitude + 0.2), CFrame.lookAt((a + b) / 2, b), {
+				color = rgb(170, 175, 190),
+				material = Enum.Material.Metal,
+				tags = { "GrindRail" },
+				name = "GrindRail",
+				attrs = { Path = name, Index = i, Hang = hang },
+			})
+			if prev then
+				local nextLink = Instance.new("ObjectValue")
+				nextLink.Name = "Next"
+				nextLink.Value = seg
+				nextLink.Parent = prev
+				local prevLink = Instance.new("ObjectValue")
+				prevLink.Name = "Prev"
+				prevLink.Value = prev
+				prevLink.Parent = seg
+			end
+			prev = seg
+		end
+		local last = samples[#samples]
+		return last, (last - samples[#samples - 1]).Unit
 	end
 	local function exitPortal(x: number, top: number, z: number)
 		block(P, Vector3.new(12, 12, 3), CFrame.new(x, top + 6, z), {
@@ -1275,15 +1324,58 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(14, 4, 10), 0, 0, 185, "PipeExit") -- z 180..190
 
 	-- GLITCH CHASE (set piece) ----------------------------------------------------------------------
-	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1100))
+	section("GlitchChase", Vector3.new(0, 62, 747), Vector3.new(0, 20, 1275))
 	grass(Vector3.new(30, 4, 20), 0, 62, 756, "ChaseStart")
 	checkpoint(P, nextOrder(), 0, 62, 752, W, {
 		"RUN! Grab the rail (F) and jump the gaps!",
 		"Keep moving. The Glitch eats everything behind you.",
 	})
-	rail(Vector3.new(0, 62.5, 770), Vector3.new(0, 50.5, 850))
-	rail(Vector3.new(0, 46.5, 866), Vector3.new(-24, 36.5, 930))
-	rail(Vector3.new(-24, 32.5, 946), Vector3.new(0, 22.5, 1004))
+	-- six separate winding rail pieces (~380 studs of grinding) with a jump between each (It Takes Two: rails break
+	-- off, you hop and re-catch the next one or fall). Each gap starts 16 studs ahead along the previous piece's exit
+	-- direction and 4 lower (the tested hop); laid out with a heading/turn/drop script so every hop lines up
+	railPath("RailA", {
+		Vector3.new(0.0, 62.5, 770.0),
+		Vector3.new(0.0, 62.0, 786.0),
+		Vector3.new(-6.8, 61.0, 800.5),
+		Vector3.new(-19.0, 60.0, 810.8),
+		Vector3.new(-31.3, 59.0, 821.1),
+		Vector3.new(-36.7, 58.0, 836.1),
+	})
+	railPath("RailB", {
+		Vector3.new(-41.5, 54.0, 851.4),
+		Vector3.new(-45.7, 53.5, 864.7),
+		Vector3.new(-42.6, 52.5, 878.4),
+		Vector3.new(-33.1, 51.5, 888.7),
+		Vector3.new(-23.7, 50.5, 899.0),
+	}, true) -- hangs on chains from side arms
+	railPath("RailC", {
+		Vector3.new(-12.8, 46.5, 910.8),
+		Vector3.new(-4.2, 45.5, 924.2),
+		Vector3.new(-4.8, 44.5, 940.2),
+		Vector3.new(-14.5, 43.5, 952.9),
+		Vector3.new(-24.3, 42.5, 965.7),
+		Vector3.new(-27.7, 41.5, 981.3),
+	})
+	railPath("RailD", {
+		Vector3.new(-30.5, 37.5, 997.0),
+		Vector3.new(-29.3, 37.0, 1011.0),
+		Vector3.new(-23.4, 36.5, 1023.7),
+		Vector3.new(-17.5, 36.0, 1036.4),
+	}, true) -- hangs on chains from side arms
+	railPath("RailE", {
+		Vector3.new(-10.8, 32.0, 1050.9),
+		Vector3.new(-8.0, 31.0, 1066.7),
+		Vector3.new(-13.5, 30.0, 1081.7),
+		Vector3.new(-21.5, 29.0, 1095.5),
+		Vector3.new(-23.0, 28.0, 1111.5),
+		Vector3.new(-17.5, 27.5, 1126.5),
+	})
+	railPath("RailF", {
+		Vector3.new(-11.5, 23.5, 1141.3),
+		Vector3.new(-4.0, 23.0, 1153.2),
+		Vector3.new(2.4, 22.5, 1165.6),
+		Vector3.new(5.3, 22.0, 1179.3),
+	}, true) -- hangs on chains from side arms
 	local trigger = block(P, Vector3.new(30, 20, 20), CFrame.new(0, 70, 756), { -- the whole start platform
 		name = "ChaseTrigger",
 		transparency = 1,
@@ -1299,7 +1391,7 @@ local function buildPixelPlains(world: Model)
 		transparency = 0.35,
 		collide = false,
 		tags = { "GlitchWall" },
-		attrs = { Speed = 30, Distance = 282 },
+		attrs = { Speed = 27, Distance = 457 }, -- 27 (not 30): the curves and hops cost ground
 	})
 	glitchWall.CanQuery = false
 	glitchWall.CanTouch = false
@@ -1309,11 +1401,11 @@ local function buildPixelPlains(world: Model)
 	triggerLink.Parent = glitchWall
 
 	-- BOSS ARENA (the Crusher King arrives with M6) ---------------------------------------------------
-	grass(Vector3.new(30, 4, 30), 0, 20, 1023, "ChaseEnd")
-	checkpoint(P, nextOrder(), 0, 20, 1016, W)
-	grass(Vector3.new(60, 6, 60), 0, 20, 1075, "BossArena")
-	exitPortal(0, 20, 1100)
-	sign(P, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 36, 1100), Vector3.new(24, 4, 0.4))
+	grass(Vector3.new(30, 4, 30), 0, 20, 1198, "ChaseEnd")
+	checkpoint(P, nextOrder(), 0, 20, 1191, W)
+	grass(Vector3.new(60, 6, 60), 0, 20, 1250, "BossArena")
+	exitPortal(0, 20, 1275)
+	sign(P, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 36, 1275), Vector3.new(24, 4, 0.4))
 
 	-- chain: each section's entry snaps onto the previous section's exit
 	local cursor = chunks[1].entry
