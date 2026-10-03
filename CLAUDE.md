@@ -15,6 +15,14 @@
 3. Blender: `cmd //c start "" "D:\Blender\blender.exe" --python "C:\Users\User\tools\blender-mcp\autostart.py"` starts Blender with the MCP server on 9876 (no user click needed).
 4. Browser: the user's browser is **Brave**. In this VS Code panel, browser tools (`mcp__claude-in-chrome__*`) only load when the user's message contains **`@browser`**.
 
+## Status (Oct 3, 2026, 14th session)
+
+- **Subagents set up** (`.claude/agents/`, Sonnet 5.5 high): `studio-operator` (Studio/Blender/Rojo, playtests, screenshots judged into a text verdict; default "no mouse") and `code-scout` (read-only file:line answers). They register only after a Claude Code restart; until then spawn `general-purpose` with "read .claude/agents/<name>.md and follow it". Brief them with exact checks; they return numbers + screenshot paths.
+- **No-mouse tooling:** `tools/screen/bgshot.ps1` screenshots Studio behind other windows, Edit and Play (PrintWindow); `tools/screen/ping.ps1` = topmost popup asking the user for the mouse (OK/NO) when clicks are unavoidable (user rule, memory mouse-ping).
+- **Clutter vs gameplay fixed:** castle room props keep 3 studs off hazards (trap tiles, a mover's whole waypoint sweep), checkpoints, plates, crystals, mirrors, gates, exit (`KEEP_OUT_TAGS` in `dressRooms`); Core clutter uses a yaw-free box + 3 studs. Verified by data (51 → 2 near-misses).
+- **Piece kit art** (BLENDER_PLAYBOOK §8): grind rails (all 4) on clamps + truss pylons, Ember Fuse stake/splices/stapled cord, vent buttons skinned. Verified in play with screenshots (vent buttons not looked at).
+- **Next:** 2P run with the user (everything since the 6th session); bosses (M6); Kai/Miko outfits (user's call); monetization plan.
+
 ## Status (Oct 3, 2026, 13th session) — READ THIS FIRST
 
 - **Prologue QA done (solo play, screenshots):** gate opening checked: the gate sinks with its frame/text, but then hung below the floor gap still saying LOCKED → the dialog now fades out when `Open` and returns if it closes (`dialogGates`, `ArtService/Prologue.luau`). Checkpoint pads (faint neon = muddy brown on navy) → "SAVE SLOT n" UI outline (yellow rim + tint, pad invisible). CP5 (Duo Pound room, G2, Heavy Lever, G3) reads fine. **All worlds:** the exit sign was buried inside the big exit arch → `dressShared` lifts any `Sign` over a `WorldExit` to just above the arch crown.
