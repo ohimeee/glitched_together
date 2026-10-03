@@ -1,6 +1,7 @@
 -- Prologue art (blender_assets/PrologueUI.*, briefs/PrologueUI.md): skins over the title-screen grey-box.
 -- Offsets are from the grey-box part's center at Design size (front = -Z). Ids from Studio's 3D importer.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
@@ -136,6 +137,19 @@ local function dialogGates(world: Instance)
 			frame.SurfaceTransparency = 1
 			frame.Parent = gate
 			faceText(gate, "LOCKED\nboth players needed", WHITE, Enum.Font.GothamBold, 0.5)
+			-- an opened gate sinks into the 2-stud gap between panels and would hang below them still saying LOCKED:
+			-- the dialog closes (fades out) as it sinks, and comes back if the gate closes again
+			local shown = gate.Transparency
+			gate:GetAttributeChangedSignal("Open"):Connect(function()
+				local open = gate:GetAttribute("Open") == true
+				TweenService:Create(gate, TweenInfo.new(0.4), { Transparency = if open then 1 else shown }):Play()
+				frame.Visible = not open
+				for _, gui in gate:GetChildren() do
+					if gui:IsA("SurfaceGui") then
+						gui.Enabled = not open
+					end
+				end
+			end)
 		end
 	end
 	for _, pad in world:GetDescendants() do
@@ -162,6 +176,41 @@ end
 
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	require(script.Parent.GlitchedCore).SavePoints(world, apply)
+	-- the faint neon pad read as a muddy brown slab on the navy panels: draw it as a highlighted save slot instead
+	-- (yellow rounded outline + a tint, yellow = checkpoint), the pad part itself goes invisible
+	for _, pad in world:GetDescendants() do
+		if pad:IsA("BasePart") and pad:HasTag("Checkpoint") then
+			pad.Transparency = 1
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = Enum.NormalId.Top
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 24
+			gui.LightInfluence = 0.3
+			gui.Parent = pad
+			local slot = Instance.new("Frame")
+			slot.AnchorPoint = Vector2.new(0.5, 0.5)
+			slot.Position = UDim2.fromScale(0.5, 0.5)
+			slot.Size = UDim2.fromScale(0.92, 0.92)
+			slot.BackgroundColor3 = Palette.Neutral
+			slot.BackgroundTransparency = 0.85
+			slot.Parent = gui
+			Instance.new("UICorner", slot).CornerRadius = UDim.new(0.12, 0)
+			local rim = Instance.new("UIStroke")
+			rim.Color = Palette.Neutral
+			rim.Thickness = 7
+			rim.Parent = slot
+			local t = Instance.new("TextLabel")
+			t.AnchorPoint = Vector2.new(0.5, 0.5)
+			t.Position = UDim2.fromScale(0.62, 0.5) -- clear of the floppy disk standing on the slot's left
+			t.Size = UDim2.fromScale(0.62, 0.2)
+			t.BackgroundTransparency = 1
+			t.Font = Enum.Font.GothamBold
+			t.TextScaled = true
+			t.TextColor3 = Palette.Neutral
+			t.Text = `SAVE SLOT {pad:GetAttribute("Order") or ""}`
+			t.Parent = slot
+		end
+	end
 	dialogGates(world)
 	-- the chimney's cling walls were bare dark slabs: stand a menu panel on its edge over each one (a giant scrollbar
 	-- track with a white trim and a scroll thumb), the wall itself stays as the invisible clingable collider

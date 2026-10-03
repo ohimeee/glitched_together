@@ -182,6 +182,22 @@ local function dressShared(world: Instance)
 			arch.Parent = part.Parent
 			if not ArtService.Apply(arch, "ExitArch") then
 				arch:Destroy()
+			else
+				-- the exit's sign hung inside the portal field and ended up buried in the (much bigger) arch: lift it
+				-- just over the arch's crown so it still reads from far away
+				local top = arch.Position.Y + design.Y / 2
+				for _, s in (part.Parent or world):GetChildren() do
+					local flat = s:IsA("BasePart") and (s.Position - part.Position) * Vector3.new(1, 0, 1)
+					if
+						flat
+						and s.Name == "Sign"
+						and flat.Magnitude < 3
+						and s.Position.Y > part.Position.Y
+						and s.Position.Y < top
+					then
+						s.CFrame += Vector3.new(0, top + s.Size.Y / 2 + 0.5 - s.Position.Y, 0)
+					end
+				end
 			end
 		elseif CollectionService:HasTag(part, "JumpVent") then
 			VentFan(part, params)
