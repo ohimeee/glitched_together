@@ -255,8 +255,7 @@ local function buildPrologue(world: Model)
 	})
 	block(world, Vector3.new(11, 1.3, 1.3), CFrame.new(7.5, 11.3, 85 - 9 + 5.5) * along, {
 		name = "SliderFill",
-		color = Palette.Prologue.Pink,
-		material = Enum.Material.Neon,
+		color = Palette.Prologue.Pink, -- plastic, not Neon: the neon fill bloomed over the whole panel edge
 		shape = Enum.PartType.Cylinder,
 		collide = false,
 	})
