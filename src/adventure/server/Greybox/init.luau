@@ -589,16 +589,6 @@ local function buildPixelPlains(world: Model)
 		local last = samples[#samples]
 		return last, (last - samples[#samples - 1]).Unit
 	end
-	local function exitPortal(x: number, top: number, z: number)
-		block(P, Vector3.new(12, 12, 3), CFrame.new(x, top + 6, z), {
-			name = "WorldExit",
-			color = DUO,
-			material = NEON,
-			transparency = 0.65,
-			collide = false,
-			tags = { "WorldExit" },
-		})
-	end
 
 	-- 1-1 STARTER MEADOW ----------------------------------------------------------------------------
 	section("StarterMeadow", Vector3.zero, Vector3.new(0, 0, 210))
@@ -1400,12 +1390,141 @@ local function buildPixelPlains(world: Model)
 	triggerLink.Value = trigger
 	triggerLink.Parent = glitchWall
 
-	-- BOSS ARENA (the Crusher King arrives with M6) ---------------------------------------------------
+	-- BOSS ARENA: THE CRUSHER KING (mechanics.md §5; fight logic in server/Bosses/CrusherKing) --------------
+	-- A 6×7 grid of 12-stud floor tiles (rows 4–6 drop away in phase 2), then the seated king: his thighs are a
+	-- lap ledge 18 up (out of jump reach from the floor, and 39 across the phase-2 gap), a belt step, shoulders
+	-- with Miko's crystals, the head and the crown. Fists hover beside him. The exit sits on the last row and
+	-- stays locked until he falls.
 	grass(Vector3.new(30, 4, 30), 0, 20, 1198, "ChaseEnd")
 	checkpoint(P, nextOrder(), 0, 20, 1191, W)
-	grass(Vector3.new(60, 6, 60), 0, 20, 1250, "BossArena")
-	exitPortal(0, 20, 1275)
-	sign(P, "BOSS: THE CRUSHER KING (M6)", CFrame.new(0, 36, 1275), Vector3.new(24, 4, 0.4))
+	local floorTop = 20
+	local arena = Instance.new("Folder")
+	arena.Name = "BossFloor"
+	arena.Parent = P
+	for row = 0, 6 do
+		for col = 0, 5 do
+			platform(arena, Vector3.new(12, 6, 12), -30 + col * 12, floorTop, 1219 + row * 12, {
+				color = if (row + col) % 2 == 0 then GRASS else Palette.PixelPlains.Grass:Lerp(DIRT, 0.25),
+				name = "BossTile",
+				tags = { "Crumble" },
+				attrs = { Row = row, Col = col, Skin = "GrassBlock" }, -- Crumble: the skin is welded, falls with it
+			})
+		end
+	end
+	local bossTrigger = block(P, Vector3.new(72, 30, 84), CFrame.new(0, floorTop + 15, 1255), {
+		name = "BossTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "BossTrigger" },
+		attrs = { Boss = "CrusherKing" },
+	})
+	bossTrigger.CanQuery = false
+	bossTrigger.CanTouch = false
+
+	-- the rock his throne stands on (the rows in front of it can fall away; this never does)
+	grass(Vector3.new(52, 40, 50), 0, floorTop, 1323, "KingRock"):SetAttribute("Bare", true)
+	local king = Instance.new("Model")
+	king.Name = "CrusherKing"
+	king.Parent = P
+	local KING = rgb(150, 150, 165) -- stacked stone blocks, infected by the Glitch
+	local ROBE = Palette.Castle.Royal
+	local ty = floorTop
+	block(
+		king,
+		Vector3.new(44, 17, 28),
+		CFrame.new(0, ty + 8.5, 1326),
+		{ name = "Throne", color = rgb(110, 90, 70), attrs = { Skin = "KingThrone" } }
+	)
+	block(
+		king,
+		Vector3.new(40, 18, 12),
+		CFrame.new(0, ty + 9, 1306),
+		{ name = "Lap", color = ROBE, attrs = { Skin = "KingLap" } }
+	) -- top ty+18
+	block(
+		king,
+		Vector3.new(44, 48, 6),
+		CFrame.new(0, ty + 41, 1343),
+		{ name = "ThroneBack", color = rgb(110, 90, 70), attrs = { Skin = "KingThroneBack" } }
+	)
+	block(
+		king,
+		Vector3.new(30, 12, 4),
+		CFrame.new(0, ty + 23, 1310),
+		{ name = "Belt", color = rgb(90, 70, 40), attrs = { Skin = "KingBelt" } }
+	) -- top ty+29
+	block(
+		king,
+		Vector3.new(36, 24, 16),
+		CFrame.new(0, ty + 29, 1320),
+		{ name = "Torso", color = KING, attrs = { Skin = "KingTorso" } }
+	) -- top ty+41
+	for _, side in { -1, 1 } do
+		local s = if side < 0 then "L" else "R"
+		block(
+			king,
+			Vector3.new(12, 6, 14),
+			CFrame.new(side * 24, ty + 38, 1320),
+			{ name = "Shoulder" .. s, color = KING, attrs = { Skin = "KingShoulder" } }
+		) -- top ty+41
+		block(
+			king,
+			Vector3.new(8, 18, 10),
+			CFrame.new(side * 23, ty + 26, 1320),
+			{ name = "Arm" .. s, color = KING, attrs = { Skin = "KingArm" } }
+		)
+		block(king, Vector3.new(4, 3, 4), CFrame.new(side * 24, ty + 42.5, 1320), {
+			name = "ShoulderCrystal" .. s,
+			color = MIKO,
+			material = NEON,
+			attrs = { Side = s },
+		})
+		local fist = block(king, Vector3.new(12, 10, 12), CFrame.new(side * 22, ty + 31, 1294), {
+			name = "Fist" .. s,
+			color = KAI,
+			tags = { "Freezable" },
+			attrs = { Side = s, Skin = "KingFist" },
+		})
+		block(king, Vector3.new(4, 3, 4), fist.CFrame * CFrame.new(0, 6.5, 0), {
+			name = "WristCrystal" .. s,
+			color = MIKO,
+			material = NEON,
+			collide = false,
+		})
+	end
+	block(
+		king,
+		Vector3.new(20, 18, 18),
+		CFrame.new(0, ty + 50, 1320),
+		{ name = "Head", color = KING, attrs = { Skin = "KingHead" } }
+	) -- top ty+59
+	block(king, Vector3.new(14, 8, 14), CFrame.new(0, ty + 63, 1320), {
+		name = "Crown",
+		color = rgb(240, 200, 60),
+		attrs = { Mass = 10, Weld = true, Skin = "KingCrown" }, -- Weld: its skin follows when Miko pulls it off
+	})
+	local shield = block(king, Vector3.new(30, 30, 30), CFrame.new(0, ty + 56, 1320), {
+		name = "GlitchShield",
+		color = GLITCH,
+		material = Enum.Material.ForceField,
+		transparency = 1,
+		collide = false,
+		shape = Enum.PartType.Ball,
+	})
+	shield.CanQuery = false
+	shield.CanTouch = false
+	-- the swing point when Kai freezes the whole king (phase 3): just in front of his chest, over the lap
+	king.WorldPivot = CFrame.new(0, ty + 36, 1302)
+
+	block(P, Vector3.new(12, 12, 3), CFrame.new(0, floorTop + 6, 1291), {
+		name = "WorldExit",
+		color = DUO,
+		material = NEON,
+		transparency = 1,
+		collide = false,
+		tags = { "WorldExit" },
+		attrs = { Locked = true }, -- unlocked by the boss's defeat (Main)
+	})
 
 	-- chain: each section's entry snaps onto the previous section's exit
 	local cursor = chunks[1].entry

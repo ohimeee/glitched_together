@@ -277,6 +277,8 @@ local function moves(part: BasePart): boolean
 		or CollectionService:HasTag(part, "Enemy") -- CombatService moves enemies by CFrame
 		or CollectionService:HasTag(part, "Station") -- StationService turns cranks by CFrame
 		or CollectionService:HasTag(part, "DuoGate") -- InteractableService tweens gates and lifts
+		or CollectionService:HasTag(part, "Crumble") -- boss floor tiles shake and fall
+		or part:GetAttribute("Weld") == true -- anything else a script moves later (the Crusher King's body)
 end
 
 -- Puts a skin over one grey-box part. Returns false (part untouched) if the meshes aren't available.
@@ -327,9 +329,43 @@ local function placeDecor(world: Instance, skinName: string, cf: CFrame, scale: 
 	end
 end
 
+-- An exit's arch (+ its sign lifted over the crown). Locked exits (behind a boss) get theirs when they unlock.
+local EXIT_ARCH_SCALE = 2.6 -- the arch's opening must clear the 12×12 portal field
+local function dressExit(part: BasePart)
+	local design = SHARED.ExitArch.Design * EXIT_ARCH_SCALE
+	local arch = Instance.new("Part")
+	arch.Name = "ExitArch"
+	arch.Size = design
+	arch.CFrame = part.CFrame * CFrame.new(0, -part.Size.Y / 2 + design.Y / 2, 0)
+	arch.Anchored = true
+	arch.CanCollide = false
+	arch.CanQuery = false
+	arch.CanTouch = false
+	arch.Transparency = 1
+	arch.Parent = part.Parent
+	if not ArtService.Apply(arch, "ExitArch") then
+		arch:Destroy()
+	else
+		-- the exit's sign hung inside the portal field and ended up buried in the (much bigger) arch: lift it
+		-- just over the arch's crown so it still reads from far away
+		local top = arch.Position.Y + design.Y / 2
+		for _, s in (part.Parent :: Instance):GetChildren() do
+			local flat = s:IsA("BasePart") and (s.Position - part.Position) * Vector3.new(1, 0, 1)
+			if
+				flat
+				and s.Name == "Sign"
+				and flat.Magnitude < 3
+				and s.Position.Y > part.Position.Y
+				and s.Position.Y < top
+			then
+				s.CFrame += Vector3.new(0, top + s.Size.Y / 2 + 0.5 - s.Position.Y, 0)
+			end
+		end
+	end
+end
+
 -- Shared pieces in every world: exit arches, Duo Pound buttons and Heavy Levers (their state shows on an inlay,
 -- since the grey-box part that turned green is hidden under the skin)
-local EXIT_ARCH_SCALE = 2.6 -- the arch's opening must clear the 12×12 portal field
 local function dressShared(world: Instance, worldName: string)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
@@ -345,35 +381,8 @@ local function dressShared(world: Instance, worldName: string)
 			continue
 		end
 		if CollectionService:HasTag(part, "WorldExit") then
-			local design = SHARED.ExitArch.Design * EXIT_ARCH_SCALE
-			local arch = Instance.new("Part")
-			arch.Name = "ExitArch"
-			arch.Size = design
-			arch.CFrame = part.CFrame * CFrame.new(0, -part.Size.Y / 2 + design.Y / 2, 0)
-			arch.Anchored = true
-			arch.CanCollide = false
-			arch.CanQuery = false
-			arch.CanTouch = false
-			arch.Transparency = 1
-			arch.Parent = part.Parent
-			if not ArtService.Apply(arch, "ExitArch") then
-				arch:Destroy()
-			else
-				-- the exit's sign hung inside the portal field and ended up buried in the (much bigger) arch: lift it
-				-- just over the arch's crown so it still reads from far away
-				local top = arch.Position.Y + design.Y / 2
-				for _, s in (part.Parent or world):GetChildren() do
-					local flat = s:IsA("BasePart") and (s.Position - part.Position) * Vector3.new(1, 0, 1)
-					if
-						flat
-						and s.Name == "Sign"
-						and flat.Magnitude < 3
-						and s.Position.Y > part.Position.Y
-						and s.Position.Y < top
-					then
-						s.CFrame += Vector3.new(0, top + s.Size.Y / 2 + 0.5 - s.Position.Y, 0)
-					end
-				end
+			if not part:GetAttribute("Locked") then
+				dressExit(part)
 			end
 		elseif CollectionService:HasTag(part, "JumpVent") then
 			VentFan(part, params)
@@ -598,6 +607,8 @@ local function watchHeld(p: Player)
 end
 
 -- Init ---------------------------------------------------------------------------------------------
+
+ArtService.DressExit = dressExit
 
 function ArtService.Init()
 	for _, p in Players:GetPlayers() do

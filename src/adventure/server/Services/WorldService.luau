@@ -111,7 +111,8 @@ function WorldService.Advance()
 	advancing = false
 end
 
--- Exit portals (tag WorldExit): the world ends only when BOTH players stand inside (a sync point).
+-- Exit portals (tag WorldExit): the world ends only when BOTH players stand inside (a sync point). A `Locked` exit
+-- (behind a boss) doesn't count until the boss falls.
 local function watchExits()
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Include
@@ -129,7 +130,7 @@ local function watchExits()
 		end
 		overlap.FilterDescendantsInstances = chars
 		for _, exit in game:GetService("CollectionService"):GetTagged("WorldExit") do
-			if exit:IsA("BasePart") and exit:IsDescendantOf(workspace) then
+			if exit:IsA("BasePart") and exit:IsDescendantOf(workspace) and not exit:GetAttribute("Locked") then
 				local inside = {}
 				for _, part in workspace:GetPartBoundsInBox(exit.CFrame, exit.Size, overlap) do
 					local p = Players:GetPlayerFromCharacter(part:FindFirstAncestorOfClass("Model"))

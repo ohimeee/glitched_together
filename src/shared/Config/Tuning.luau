@@ -257,6 +257,33 @@ return {
 		},
 	},
 
+	-- Bosses (mechanics.md §5)
+	CrusherKing = {
+		-- phase 1: fist slams (targets alternate Kai / Miko); Kai freezes a fist, Miko pounds its wrist crystal
+		Hover = 24, -- studs a fist hangs over the floor while it tracks its target
+		Track = 1.8, -- s a fist follows its target with a slam mark under it
+		SlamTime = 0.22,
+		Rest = 1.1, -- s a fist stays on the floor after a slam (freeze it now: its top is double-jump high)
+		Rise = 0.8,
+		Gap = 0.6, -- s between one fist going up and the other starting
+		SlamRadius = 7, -- players within this of the fist's center when it lands lose a heart
+		CrystalHits = 3,
+		ShakeOff = 0.6, -- s after a crystal hit before the fist breaks free
+		-- phase 2: the front rows drop away, he throws blocks; Kai freezes one mid-flight, Miko swings over
+		DropRows = 3, -- the rows nearest the king that fall away (gap 36 across, lap 18 up)
+		ThrowEvery = 2.6,
+		ThrowTime = 2.4, -- s a block is in the air
+		ThrowArc = 10, -- apex above the higher end
+		BlockSize = 8,
+		BlockRadius = 7, -- landing hurts within this
+		CrumbleEvery = 3, -- s between tiles crumbling in the safe rows
+		CrumbleWarn = 1, -- s a tile shakes before it falls
+		CrumbleBack = 5, -- s until it's back
+		-- phase 3: glitch shield; Kai freezes the whole king, Miko pulls the crown off
+		Phase3Speed = 1.3, -- fists move this much faster
+	},
+	BossHitFlash = 0.25,
+
 	-- World 3
 	CopyPaste = { CopyRange = 50, PasteRange = 40, MaxPastes = 2, FloatDistance = 14 }, -- float: mid-air paste ahead of Kai
 	LayerShift = { Transition = 0.3, PullRange = 35 },

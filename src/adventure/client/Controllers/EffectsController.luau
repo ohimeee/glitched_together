@@ -86,11 +86,21 @@ local function outline(tag: string, color: Color3)
 		hl.OutlineColor = color
 		hl.DepthMode = Enum.HighlightDepthMode.Occluded
 		hl.Parent = inst
+	end, function(inst)
+		local hl = inst:FindFirstChild(tag .. "Look")
+		if hl then
+			hl:Destroy() -- the tag can come and go (the Crusher King's crown is Pullable only while he's frozen)
+		end
 	end)
 end
 
 function EffectsController.Init()
-	Tags.each("Freezable", onFreezable)
+	Tags.each("Freezable", onFreezable, function(inst)
+		local frame = inst:FindFirstChild("FreezableFrame")
+		if frame then
+			frame:Destroy() -- e.g. boss floor tiles: Freezable only while they fall
+		end
+	end)
 	outline("GrappleRing", Palette.Miko)
 	outline("Pullable", Palette.Miko)
 	outline("Copyable", Palette.Kai)

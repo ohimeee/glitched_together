@@ -1,6 +1,7 @@
 -- Adventure place entry point: Init services in dependency order, then load the duo's save.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
 
 local Services = script.Parent.Services
 local Net = require(ReplicatedStorage.Shared.Net)
@@ -87,6 +88,23 @@ WorldService.Loaded:Connect(function(worldName: string, restart: boolean?)
 	end
 	if worldName == "StarfallCastle" then
 		XpService.Reset() -- leveling starts fresh each time the castle loads
+	end
+end)
+
+-- A boss falls (story triggers W1_BossDefeated / W2_BossDefeated): memory cutscene, end-of-world scene, then the
+-- exit portal opens.
+local BOSS_CUTSCENES = { CrusherKing = { "W1_Memory1", "W1_End" } }
+BossService.Finished:Connect(function(name: string)
+	task.wait(2.5) -- let him come apart first
+	for _, id in BOSS_CUTSCENES[name] or {} do
+		CutsceneService.Play(id)
+	end
+	for _, exit in CollectionService:GetTagged("WorldExit") do
+		if exit:GetAttribute("Locked") then
+			exit:SetAttribute("Locked", nil)
+			exit.Transparency = 0.65
+			ArtService.DressExit(exit)
+		end
 	end
 end)
 

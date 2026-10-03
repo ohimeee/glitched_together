@@ -17,7 +17,141 @@ local NEON = Enum.Material.Neon
 local PLASTIC = "PixelPlastic" -- ArtService/Materials: toy plastic with a soft pixel grid
 local v = Vector3.new
 
+local KING_ATLAS = "rbxassetid://101000082699383"
+
 local Skins: { [string]: MeshAssets.Skin } = {
+	-- The Crusher King (tools/crusher_king/kit.py): painted wooden toy cubes, one mesh per grey-box part, all on one
+	-- palette atlas (textures/make_king_palette.py)
+	KingArm = {
+		Design = v(8, 18, 10),
+		Meshes = {
+			CK_Arm = {
+				Id = "rbxassetid://139603453996521",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(8, 18, 10),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingBelt = {
+		Design = v(30, 12, 4),
+		Meshes = {
+			CK_Belt = {
+				Id = "rbxassetid://84926330741099",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(30, 12, 4),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingCrown = {
+		Design = v(14, 8, 14),
+		Meshes = {
+			CK_Crown = {
+				Id = "rbxassetid://112801799315417",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(14, 8, 14),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingFist = {
+		Design = v(12, 10, 12),
+		Meshes = {
+			CK_Fist = {
+				Id = "rbxassetid://114716790022423",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(12, 10, 12),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingHead = {
+		Design = v(20, 18, 18),
+		Meshes = {
+			CK_Head = {
+				Id = "rbxassetid://103502743668611",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(20, 18, 18),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingLap = {
+		Design = v(40, 18, 12),
+		Meshes = {
+			CK_Lap = {
+				Id = "rbxassetid://124566979589837",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(40, 18, 12),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingShoulder = {
+		Design = v(12, 6, 14),
+		Meshes = {
+			CK_Shoulder = {
+				Id = "rbxassetid://103810746977690",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(12, 6, 14),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingThrone = {
+		Design = v(44, 17, 28),
+		Meshes = {
+			CK_Throne = {
+				Id = "rbxassetid://74735935285484",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(44, 17, 28),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingThroneBack = {
+		Design = v(44, 48, 6),
+		Meshes = {
+			CK_ThroneBack = {
+				Id = "rbxassetid://72797592136849",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(44, 48, 6),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
+	KingTorso = {
+		Design = v(36, 24, 16),
+		Meshes = {
+			CK_Torso = {
+				Id = "rbxassetid://112613268278407",
+				TextureId = KING_ATLAS,
+				Offset = v(0, 0, 0),
+				Size = v(36, 24, 16),
+				Material = SMOOTH,
+				Color = Color3.new(1, 1, 1),
+			},
+		},
+	},
 	GrassBlock = {
 		Design = v(20, 6, 20),
 		Meshes = {
@@ -939,6 +1073,47 @@ local function hiddenPart(name: string, size: Vector3, cf: CFrame, parent: Insta
 	return p
 end
 
+-- Boss arena tiles (tag Crumble) drop away in the Crusher King fight, so each carries its own chunk of island
+-- underneath, welded to it: together they read as one jagged voxel island, and a falling tile takes its dirt along.
+local function bossTileChunks(world: Instance)
+	local rng = Random.new(1300)
+	local colors = { PP.Dirt, Color3.fromHex("#8F5E33"), Color3.fromHex("#8C8C96") }
+	for _, tile in world:GetDescendants() do
+		if not (tile:IsA("BasePart") and tile:HasTag("Crumble")) then
+			continue
+		end
+		local size = tile.Size
+		local y = tile.Position.Y - size.Y / 2
+		local row = (tile:GetAttribute("Row") or 0) :: number
+		local depth = rng:NextNumber(10, 22) + row * 1.5 -- deeper toward the king's rock
+		for i, k in { 0.98, rng:NextNumber(0.6, 0.85), rng:NextNumber(0.3, 0.55) } do
+			local d = depth * ({ 0.45, 0.35, 0.3 })[i]
+			local chunk = hiddenPart(
+				"TileChunk",
+				Vector3.new(size.X * k, d, size.Z * k),
+				CFrame.new(
+					tile.Position.X + rng:NextNumber(-1, 1) * size.X * (1 - k) / 2,
+					y - d / 2 + 0.2,
+					tile.Position.Z + rng:NextNumber(-1, 1) * size.Z * (1 - k) / 2
+				),
+				tile
+			)
+			chunk.Transparency = 0
+			chunk.Material = SMOOTH
+			chunk.MaterialVariant = PLASTIC
+			chunk.Color = colors[i]
+			chunk.CastShadow = false
+			chunk.Anchored = false
+			chunk.Massless = true
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = tile
+			w.Part1 = chunk
+			w.Parent = chunk
+			y -= d - 0.2
+		end
+	end
+end
+
 -- Oct 2 art pass: surfaces, gates, plates, checkpoints, fire bars and switch blocks (see the skins above).
 local SURFACES: { [string]: { any } } = { -- name → { material, variant?, color }: real surfaces, no mesh needed
 	Bridge = { Enum.Material.WoodPlanks, "CastlePlanks", Color3.fromRGB(255, 222, 140) }, -- yellow-stained planks:
@@ -1232,6 +1407,8 @@ local function islandUndersides(world: Instance, params: RaycastParams, apply: (
 			or (floor:GetAttribute("Skin") ~= "GrassBlock" and floor:GetAttribute("Skin") ~= "Cliff")
 			or floor:HasTag("Mover")
 			or floor:HasTag("DuoGate")
+			or floor:HasTag("Crumble") -- boss floor tiles drop away
+			or floor:GetAttribute("Bare") -- no underside/foliage (the Crusher King's rock: the fight happens on it)
 			or floor.Parent == folder
 			or floor:FindFirstAncestor("SkyIslands")
 		then
@@ -1560,6 +1737,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		end
 	end
 	islandUndersides(world, params, apply)
+	bossTileChunks(world)
 	-- the Fire Bar Run gallery glass was a bare pale slab: now real glass in a wooden frame (posts, sill, top rail),
 	-- starting at the gallery floor instead of hanging below it. Frame pieces don't collide or block aim rays.
 	for _, glass in world:GetDescendants() do

@@ -682,6 +682,62 @@ local function buildCastle()
 	buildOverheadBars()
 end
 
+-- Boss bar (top center): the boss's name, a health bar and the phase, while workspace.BossName is set ---------
+local function buildBoss()
+	local panel = new("Frame", {
+		Name = "Boss",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 18),
+		Size = UDim2.fromOffset(460, 62),
+		Visible = false,
+		ZIndex = 2,
+	}, gui)
+	UiSkin.Panel(panel)
+	local name = text({
+		Position = UDim2.fromOffset(14, 6),
+		Size = UDim2.new(1, -28, 0, 22),
+		TextScaled = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 3,
+	}, panel, "Title")
+	local phase = text({
+		Position = UDim2.fromOffset(14, 6),
+		Size = UDim2.new(1, -28, 0, 18),
+		TextScaled = true,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		ZIndex = 3,
+	}, panel, "Body")
+	local back = new("Frame", {
+		Position = UDim2.new(0, 14, 0, 34),
+		Size = UDim2.new(1, -28, 0, 16),
+		BackgroundColor3 = Color3.fromRGB(20, 20, 35),
+		ZIndex = 3,
+	}, panel)
+	corner(back, 8)
+	local fill = new("Frame", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Palette.Glitch, -- he's made of the Glitch
+		ZIndex = 4,
+	}, back)
+	corner(fill, 8)
+
+	local function refresh()
+		local boss = workspace:GetAttribute("BossName")
+		panel.Visible = boss ~= nil
+		if not boss then
+			return
+		end
+		name.Text = boss
+		phase.Text = string.upper((workspace:GetAttribute("BossPhaseName") or "") :: string)
+		local health = math.clamp((workspace:GetAttribute("BossHealth") or 1) :: number, 0, 1)
+		TweenService:Create(fill, TweenInfo.new(0.35), { Size = UDim2.fromScale(health, 1) }):Play()
+	end
+	for _, attr in { "BossName", "BossHealth", "BossPhaseName" } do
+		workspace:GetAttributeChangedSignal(attr):Connect(refresh)
+	end
+	refresh()
+end
+
 function HUDController.Init()
 	gui = new(
 		"ScreenGui",
@@ -696,6 +752,7 @@ function HUDController.Init()
 	hideOwnRevivePrompt()
 	buildTouch()
 	buildCastle()
+	buildBoss()
 end
 
 function HUDController.Gui(): ScreenGui

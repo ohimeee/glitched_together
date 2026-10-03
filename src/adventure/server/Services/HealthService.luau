@@ -286,6 +286,7 @@ local UNSAFE = {
 	"SwitchBlock",
 	"Cart", -- the Siege Cart: it moves (and a crash puts everyone back on it anyway)
 	"Unloaded", -- Unloaded Chunk floor: there only while Kai's scanner lights it
+	"Crumble", -- boss arena tiles: they drop away
 }
 
 local function trackSafeGround()

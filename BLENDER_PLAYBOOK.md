@@ -183,6 +183,7 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 
 | Priority | Asset | World | Notes |
 | --- | --- | --- | --- |
+| ✅ | **Crusher King** (World 1 boss) | Pixel Plains | Oct 3 (15th session): voxel king of painted wooden toy cubes, one mesh per grey-box part on a chipped-paint palette atlas; `tools/crusher_king/kit.py`, `textures/make_king_palette.py`, brief `briefs/CrusherKing.md`, skins `King*` in `ArtService/PixelPlains.luau`. Export FBX with `path_mode="COPY", embed_textures=True` (a stripped texture path blocks the Studio import) |
 | ✅ | **Pip** | All | Redone Sep 30 to the graphics baseline with Studio `generate_mesh` (4 textured parts; ids in `ArtService/Pip.luau`); old Blender voxel version kept in `blender_assets/Pip.*` |
 | 1 | **Redo to the graphics baseline** (art-direction.md top note): lobby capsule, Prologue set, Pixel Plains kit, role badges, castle kit (real stone / wood / metal surfaces before import) | All | Current versions are flat-colored primitive builds from before the baseline |
 | ✅ | **Lobby capsule** (Kai ▲ / Miko ●) + marquee | Lobby | Done and in game: `blender_assets/LobbyCapsule.blend/.fbx` (2,082 tris per capsule), ids in `src/lobby/server/CapsuleMeshes.luau`, brief `briefs/LobbyCapsule.md` |

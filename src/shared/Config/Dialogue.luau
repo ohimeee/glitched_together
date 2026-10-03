@@ -21,6 +21,21 @@ local Cutscenes: { [string]: { Line } } = {
 			Text = "Pixel Plains! Your very first level. Kai, you get the Pause Beam. Miko, the Grapple Line.",
 		},
 	},
+	-- Memory 1 "Level One" (Story Line, World 1): after the Crusher King
+	W1_Memory1 = {
+		{ Speaker = "Pip", Text = "MEMORY FILE 1 OF 3: LEVEL_ONE.SAV. ...Loading." },
+		{
+			Speaker = "Memory",
+			Text = "Kai's bedroom floor. Two twelve-year-olds, graph paper everywhere, building this exact level.",
+		},
+		{
+			Speaker = "Memory",
+			Text = "Miko draws a crown on the Crusher King and laughs so hard she drops the pencil.",
+		},
+		{ Speaker = "Miko", Text = "When we finish it, we launch it together. No matter what." },
+		{ Speaker = "Kai", Text = "No matter what." },
+		{ Speaker = "Memory", Text = "They pinky-promise." },
+	},
 	W1_End = {
 		{ Speaker = "Kai", Text = "You promised." },
 		{ Speaker = "Miko", Text = "So did you." },
