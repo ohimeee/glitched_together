@@ -190,6 +190,36 @@ local ByName: { [string]: World } = {
 			BakedSky = true,
 		},
 	},
+	-- not a world you play: the lobby (Kai and Miko's bedroom at night, src/lobby/server/LobbyRoom.luau)
+	Lobby = {
+		Name = "Lobby",
+		Title = "The Bedroom",
+		Palette = { rgb(40, 44, 90), rgb(255, 200, 140), rgb(170, 175, 220) },
+		Look = {
+			-- moonlight falls in through the window (+Z) at a day clock (Roblox dims skyboxes at night): ClockTime
+			-- 10.25 at latitude 80 aims the light from above the window into the room, at moonlight brightness;
+			-- warm pools come from the desk lamp, the fairy lights and the hallway door
+			ClockTime = 10.25,
+			Latitude = 80,
+			Brightness = 0.7,
+			EnvDiffuse = 0.5,
+			EnvSpecular = 0.5,
+			Ambient = rgb(118, 114, 156),
+			OutdoorAmbient = rgb(110, 112, 158),
+			AtmosphereDensity = 0,
+			AtmosphereHaze = 0,
+			AtmosphereColor = rgb(40, 44, 90),
+			AtmosphereDecay = rgb(40, 44, 90),
+			BloomIntensity = 1,
+			BloomThreshold = 1.1,
+			Saturation = 0.1,
+			Contrast = 0.12,
+			Tint = rgb(236, 236, 255),
+			BakedSky = true,
+			-- macro-photo depth of field: a tight focus near the camera sells the doll scale (tilt-shift)
+			Dof = { Far = 0.4, Focus = 24, Radius = 26 },
+		},
+	},
 	Epilogue = {
 		Name = "Epilogue",
 		Title = "Continue",
@@ -211,6 +241,9 @@ local ByName: { [string]: World } = {
 		},
 	},
 }
+
+-- out of the bedroom window: the moonlit valley (the kingdom they dreamed up); a suburb render could replace it
+ByName.Lobby.Look.Skybox = ByName.StarfallCastle.Look.Skybox
 
 local Lighting = game:GetService("Lighting")
 

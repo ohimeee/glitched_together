@@ -8,9 +8,13 @@ local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local CapsuleMeshes = require(script.Parent.CapsuleMeshes)
+local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
+local LobbyRoom = require(script.Parent.LobbyRoom)
+local LobbyProps = require(script.Parent.LobbyProps)
 
 local PAIRS = 6
-local RING_RADIUS = 46
+local RING_RADIUS = 40
+local RING_CENTER = Vector3.new(0, 0, -14) -- the front of the desk; the back strip holds the monitor and the lamp
 
 local LobbyBuilder = {}
 
@@ -218,45 +222,57 @@ function LobbyBuilder.Build()
 	local lobby = Instance.new("Folder")
 	lobby.Name = "Lobby"
 
-	part({
-		Name = "Platform",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(4, 150, 150),
-		CFrame = CFrame.new(0, -2, 0) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Color3.fromRGB(60, 62, 92),
-		Parent = lobby,
-	})
-	part({
-		Name = "Rim",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(0.4, 152, 152),
-		CFrame = CFrame.new(0, -0.25, 0) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Palette.Prologue.Pink,
-		Material = Enum.Material.Neon,
-		CanCollide = false,
-		Parent = lobby,
-	})
+	-- the lobby is Kai and Miko's bedroom at night, players doll-sized on the shared desk (LobbyRoom)
+	Worlds.ApplyLook(Worlds.ByName.Lobby.Look)
+	LobbyRoom.Build(lobby)
+	LobbyProps.Build(lobby)
 
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "Spawn"
 	spawn.Anchored = true
-	spawn.Size = Vector3.new(12, 1, 12)
-	spawn.CFrame = CFrame.new(0, 0.5, 0)
-	spawn.Color = Color3.fromRGB(240, 240, 250)
-	spawn.Material = Enum.Material.SmoothPlastic
+	spawn.Size = Vector3.new(12, 0.2, 12)
+	spawn.CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 0.1, 0))
+	spawn.Transparency = 1
+	spawn.CanCollide = false
 	spawn.Duration = 0
 	spawn.Parent = lobby
 
-	-- Title board
-	local board = part({
-		Name = "TitleBoard",
-		Size = Vector3.new(40, 10, 1),
-		CFrame = CFrame.new(0, 26, 0),
-		Color = Color3.fromRGB(20, 24, 58),
+	-- the instructions: a big sticky note stuck upright to a pencil cup in the middle of the desk
+	local note = part({
+		Name = "StickyNote",
+		Size = Vector3.new(16, 16, 0.3),
+		CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 14, -2)) * CFrame.Angles(math.rad(-8), 0, math.rad(2)),
+		Color = Color3.fromRGB(255, 196, 214), -- pastel pink note
+		Material = Enum.Material.SmoothPlastic,
 		Parent = lobby,
 	})
-	label(board, Enum.NormalId.Front, "[2 PLAYER] GLITCHED TOGETHER 👾", Color3.fromRGB(255, 255, 255))
-	label(board, Enum.NormalId.Back, "STEP INTO A CAPSULE: ▲ KAI  or  ● MIKO", Color3.fromRGB(255, 200, 235))
+	note.CanCollide = false
+	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = face
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 24
+		gui.LightInfluence = 1
+		gui.Parent = note
+		local t = Instance.new("TextLabel")
+		t.Size = UDim2.fromScale(0.86, 0.86)
+		t.Position = UDim2.fromScale(0.07, 0.07)
+		t.BackgroundTransparency = 1
+		t.Font = Enum.Font.PermanentMarker
+		t.TextScaled = true
+		t.TextColor3 = Color3.fromRGB(40, 40, 70)
+		t.Text = "GLITCHED TOGETHER\n2 players!\n\nstep in a capsule:\n▲ KAI  or  ● MIKO"
+		t.Parent = gui
+	end
+	local stick = part({
+		Name = "NoteStick",
+		Size = Vector3.new(14, 1.2, 1.2),
+		CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 3, -1.2)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(80, 84, 96),
+		Shape = Enum.PartType.Cylinder,
+		Parent = lobby,
+	})
+	stick.CanCollide = false
 
 	local pairsFolder = Instance.new("Folder")
 	pairsFolder.Name = "CapsulePairs"
@@ -266,9 +282,9 @@ function LobbyBuilder.Build()
 
 	for i = 1, PAIRS do
 		local angle = (i - 1) / PAIRS * math.pi * 2
-		local pos = Vector3.new(math.cos(angle) * RING_RADIUS, 0, math.sin(angle) * RING_RADIUS)
+		local pos = RING_CENTER + Vector3.new(math.cos(angle) * RING_RADIUS, 0, math.sin(angle) * RING_RADIUS)
 		-- LookVector points at the center, so the open (front, -Z) side of each capsule faces players.
-		local pairCf = CFrame.lookAt(pos, Vector3.zero)
+		local pairCf = CFrame.lookAt(pos, RING_CENTER)
 
 		local pair = Instance.new("Model")
 		pair.Name = `Pair{i}`

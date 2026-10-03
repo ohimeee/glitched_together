@@ -4,18 +4,110 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "Shared": { "$path": "src/shared" }
+      "Shared": {
+        "$path": "src/shared"
+      }
     },
     "ServerScriptService": {
-      "Lobby": { "$path": "src/lobby/server" }
+      "Lobby": {
+        "$path": "src/lobby/server"
+      }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "LobbyClient": { "$path": "src/lobby/client" }
+        "LobbyClient": {
+          "$path": "src/lobby/client"
+        }
       }
     },
     "Lighting": {
-      "$properties": { "Technology": "Future", "ClockTime": 14.5, "Brightness": 2.5 }
+      "$properties": {
+        "Technology": "Future",
+        "ClockTime": 14.5,
+        "Brightness": 2.5
+      }
+    },
+    "MaterialService": {
+      "LobbyDesk": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Wood",
+          "ColorMap": "rbxassetid://134810938956243",
+          "NormalMap": "rbxassetid://103059125548560",
+          "RoughnessMap": "rbxassetid://93722176483251",
+          "StudsPerTile": 60
+        }
+      },
+      "LobbyFloor": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "WoodPlanks",
+          "ColorMap": "rbxassetid://78845645487778",
+          "NormalMap": "rbxassetid://107560611895742",
+          "RoughnessMap": "rbxassetid://82378002901804",
+          "StudsPerTile": 90
+        }
+      },
+      "LobbyWall": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Plaster",
+          "ColorMap": "rbxassetid://100546536951810",
+          "NormalMap": "rbxassetid://111335684202853",
+          "RoughnessMap": "rbxassetid://84778449464267",
+          "StudsPerTile": 80
+        }
+      },
+      "LobbyQuilt": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://138755330184605",
+          "NormalMap": "rbxassetid://135238210608617",
+          "RoughnessMap": "rbxassetid://129288381935959",
+          "StudsPerTile": 26
+        }
+      },
+      "LobbyFleece": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://92678549158007",
+          "NormalMap": "rbxassetid://101804067126230",
+          "RoughnessMap": "rbxassetid://134073179914498",
+          "StudsPerTile": 20
+        }
+      },
+      "LobbyCurtain": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://113693913525599",
+          "NormalMap": "rbxassetid://127793694254265",
+          "RoughnessMap": "rbxassetid://78122533568901",
+          "StudsPerTile": 40
+        }
+      },
+      "LobbyRug": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://121182816480614",
+          "NormalMap": "rbxassetid://102409602060377",
+          "RoughnessMap": "rbxassetid://89810982523237",
+          "StudsPerTile": 36
+        }
+      },
+      "LobbyShelf": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Wood",
+          "ColorMap": "rbxassetid://104641451057463",
+          "NormalMap": "rbxassetid://84985786811890",
+          "RoughnessMap": "rbxassetid://124908659879891",
+          "StudsPerTile": 50
+        }
+      }
     }
   }
 }

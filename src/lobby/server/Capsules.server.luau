@@ -20,7 +20,7 @@ local DUO_TTL = 60 * 60 -- seconds the duo record lives in MemoryStore
 local MESSAGE_TIME = 2.5 -- how long TRY AGAIN / STUDIO notices stay on a screen
 
 LobbyBuilder.Build()
-Worlds.ApplyLook(Worlds.ByName.PixelPlains.Look)
+Worlds.ApplyLook(Worlds.ByName.Lobby.Look)
 
 -- MemoryStore throws in an unpublished place; keep going so the capsule lock-in can still be tested in Studio.
 -- Every later use is inside a pcall, so missing maps only turn off teleport/rejoin.
