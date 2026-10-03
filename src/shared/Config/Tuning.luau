@@ -87,8 +87,10 @@ return {
 	HeartRegenEvery = 5,
 	HpRegen = { Delay = 4, PerSecond = 5 }, -- castle HP: s without a hit before it refills, then HP per second
 	HitInvuln = 1,
-	KillZoneRespawnDelay = 1.5,
-	SafePosEvery = 0.5,
+	KillZoneRespawnDelay = 1,
+	SafePosEvery = 0.25,
+	VoidDrop = 25, -- studs below your last safe ground, falling with nothing under you (VoidProbe deep) = a fall
+	VoidProbe = 150,
 	LeverThrow = 40, -- degrees a pull lever swings over when pulled (and back when pulled again)
 	LeverSwingTime = 0.35,
 	SwitchGhost = 0.78, -- transparency of the switch-block set that isn't solid (still readable: where you'll land next)

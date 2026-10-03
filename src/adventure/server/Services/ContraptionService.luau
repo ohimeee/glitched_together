@@ -40,6 +40,7 @@ local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local HealthService = require(script.Parent.HealthService)
 local MoverService = require(script.Parent.MoverService)
+local CheckpointService = require(script.Parent.CheckpointService)
 
 local T = Tuning.Contraptions
 
@@ -447,6 +448,17 @@ local function resetChase(c: Chase)
 	c.cooldown = os.clock() + T.ChaseRetryDelay
 end
 
+-- A failed run (someone caught by the wall or fallen off a rail): the whole duo goes back to the chase's start
+-- (the checkpoint before it) and the wall resets (playtest Oct 4: "if i die i should spawn in the rail start").
+local function failChase(c: Chase)
+	c.wall:SetAttribute("Running", nil)
+	resetChase(c)
+	for _, p in Players:GetPlayers() do
+		HealthService.SetSafe(p, CheckpointService.SpawnCFrame(p))
+		HealthService.Fall(p) -- the usual fall: a beat, then put back (now at the start)
+	end
+end
+
 local function stepChase(c: Chase, dt: number)
 	local wall = c.wall
 	if not c.running then
@@ -484,11 +496,15 @@ local function stepChase(c: Chase, dt: number)
 		if root and not p:GetAttribute("Downed") and not p:GetAttribute("Falling") then
 			local lp = front:PointToObjectSpace(root.Position)
 			if lp.Z > 0 and math.abs(lp.X) <= wall.Size.X / 2 and math.abs(lp.Y) <= wall.Size.Y / 2 then
-				HealthService.Fall(p)
-				wall:SetAttribute("Running", nil)
-				resetChase(c)
+				failChase(c)
 				return
 			end
+		end
+	end
+	for _, p in Players:GetPlayers() do
+		if p:GetAttribute("Falling") or p:GetAttribute("Downed") then
+			failChase(c) -- fell off a rail mid-run
+			return
 		end
 	end
 	if c.travelled >= distance then

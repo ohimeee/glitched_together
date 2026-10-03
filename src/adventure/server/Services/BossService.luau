@@ -126,6 +126,28 @@ function BossService.Running(): string?
 end
 
 function BossService.Init()
+	-- Studio only: workspace:SetAttribute("DebugBossPhase", n) jumps the running fight to phase n (solo tests of
+	-- phases that need both players); a number past the last phase finishes the fight.
+	if RunService:IsStudio() then
+		workspace:GetAttributeChangedSignal("DebugBossPhase"):Connect(function()
+			local n = workspace:GetAttribute("DebugBossPhase")
+			local r = running
+			if not (r and type(n) == "number") then
+				return
+			end
+			local phase = r.phases[r.index]
+			if phase then
+				phase.Exit(r.state)
+			end
+			if n > #r.phases then
+				local name = r.name
+				BossService.Stop()
+				finished:Fire(name)
+			else
+				enter(n)
+			end
+		end)
+	end
 	-- Boss triggers: the whole duo inside starts the fight (at the saved phase after a game over).
 	task.spawn(function()
 		while true do

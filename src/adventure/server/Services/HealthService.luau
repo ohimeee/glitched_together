@@ -261,6 +261,13 @@ function HealthService.Fall(p: Player)
 	end)
 end
 
+-- Where this player goes back to after their next fall (the Glitch Chase sends everyone back to its start).
+function HealthService.SetSafe(p: Player, cf: CFrame)
+	local s = state(p)
+	s.safe = cf
+	table.clear(s.history)
+end
+
 function HealthService.ResetSafe()
 	for _, s in states do
 		s.safe = nil
@@ -303,6 +310,21 @@ local function trackSafeGround()
 				HealthService.Fall(p)
 				continue
 			end
+			-- falling into the void high up (chase rails, sky islands): don't wait for the world's kill height
+			-- (playtest Oct 4: "i die longer if i fall"). Well below the last safe ground with nothing under you = a fall.
+			local s = state(p)
+			if
+				s.safe
+				and not s.falling
+				and humanoid.FloorMaterial == Enum.Material.Air
+				and root.Position.Y < s.safe.Position.Y - Tuning.VoidDrop
+			then
+				rayParams.FilterDescendantsInstances = { p.Character :: Model }
+				if not workspace:Raycast(root.Position, Vector3.new(0, -Tuning.VoidProbe, 0), rayParams) then
+					HealthService.Fall(p)
+					continue
+				end
+			end
 			if humanoid.FloorMaterial == Enum.Material.Air or state(p).falling then
 				continue
 			end
@@ -317,7 +339,6 @@ local function trackSafeGround()
 					end
 				end
 				if not unsafe then
-					local s = state(p)
 					s.safe = CFrame.new(root.Position + Vector3.new(0, 1, 0)) * root.CFrame.Rotation
 					table.insert(s.history, { t = os.clock(), cf = s.safe })
 					if #s.history > 12 then
