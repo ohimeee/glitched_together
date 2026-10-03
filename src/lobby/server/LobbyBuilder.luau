@@ -17,6 +17,19 @@ local PAIRS = 6
 local RING_RADIUS = 40
 local RING_CENTER = Vector3.new(0, 0, -14) -- the front of the desk; the back strip holds the monitor and the lamp
 
+-- the A-frame chalkboard sign in the ring (tools/lobby_kit/sign.py: HINGE, SPREAD, W, H, BOARD_AT)
+local CHALK = "rbxassetid://93825968961017" -- textures/lobby_chalk.png
+local SIGN = { Hinge = Vector3.new(0, 22, -14), Spread = 6, W = 16, H = 17, BoardAt = 11 }
+
+-- One board's centre; LookVector points out of the board (side -1 = the front, facing the spawn).
+local function signPanel(side: number): CFrame
+	local hinge = SIGN.Hinge
+	local foot = Vector3.new(0, 0, hinge.Z + side * SIGN.Spread)
+	local down = (foot - hinge).Unit
+	local right = if side < 0 then Vector3.xAxis else -Vector3.xAxis
+	return CFrame.fromMatrix(hinge + down * SIGN.BoardAt, right, -down)
+end
+
 local LobbyBuilder = {}
 
 local function part(props: { [string]: any }): Part
@@ -233,48 +246,55 @@ function LobbyBuilder.Build()
 	spawn.Name = "Spawn"
 	spawn.Anchored = true
 	spawn.Size = Vector3.new(12, 0.2, 12)
-	spawn.CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 0.1, 0))
+	-- in front of the chalkboard sign, facing it (and the CRT + moonlit window behind it)
+	local spawnAt = RING_CENTER + Vector3.new(0, 0.1, -18)
+	spawn.CFrame = CFrame.lookAt(spawnAt, spawnAt + Vector3.zAxis)
 	spawn.Transparency = 1
 	spawn.CanCollide = false
 	spawn.Duration = 0
 	spawn.Parent = lobby
 
-	-- the instructions: a big sticky note stuck upright to a pencil cup in the middle of the desk
-	local note = part({
-		Name = "StickyNote",
-		Size = Vector3.new(16, 16, 0.3),
-		CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 14, -2)) * CFrame.Angles(math.rad(-8), 0, math.rad(2)),
-		Color = Color3.fromRGB(255, 196, 214), -- pastel pink note
-		Material = Enum.Material.SmoothPlastic,
-		Parent = lobby,
-	})
-	note.CanCollide = false
-	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+	-- the instructions: a double-sided A-frame chalkboard in the middle of the ring (meshes: LobbyKit Sign_*, built by
+	-- tools/lobby_kit/sign.py; the chalk lettering lies on the same board planes, so keep SIGN in sync with HINGE etc.)
+	for _, side in { -1, 1 } do
+		local board = signPanel(side)
+		local face = part({
+			Name = "SignChalk",
+			Size = Vector3.new(SIGN.W, SIGN.H, 0.04),
+			CFrame = board * CFrame.new(0, 0, -0.23),
+			Transparency = 1,
+			Parent = lobby,
+		})
+		face.CanCollide = false
+		face.CanQuery = false
+		face.CanTouch = false
 		local gui = Instance.new("SurfaceGui")
-		gui.Face = face
+		gui.Face = Enum.NormalId.Front
 		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-		gui.PixelsPerStud = 24
-		gui.LightInfluence = 1
-		gui.Parent = note
-		local t = Instance.new("TextLabel")
-		t.Size = UDim2.fromScale(0.86, 0.86)
-		t.Position = UDim2.fromScale(0.07, 0.07)
-		t.BackgroundTransparency = 1
-		t.Font = Enum.Font.PermanentMarker
-		t.TextScaled = true
-		t.TextColor3 = Color3.fromRGB(40, 40, 70)
-		t.Text = "GLITCHED TOGETHER\n2 players!\n\nstep in a capsule:\n▲ KAI  or  ● MIKO"
-		t.Parent = gui
+		gui.PixelsPerStud = 32
+		gui.LightInfluence = 0.5 -- chalk stays readable in the night room
+		gui.Brightness = 1.3
+		gui.Parent = face
+		-- hand-chalked lettering, smudges and doodles baked into one texture (textures/make_lobby_chalk.py)
+		local img = Instance.new("ImageLabel")
+		img.Size = UDim2.fromScale(1, 1)
+		img.BackgroundTransparency = 1
+		img.Image = CHALK
+		img.Parent = gui
 	end
-	local stick = part({
-		Name = "NoteStick",
-		Size = Vector3.new(14, 1.2, 1.2),
-		CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 3, 0.6)) * CFrame.Angles(0, 0, math.rad(90)), -- behind the note
-		Color = Color3.fromRGB(80, 84, 96),
-		Shape = Enum.PartType.Cylinder,
-		Parent = lobby,
-	})
-	stick.CanCollide = false
+	for _, side in { -1, 1 } do -- the panels are solid (invisible colliders on the board planes)
+		local hinge = SIGN.Hinge
+		local foot = Vector3.new(0, 0, hinge.Z + side * SIGN.Spread)
+		local slope = (foot - hinge).Magnitude
+		local panel = part({
+			Name = "SignCollider",
+			Size = Vector3.new(SIGN.W + 4, slope, 1.4),
+			CFrame = signPanel(side) * CFrame.new(0, SIGN.BoardAt - slope / 2, 0),
+			Transparency = 1,
+			Parent = lobby,
+		})
+		panel.CanQuery = false
+	end
 
 	local pairsFolder = Instance.new("Folder")
 	pairsFolder.Name = "CapsulePairs"

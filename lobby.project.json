@@ -98,6 +98,16 @@
           "StudsPerTile": 18
         }
       },
+      "LobbyCork": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://115467532422413",
+          "NormalMap": "rbxassetid://96287954134168",
+          "RoughnessMap": "rbxassetid://79681593644490",
+          "StudsPerTile": 24
+        }
+      },
       "LobbyCurtain": {
         "$className": "MaterialVariant",
         "$properties": {

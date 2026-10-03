@@ -27,6 +27,9 @@ local SURFACES: { [string]: Surface } = {
 	Fabric = { Material = Enum.Material.Fabric, Variant = "LobbyCotton", Color = rgb(222, 150, 172) }, -- dusty rose cotton
 	Fur = { Material = Enum.Material.Fabric, Variant = "LobbyRug", Color = rgb(226, 214, 236) },
 	Pal = { Material = Enum.Material.Fabric, Texture = PALETTE }, -- cloth covers (SmoothPlastic read glossy)
+	Cork = { Material = Enum.Material.Fabric, Variant = "LobbyCork", Color = rgb(226, 200, 170) }, -- ambientCG Cork001
+	Slate = { Material = Enum.Material.Slate, Color = rgb(46, 58, 54) }, -- chalkboard
+	Paper = { Material = Enum.Material.Neon, Color = rgb(120, 98, 74) }, -- rice-paper lantern, faintly lit from inside
 }
 
 -- name = LK_<Piece>_<Surface> in Blender; Center/Size are Roblox studs (tools/lobby_kit/kit.py report())
@@ -102,6 +105,35 @@ local PIECES: { [string]: Piece } = {
 		Center = v(33.252, -43, -177.748),
 		Size = v(160.503, 14, 94.503),
 	},
+	-- batch 4 (tools/lobby_kit/walls.py): corkboard, peg rail, photo string, paper lantern
+	CorkFrame_Oak = { Id = "rbxassetid://98412143460946", Center = v(-40, 45, -228.8), Size = v(70, 50, 2.4) },
+	Cork_Cork = { Id = "rbxassetid://86890298415414", Center = v(-40, 45, -229.4), Size = v(64, 44, 1.2) },
+	CorkNotes_Pal = {
+		Id = "rbxassetid://82200861545115",
+		Center = v(-40.153, 43.87, -227.938),
+		Size = v(53.689, 37.287, 1.575),
+	},
+	PegRail_Oak = { Id = "rbxassetid://82519861711920", Center = v(144, 45, -226.924), Size = v(26, 4, 6.152) },
+	Photos_Pal = {
+		Id = "rbxassetid://115511393054520",
+		Center = v(158.875, 50.759, -69),
+		Size = v(0.95, 18.771, 66.082),
+	},
+	Lantern_Paper = { Id = "rbxassetid://123274913094221", Center = v(46, 98, -112), Size = v(22.7, 22, 22.7) },
+	LanternCord_Oak = { Id = "rbxassetid://114159294205996", Center = v(46, 116.75, -112), Size = v(6, 16.5, 6) },
+	-- the A-frame chalkboard sign in the capsule ring (tools/lobby_kit/sign.py; lettering in LobbyBuilder)
+	Sign_Oak = { Id = "rbxassetid://129756451760532", Center = v(0, 11.289, -14.736), Size = v(20, 22.842, 14.718) },
+	SignBoard_Slate = {
+		Id = "rbxassetid://108135782489235",
+		Center = v(0, 11.361, -14),
+		Size = v(16.4, 16.945, 10.753),
+	},
+	SignHinge_Brass = { Id = "rbxassetid://113948877706847", Center = v(0, 22.2, -14), Size = v(22, 1.4, 1.331) },
+	SignBits_Pal = {
+		Id = "rbxassetid://120692984009088",
+		Center = v(1.4, 1.306, -23.922),
+		Size = v(14.2, 2.813, 3.757),
+	},
 	Rug_Fur = { Id = "rbxassetid://72045910082061", Center = v(-10, -48.75, -150), Size = v(120, 2.5, 120) },
 }
 
@@ -144,6 +176,14 @@ function LobbyKit.Build(parent: Instance, room: Instance)
 				local p = load(name, piece.Id, piece.Size, surfaceOf(name))
 				if p then
 					p.CFrame = CFrame.new(piece.Center)
+					if name == "Lantern_Paper" then -- a small warm pool under the lantern (memory: subtle lights)
+						local glow = Instance.new("PointLight")
+						glow.Color = rgb(255, 196, 140)
+						glow.Brightness = 0.5
+						glow.Range = 26
+						glow.Shadows = true
+						glow.Parent = p
+					end
 					p.Parent = folder
 				else
 					failed = true

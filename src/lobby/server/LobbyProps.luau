@@ -121,6 +121,28 @@ local PROPS: { [string]: Prop } = {
 		At = v(110, -48.5, -160),
 		Yaw = 0,
 	},
+	WallClock = { -- over the door
+		Id = "rbxassetid://113512693537874",
+		Tex = "rbxassetid://113358452816568",
+		Size = v(16, 16, 2.7),
+		At = v(90, 102, -228.6),
+		Yaw = 180,
+	},
+	Hoodie = { -- hanging on the peg rail by the door
+		Id = "rbxassetid://139800686223767",
+		Tex = "rbxassetid://81767989145794",
+		Size = v(16, 17.7, 6.3),
+		At = v(144, 29.3, -226.6),
+		Yaw = 180,
+	},
+	BoardGames = { -- stacked on top of the cubbies
+		Id = "rbxassetid://115828591954845",
+		Tex = "rbxassetid://130381342052983",
+		Size = v(12.7, 14.4, 11.6),
+		At = v(147, 1, -88),
+		Yaw = -90,
+		Solid = true,
+	},
 	AlarmClock = { -- on the bookshelf's top shelf
 		Id = "rbxassetid://126811922982958",
 		Tex = "rbxassetid://125531394157193",
