@@ -19,6 +19,45 @@ local rgb = Color3.fromRGB
 
 local folder: Folder
 
+-- Box stand-ins that the sculpted kit (LobbyKit) replaces: once the kit loads, colliding ones turn invisible
+-- (they stay the colliders) and decorative ones are removed.
+local KIT_REPLACES = {
+	DeskTop = true,
+	DeskLeg = true,
+	DeskDrawers = true,
+	DrawerFront = true,
+	DrawerKnob = true,
+	ChairSeat = true,
+	ChairLeg = true,
+	ChairBack = true,
+	BedFrame = true,
+	BedLeg = true,
+	Headboard = true,
+	Mattress = true,
+	Quilt = true,
+	QuiltSide = true,
+	QuiltFoot = true,
+	Pillow = true,
+	ShelfBack = true,
+	ShelfSide = true,
+	Shelf = true,
+	ShelfBook = true,
+	SpineBand = true,
+	LadderRail = true,
+	LadderRung = true,
+	Book = true,
+	BookPages = true,
+	WindowFrame = true,
+	WindowSill = true,
+	Curtain = true,
+	CurtainRod = true,
+	Door = true,
+	DoorFrame = true,
+	DoorKnob = true,
+	Trim = true,
+	Rug = true,
+}
+
 local function part(name: string, size: Vector3, cf: CFrame, props: { [string]: any }?): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -30,6 +69,9 @@ local function part(name: string, size: Vector3, cf: CFrame, props: { [string]: 
 	p.Material = Enum.Material.SmoothPlastic
 	for k, value in props or {} do
 		(p :: any)[k] = value
+	end
+	if KIT_REPLACES[name] then
+		CollectionService:AddTag(p, "LobbyBox")
 	end
 	p.Parent = folder
 	return p
@@ -312,6 +354,7 @@ local function toyBlock(pos: Vector3, s: number, i: number)
 		{ Material = Enum.Material.Wood, Color = colors[(i % #colors) + 1] },
 		rng:NextNumber(-0.1, 0.1)
 	)
+	CollectionService:AddTag(b, "ToyBlock") -- LobbyKit dresses it in the bevelled ABC-block mesh
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right } do
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = face
@@ -597,6 +640,20 @@ local function drawings()
 	end
 end
 
+-- Invisible colliders for kit furniture that has no box stand-in (LobbyKit Shelves_Paint): the cubby unit by the
+-- right wall is climbable, and so is the little wall shelf over the bed.
+local function kitColliders()
+	local hidden = { Transparency = 1 }
+	local z0, cx = -104, X1 - 13
+	for j = 0, 2 do
+		part("CubbyShelf", v(26, 2, 74), CFrame.new(cx, FLOOR_Y + 2 + j * 24, z0 + 37), hidden)
+	end
+	for i = 0, 3 do
+		part("CubbySide", v(26, 50, 2), CFrame.new(cx, FLOOR_Y + 26, z0 + 1 + i * 24), hidden)
+	end
+	part("WallShelf", v(12, 2, 70), CFrame.new(X0 + 6, FLOOR_Y + 125, -165), hidden)
+end
+
 function LobbyRoom.Build(parent: Instance)
 	folder = Instance.new("Folder")
 	folder.Name = "Room"
@@ -610,6 +667,7 @@ function LobbyRoom.Build(parent: Instance)
 	fairyLights()
 	ceilingStars()
 	drawings()
+	kitColliders()
 	folder.Parent = parent
 	return folder
 end

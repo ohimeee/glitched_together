@@ -80,6 +80,12 @@ See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-lik
 **Direct download (faster than through Blender):** `curl -s https://api.polyhaven.com/files/<id>` (Python urllib gets a 403 from the API; the `dl.polyhaven.org` file URLs work from Python) → `[Diffuse|nor_gl|Rough]['1k']['png']['url']`. Convert every map to 8-bit RGB with Pillow (some rough maps are 16-bit `I;16` or grey `L`), save in `textures/polyhaven/`, serve the repo (`python -m http.server 8767`) and `upload_image`. Then a MaterialVariant in `adventure.project.json` (BaseMaterial = the grey-box part's material; part Color tints the map). A MaterialVariant's maps CAN be set live in the Edit datamodel through `execute_luau` (good for testing before a rebuild).
 **Upload gotchas:** `upload_image` dedups by image content: a broken/blank asset keeps coming back for the same pixels, so change the pixels (a slight grade) and the file name to get a fresh id. A fresh image can render blank for a minute.
 
+### ambientCG (CC0 PBR textures, HDRIs, a few models; user added Oct 3, 2026)
+- Site https://ambientcg.com, everything **CC0** (no credit needed, commercial OK), no account or key.
+- Search API: `curl -s "https://ambientcg.com/api/v2/full_json?q=<words>&limit=20&include=downloadData"` → `foundAssets[].assetId` + `downloadFolders.default.downloadFiletypeCategories.zip.downloads[]` (`attribute` like `1K-PNG`, `downloadLink`). Direct zip: `https://ambientcg.com/get?file=<assetId>_1K-PNG.zip`.
+- Zip holds `_Color`, `_NormalGL` (use this one: Roblox wants OpenGL normals), `_Roughness`, `_AmbientOcclusion`, `_Displacement` PNGs. Same pipeline as Poly Haven: convert to 8-bit RGB with Pillow, `textures/ambientcg/`, upload, MaterialVariant in the project json.
+- Good for fabrics/carpets/leather/paper/cardboard/painted wood that Poly Haven lacks. Preview: `https://ambientcg.com/view?id=<assetId>`.
+
 ### Sketchfab (huge model library; license per model)
 - Through Blender MCP (token in `C:\Users\User\tools\blender-mcp\keys.env` as `BLENDERMCP_SKETCHFAB_API_KEY`, loaded by `autostart.py`): `get_sketchfab_status`, `search_sketchfab_models(query, categories, count, downloadable)`, `get_sketchfab_model_preview(uid)`, `download_sketchfab_model(uid)` (imports into Blender; check `world_bounding_box` and rescale).
 - **Only downloadable models under CC0 or CC-BY** (CC-BY: put author + link in a credits file). Skip NC (non-commercial), ND and SA. Check each model's license before using it.

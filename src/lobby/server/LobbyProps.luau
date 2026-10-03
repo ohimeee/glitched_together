@@ -99,6 +99,28 @@ local PROPS: { [string]: Prop } = {
 		At = v(131, -24, -142),
 		Yaw = 80,
 	},
+	ToyChest = { -- painted star chest against the left wall, between the window and the bed
+		Id = "rbxassetid://122546609019215",
+		Tex = "rbxassetid://102882813964117",
+		Size = v(30, 20.6, 20),
+		At = v(-144, -50, 20),
+		Yaw = -90,
+		Solid = true,
+	},
+	Dino = { -- plush triceratops on the wall shelf over the bed
+		Id = "rbxassetid://104177434934291",
+		Tex = "rbxassetid://138024132081161",
+		Size = v(8.8, 11.5, 12),
+		At = v(-153, 76, -182),
+		Yaw = -90,
+	},
+	Train = { -- wooden engine on the track loop (LobbyTrain.client drives it round)
+		Id = "rbxassetid://104298266714340",
+		Tex = "rbxassetid://130571225608901",
+		Size = v(6.3, 7.7, 12),
+		At = v(110, -48.5, -160),
+		Yaw = 0,
+	},
 	AlarmClock = { -- on the bookshelf's top shelf
 		Id = "rbxassetid://126811922982958",
 		Tex = "rbxassetid://125531394157193",

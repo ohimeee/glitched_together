@@ -78,6 +78,26 @@
           "StudsPerTile": 20
         }
       },
+      "LobbyLinen": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://92021803151352",
+          "NormalMap": "rbxassetid://110994881517603",
+          "RoughnessMap": "rbxassetid://95852185545521",
+          "StudsPerTile": 14
+        }
+      },
+      "LobbyCotton": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://114968780163722",
+          "NormalMap": "rbxassetid://117402465038256",
+          "RoughnessMap": "rbxassetid://87570731699783",
+          "StudsPerTile": 18
+        }
+      },
       "LobbyCurtain": {
         "$className": "MaterialVariant",
         "$properties": {

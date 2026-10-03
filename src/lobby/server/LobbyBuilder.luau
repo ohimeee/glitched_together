@@ -11,6 +11,7 @@ local CapsuleMeshes = require(script.Parent.CapsuleMeshes)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local LobbyRoom = require(script.Parent.LobbyRoom)
 local LobbyProps = require(script.Parent.LobbyProps)
+local LobbyKit = require(script.Parent.LobbyKit)
 
 local PAIRS = 6
 local RING_RADIUS = 40
@@ -224,7 +225,8 @@ function LobbyBuilder.Build()
 
 	-- the lobby is Kai and Miko's bedroom at night, players doll-sized on the shared desk (LobbyRoom)
 	Worlds.ApplyLook(Worlds.ByName.Lobby.Look)
-	LobbyRoom.Build(lobby)
+	local room = LobbyRoom.Build(lobby)
+	LobbyKit.Build(lobby, room)
 	LobbyProps.Build(lobby)
 
 	local spawn = Instance.new("SpawnLocation")
