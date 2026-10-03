@@ -118,6 +118,7 @@ local function onCharacter(character: Model)
 			return
 		end
 		swing = nil
+		player:SetAttribute("Swinging", nil) -- local only: SwingPromptController hides its chips
 		if current then
 			current.swing = nil
 		end
@@ -226,6 +227,7 @@ local function onCharacter(character: Model)
 			blocked = 0,
 			onEnd = onEnd,
 		}
+		player:SetAttribute("Swinging", true)
 		if current then
 			current.swing = swing
 		end

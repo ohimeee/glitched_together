@@ -122,7 +122,7 @@ function SwingPromptController.Init()
 			local d = if root and point:IsDescendantOf(workspace)
 				then (Tags.position(point) - root.Position).Magnitude
 				else math.huge
-			p.gui.Enabled = d <= Tuning.SwingPromptRange
+			p.gui.Enabled = d <= Tuning.SwingPromptRange and not player:GetAttribute("Swinging") -- no chip mid-swing
 			if p.gui.Enabled then
 				p.key.Text = text
 				local near = point == nearest
