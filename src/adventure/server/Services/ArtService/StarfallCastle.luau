@@ -651,6 +651,20 @@ local FILL = 0.7 -- share of slots that get a prop (gaps read natural)
 local LIBRARY_ROOMS =
 	{ LibraryHall = true, ReadingRoom = true, RollerHall = true, SidePassage = true, MirrorRoom = true }
 local SHELF_SPACING, SHELF_FILL = 3.35, 0.93
+-- room props stay clear of these (plus a mover's whole path)
+local KEEP_OUT_TAGS = {
+	"Hazard",
+	"Checkpoint",
+	"PressurePlate",
+	"FireSwitch",
+	"Mirror",
+	"DuoGate",
+	"WorldExit",
+	"Mover",
+	"Station",
+	"HeavyLever",
+	"DuoPound",
+}
 
 local function dressRooms(world: Instance)
 	local templates: { [string]: MeshPart } = {}
@@ -690,7 +704,46 @@ local function dressRooms(world: Instance)
 	clear.FilterType = Enum.RaycastFilterType.Exclude
 	clear.FilterDescendantsInstances = { folder, table.unpack(floors) }
 	local ignore = { Wall = true, Rug = true, Torch = true, Flame = true, Sign = true, CheckpointBanner = true }
+	-- keep-out boxes around gameplay pieces: trap tiles are cobblestone (so they count as floor above), and a mover's
+	-- sweep isn't where it sits at load time, so neither shows up in the overlap test below
+	local keepOut: { { min: Vector3, max: Vector3 } } = {}
+	local KEEP_OUT = 3
+	for _, tag in KEEP_OUT_TAGS do
+		for _, p in CollectionService:GetTagged(tag) do
+			if not (p:IsA("BasePart") and p:IsDescendantOf(world)) then
+				continue
+			end
+			local half = p.Size / 2
+			local lo, hi = p.Position - half, p.Position + half
+			local wps = p:FindFirstChild("Waypoints")
+			if wps then
+				for _, wp in wps:GetChildren() do
+					if wp:IsA("BasePart") then
+						lo = lo:Min(wp.Position - half)
+						hi = hi:Max(wp.Position + half)
+					end
+				end
+			end
+			local pad = Vector3.new(KEEP_OUT, 0, KEEP_OUT)
+			table.insert(keepOut, { min = lo - pad, max = hi + pad })
+		end
+	end
 	local function blocked(cf: CFrame, size: Vector3): boolean
+		local r = math.max(size.X, size.Z) / 2
+		local lo = cf.Position - Vector3.new(r, size.Y / 2, r)
+		local hi = cf.Position + Vector3.new(r, size.Y / 2, r)
+		for _, box in keepOut do
+			if
+				lo.X < box.max.X
+				and hi.X > box.min.X
+				and lo.Z < box.max.Z
+				and hi.Z > box.min.Z
+				and lo.Y < box.max.Y + 4
+				and hi.Y > box.min.Y - 4
+			then
+				return true
+			end
+		end
 		for _, hit in workspace:GetPartBoundsInBox(cf, size + Vector3.new(1.5, 0, 1.5), clear) do
 			if not ignore[hit.Name] and hit:IsDescendantOf(world) and not hit:IsDescendantOf(folder) then
 				local env = world:FindFirstChild("Environment")

@@ -607,7 +607,11 @@ local function modelClutter(world: Instance)
 				Vector3.new(c[1] * (f.Size.X / 2 - inset), f.Size.Y / 2 + size.Y / 2, c[2] * (f.Size.Z / 2 - inset))
 			local cf = f.CFrame * CFrame.new(offset) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0)
 			overlap.FilterDescendantsInstances = { f, folder }
-			if #workspace:GetPartBoundsInBox(cf, size + Vector3.new(2, 0, 2), overlap) > 0 then
+			-- yaw-free box over the prop's full turn, 3 studs clear of anything (checkpoints, code planks)
+			local reach = Vector3.new(size.X, 0, size.Z).Magnitude + 6
+			if
+				#workspace:GetPartBoundsInBox(CFrame.new(cf.Position), Vector3.new(reach, size.Y, reach), overlap) > 0
+			then
 				continue
 			end
 			local m = template:Clone()
