@@ -105,6 +105,22 @@ local Ambient: { [string]: { Box: Vector3, Layers: { Layer } } } = {
 			},
 		},
 	},
+	Lobby = { -- dust motes drifting in the lamp light over the desk (LobbyDust, lobby client)
+		Box = Vector3.new(80, 40, 70),
+		Layers = {
+			{
+				Texture = MOTE,
+				Color = rgb(255, 222, 180),
+				Rate = 30,
+				Size = NumberRange.new(0.2, 0.45),
+				Lifetime = NumberRange.new(8, 12),
+				Speed = NumberRange.new(0.1, 0.4),
+				Drift = Vector3.new(0.02, 0.03, 0),
+				Glow = 0.4,
+				Light = 1,
+			},
+		},
+	},
 	Prologue = {
 		Box = Vector3.new(100, 50, 100),
 		Layers = {
