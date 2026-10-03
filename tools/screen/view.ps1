@@ -4,7 +4,8 @@ $sp = $PSScriptRoot
 . "$sp\dpi.ps1"
 & "$sp\act.ps1" -Title $Title -Steps "wait:$Wait" | Out-Null
 Add-Type -AssemblyName System.Drawing
-# viewport of a maximized Studio with Explorer docked right (real px)
+# viewport of a maximized Studio with Explorer docked right (physical px, measured on the 1920x1200 laptop panel;
+# on the 1920x1080 Titan monitor re-measure with shot.ps1 first)
 $x = 6; $y = 212; $w = 1648; $h = 852
 $bmp = New-Object System.Drawing.Bitmap $w, $h
 $g = [System.Drawing.Graphics]::FromImage($bmp)
