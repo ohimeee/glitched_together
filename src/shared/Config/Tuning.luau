@@ -135,6 +135,11 @@ return {
 		DropEvery = 1.2,
 		DropSize = Vector3.new(6, 6, 6),
 		DropLifetime = 5,
+		-- dropped blocks are moved by code, not gravity: they start slow and speed up, so Kai has a window to
+		-- freeze one near the top (user, Oct 4: they fell too fast to freeze). studs/s, studs/s², studs/s
+		DropSpeed = 4,
+		DropAccel = 14,
+		DropMaxSpeed = 70,
 		ChaseSpeed = 30, -- Glitch Chase wall; grinding is 40, so the duo stays ahead if they keep moving
 		ChaseRetryDelay = 2,
 		ChaseWarmup = 1.5, -- seconds between the duo stepping onto the start and the wall moving

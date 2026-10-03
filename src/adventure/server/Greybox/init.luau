@@ -1295,7 +1295,7 @@ local function buildPixelPlains(world: Model)
 		"Split up: Kai left, Miko right. Each lane needs the OTHER one's tool halfway. Find the white pipes!",
 		"Both stand on your pipe and ground-pound at the same time to swap places. Count it down!",
 	})
-	sign(P, "WARP PIPE SWAP", CFrame.new(0, 12, 20), Vector3.new(30, 3, 0.4)) -- wide: its posts stand on the two lanes
+	sign(P, "WARP PIPE SWAP", CFrame.new(0, 12, 20), Vector3.new(18, 3, 0.4)) -- posts found on the ledge by ArtService
 	sign(P, "▲ KAI", CFrame.new(-12, 7, 18), Vector3.new(8, 3, 0.4))
 	sign(P, "MIKO ●", CFrame.new(12, 7, 18), Vector3.new(8, 3, 0.4))
 	dirtWall(Vector3.new(2, 100, 136), 0, 60, 88) -- z 20..156, -40..60: no way over or under
