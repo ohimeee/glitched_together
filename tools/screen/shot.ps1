@@ -5,4 +5,4 @@ $bmp = New-Object System.Drawing.Bitmap 1920, 1200
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $g.CopyFromScreen(0, 0, 0, 0, $bmp.Size)
 $small = New-Object System.Drawing.Bitmap $bmp, 1280, 800
-$small.Save("$PSScriptRoot\screen.png")
+$small.Save("$env:TEMP\gt_screen.png")

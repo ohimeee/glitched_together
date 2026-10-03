@@ -10,5 +10,5 @@ $bmp = New-Object System.Drawing.Bitmap $w, $h
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $g.CopyFromScreen($x, $y, 0, 0, $bmp.Size)
 $small = New-Object System.Drawing.Bitmap $bmp, 1240, 642
-$small.Save("$env:TEMPgt_$Name.png")
-"saved $env:TEMPgt_$Name.png"
+$small.Save("$env:TEMP\gt_$Name.png")
+"saved $env:TEMP\gt_$Name.png"
