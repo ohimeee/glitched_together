@@ -1438,8 +1438,10 @@ local function buildPixelPlains(world: Model)
 	-- with Miko's crystals, the head and the crown. Fists hover beside him. The exit sits on the last row and
 	-- stays locked until he falls.
 	grass(Vector3.new(30, 4, 30), 0, 20, 1198, "ChaseEnd")
-	checkpoint(P, nextOrder(), 0, 20, 1191, W)
 	local floorTop = 20
+	-- the save sits INSIDE the arena on the front row (user, Oct 4: on the landing pad a respawn left the fight and
+	-- the fists couldn't reach); the two tiles under it are `Safe`: they never crumble
+	checkpoint(P, nextOrder(), 0, floorTop, 1219, W)
 	local arena = Instance.new("Folder")
 	arena.Name = "BossFloor"
 	arena.Parent = P
@@ -1449,7 +1451,12 @@ local function buildPixelPlains(world: Model)
 				color = if (row + col) % 2 == 0 then GRASS else Palette.PixelPlains.Grass:Lerp(DIRT, 0.25),
 				name = "BossTile",
 				tags = { "Crumble" },
-				attrs = { Row = row, Col = col, Skin = "GrassBlock" }, -- Crumble: the skin is welded, falls with it
+				attrs = { -- Crumble: the skin is welded, falls with it
+					Row = row,
+					Col = col,
+					Skin = "GrassBlock",
+					Safe = if row == 0 and (col == 2 or col == 3) then true else nil, -- under the checkpoint
+				},
 			})
 		end
 	end

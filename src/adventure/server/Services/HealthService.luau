@@ -160,6 +160,7 @@ function HealthService.Revive(p: Player, onTheSpot: boolean)
 		end
 		back = back or (s.history[1] and s.history[1].cf)
 		place(p, back or CheckpointService.SpawnCFrame(p))
+		state(p).invulnUntil = os.clock() + Tuning.SpawnInvuln
 	end
 end
 
@@ -185,7 +186,8 @@ local function bothDown()
 		end
 	end
 	for _, p in DuoService.Players() do
-		state(p).invulnUntil = os.clock() + 1.5 -- hazard touches queued before the restart land after it
+		-- hazard touches queued before the restart land after it, and a boss gets a beat before it can hit
+		state(p).invulnUntil = os.clock() + Tuning.SpawnInvuln
 	end
 	gameOverRunning = false
 end

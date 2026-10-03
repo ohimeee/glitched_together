@@ -580,7 +580,11 @@ Boss.Phases = {
 				self.crumbleT = T.CrumbleEvery
 				local pick = {}
 				for _, tile in self.tiles do
-					if (tile:GetAttribute("Row") :: number) < self.dropFrom and not self.warned[tile] then
+					if
+						(tile:GetAttribute("Row") :: number) < self.dropFrom
+						and not self.warned[tile]
+						and not tile:GetAttribute("Safe") -- under the checkpoint: respawns land on it
+					then
 						table.insert(pick, tile)
 					end
 				end
