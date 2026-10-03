@@ -21,6 +21,14 @@ The caller says either **"no mouse"** or **"mouse OK"**. Default = **no mouse**.
 - **No mouse:** never use MCPControl, `tools/screen/act.ps1`, `view.ps1`, `SetForegroundWindow`, `SetCursorPos`, SendKeys or anything that steals focus (the user is watching something). Use only Studio MCP (`execute_luau`, `start_stop_play`, `screen_capture`, `get_console_output`), Blender MCP and plain shell commands. If `screen_capture` returns a blank/black frame during play (it does when Studio is behind other windows), say so and fall back to data checks (raycasts, bounding boxes, attributes) instead of a picture.
 - **Mouse OK:** one PowerShell script per action sequence (VS Code steals focus between tool calls). Scripts must be DPI-aware: dot-source `tools/screen/dpi.ps1` first (Windows scaling 125%; a non-DPI-aware script clicks ×1.25 off and once hit "show desktop"). Helpers: `tools/screen/act.ps1 -Title <window> -Steps "click:x,y;dbl:x,y;type:text;key:ENTER;wait:ms;esc"`, `shot.ps1` (full screen → `%TEMP%\gt_screen.png`, prints resolution + scale), `view.ps1 -Name n` (focus Studio + capture viewport → `%TEMP%\gt_n.png`). Physical px = 1280-wide screenshot × scale (1.5). Laptop panel 1920×1200, Titan monitor 1920×1080: run `shot.ps1` once to know which. If a Studio click does nothing, Alt left the menu bar armed: send `esc` and retry.
 
+## Before every test (avoid wasted runs)
+- Confirm the code is current: `curl -s localhost:34872/api/rojo` answers, and a name/string the caller says is new exists in Edit. If not: report BLOCKED (don't test stale code). Start `rojo serve` only if the caller allows it.
+- Param names: `start_stop_play(is_start)`, `execute_luau(datamodel_type)`, `screen_capture(capture_id)`. `user_keyboard_input` presses keys in play without the mouse (F grabs a rail).
+- Reset between runs: respawn/reset the character (clear leftover grind/swing state, anchoring, velocity) before each measurement; throw out runs where state leaked and say so.
+- Keep test scripts small and print what they measured; if a script errors, fix it once, don't loop.
+- Emulated input (teleports, set velocities) is not a real player: label such results "emulated".
+- Report ≤40 lines, problems first, numbers. The caller may resume you with SendMessage for follow-ups: keep what you learned.
+
 ## Studio basics
 - Every Studio MCP call needs `studio_id` from `list_roblox_studios` (pick the one whose place is `Adventure` or `Lobby` as asked).
 - `execute_luau` contexts: `Edit`, `Server`, `Client`. Its `require` makes a separate module copy (Init never ran): drive game code through attributes/events, not by requiring services.

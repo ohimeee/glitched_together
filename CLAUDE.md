@@ -8,6 +8,15 @@
 - **All tools we have** (Studio MCP, Blender, asset sources, browser, CLIs) + gotchas: `TOOLS.md`.
 - **Knowledge graph (read first in every new session / context window):** `graphify-out/GRAPH_REPORT.md` (god nodes, communities, surprising links across code + docs). For "where is X / what touches Y" questions run `graphify query "<question>"` (or `graphify path "A" "B"`, `graphify explain "X"`) before grepping. Obsidian vault: `graphify-out/obsidian/`. The folder is gitignored and local: if it's missing run `/graphify . --obsidian`; after big code changes run `/graphify . --update`.
 
+## Subagent rules (Oct 3, 2026, after the 14th session; user: "so they don't hinder you and the tokens")
+
+- **Use them for:** playtests, measurements, screenshot checks (`studio-operator`); broad "find everything about X" research across many files/docs (`code-scout`). They keep screenshots and long reads out of the main context.
+- **Don't use them for:** single greps, small edits, reading one file, Blender modelling, the final art look before showing the user (do those in main: a cold agent costs ~70–130k tokens to re-learn the project).
+- **One operator per session:** spawn once, then `SendMessage` the same agent id for every later Studio check (a resumed agent keeps its context; much cheaper than a new spawn).
+- **Tight briefs:** exact parts/coords/checkpoints, what to measure, expected values, report format (problems first, numbers, ≤40 lines). Batch several checks into one brief.
+- **Known pitfalls to brief against:** stale code (check `curl localhost:34872/api/rojo` + that a new name exists in Edit before testing), leftover state between tests (respawn/reset the character between runs), its own broken scripts (keep scripts small, verify outputs), emulations aren't real input (say so; ask the user for a feel test).
+- Agent types load only after a Claude Code restart; before that, spawn `general-purpose` with "read .claude/agents/<name>.md and follow it".
+
 ## Relaunch checklist (after a restart)
 
 1. Rojo: `rojo serve adventure.project.json` (port 34872) and `rojo serve lobby.project.json` (port 34873), each as a background task. Check with `curl localhost:34872/api/rojo`.
