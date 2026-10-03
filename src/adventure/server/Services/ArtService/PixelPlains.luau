@@ -533,34 +533,32 @@ local BUSHES = { "Bush", "Bush2" }
 local WOOD = Color3.fromHex("#C8964B")
 local WOOD_DARK = Color3.fromHex("#7A5230")
 local IRON = Color3.fromHex("#4A4A55")
-Skins.Sign = { -- the text stays on the grey-box part's SurfaceGuis; planks sit just behind both faces
+-- Voxel notice board (tools/pp_trees/trees.py sign_board; refs: stylized game signs: uneven planks in three tones,
+-- a shingle cap, iron brackets and battens behind so the painted text on the grey-box part's front face stays clear)
+local SIGN_ATLAS = "rbxassetid://133498206345624"
+Skins.Sign = {
 	Design = v(14, 3, 0.4),
 	Meshes = {
-		PP_Prop_Sign_Planks = {
-			Id = "rbxassetid://132889818651877",
-			Offset = v(0.005, -0.047, 0),
-			Size = v(13.553, 2.979, 0.28),
-			Material = Enum.Material.WoodPlanks,
-			Color = WOOD,
-		},
-		PP_Prop_Sign_Battens = {
-			Id = "rbxassetid://123232037562820",
-			Offset = v(0, 0, 0),
-			Size = v(10.1, 3.1, 0.38),
-			Material = Enum.Material.Wood,
-			Color = WOOD_DARK,
+		PP_SignBoard = {
+			Id = "rbxassetid://85936959636038",
+			TextureId = SIGN_ATLAS,
+			Offset = v(0, 0.25, 0.125),
+			Size = v(15.25, 4.25, 1.5),
+			Material = SMOOTH,
+			Color = Color3.new(1, 1, 1),
 		},
 	},
 }
 Skins.SignPost = {
 	Design = v(0.9, 6, 0.9),
 	Meshes = {
-		PP_Prop_SignPost = {
-			Id = "rbxassetid://132664259938554",
+		PP_SignPost = {
+			Id = "rbxassetid://135303045095115",
+			TextureId = SIGN_ATLAS,
 			Offset = v(0, 0, 0),
 			Size = v(0.9, 6, 0.9),
-			Material = Enum.Material.Wood,
-			Color = WOOD_DARK,
+			Material = SMOOTH,
+			Color = Color3.new(1, 1, 1),
 		},
 	},
 }
@@ -1925,8 +1923,18 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		end
 		local top = sign.Position.Y + sign.Size.Y / 2
 		for _, side in { -1, 1 } do
-			local foot = sign.CFrame * Vector3.new(side * (sign.Size.X / 2 - 0.1), -sign.Size.Y / 2, 0)
-			local hit = workspace:Raycast(foot, Vector3.new(0, -60, 0), params)
+			-- behind the board, under its battens (the voxel board keeps them 0.9 in from each end)
+			local inset = 0.9 * sign.Size.X / 14
+			-- just behind the board if there's ground there, else as close behind/under it as there is (a sign on a
+			-- ledge's lip: WARP PIPE SWAP)
+			local foot, hit
+			for _, back in { 0.6, 0, -0.6, -1.5 } do
+				foot = sign.CFrame * Vector3.new(side * (sign.Size.X / 2 - inset), -sign.Size.Y / 2, back)
+				hit = workspace:Raycast(foot, Vector3.new(0, -60, 0), params)
+				if hit then
+					break
+				end
+			end
 			if hit then
 				local height = top + 0.5 - hit.Position.Y
 				local post = Instance.new("Part")
@@ -1940,6 +1948,21 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 				post.Transparency = 1
 				post.Parent = sign
 				apply(post, "SignPost")
+				-- grass and flowers growing round the foot of the post
+				for i, skin in { "Tuft", if side < 0 then "Flowers2" else "Flowers3" } do
+					local design = Skins[skin].Design
+					local out = sign.CFrame:VectorToWorldSpace(Vector3.new(side * (0.8 + i * 0.6), 0, -0.6 + i * 0.7))
+					local at = hit.Position + out
+					local tuft = hiddenPart(
+						"PostFoliage",
+						design,
+						CFrame.new(at.X, hit.Position.Y + design.Y / 2 - 0.1, at.Z) * sign.CFrame.Rotation,
+						sign
+					)
+					if not apply(tuft, skin) then
+						tuft:Destroy()
+					end
+				end
 			end
 		end
 	end

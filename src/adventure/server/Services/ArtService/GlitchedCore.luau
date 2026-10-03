@@ -220,11 +220,11 @@ local function savePoints(world: Instance, apply: (BasePart, string) -> boolean)
 			continue
 		end
 		pad.Transparency = 0.75
-		local design = KIT.SavePoint.Design * 1.25
+		local design = KIT.SavePoint.Design * 0.55 -- ~3 studs: a marker at the pad's edge, not a landmark (user: "too big")
 		local disk = holder(
 			"SavePoint",
 			design,
-			pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + design.Y / 2, pad.Size.Z / 2 - 1.2),
+			pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + design.Y / 2, pad.Size.Z / 2 - 0.8),
 			pad.Parent or world
 		)
 		if not apply(disk, "SavePoint") then

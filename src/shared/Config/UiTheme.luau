@@ -76,6 +76,7 @@ local Themes: { [string]: Theme } = {
 		SignFont = Enum.Font.PermanentMarker, -- hand-painted "START" signs (§8)
 		SignBoard = hex("#B5773F"),
 		SignInk = hex("#FFF6D8"),
+		SignStroke = hex("#3A2414"), -- dark wood-stain outline round the painted letters
 		SignMaterial = Enum.Material.WoodPlanks,
 		SignTilt = -3,
 	},

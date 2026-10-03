@@ -126,6 +126,16 @@ def shade(g, key, kind, facing, zmin, zmax, rng):
         return ROCK + max(0, min(3, s))
     if kind == "stem":
         return LEAF + 2
+    if kind.startswith("plank"):  # plank0..plank2: three wood tones, lighter on top faces
+        tone = int(kind[5:])
+        s = 3 + tone * 2 + {"top": 1, "side": 0, "bottom": -2}[facing] + rng.choice((0, 0, 1, -1))
+        return BARK + max(0, min(7, s))
+    if kind == "frame":
+        return BARK + (2 if facing == "top" else 0)
+    if kind == "iron":
+        return ROCK + (2 if facing == "top" else 0)
+    if kind == "roof":
+        return BARK + (1 if facing == "top" else 0) + rng.choice((0, 0, 1))
     return 0
 
 
@@ -192,6 +202,7 @@ def mesh_from(g, name, seed=1):
     shift = Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
     for vv in me.vertices:
         vv.co -= shift
+    o["shift"] = tuple(shift)  # grid origin = -shift in the exported mesh (signs need it to line up with the text)
     return o
 
 
@@ -349,6 +360,58 @@ def tuft(seed, v=0.25):
         x, y = rng.uniform(-0.6, 0.6), rng.uniform(-0.6, 0.6)
         for k in range(rng.randint(2, 5)):
             g.put((x, y, k * v), "leaf")
+    return g
+
+
+def sign_board(seed, w=14.0, h=3.0, v=0.25):
+    """Voxel notice board: three staggered planks (ragged ends, three tones), a dark frame batten each side, iron
+    corner brackets with nails, and a little shingle roof on top. Text stays on the grey-box part in front of it."""
+    rng = random.Random(seed)
+    g = Grid(v)
+    nx = int(w / v)
+    planks = 3
+    ph = h / planks
+    for i in range(planks):
+        z0 = -h / 2 + i * ph
+        left = -w / 2 + rng.uniform(-0.3, 0.2)
+        right = w / 2 + rng.uniform(-0.2, 0.3)
+        tone = "plank" + str(rng.randrange(3))
+        x = left
+        while x <= right:
+            for k in range(int(ph / v) - 1):  # a one-voxel gap between planks
+                for d in (0, v):
+                    g.put((x, d, z0 + k * v), tone)
+            x += v
+        if rng.random() < 0.5:  # a knot / chip
+            g.cells.pop(g.key((rng.uniform(left + 1, right - 1), 0, z0 + ph - 2 * v)), None)
+    for side in (-1, 1):  # frame battens
+        x = side * (w / 2 - 0.9)
+        for k in range(int((h + 0.5) / v)):
+            for dx in (0, v):
+                g.put((x + dx, 2 * v, -h / 2 - 0.25 + k * v), "frame")  # behind: the front stays clear for the text
+        for zc in (-h / 2 + 0.3, h / 2 - 0.3):  # iron brackets + nail heads
+            for dx in (-v, 0, v, 2 * v):
+                g.put((x + dx, 3 * v, zc), "iron")
+    # roof: a shingle cap stepping out over the board
+    for row in range(3):
+        z = h / 2 + 0.25 + row * v
+        inset = row * 0.35
+        x = -w / 2 - 0.5 + inset
+        while x <= w / 2 + 0.5 - inset:
+            for d in (-2 * v + row * v, -v + row * v, row * v, v + row * v, 2 * v - row * v):
+                g.put((x, d, z), "roof")
+            x += v
+    return g
+
+
+def sign_post(seed, h=6.0, v=0.25):
+    rng = random.Random(seed)
+    g = Grid(v)
+    for k in range(int(h / v)):
+        for i in (-1, 0, 1):
+            for j in (-1, 0, 1):
+                if abs(i) + abs(j) < 2 or rng.random() < 0.6:
+                    g.put((i * v, j * v, k * v), "frame" if k % 7 else "plank0")
     return g
 
 

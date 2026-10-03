@@ -119,6 +119,14 @@ local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, 
 		label.TextStrokeColor3 = Color3.new(0, 0, 0)
 		label.TextStrokeTransparency = 0.75
 		label.Text = text
+		if (signTheme :: any).SignStroke then -- a thick painted outline (Pixel Plains: cream paint, dark brown edge)
+			label.TextStrokeTransparency = 1
+			local stroke = Instance.new("UIStroke")
+			stroke.Color = (signTheme :: any).SignStroke
+			stroke.Thickness = 4
+			stroke.LineJoinMode = Enum.LineJoinMode.Round
+			stroke.Parent = label
+		end
 		label.Parent = gui
 	end
 	return s
@@ -1261,7 +1269,7 @@ local function buildPixelPlains(world: Model)
 		"Miko: pull the ? block (right click). Kai: freeze the step that pops out at the right height!",
 		"Freeze it low enough to jump on, high enough to reach the ledge.",
 	})
-	sign(P, "COIN BONK STAIRS", CFrame.new(0, 9, 14), Vector3.new(18, 3, 0.4))
+	sign(P, "COIN BONK STAIRS", CFrame.new(0, 9, 17), Vector3.new(18, 3, 0.4)) -- over the base, so its posts stand on it
 	grass(Vector3.new(30, 4, 30), 0, 0, 30, "BonkBase") -- z 15..45
 	bonkBlock(0, 30, 48) -- its step sinks through the 6-stud slot between the base and the wall
 	grass(Vector3.new(30, 24, 24), 0, 20, 63, "BonkLedge") -- z 51..75, 20 up
@@ -1287,7 +1295,7 @@ local function buildPixelPlains(world: Model)
 		"Split up: Kai left, Miko right. Each lane needs the OTHER one's tool halfway. Find the white pipes!",
 		"Both stand on your pipe and ground-pound at the same time to swap places. Count it down!",
 	})
-	sign(P, "WARP PIPE SWAP", CFrame.new(0, 12, 20), Vector3.new(18, 3, 0.4))
+	sign(P, "WARP PIPE SWAP", CFrame.new(0, 12, 20), Vector3.new(30, 3, 0.4)) -- wide: its posts stand on the two lanes
 	sign(P, "▲ KAI", CFrame.new(-12, 7, 18), Vector3.new(8, 3, 0.4))
 	sign(P, "MIKO ●", CFrame.new(12, 7, 18), Vector3.new(8, 3, 0.4))
 	dirtWall(Vector3.new(2, 100, 136), 0, 60, 88) -- z 20..156, -40..60: no way over or under
