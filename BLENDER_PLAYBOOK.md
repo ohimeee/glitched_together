@@ -202,6 +202,9 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 | ✅ | **Shared (Oct 2):** marble exit arch with brass stars around every WorldExit, white Duo Pound button, Heavy Lever, generic button plate (`ArtService/init.luau` SHARED, `StateInlay.luau`); Prologue checkpoints use the floppy save point; castle rug (Poly Haven jacquard) + velvet sign banners; Pixel Plains sky islands | All | |
 | 2 | Core 3-2 additions: Layer Hop real/code steps, Counterweight balance (centre post, beam, two pans hung on chains from the beam, code anvil); Pixel Plains warp pipes (white, retro pipe shape) + the lane wall | GC / PP | Pans must visibly hang from the beam (nothing floats) |
 | 2 | 3-3 Memory Lane pieces: faded menu buttons with labels (Title Echo), static wall segments, Kai's scanner terminal + projector head and cone, unloaded floor tiles (a "loading" look, wireframe edge), PathMark code marks | GC | Echo areas reuse the world kits faded toward grey (broken memories); the terminal needs a desk/stand (nothing floats) |
+| ✅ | **Prologue stage set (Oct 3, 13th session):** Blender kit `PrologueKit.blend/.fbx` (`tools/prologue_kit/kit.py`): 3×3 aluminium box truss (12-stud segment, stacked + faded into the void), stage par can on a yoke, settings window, toggle, checkbox, loading bar, gear. Placed by `stageSet` in `ArtService/Prologue.luau` (trusses under every panel, bulbs, light towers with SpotLight + Beam cones, props on trusses facing back down the route) | PR | Gear spins via client `PropMotionController` (tag `PropMotion`, attrs `Spin`/`Bob`) |
+| ✅ | **Castle stilt towers (Oct 3):** Siege Cart archer posts on splayed, X-braced timber legs down to rock spurs (`fillEnvironment`) | SC | |
+| 2 | Still plain: Powder Hall fuse start post (orange Kai target), PP grind rails | SC / PP | |
 | 3 | Bosses: Crusher King (stacked blocks + crown), Hollow Dragon, The Unfinished | W1–W3 | Split into parts that the boss code can move |
 | 3 | Kai's and Miko's bedrooms | Epilogue | |
 
@@ -256,6 +259,13 @@ Recommended first: **Poly Haven** (free, no key), useful for textures and lighti
 - `rigHoists`: DuoGate bridges/lifts with an upward `OpenOffset` that hang over nothing: bridges get posts + davit arms on both ledges and Beam ropes to the deck corners; lifts get a crane post on the ledge they rise to, a jib, a pulley, 4 ropes. Beams follow moving attachments, so ropes stay taut.
 - Lever posts (`PullLever`), vent fans (`VentFan.luau` shared, client spin in `FanController`), gallery glass frame: see the code comments.
 - Castle (`StarfallCastle.luau` fillEnvironment): foundations end at y −90 on 3 jittered rock tiers ("Crag"), trestles on rock piers.
+
+## 10b. Generic kits placed by code (Prologue, Oct 3, 2026, 13th session)
+
+- Pieces modeled at the origin (`tools/prologue_kit/kit.py`, scene `PrologueKit`), one mesh per surface (`PK_<Piece>_<Surface>`), front = Blender −Y = Roblox −Z. `report()` prints each mesh centre/size in Roblox coords: those are the skin `Offset`/`Size` values (Blender X is mirrored: Roblox x = −bx).
+- Saved with `bpy.data.libraries.write(path, objs)` (no bloat), exported as one FBX.
+- **Importer scale varies** (×100 before, ×0.4096 this time): never trust imported sizes, take them from the Blender report.
+- Placement code builds transparent holder parts at `Design × scale` and calls `apply(holder, skin)`; stacked/tiled pieces (truss) are just many holders.
 
 ## 11. Room-scale kits modeled in place (lobby, Oct 3, 2026, 12th session)
 
