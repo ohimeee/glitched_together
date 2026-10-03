@@ -60,7 +60,9 @@ local function refresh()
 	if type(world) ~= "string" then
 		return
 	end
-	local boss = workspace:GetAttribute("BossFight") and Sounds.BossMusic[world]
+	-- BossMusic outlives a game-over reload (the fight stops and restarts under it), so the track keeps playing
+	local inFight = workspace:GetAttribute("BossFight") or workspace:GetAttribute("BossMusic")
+	local boss = inFight and Sounds.BossMusic[world]
 	set(music, boss or Sounds.Music[world], "Music", duck)
 	set(ambience, Sounds.Ambience[world], "Ambience", 1)
 end
@@ -78,6 +80,7 @@ function AudioController.Init()
 	end
 	workspace:GetAttributeChangedSignal("World"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("BossFight"):Connect(refresh)
+	workspace:GetAttributeChangedSignal("BossMusic"):Connect(refresh)
 	refresh()
 
 	Net.event("Cutscene").OnClientEvent:Connect(function(id: string?)

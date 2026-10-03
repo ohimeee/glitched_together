@@ -68,6 +68,9 @@ function BossService.Start(name: string, startPhase: number?)
 		boss.Setup(state, world)
 	end
 	workspace:SetAttribute("BossFight", true)
+	-- the boss track: unlike BossFight it stays through a game-over reload (user, Oct 4: respawning brought back
+	-- the world's music) and only ends when he's beaten or the duo leaves the world
+	workspace:SetAttribute("BossMusic", true)
 	workspace:SetAttribute("BossName", DISPLAY[name] or name)
 
 	local r = { name = name, phases = boss.Phases, index = 0, state = state, world = world, conn = nil :: any }
@@ -89,6 +92,7 @@ function BossService.Start(name: string, startPhase: number?)
 			phase.Exit(r.state)
 			if r.index >= #r.phases then
 				BossService.Stop()
+				workspace:SetAttribute("BossMusic", nil)
 				SaveService.Set({ boss = false, bossPhase = false })
 				task.spawn(SaveService.Flush)
 				for _, trigger in Tags.list("BossTrigger") do
@@ -126,6 +130,9 @@ function BossService.Running(): string?
 end
 
 function BossService.Init()
+	workspace:GetAttributeChangedSignal("World"):Connect(function()
+		workspace:SetAttribute("BossMusic", nil) -- a different world: its own music
+	end)
 	-- Studio only: workspace:SetAttribute("DebugBossPhase", n) jumps the running fight to phase n (solo tests of
 	-- phases that need both players); a number past the last phase finishes the fight.
 	if RunService:IsStudio() then
@@ -142,6 +149,7 @@ function BossService.Init()
 			if n > #r.phases then
 				local name = r.name
 				BossService.Stop()
+				workspace:SetAttribute("BossMusic", nil)
 				finished:Fire(name)
 			else
 				enter(n)
