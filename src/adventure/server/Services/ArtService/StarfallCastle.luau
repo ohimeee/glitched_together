@@ -564,6 +564,173 @@ local function fillEnvironment(world: Instance)
 	end)
 end
 
+-- Room dressing (Oct 3, 2026, 12th session): the rooms were bare flagstone between plain walls (the "Dark Library"
+-- had no books at all). Every room now gets furniture along its walls, themed per room, like It Takes Two's castle:
+-- a lived-in place the obstacles sit in. Generated props (generate_mesh), sizes fitted under the 6-stud walls.
+-- Visual only (no collision, no queries): gameplay, shots and enemy paths are untouched; a prop is skipped where it
+-- would touch anything that isn't floor or wall (plates, crystals, gates, trap tiles, the cart track...).
+type RoomProp = { Id: string, Tex: string, Size: Vector3, Color: Color3? }
+local ROOM_PROPS: { [string]: RoomProp } = {
+	Bookcase = { Id = "rbxassetid://102304519575481", Tex = "rbxassetid://99781674439643", Size = v(3.2, 6.4, 1.6) },
+	WritingDesk = { Id = "rbxassetid://117117651357620", Tex = "rbxassetid://106997906907482", Size = v(5, 4.6, 3.1) },
+	Armor = { Id = "rbxassetid://122997350774041", Tex = "rbxassetid://71549138747772", Size = v(2.8, 5.4, 1.9) },
+	Candelabra = { Id = "rbxassetid://95897062912769", Tex = "rbxassetid://133453774380172", Size = v(2.4, 5.4, 2.4) },
+	Sacks = { Id = "rbxassetid://99982673009585", Tex = "rbxassetid://100488548637171", Size = v(3.9, 3.3, 3.5) },
+	Crates = { Id = "rbxassetid://87953264966824", Tex = "rbxassetid://99184314837122", Size = v(2.7, 5, 2.4) },
+	WeaponRack = { Id = "rbxassetid://78041174983756", Tex = "rbxassetid://74309364204593", Size = v(2.9, 5.4, 2.1) },
+	Keg = { Id = "rbxassetid://128811076776832", Tex = "rbxassetid://118383684707806", Size = v(2.6, 3, 2.6) },
+}
+-- what each room is: a weighted list (repeats = more likely); rooms not listed get the store-room mix
+local STORE = { "Crates", "Sacks", "Keg", "Crates", "Keg" }
+local ARMOURY = { "WeaponRack", "Crates", "Keg", "WeaponRack", "Sacks", "Armor", "Candelabra" }
+local LIBRARY = { "Bookcase", "Bookcase", "Bookcase", "WritingDesk", "Bookcase", "Bookcase", "Candelabra" }
+local ROOM_THEME: { [string]: { string } } = {
+	Gatehouse = ARMOURY,
+	Corridor = ARMOURY,
+	Barracks = ARMOURY,
+	Hall = { "WeaponRack", "Armor", "Candelabra", "Bookcase", "Candelabra" },
+	CastleExit = { "Candelabra" },
+	LibraryHall = LIBRARY,
+	ReadingRoom = LIBRARY,
+	RollerHall = LIBRARY,
+	SidePassage = LIBRARY,
+	MirrorRoom = LIBRARY,
+	TorchHall = { "WeaponRack", "Crates", "Candelabra" },
+	GolemCorridor = ARMOURY,
+	GolemHall = { "Armor", "Candelabra", "WeaponRack" },
+	CartDock = STORE,
+	PowderHall = { "Keg", "Keg", "Crates", "Sacks", "Keg" },
+	ThroneApproach = { "Armor", "Candelabra" },
+}
+local SPACING = 6.5 -- studs between props along a wall
+local FILL = 0.7 -- share of slots that get a prop (gaps read natural)
+-- libraries line their walls with shelves end to end (Bookcase width + a hair)
+local LIBRARY_ROOMS =
+	{ LibraryHall = true, ReadingRoom = true, RollerHall = true, SidePassage = true, MirrorRoom = true }
+local SHELF_SPACING, SHELF_FILL = 3.35, 0.93
+
+local function dressRooms(world: Instance)
+	local templates: { [string]: MeshPart } = {}
+	for name, prop in ROOM_PROPS do
+		local ok, part = pcall(MeshAssets.Template, name, {
+			Id = prop.Id,
+			TextureId = prop.Tex,
+			Offset = Vector3.zero,
+			Size = prop.Size,
+			Material = SMOOTH,
+			Color = prop.Color,
+		})
+		if ok then
+			templates[name] = part
+		else
+			warn("[StarfallCastle] room prop failed", name, part)
+		end
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "RoomDressing"
+	folder.Parent = world -- in the world from the start, so placed props block later ones
+	local rng = Random.new(1031)
+	local candles = 0
+	local floorRay = RaycastParams.new()
+	floorRay.FilterType = Enum.RaycastFilterType.Include
+	local floors: { BasePart } = {}
+	local walls: { BasePart } = {}
+	for _, p in world:GetDescendants() do
+		if p:IsA("BasePart") and p.Material == Enum.Material.Cobblestone and p.Size.Y <= 2.5 then
+			table.insert(floors, p)
+		elseif p:IsA("BasePart") and p.Name == "Wall" then
+			table.insert(walls, p)
+		end
+	end
+	floorRay.FilterDescendantsInstances = floors
+	local clear = OverlapParams.new()
+	clear.FilterType = Enum.RaycastFilterType.Exclude
+	clear.FilterDescendantsInstances = { folder, table.unpack(floors) }
+	local ignore = { Wall = true, Rug = true, Torch = true, Flame = true, Sign = true, CheckpointBanner = true }
+	local function blocked(cf: CFrame, size: Vector3): boolean
+		for _, hit in workspace:GetPartBoundsInBox(cf, size + Vector3.new(1.5, 0, 1.5), clear) do
+			if not ignore[hit.Name] and hit:IsDescendantOf(world) and not hit:IsDescendantOf(folder) then
+				local env = world:FindFirstChild("Environment")
+				if not (env and hit:IsDescendantOf(env)) then
+					return true
+				end
+			end
+		end
+		-- no prop inside another (a desk in a run of shelves): tight check against what's already placed
+		local own = OverlapParams.new()
+		own.FilterType = Enum.RaycastFilterType.Include
+		own.FilterDescendantsInstances = { folder }
+		return #workspace:GetPartBoundsInBox(cf, size * 0.92, own) > 0
+	end
+	for _, wall in walls do
+		local alongX = wall.Size.X >= wall.Size.Z
+		local length = if alongX then wall.Size.X else wall.Size.Z
+		local thick = if alongX then wall.Size.Z else wall.Size.X
+		if length < 9 then
+			continue
+		end
+		local axis = if alongX then wall.CFrame.RightVector else wall.CFrame.LookVector
+		local normal = if alongX then wall.CFrame.LookVector else wall.CFrame.RightVector
+		for _, side in { -1, 1 } do
+			local inward = normal * side
+			local probe = workspace:Raycast(
+				wall.Position + inward * (thick / 2 + 2) + Vector3.new(0, 4, 0),
+				Vector3.new(0, -8, 0),
+				floorRay
+			)
+			local library = probe and LIBRARY_ROOMS[probe.Instance.Name]
+			local spacing = if library then SHELF_SPACING else SPACING
+			local fill = if library then SHELF_FILL else FILL
+			local slots = math.floor((length - 5) / spacing)
+			for k = 0, slots - 1 do
+				if rng:NextNumber() > fill then
+					continue
+				end
+				local jitter = if library then 0 else rng:NextNumber(-0.8, 0.8)
+				local along = -length / 2 + 2.5 + spacing * (k + 0.5) + jitter
+				local base = wall.Position + axis * along + inward * (thick / 2)
+				local hit = workspace:Raycast(base + inward * 2 + Vector3.new(0, 4, 0), Vector3.new(0, -8, 0), floorRay)
+				if not hit then
+					continue -- the outside of an outer wall: no room there
+				end
+				local theme = ROOM_THEME[hit.Instance.Name] or STORE
+				local name = theme[rng:NextInteger(1, #theme)]
+				local template = templates[name]
+				if not template then
+					continue
+				end
+				local size = template.Size
+				local pos = base + inward * (size.Z / 2 + 0.15)
+				local cf = CFrame.lookAt(
+					Vector3.new(pos.X, hit.Position.Y + size.Y / 2, pos.Z),
+					Vector3.new(pos.X, hit.Position.Y + size.Y / 2, pos.Z) + inward
+				)
+				-- generations face -Z; lookAt points -Z into the room, so the prop's front faces the room
+				if blocked(cf, size) then
+					continue
+				end
+				local m = template:Clone()
+				m.CFrame = cf
+				m.CanCollide = false
+				m.CanQuery = false
+				m.CanTouch = false
+				m.Parent = folder
+				if name == "Candelabra" then
+					candles += 1
+					if candles % 2 == 1 then -- every other one lights its patch of wall (small: memory subtle-lighting)
+						local glow = Instance.new("PointLight")
+						glow.Color = Color3.fromRGB(255, 190, 120)
+						glow.Range = 10
+						glow.Brightness = 0.6
+						glow.Parent = m
+					end
+				end
+			end
+		end
+	end
+	folder.Parent = world
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	for _, part in world:GetDescendants() do
 		local surface = part:IsA("BasePart") and not part:IsA("MeshPart") and SURFACES[part.Material]
@@ -586,6 +753,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		end
 	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
+	task.spawn(dressRooms, world) -- meshes load async; the rooms are playable meanwhile
 	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)
 	for _, pad in world:GetDescendants() do
 		if pad:IsA("BasePart") and CollectionService:HasTag(pad, "Checkpoint") then
