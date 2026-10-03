@@ -49,25 +49,21 @@ type Pair = {
 local allPairs: { Pair } = {}
 local seatedIn: { [Player]: Pair } = {}
 
-local overlap = OverlapParams.new()
-overlap.FilterType = Enum.RaycastFilterType.Include
+-- How far from the capsule's centre a player's root may be and still count as inside (the inner floor is ~4 studs
+-- across the glass): standing right outside, arms or accessories brushing the zone, no longer seats you.
+local INSIDE_RADIUS = 2.6
 
--- Returns the set of players whose characters are inside the zone.
+-- Returns the set of players standing inside the capsule: the HumanoidRootPart's centre within INSIDE_RADIUS of the
+-- zone's vertical axis and within its height.
 local function occupants(zone: BasePart): { [Player]: boolean }
-	local chars = {}
-	for _, p in Players:GetPlayers() do
-		if p.Character then
-			table.insert(chars, p.Character)
-		end
-	end
-	overlap.FilterDescendantsInstances = chars
-
 	local found = {}
-	for _, part in workspace:GetPartBoundsInBox(zone.CFrame, zone.Size, overlap) do
-		local character = part:FindFirstAncestorOfClass("Model")
-		local p = character and Players:GetPlayerFromCharacter(character)
-		if p then
-			found[p] = true
+	for _, p in Players:GetPlayers() do
+		local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root then
+			local loc = zone.CFrame:PointToObjectSpace(root.Position)
+			if Vector2.new(loc.X, loc.Z).Magnitude <= INSIDE_RADIUS and math.abs(loc.Y) <= zone.Size.Y / 2 then
+				found[p] = true
+			end
 		end
 	end
 	return found
