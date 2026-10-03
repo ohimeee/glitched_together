@@ -96,6 +96,9 @@ return function(vent: BasePart, params: RaycastParams)
 		)
 	end
 	blades.Parent = model
+	-- the pivot the client spins about: with StreamingEnabled the Model can reach a client before its parts, and an
+	-- empty Model's pivot is the world origin (the blades spun on Prologue SAVE SLOT 1, user Oct 4)
+	blades:SetAttribute("Home", blades:GetPivot())
 	blades:AddTag("FanBlades")
 	-- grille: parallel bars across the top of the rim
 	for k = -2, 2 do
