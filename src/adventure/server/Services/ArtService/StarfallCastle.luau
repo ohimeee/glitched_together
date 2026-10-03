@@ -548,6 +548,49 @@ local function fillEnvironment(world: Instance)
 					Color = Color3.fromRGB(150, 110, 70),
 				}
 			)
+		elseif floor:IsA("BasePart") and floor.Name == "ArcherPost" then
+			-- the Siege Cart's archer lookouts floated beside the track (13th session QA): each stands on a timber
+			-- stilt tower now, four splayed legs down to its own rock spur, X-braced every 14 studs
+			local top = floor.Position.Y - floor.Size.Y / 2
+			local c = floor.Position
+			column(c.X, c.Z, 6)
+			local h = floor.Size.X / 2 - 0.6
+			local wood = {
+				Material = Enum.Material.WoodPlanks,
+				MaterialVariant = "CastlePlanks",
+				Color = Color3.fromRGB(140, 102, 66),
+			}
+			local legs = {}
+			for _, s in { Vector3.new(1, 0, 1), Vector3.new(-1, 0, 1), Vector3.new(-1, 0, -1), Vector3.new(1, 0, -1) } do
+				local a = Vector3.new(c.X + s.X * h, top, c.Z + s.Z * h)
+				local b = Vector3.new(c.X + s.X * (h + 3), GROUND_Y, c.Z + s.Z * (h + 3)) -- splayed
+				legs[#legs + 1] = { a, b }
+				art(folder, "StiltLeg", Vector3.new(0.9, 0.9, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), wood)
+			end
+			for y = top - 6, GROUND_Y + 10, -14 do
+				for i = 1, 4 do
+					local l1, l2 = legs[i], legs[i % 4 + 1]
+					local function at(l, yy)
+						return l[1]:Lerp(l[2], (top - yy) / (top - GROUND_Y))
+					end
+					local p, q = at(l1, y), at(l2, y - 8)
+					art(
+						folder,
+						"StiltBrace",
+						Vector3.new(0.5, 0.5, (q - p).Magnitude),
+						CFrame.lookAt((p + q) / 2, q),
+						wood
+					)
+					local r = at(l2, y)
+					art(
+						folder,
+						"StiltRail",
+						Vector3.new(0.6, 0.6, (r - p).Magnitude),
+						CFrame.lookAt((p + r) / 2, r),
+						wood
+					)
+				end
+			end
 		end
 	end
 	folder.Parent = world

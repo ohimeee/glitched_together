@@ -2739,10 +2739,11 @@ local function buildStarfallCastle(world: Model)
 		local nextPt = points[i + 1]
 		if nextPt then
 			local to = Vector3.new(nextPt[1] :: number, 0.3, nextPt[2] :: number)
-			local rope = block(fuse, Vector3.new(0.4, 0.3, (to - at).Magnitude), CFrame.lookAt((at + to) / 2, to), {
+			-- Plastic, not Fabric: Roblox's fabric albedo is dark, so the tan cord read as a black line from above
+			local rope = block(fuse, Vector3.new(0.65, 0.35, (to - at).Magnitude), CFrame.lookAt((at + to) / 2, to), {
 				name = `Rope{i}`,
 				color = rgb(205, 165, 110),
-				material = Enum.Material.Fabric,
+				material = Enum.Material.Plastic,
 				collide = false,
 			})
 			rope.CanQuery = false
