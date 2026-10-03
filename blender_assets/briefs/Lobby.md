@@ -18,3 +18,6 @@ Players are doll-sized on **Kai and Miko's shared childhood desk** at night: the
 
 ## Status (end of Oct 3) and the fix to do next
 Built (in game): room, desk, bed, shelf, books, toy blocks as plain Parts + 11 generated props. User feedback: "looks like Hide and Seek Extreme" (that Roblox game = tiny players in a giant room of flat box furniture). Fix (user's pick): keep the bedroom, rebuild every box as a sculpted Blender mesh (bevels, rounded cushions, cloth-sim quilt/curtains, book meshes, panelled drawers, turned legs), add much denser clutter, moodier light, close framing at spawn. Keep the invisible colliders in LobbyRoom.luau. Details: CLAUDE.md "Status (Oct 3, 11th session)" item 7.
+
+## Rebuilt (Oct 3, 12th session)
+Done: every box replaced by a sculpted Blender piece (BLENDER_PLAYBOOK §11, `tools/lobby_kit/`), denser clutter (bunting, mobile, cubbies, corkboard, train loop, beanbag, toy basket...), A-frame chalkboard sign, moodier ambient. Reference re-check (It Takes Two Rose's Room, ArtStation): pennant bunting + planet mobile + cubbies with fabric bins + toys on the floor were taken from that pass (principles only).
