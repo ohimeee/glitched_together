@@ -267,7 +267,7 @@ function LobbyBuilder.Build()
 	local stick = part({
 		Name = "NoteStick",
 		Size = Vector3.new(14, 1.2, 1.2),
-		CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 3, -1.2)) * CFrame.Angles(0, 0, math.rad(90)),
+		CFrame = CFrame.new(RING_CENTER + Vector3.new(0, 3, 0.6)) * CFrame.Angles(0, 0, math.rad(90)), -- behind the note
 		Color = Color3.fromRGB(80, 84, 96),
 		Shape = Enum.PartType.Cylinder,
 		Parent = lobby,
