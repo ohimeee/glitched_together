@@ -221,7 +221,6 @@ local function windowSet()
 					CFrame.new(x, (WIN.Y1 + 10 + FLOOR_Y + 2) / 2, z - 8 + (k % 2) * 1.2),
 					{
 						Material = Enum.Material.Fabric,
-						MaterialVariant = "LobbyCurtain",
 						Color = rgb(214, 156, 176), -- dusty rose
 					}
 				)
