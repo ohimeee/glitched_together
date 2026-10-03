@@ -551,6 +551,75 @@ local function modelStands(world: Instance)
 	end
 end
 
+-- Modelmaker's clutter (Oct 3, 2026, 12th session): the kids building this level left their tools on it, like a real
+-- unfinished scale model on a workbench: masking tape rolls, primer jars with a brush, bundles of balsa sticks, sitting
+-- near the corners of the bigger floors. Visual only; skipped wherever they would touch anything but the floor.
+type Clutter = { Id: string, Tex: string, Size: Vector3 }
+local CLUTTER: { Clutter } = {
+	{ Id = "rbxassetid://103131888026207", Tex = "rbxassetid://109036044335564", Size = v(8, 7.2, 3.3) }, -- tape
+	{ Id = "rbxassetid://127023974180486", Tex = "rbxassetid://93466995478351", Size = v(8, 7, 5) }, -- primer + brush
+	{ Id = "rbxassetid://131785092212950", Tex = "rbxassetid://87970261795329", Size = v(3.4, 3.2, 9.2) }, -- balsa
+}
+local function modelClutter(world: Instance)
+	local templates = {}
+	for i, c in CLUTTER do
+		local ok, part = pcall(MeshAssets.Template, "Clutter", {
+			Id = c.Id,
+			TextureId = c.Tex,
+			Offset = Vector3.zero,
+			Size = c.Size,
+			Material = SMOOTH,
+		})
+		if ok then
+			templates[i] = part
+		end
+	end
+	if not next(templates) then
+		return
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Clutter"
+	folder.Parent = world
+	local rng = Random.new(77)
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	for _, f in world:GetDescendants() do
+		if
+			not f:IsA("BasePart")
+			or f:GetAttribute("CoreSurface") ~= "Floor"
+			or f.Size.X < 22
+			or f.Size.Z < 22
+			or not isStatic(f)
+		then
+			continue
+		end
+		local corners = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }
+		for _ = 1, rng:NextInteger(1, 2) do
+			local c = table.remove(corners, rng:NextInteger(1, #corners))
+			local i = rng:NextInteger(1, #CLUTTER)
+			local template = templates[i]
+			if not c or not template then
+				continue
+			end
+			local size = template.Size
+			local inset = math.max(size.X, size.Z) / 2 + 1.5
+			local offset =
+				Vector3.new(c[1] * (f.Size.X / 2 - inset), f.Size.Y / 2 + size.Y / 2, c[2] * (f.Size.Z / 2 - inset))
+			local cf = f.CFrame * CFrame.new(offset) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0)
+			overlap.FilterDescendantsInstances = { f, folder }
+			if #workspace:GetPartBoundsInBox(cf, size + Vector3.new(2, 0, 2), overlap) > 0 then
+				continue
+			end
+			local m = template:Clone()
+			m.CFrame = cf
+			m.CanCollide = false
+			m.CanQuery = false
+			m.CanTouch = false
+			m.Parent = folder
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	dressEchoes(world, apply) -- first, so the Core's own surfaces below skip the skinned echo floors
 	for _, part in world:GetDescendants() do
@@ -627,6 +696,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	wireCubes(world, apply)
 	debris(world, apply)
 	modelStands(world)
+	task.spawn(modelClutter, world) -- after the stands, so clutter never lands on a rod top
 end
 
 -- SavePoints: the Prologue (a title screen) uses the same floppy-disk save points
