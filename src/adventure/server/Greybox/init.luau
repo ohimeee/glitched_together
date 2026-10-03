@@ -295,7 +295,7 @@ local function buildPrologue(world: Model)
 		31,
 		118,
 		W,
-		{ "F near the glowing ball to swing. Jump to let go.", "Swing, then jump at the far end of the arc." }
+		{ "F near the yellow ring to swing. Jump to let go.", "Swing, then jump at the far end of the arc." }
 	)
 
 	-- Swing point over a pit → D

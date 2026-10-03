@@ -84,6 +84,7 @@ local Skins: { [string]: MeshAssets.Skin } = {
 -- truss towers, giant settings-menu props stand on their own trusses. Offsets = mesh centres from the Blender report.
 local ALU = Color3.fromRGB(196, 200, 210)
 local PINK = Palette.Prologue.Pink
+local STEEL_DARK = Color3.fromRGB(70, 74, 84)
 local LAMP = Color3.fromRGB(255, 214, 160) -- warm stage light, never the Duo white
 local METAL = Enum.Material.Metal
 local KIT: { [string]: MeshAssets.Skin } = {
@@ -494,6 +495,98 @@ local function setPiece(
 	end
 end
 
+-- Swing points were a bare glowing ball that read as background (user, Oct 4: "how the hell players know they will
+-- rope that"): now a yellow grab ring (neutral-interactable yellow, art-direction §6) hanging face-on to the route
+-- from a steel cable off a stage truss, with a small warm glow. The ball stays as the invisible swing anchor;
+-- SwingPromptController adds the "[F] SWING" chip.
+local function swingHooks(world: Instance, apply: (BasePart, string) -> boolean)
+	for _, point in world:GetDescendants() do
+		if not (point:IsA("BasePart") and point.Name == "SwingPoint") then
+			continue
+		end
+		local c = point.Position
+		point.Transparency = 1
+		point:SetAttribute("ArtHidden", true)
+		local model = Instance.new("Model")
+		model.Name = "SwingHook"
+		model.Parent = point.Parent
+		local function bit(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, shape)
+			local p = Instance.new("Part")
+			p.Name = name
+			p.Size = size
+			p.CFrame = cf
+			p.Color = color
+			p.Material = material
+			p.Anchored = true
+			p.CanCollide = false
+			p.CanQuery = false
+			p.CanTouch = false
+			if shape then
+				p.Shape = shape
+			end
+			p.Parent = model
+			return p
+		end
+		-- the ring: 16 rounded segments in the plane facing the route (+Z)
+		local r, n = 2.2, 16
+		local seg = 2 * math.pi * r / n + 0.12
+		for i = 0, n - 1 do
+			local a = (i + 0.5) / n * 2 * math.pi
+			local at = c + Vector3.new(math.cos(a) * r, math.sin(a) * r, 0)
+			-- a cylinder's axis is X: lay it along the tangent
+			bit(
+				"Ring",
+				Vector3.new(seg, 0.55, 0.55),
+				CFrame.new(at) * CFrame.Angles(0, 0, a + math.pi / 2),
+				Palette.Glow.Neutral, -- neon: plain yellow plastic read gold-brown (near Kai's orange) in the navy dark
+				Enum.Material.Neon,
+				Enum.PartType.Cylinder
+			)
+		end
+		-- a white grip wrap at the bottom, where the hands go
+		for _, dx in { -0.45, 0, 0.45 } do
+			bit(
+				"Grip",
+				Vector3.new(0.3, 0.7, 0.7),
+				CFrame.new(c + Vector3.new(dx, -r, 0)),
+				WHITE,
+				Enum.Material.SmoothPlastic,
+				Enum.PartType.Cylinder
+			)
+		end
+		-- shackle + cable up to a truss beam between two pylons
+		local beamY = c.Y + 20
+		bit(
+			"Shackle",
+			Vector3.new(0.7, 0.7, 0.7),
+			CFrame.new(c + Vector3.new(0, r + 0.3, 0)),
+			STEEL_DARK,
+			Enum.Material.Metal,
+			Enum.PartType.Ball
+		)
+		local top = c + Vector3.new(0, r + 0.5, 0)
+		local len = beamY - 1.5 - top.Y
+		bit(
+			"Cable",
+			Vector3.new(len, 0.22, 0.22),
+			CFrame.new(top + Vector3.new(0, len / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			STEEL_DARK,
+			Enum.Material.Metal,
+			Enum.PartType.Cylinder
+		)
+		local glow = Instance.new("PointLight")
+		glow.Color = Palette.Neutral
+		glow.Brightness = 0.6
+		glow.Range = 9
+		glow.Shadows = false
+		glow.Parent = model:FindFirstChild("Grip")
+		girder(apply, model, Vector3.new(c.X - 16, beamY, c.Z), Vector3.new(c.X + 16, beamY, c.Z))
+		for _, dx in { -16, 16 } do
+			pylon(apply, model, c.X + dx, c.Z, beamY - 1.5, 0)
+		end
+	end
+end
+
 local function stageSet(world: Instance, apply: (BasePart, string) -> boolean)
 	local set = Instance.new("Folder")
 	set.Name = "StageSet"
@@ -609,6 +702,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 	dialogGates(world)
 	stageSet(world, apply)
+	swingHooks(world, apply)
 	-- the chimney's cling walls were bare dark slabs: stand a menu panel on its edge over each one (a giant scrollbar
 	-- track with a white trim and a scroll thumb), the wall itself stays as the invisible clingable collider
 	for _, wall in world:GetDescendants() do
