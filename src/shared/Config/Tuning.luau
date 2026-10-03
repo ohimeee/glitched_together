@@ -58,6 +58,7 @@ return {
 
 	-- Traversal objects
 	SwingRange = 18,
+	SwingPromptRange = 30, -- "[F] SWING" chips show this close (SwingPromptController); bright inside SwingRange
 	SwingBoost = 1.2,
 	-- It Takes Two style swing (MovementController): an assisted pendulum that settles into a steady arc forward
 	-- along the way you came; you only time the jump. A/D slowly turn it.
