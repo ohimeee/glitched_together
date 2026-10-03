@@ -81,6 +81,72 @@ Skins.IronGolem = enemy( -- a little castle-tower guardian; its visor faces +Z a
 	0,
 	180
 )
+-- Ember Fuse pieces (tools/piece_kit/kit.py, PieceKit.fbx). Stake = the FuseStart part (1 x 1.6 x 1, bottom on the
+-- floor): oak stake, iron cup with the fuse coil, the tail running off toward +Z; the tinder knot Kai lights glows in
+-- his color. Splice = a FuseBreak marker (1.6 x 0.8 x 1.6): iron clamp over a cut cord with fresh tinder, cord along X.
+local IRON = Color3.fromRGB(58, 56, 60)
+local CORD = Color3.fromRGB(205, 165, 110)
+local function piece(id: string, offset: Vector3, size: Vector3, material: Enum.Material, color: Color3, yaw: number)
+	return { Id = id, Offset = offset, Size = size, Material = material, Color = color, Yaw = yaw }
+end
+Skins.FuseStake = {
+	Design = v(1, 1.6, 1),
+	Meshes = {
+		Wood = piece(
+			"rbxassetid://84917379973525",
+			v(0, -0.32, 0),
+			v(0.51, 1.45, 0.51),
+			Enum.Material.Wood,
+			Color3.fromRGB(122, 84, 52),
+			180
+		),
+		Iron = piece("rbxassetid://122031547164264", v(0, 0.1, 0), v(0.91, 1.28, 0.91), Enum.Material.Metal, IRON, 180),
+		Cord = piece(
+			"rbxassetid://75121039333865",
+			v(0.06, -0.07, 0.32),
+			v(0.74, 1.46, 1.29),
+			Enum.Material.Plastic,
+			CORD,
+			180
+		),
+		Tinder = piece(
+			"rbxassetid://130944144812166",
+			v(0, 0.67, 0.02),
+			v(0.4, 0.34, 0.38),
+			Enum.Material.Neon,
+			Palette.Glow.Kai,
+			180
+		),
+	},
+}
+Skins.FuseSplice = {
+	Design = v(1.6, 0.8, 1.6),
+	Meshes = {
+		Iron = piece("rbxassetid://118221374300015", v(0, -0.04, 0), v(1.2, 0.45, 0.7), Enum.Material.Metal, IRON, 90),
+		Cord = piece(
+			"rbxassetid://106050062174290",
+			v(0, -0.15, 0),
+			v(0.14, 0.26, 1.83),
+			Enum.Material.Plastic,
+			CORD,
+			90
+		),
+		Tinder = piece(
+			"rbxassetid://105496610034014",
+			v(0, 0.25, 0),
+			v(0.62, 0.38, 0.48),
+			Enum.Material.Neon,
+			Palette.Glow.Kai,
+			90
+		),
+	},
+}
+Skins.FuseStaple = { -- iron staple pinning the cord to the floor (cord along Z)
+	Design = v(0.94, 0.63, 0.22),
+	Meshes = {
+		Iron = piece("rbxassetid://76289525307929", Vector3.zero, v(0.94, 0.63, 0.22), Enum.Material.Metal, IRON, 0),
+	},
+}
 Skins.SpikeRoller = enemy(v(10, 4, 3), "rbxassetid://135577631972243", "rbxassetid://71542413269555", v(10, 4, 4), 0, 0)
 Skins.GolemPillar = enemy(v(4, 10, 4), "rbxassetid://102180491432565", "rbxassetid://89145144615487", v(4, 10, 4), 0, 0)
 Skins.MirrorSkin =
@@ -827,6 +893,50 @@ local function dressRooms(world: Instance)
 	folder.Parent = world
 end
 
+-- Ember Fuse: the start stake, iron splices at the two breaks, and a round cord stapled to the floor (the grey-box cord
+-- was a flat strip). CombatService still recolors the Rope parts as the fuse burns, so they stay real parts.
+local STAPLE_SCALE = 1.35 -- the staple's bar has to clear the 0.42-stud cord
+local function dressFuse(world: Instance, apply: (BasePart, string) -> boolean)
+	local fuse = world:FindFirstChild("Fuse")
+	if not fuse then
+		return
+	end
+	local start = fuse:FindFirstChild("FuseStart")
+	if start and start:IsA("BasePart") then
+		apply(start, "FuseStake")
+	end
+	local path = fuse:FindFirstChild("Path")
+	for _, marker in if path then path:GetChildren() else {} do
+		if marker:IsA("BasePart") and CollectionService:HasTag(marker, "FuseBreak") then
+			apply(marker, "FuseSplice")
+		end
+	end
+	for _, rope in fuse:GetChildren() do
+		if not (rope:IsA("BasePart") and rope.Name:match("^Rope%d+$")) then
+			continue
+		end
+		local len = rope.Size.Z
+		local floorY = rope.Position.Y - 0.3 -- markers sit at y 0.3 over the floor top
+		local rot = rope.CFrame.Rotation
+		rope.Shape = Enum.PartType.Cylinder
+		rope.Size = v(len + 0.4, 0.42, 0.42) -- a little longer so the round ends overlap at the corners
+		rope.CFrame = CFrame.new(rope.Position.X, floorY + 0.22, rope.Position.Z)
+			* rot
+			* CFrame.Angles(0, math.rad(90), 0)
+		local n = math.floor(len / 5)
+		for k = 1, n do
+			local t = k / (n + 1) - 0.5
+			local at = CFrame.new(rope.Position.X, floorY, rope.Position.Z) * rot * CFrame.new(0, 0, t * len)
+			local design = Skins.FuseStaple.Design * STAPLE_SCALE
+			local h = art(fuse, "FuseStaple", design, at * CFrame.new(0, 0.17 * STAPLE_SCALE, 0), { Transparency = 1 })
+			if not apply(h, "FuseStaple") then
+				h:Destroy()
+				break
+			end
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	for _, part in world:GetDescendants() do
 		local surface = part:IsA("BasePart") and not part:IsA("MeshPart") and SURFACES[part.Material]
@@ -850,6 +960,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
 	task.spawn(dressRooms, world) -- meshes load async; the rooms are playable meanwhile
+	dressFuse(world, apply)
 	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)
 	for _, pad in world:GetDescendants() do
 		if pad:IsA("BasePart") and CollectionService:HasTag(pad, "Checkpoint") then

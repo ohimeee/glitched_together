@@ -31,6 +31,7 @@ local Worlds: { [string]: WorldArt } = {
 
 local StateInlay = require(script.StateInlay)
 local VentFan = require(script.VentFan)
+local Rails = require(script.Rails)
 
 -- Pieces every world shares (Oct 2): realism-first generations (generate_mesh)
 local SHARED: { [string]: MeshAssets.Skin } = {
@@ -67,6 +68,55 @@ local SHARED: { [string]: MeshAssets.Skin } = {
 				Offset = Vector3.zero,
 				Size = Vector3.new(2.6, 5, 2.6),
 				Material = Enum.Material.SmoothPlastic,
+			},
+		},
+	},
+	-- grind rail stanchion (tools/piece_kit/kit.py, PieceKit.fbx): saddle clamp, pole (stretched), flange plate.
+	-- Rails.luau stacks them over a box-truss pylon and tints the steel per world
+	RailClamp = {
+		Design = Vector3.new(1.55, 1.11, 0.92),
+		Meshes = {
+			Steel = {
+				Id = "rbxassetid://132967066000423",
+				Offset = Vector3.new(-0.01, -0.055, 0),
+				Size = Vector3.new(1.38, 1, 0.92),
+				Material = Enum.Material.Metal,
+			},
+			Bolt = {
+				Id = "rbxassetid://85537550491701",
+				Offset = Vector3.new(0, 0.445, 0),
+				Size = Vector3.new(1.55, 0.22, 0.5),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(90, 92, 98),
+			},
+		},
+	},
+	RailPole = {
+		Design = Vector3.new(0.76, 1, 0.76),
+		Meshes = {
+			Steel = {
+				Id = "rbxassetid://104308332982927",
+				Offset = Vector3.zero,
+				Size = Vector3.new(0.76, 1, 0.76),
+				Material = Enum.Material.Metal,
+			},
+		},
+	},
+	RailBase = {
+		Design = Vector3.new(2.17, 0.8, 2.17),
+		Meshes = {
+			Steel = {
+				Id = "rbxassetid://114860702714975",
+				Offset = Vector3.zero,
+				Size = Vector3.new(2.17, 0.8, 2.17),
+				Material = Enum.Material.Metal,
+			},
+			Bolt = {
+				Id = "rbxassetid://85284635354607",
+				Offset = Vector3.new(0, -0.03, 0),
+				Size = Vector3.new(1.33, 0.14, 1.36),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(90, 92, 98),
 			},
 		},
 	},
@@ -154,7 +204,7 @@ end
 -- Shared pieces in every world: exit arches, Duo Pound buttons and Heavy Levers (their state shows on an inlay,
 -- since the grey-box part that turned green is hidden under the skin)
 local EXIT_ARCH_SCALE = 2.6 -- the arch's opening must clear the 12×12 portal field
-local function dressShared(world: Instance)
+local function dressShared(world: Instance, worldName: string)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { world }
@@ -201,6 +251,10 @@ local function dressShared(world: Instance)
 			end
 		elseif CollectionService:HasTag(part, "JumpVent") then
 			VentFan(part, params)
+		elseif CollectionService:HasTag(part, "GrindRail") then
+			Rails(part, worldName, Skins, ArtService.Apply)
+		elseif CollectionService:HasTag(part, "VentButton") and ArtService.Apply(part, "ButtonPad") then
+			StateInlay(part) -- pound it to flip the vent: the same toy push button as a plate
 		elseif CollectionService:HasTag(part, "PressurePlate") and ArtService.Apply(part, "ButtonPad") then
 			StateInlay(part) -- any plate a world didn't dress itself: the toy push button (Pixel Plains kit)
 		elseif CollectionService:HasTag(part, "DuoPound") and ArtService.Apply(part, "DuoButton") then
@@ -237,7 +291,7 @@ function ArtService.Dress(world: Instance, worldName: string)
 			art.Extras(world, ArtService.Apply)
 		end
 		if world.Parent then
-			dressShared(world)
+			dressShared(world, worldName)
 		end
 	end)
 	-- parts spawned later (dropper blocks) get their skin too
