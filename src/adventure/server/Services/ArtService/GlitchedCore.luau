@@ -211,6 +211,8 @@ local function dressTerminal(world: Instance, apply: (BasePart, string) -> boole
 end
 
 -- checkpoints: a floppy disk on a stand ("SAVE" in marker on its label) beside a faint pad
+local disksByPad: { [BasePart]: BasePart } = setmetatable({}, { __mode = "k" }) :: any
+local savedHooked = false
 local function savePoints(world: Instance, apply: (BasePart, string) -> boolean)
 	if not Skins.SavePoint then
 		return
@@ -249,6 +251,19 @@ local function savePoints(world: Instance, apply: (BasePart, string) -> boolean)
 			text.Text = "SAVE"
 			text.Parent = gui
 		end
+		-- the disk reacts when its checkpoint saves (client SaveDiskController: idle bob, slide into the stand, light,
+		-- "SAVED!" pop; user Oct 4: "the floppy disk didnt have any animation?")
+		disksByPad[pad] = disk
+		disk:AddTag("SaveDisk")
+	end
+	if not savedHooked then
+		savedHooked = true -- required lazily: CheckpointService loads before the art runs
+		require(script.Parent.Parent.CheckpointService).Reached:Connect(function(_order: number, pad: BasePart)
+			local disk = disksByPad[pad]
+			if disk and disk.Parent then
+				disk:SetAttribute("SavedAt", workspace:GetServerTimeNow())
+			end
+		end)
 	end
 end
 
