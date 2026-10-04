@@ -69,17 +69,11 @@ Environment polish plan (CLAUDE.md note 7): It Takes Two–level detail per worl
 ### Studio `generate_mesh` (Roblox Cube, textured)
 See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-like chunky <thing>, <world colors/materials>, believable <material> textures, It Takes Two art style"*. Name owner colors in words ("aqua turquoise", "bright orange trim") and check the result: generations sometimes pick the wrong color (a first grapple gun came out green with an orange rope) or shape (a chute came out as a U-pipe). Regenerate, or build it in Blender.
 
-### Tripo (REST API v3, called directly, not through the Blender add-on)
-- **Keys:** repo `.env` (gitignored): `TRIPO_API_KEY`, backups `TRIPO_API_KEY_2`, `_3`, `_4` (they start with `tsk_`). Use key 1, move to the next when one runs out. Free credits only: **never buy or top up**; tell the user when all 4 are empty. Never print or commit key values.
-- **API:** base `https://openapi.tripo3d.ai/v3`, header `Authorization: Bearer <key>`, JSON bodies.
-  - `POST /generation/text-to-model` `{ "prompt": "...", "model": "v3.1-20260211" }` (or `v3.0-20250812`; texture/PBR options) → `data.task_id`
-  - `POST /generation/image-to-model` (one image; upload it first with `POST /upload`)
-  - `GET /tasks/{task_id}`: poll until `status` is `"success"`, then read `model_url` (GLB) and `rendered_image_url`. **Model URLs expire after ~5 minutes: download at once.**
-  - Rigging: `/animations/rig-check`, `/animations/rig`, `/animations/retarget` (a full game-ready character pipeline costs about 85 credits).
-  - Docs: https://developers.tripo3d.ai/en/docs/quick-start and https://docs.tripo3d.ai
-- **Pipeline:** download the GLB to the scratchpad → import into Blender → clean up (tri budget, one mesh per material, bottom-center origin, stud scale) → export FBX into `blender_assets/` → the user imports it in Studio. Credit Tripo in a credits file if their terms ask for it.
-- **All 4 keys were out of credit on Oct 1, 2026 (8th session).** Tried for a realistic courtyard tower: every key returned `code 2010 "You don't have enough credit to create this task"` on both `v3.1-20260211` and `v3.0-20250812` (8 attempts), so no task started and no model, render or PNG exists. **Tripo has never produced an asset in this project**: every generated mesh so far (castle courtyard included) is Studio `generate_mesh`. Don't plan on Tripo until a key has credit again (free monthly refill or a new free account; never buy). Test a key first with one cheap call.
-- No Tripo script exists in the repo yet: write one in Python (read `.env`, `urllib`/`requests`) the first time it's needed.
+### Tripo (web app through the browser, NOT the API)
+- **The API is paid** (Oct 4, 2026): it has its own credit wallet that only refills by top-up (`code 2010 "Insufficient credits"`), separate from the web app; the one-time signup credits were spent and the keys and `.env` were deleted. Never top up.
+- **Use tripo3d.ai in Brave via Claude in Chrome** (the user's message must include `@browser`). The free web plan gives 300 credits a month (current batch expires 2026-11-03). Spend them on hero pieces only and tell the user the cost before a batch.
+- **Pipeline:** generate (text/image to 3D, texture) → download GLB/FBX into `blender_assets/` → Blender cleanup (tri budget, one mesh per material, bottom-center origin, stud scale) → export FBX → the user imports it in Studio. Credit Tripo in a credits file if their terms ask for it.
+- Docs in plain text: `https://developers.tripo3d.ai/llms.txt` (pages as `/en/docs/<page>.md`).
 
 ### Poly Haven (CC0: free for anything, no credit needed)
 - Through Blender MCP (switched on by `autostart.py`, no key): `get_polyhaven_status`, `get_polyhaven_categories(asset_type)`, `search_polyhaven_assets(asset_type, categories)`, `get_polyhaven_asset_preview`, `download_polyhaven_asset(asset_id, asset_type, resolution, file_format)`, `set_texture(object_name, texture_id)`.
