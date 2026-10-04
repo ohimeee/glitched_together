@@ -71,7 +71,7 @@ See §1. Prompt pattern that matches the graphics baseline: *"stylized Pixar-lik
 
 ### Tripo (web app through the browser, NOT the API)
 - **The API is paid** (Oct 4, 2026): it has its own credit wallet that only refills by top-up (`code 2010 "Insufficient credits"`), separate from the web app; the one-time signup credits were spent and the keys and `.env` were deleted. Never top up.
-- **Use tripo3d.ai in Brave via Claude in Chrome** (the user's message must include `@browser`). The free web plan gives 300 credits a month (current batch expires 2026-11-03). Spend them on hero pieces only and tell the user the cost before a batch.
+- **Use tripo3d.ai in Brave via Claude in Chrome** (the user's message must include `@browser`). The free web plan gives 200 credits by default (Oct 2026 batch was 300, expires 2026-11-03). Spend them on hero pieces only and tell the user the cost before a batch.
 - **Pipeline:** generate (text/image to 3D, texture) → download GLB/FBX into `blender_assets/` → Blender cleanup (tri budget, one mesh per material, bottom-center origin, stud scale) → export FBX → the user imports it in Studio. Credit Tripo in a credits file if their terms ask for it.
 - Docs in plain text: `https://developers.tripo3d.ai/llms.txt` (pages as `/en/docs/<page>.md`).
 

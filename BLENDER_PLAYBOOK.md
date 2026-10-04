@@ -47,7 +47,7 @@ Quick socket check without MCP (PowerShell): connect to `localhost:9876` and sen
 | `screen_capture` | See the result in Studio |
 
 ### Tripo (web app via the browser, not the API or the Blender add-on)
-AI text/image → textured 3D (GLB), plus retexture, smart low poly, rigging. Use when Studio `generate_mesh` runs out or a hero asset needs more quality/control. Made on the tripo3d.ai web app through Claude in Chrome (free 300 credits/month); the API is paid, never used (TOOLS.md §Tripo). Output → Blender cleanup (tri budget, split per material, origin bottom-center) → FBX → user Import click. Credit Tripo in `CREDITS.md` if its terms require it.
+AI text/image → textured 3D (GLB), plus retexture, smart low poly, rigging. Use when Studio `generate_mesh` runs out or a hero asset needs more quality/control. Made on the tripo3d.ai web app through Claude in Chrome (free 200 credits by default); the API is paid, never used (TOOLS.md §Tripo). Output → Blender cleanup (tri budget, split per material, origin bottom-center) → FBX → user Import click. Credit Tripo in `CREDITS.md` if its terms require it.
 
 ### Other
 - **Claude in Chrome (`mcp__claude-in-chrome__*`), running in the user's Brave browser:** browse for reference pictures (§3A).
