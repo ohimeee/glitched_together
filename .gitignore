@@ -14,3 +14,6 @@ lobby.sourcemap.json
 
 # graphify knowledge graph + Obsidian vault (regenerate with /graphify . --obsidian)
 graphify-out/
+
+# textures Blender unpacks next to FBX exports (copies of textures/ files)
+*.fbm/
