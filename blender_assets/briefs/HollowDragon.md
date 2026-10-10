@@ -1,5 +1,11 @@
 # Brief: The Hollow Dragon (World 2 boss)
 
+**v2 (current, Oct 10, 2026):** the user found the scripted v1 below ugly and stiff and picked the Sketchfab **Celestial Dragon** by achrefrhm9 (CC BY 4.0, credited in CREDITS.md) over Starry Skies' Dragon and the red Stylized Dragon. Second head (AI artifact) removed on the user's call; split into body + wings; repainted plum with magenta static stars (`textures/make_hollow_dragon_tex.py`); hovers over a hole in the hall. Files `blender_assets/HollowDragon2.*`, skins `DragonBody/WingL/WingR` in ArtService/StarfallCastle.
+
+---
+
+**v1 (replaced):**
+
 **Pick (user, Oct 10, 2026):** "Hollow storybook" (over a kid-drawing papercraft dragon or a stone-and-iron one).
 
 **References (Oct 10, Brave/Google Images):** skeletal bone dragons with an exposed glowing heart, It Takes Two's Dungeon Crawler (the top-down mage + knight chapter our castle mirrors: warm light against deep shadow, chunky readable shapes), kid-drawing dragons made into 3D toys (big horns, big wings). Shape and mood only.

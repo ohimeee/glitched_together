@@ -249,6 +249,8 @@ ITT bosses are cooperation-first with multiple phases; some alternate which play
 | 2 | Flies, summons skeletons and archers, lands every 20 s | Miko charges minions into Flame Walls; Kai Meteors the dragon when it lands |
 | 3 | Splits the arena with a static wall with one small gap | Miko stands at the gap with shield raised; Kai fires into the shield so reflections pass through the gap and hit the dragon's heart |
 
+As built (Oct 10, 2026, `Bosses/HollowDragon.luau`, numbers in `Tuning.HollowDragon`): the dragon hovers over a hole the Glitch ate in the back of the throne hall (floor ends at z 1600). (1) breath windup line 1.4 s → beam 2.6 s tracking at 28°/s, 5 dmg / 0.35 s; a raised shield facing the mouth cuts it for everyone behind; the 4 scales (orbs on its legs, fireball height) open only while it breathes, 3 fireballs each. (2) flies a loop, summons Skeleton/StaticArcher (max 6, each fall +0.2 of Kai's Meteor), lands every 20 s (ring 2.2 s, 25 dmg, grounded 7 s); 2 Meteors. (3) wall at z 1575, 8-wide gap moving every 10 s, bombs every 3.5 s; it sinks 9 so the heart is at reflect height; plain fire is swallowed, 4 reflected hits. On defeat the floor knits a bridge over the hole to the hidden room (Memory 2).
+
 ### The Unfinished (final boss, World 3)
 Each phase swaps **everyone's tools and camera** to a previous world's kit, like the genre shift at the end of ITT's Moon Baboon fight.
 
