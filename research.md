@@ -33,6 +33,12 @@ Short notes gathered before building. They feed `src/shared/Config/Worlds.luau` 
 
 - ITT keeps both players in view with constrained, shared-logic cameras; no sudden pans or zooms. Ours: a follow camera slightly higher and wider than default, smoothed; top-down midpoint camera in the castle.
 
+## Move animations (Oct 11, 2026)
+
+- No public breakdown of It Takes Two's move animations; notes from gameplay footage (speedrun movement guide) + the game itself: jumps fling the arms wide into a star shape, the double jump is a quick tucked front flip, the slide/crouch sits very low, the long jump reads as a forward dive, the ground pound curls into a spin, then drops stretched straight down and squashes on impact. Doll-like and exaggerated, readable from behind at camera distance.
+- Roblox: client-side `Motor6D.Transform` poses don't replicate (DevForum), but an `AnimationTrack` played on your own character's Animator does. So the clips are real animations: keyframe data in `Config/MoveAnims.luau`, played by `MoveAnimController`; in Studio from temporary `KeyframeSequenceProvider` ids, live from uploaded ids (`tools/anim/upload.py`, Open Cloud Assets API accepts Animation as `.rbxm`).
+- Sources: [It Takes Two Speedrunning Movement Guide (YouTube)](https://www.youtube.com/watch?v=is6b8gf-afQ), [DevForum: Motor6D replication](https://devforum.roblox.com/t/replicate-motor6ds/3685283), [DevForum: animations replicate from the client](https://devforum.roblox.com/t/fe-player-animations/282776/16), [Open Cloud assets usage guide](https://create.roblox.com/docs/en-us/cloud/guides/usage-assets).
+
 ## Sources
 
 - [Hazelight It Takes Two Art Blast — ArtStation Magazine](https://magazine.artstation.com/2021/04/hazelight-studios-it-takes-two-art-blast/)
