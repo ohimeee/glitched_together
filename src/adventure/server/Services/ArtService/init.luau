@@ -260,12 +260,18 @@ end
 local ArtService = {}
 
 local loaded: { [string]: { [string]: MeshPart } | false } = {} -- skin name → templates, false = failed / not imported
+local inflight: { [string]: boolean } = {} -- skins being downloaded right now (a second caller waits for the first)
 
 local function templatesFor(skinName: string): { [string]: MeshPart }?
+	while inflight[skinName] do
+		task.wait()
+	end
 	local cached = loaded[skinName]
 	if cached == nil then
+		inflight[skinName] = true
 		cached = MeshAssets.Load(Skins[skinName].Meshes, skinName) or false
 		loaded[skinName] = cached
+		inflight[skinName] = nil
 	end
 	return if cached then cached else nil
 end
@@ -417,20 +423,88 @@ local function dressShared(world: Instance, worldName: string)
 	end
 end
 
--- Dresses a freshly built grey-box world. Runs in the background: shells pop in once the meshes load.
-function ArtService.Dress(world: Instance, worldName: string)
-	workspace.Terrain:Clear() -- terrain belongs to one world at a time (the castle's mountain)
+-- Every mesh skin a world can use (its own, plus the shared ones its parts name), downloaded in parallel. Done ahead
+-- of time for the next world (WorldService), so dressing it later is near-instant; returns when all are in.
+function ArtService.Preload(worldName: string, onProgress: ((number) -> ())?)
 	local art = Worlds[worldName]
 	if not art then
 		return
 	end
+	local names: { [string]: boolean } = {}
+	for name, skin in art.Skins do
+		if skin.Meshes and not skin.Build then
+			names[name] = true
+		end
+	end
+	for _, name in art.Dressing do
+		names[name] = true
+	end
+	for _, item in art.Decor do
+		names[item[1]] = true
+	end
+	local list = {}
+	for name in names do
+		local skin = Skins[name]
+		if skin and skin.Meshes and not skin.Build then
+			table.insert(list, name)
+		end
+	end
+	local pending = #list
+	for _, name in list do
+		task.spawn(function()
+			templatesFor(name)
+			pending -= 1
+			if onProgress then
+				onProgress(1 - pending / math.max(#list, 1))
+			end
+		end)
+	end
+	while pending > 0 do
+		task.wait()
+	end
+end
+
+-- Dresses a freshly built grey-box world in the background: every skin downloads first (in parallel), then the
+-- parts nearest `focus` (the spawn) are dressed first, then decor and extras. Progress 0..1 goes to `onProgress`;
+-- the world gets the attribute `Dressed` = true when it's all done (WorldService holds a loading screen till then).
+function ArtService.Dress(world: Instance, worldName: string, focus: Vector3?, onProgress: ((number) -> ())?)
+	workspace.Terrain:Clear() -- terrain belongs to one world at a time (the castle's mountain)
+	local art = Worlds[worldName]
+	local function progress(k: number)
+		if onProgress then
+			onProgress(k)
+		end
+	end
+	if not art then
+		world:SetAttribute("Dressed", true)
+		return
+	end
 	task.spawn(function()
+		ArtService.Preload(worldName, function(k)
+			progress(k * 0.5)
+		end)
+		local todo: { { part: BasePart, skin: string } } = {}
 		for _, d in world:GetDescendants() do
 			local skinName = d:GetAttribute("Skin") or art.Dressing[d.Name] -- a level part's own `Skin` wins
 			if skinName and d:IsA("BasePart") then
-				ArtService.Apply(d, skinName)
+				table.insert(todo, { part = d, skin = skinName })
 			end
 		end
+		if focus then
+			table.sort(todo, function(x, y)
+				return (x.part.Position - focus).Magnitude < (y.part.Position - focus).Magnitude
+			end)
+		end
+		for i, job in todo do
+			if not world.Parent then
+				return
+			end
+			ArtService.Apply(job.part, job.skin)
+			if i % 25 == 0 then
+				progress(0.5 + 0.4 * i / #todo)
+			end
+		end
+		progress(0.9)
 		for _, item in art.Decor do
 			if world.Parent then
 				-- item[4]: the Greybox section it belongs to (decor moves with that section's Shift)
@@ -446,6 +520,8 @@ function ArtService.Dress(world: Instance, worldName: string)
 			dressShared(world, worldName)
 			LeverSupports(world, ArtService.Apply) -- posts / wall arms / footings: no lever floats
 		end
+		progress(1)
+		world:SetAttribute("Dressed", true)
 	end)
 	-- parts spawned later (dropper blocks) get their skin too
 	world.DescendantAdded:Connect(function(d)

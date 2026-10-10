@@ -4,6 +4,7 @@ Input.Init()
 
 local Controllers = script.Parent.Controllers
 local order = {
+	"LoadingController", -- first: covers the screen before anything else draws
 	"MoveAnimController",
 	"MovementController",
 	"StationController",

@@ -66,10 +66,31 @@ function WorldService.SpawnPlayer(p: Player)
 	character:PivotTo(cf)
 end
 
--- `restart`: a game over reloading the same world (Loaded listeners keep progress like castle levels)
+local loadToken = 0
+
+local function freeze(on: boolean)
+	for _, p in DuoService.Players() do
+		local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root then
+			root.Anchored = on
+		end
+	end
+end
+
+-- `restart`: a game over reloading the same world (Loaded listeners keep progress like castle levels).
+-- Loading screen (client LoadingController): workspace `WorldLoading` = true (+ `LoadingWorld`, `LoadProgress` 0..1)
+-- while the world builds and dresses; the duo waits frozen, then spawns into the finished world (art nearest the
+-- spawn is dressed first). Yields until then, at most Tuning.WorldLoad.Timeout s. Then the next world's art starts
+-- downloading in the background so the next load is quick.
 function WorldService.Load(worldName: string, checkpoint: number?, restart: boolean?)
+	loadToken += 1
+	local token = loadToken
 	WorldService.Current = worldName
 	workspace:SetAttribute("World", worldName)
+	workspace:SetAttribute("LoadingWorld", worldName)
+	workspace:SetAttribute("LoadProgress", 0)
+	workspace:SetAttribute("WorldLoading", true)
+	freeze(true)
 
 	local old = workspace:FindFirstChild("World")
 	if old then
@@ -85,8 +106,15 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 	end
 	model.Name = "World"
 	model.Parent = workspace
-	if not source then
-		ArtService.Dress(model, worldName)
+	CheckpointService.Reset(worldName, checkpoint or 0)
+	if source then
+		model:SetAttribute("Dressed", true)
+	else
+		ArtService.Dress(model, worldName, CheckpointService.SpawnCFrame(nil).Position, function(k)
+			if token == loadToken then
+				workspace:SetAttribute("LoadProgress", k)
+			end
+		end)
 	end
 
 	local info = Worlds.ByName[worldName]
@@ -94,14 +122,33 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 		Worlds.ApplyLook(info.Look)
 	end
 
-	CheckpointService.Reset(worldName, checkpoint or 0)
+	local started = os.clock()
+	while
+		not model:GetAttribute("Dressed")
+		and os.clock() - started < Tuning.WorldLoad.Timeout
+		and token == loadToken
+	do
+		task.wait(0.1)
+	end
+	if token ~= loadToken then
+		return -- a newer Load took over (Studio world jumps)
+	end
+
 	table.clear(zoneOf)
 	forced = nil
 	for _, p in DuoService.Players() do
 		applyKit(p)
 		WorldService.SpawnPlayer(p)
 	end
+	freeze(false)
+	workspace:SetAttribute("WorldLoading", false)
 	loaded:Fire(worldName, restart)
+
+	local index = table.find(Worlds.Order, worldName)
+	local nextWorld = index and Worlds.Order[index + 1]
+	if nextWorld then
+		task.spawn(ArtService.Preload, nextWorld)
+	end
 end
 
 -- Both players reached the exit: unlock and load the next world.

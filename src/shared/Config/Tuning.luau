@@ -38,6 +38,13 @@ return {
 	LongJumpHold = 0.45,
 	LedgeAssistReach = 2.5, -- studs a near-miss ledge pulls you up
 	MobileAutoSprintAfter = 1.5,
+	-- World loading (WorldService.Load + client LoadingController)
+	WorldLoad = {
+		Timeout = 25, -- s the server waits for a world's art before spawning the duo anyway
+		ClientRadius = 220, -- studs around you whose meshes/textures the client downloads behind the screen
+		ClientTimeout = 8, -- s the client waits for those downloads at most
+		MinShow = 0.6, -- s the screen stays up at least (no flash on instant reloads)
+	},
 	-- Move animations (Config/MoveAnims.luau, MoveAnimController)
 	MoveAnim = {
 		Fade = 0.08, -- s blend in/out of a clip
