@@ -2,10 +2,13 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
 
 local Kits = require(ReplicatedStorage.Shared.Config.Kits)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Places = require(ReplicatedStorage.Shared.Config.Places)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local DuoService = require(script.Parent.DuoService)
 local SaveService = require(script.Parent.SaveService)
@@ -110,8 +113,20 @@ function WorldService.Advance()
 	local index = table.find(Worlds.Order, WorldService.Current) or 0
 	local nextWorld = Worlds.Order[index + 1]
 	if not nextWorld then
+		-- past the last world (the Epilogue's BACK TO LOBBY exit): the duo goes home together
 		SaveService.Set({ complete = true })
 		SaveService.Flush()
+		if Places.Lobby == 0 or RunService:IsStudio() then
+			warn("[WorldService] Duo at the last exit; would return to Lobby (skipped: Studio or no Lobby id).")
+		else
+			local ok, err = pcall(function()
+				TeleportService:TeleportAsync(Places.Lobby, DuoService.Players())
+			end)
+			if not ok then
+				warn("[WorldService] Lobby teleport failed:", err)
+			end
+		end
+		task.wait(3) -- don't fire again every 0.25 s while they still stand inside
 		advancing = false
 		return
 	end

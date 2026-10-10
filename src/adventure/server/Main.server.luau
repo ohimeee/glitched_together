@@ -25,6 +25,7 @@ for _, name in
 		"LevelPick",
 		"StationInput",
 		"Credits",
+		"ContinueYes",
 	}
 do
 	Net.event(name)
@@ -99,16 +100,20 @@ local BOSS_CUTSCENES = {
 	HollowDragon = { "W2_Memory2", "W2_End" },
 	Unfinished = { "Final_Save" }, -- then the exit opens onto the Epilogue
 }
+local function unlockExit(exit: BasePart)
+	exit:SetAttribute("Locked", nil)
+	exit.Transparency = 0.65
+	ArtService.DressExit(exit)
+end
+
 BossService.Finished:Connect(function(name: string)
 	task.wait(2.5) -- let him come apart first
 	for _, id in BOSS_CUTSCENES[name] or {} do
 		CutsceneService.Play(id)
 	end
 	for _, exit in CollectionService:GetTagged("WorldExit") do
-		if exit:GetAttribute("Locked") then
-			exit:SetAttribute("Locked", nil)
-			exit.Transparency = 0.65
-			ArtService.DressExit(exit)
+		if exit:GetAttribute("Locked") and not exit:GetAttribute("AfterYes") then
+			unlockExit(exit)
 		end
 	end
 end)
@@ -144,6 +149,31 @@ WorldService.Loaded:Connect(function(worldName: string)
 		task.spawn(SaveService.Flush)
 		Net.event("Credits"):FireAllClients()
 	end)
+end)
+
+-- CONTINUE? YES (CreditsController): the way home appears on the hilltop ledge, a BACK TO LOBBY exit. The duo can
+-- stay under the stars as long as they like; both inside the exit = teleport to the lobby (WorldService.Advance).
+Net.event("ContinueYes").OnServerEvent:Connect(function()
+	local world = workspace:FindFirstChild("World")
+	if WorldService.Current ~= "Epilogue" or not world then
+		return
+	end
+	for _, part in world:GetDescendants() do
+		if not (part:IsA("BasePart") and part:GetAttribute("AfterYes")) then
+			continue
+		end
+		part:SetAttribute("AfterYes", nil)
+		if CollectionService:HasTag(part, "WorldExit") then
+			unlockExit(part)
+		else
+			part.Transparency = 0
+			for _, gui in part:GetChildren() do
+				if gui:IsA("SurfaceGui") then
+					gui.Enabled = true
+				end
+			end
+		end
+	end
 end)
 
 -- Game over (both Downed): rebuild the world and restart at the checkpoint, so every room past it resets

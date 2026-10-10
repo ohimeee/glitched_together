@@ -5,7 +5,7 @@ export type Block = { Title: string, Lines: { string } }
 local Credits: { Block } = {
 	{ Title = "STARFALL KINGDOM", Lines = { "a game by Kai & Miko", "(finally finished)" } },
 	{ Title = "GLITCHED TOGETHER", Lines = { "a co-op adventure for two" } },
-	{ Title = "Made by", Lines = { "Johnmarc Jayme" } },
+	{ Title = "Made by", Lines = { "buldak0555" } },
 	{ Title = "Built with", Lines = { "Roblox Studio, Rojo, Blender", "and Claude (Anthropic)" } },
 	{
 		Title = "Boss models",

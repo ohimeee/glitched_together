@@ -1,6 +1,7 @@
 -- The end credits (Epilogue; Story Line "Continue" steps 5-6). The server fires the "Credits" remote after the
 -- real-world ending cutscene: a night-blue screen, the credits (Config/Credits) scroll up, then the title card
--- "CONTINUE?" with one answer, YES. YES fades the screen away and leaves the duo free under the stars.
+-- "CONTINUE?" with one answer, YES. YES fades the screen away, leaves the duo free under the stars and tells the
+-- server to open the BACK TO LOBBY exit on the hilltop ledge (Main).
 -- Space / click / tap skips straight to the title card.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -134,6 +135,7 @@ local function roll()
 			end)
 		end)
 		yes.Activated:Connect(function()
+			Net.event("ContinueYes"):FireServer()
 			TweenService:Create(back, TweenInfo.new(1.2), { BackgroundTransparency = 1 }):Play()
 			card:Destroy()
 			task.delay(1.3, gui.Destroy, gui)

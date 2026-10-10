@@ -3603,6 +3603,27 @@ local function buildEpilogue(world: Model)
 	goodbye.CanQuery = false
 	goodbye.CanTouch = false
 
+	-- past the pieces, a ledge with the way home: a locked, hidden exit that opens once a player answers the credits'
+	-- CONTINUE? YES (Main). Both inside = back to the lobby (WorldService.Advance after the last world); or stay up here.
+	grass(Vector3.new(36, 6, 16), 0, hill.Y, 198, "PortalLedge")
+	block(world, Vector3.new(12, 12, 3), CFrame.new(0, hill.Y + 6, 198), {
+		name = "WorldExit",
+		color = DUO,
+		material = Enum.Material.Neon,
+		transparency = 1,
+		collide = false,
+		tags = { "WorldExit" },
+		attrs = { Locked = true, AfterYes = true },
+	})
+	local home = sign(world, "BACK TO LOBBY", CFrame.new(0, hill.Y + 14, 198), Vector3.new(16, 3, 0.4))
+	home:SetAttribute("AfterYes", true)
+	home.Transparency = 1
+	for _, gui in home:GetChildren() do
+		if gui:IsA("SurfaceGui") then
+			gui.Enabled = false
+		end
+	end
+
 	-- the three worlds, whole, under the stars, are the Blender panorama (Worlds.luau Epilogue Look.Skybox)
 end
 
