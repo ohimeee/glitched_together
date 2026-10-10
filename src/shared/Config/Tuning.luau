@@ -18,8 +18,8 @@ return {
 	CrouchSpeed = 8,
 	JumpHeight = 7.5,
 	DoubleJumpVelocity = jumpVelocity(6),
-	DashDistance = 14,
-	DashTime = 0.18,
+	DashDistance = 10, -- user (Oct 11): shorter than 14; dash gaps (24–27) still clear (walk double + dash ~30)
+	DashTime = 0.16,
 	GroundDashCooldown = 0.6,
 	PoundHang = 0.15,
 	PoundFallSpeed = 110,

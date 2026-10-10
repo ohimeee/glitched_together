@@ -55,7 +55,7 @@ ITT teaches sprint, ground pound, double jump, dash, wall cling and wall jump in
 | Sprint speed | 24 | Toggle; cancels when stopping |
 | Jump height | 7.5 | |
 | Double jump height | 6 | Once per air time; resets on landing, wall cling, grapple, swing |
-| Dash | 14 studs over 0.18 s | 1 air dash per air time; ground dash cooldown 0.6 s |
+| Dash | 10 studs over 0.16 s | 1 air dash per air time; ground dash cooldown 0.6 s |
 | Ground pound | 0.15 s hang, then fall at 110 studs/s | Breaks cracked floors, presses heavy buttons, stuns small enemies in 5-stud radius |
 | Ground pound bounce | Landing a pound on a Bounce Pad launches the *other* player standing on it 22 studs up | ITT uses pounds to boost the partner; our version needs the partner on the pad |
 | Crouch | Speed 8, height halved | Fits through low gaps |

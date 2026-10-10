@@ -266,9 +266,9 @@ local Clips: { [string]: Clip } = {
 		priority = "Action2",
 		keys = {
 			{ t = 0, pose = {} },
-			{ t = 0.05, pose = dash },
-			{ t = 0.22, pose = dash },
-			{ t = 0.34, pose = merge(spread, { LowerTorso = { -8, 0, 0 } }) },
+			{ t = 0.04, pose = dash },
+			{ t = 0.16, pose = dash }, -- held for the burst (Tuning.DashTime)
+			{ t = 0.24, pose = merge(spread, { LowerTorso = { -8, 0, 0 } }) },
 		},
 	},
 	-- ground pound: one curled spin during the hang (Tuning.PoundHang 0.15 s), then PoundFall until impact

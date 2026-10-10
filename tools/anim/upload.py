@@ -136,7 +136,7 @@ def upload(only: list[str]) -> None:
         rbxm = build_rbxm(name)
         asset_id = upload_one(key, name, rbxm, entry and entry["id"])
         ids[name] = {"id": asset_id, "hash": digest}
-        IDS.write_text(json.dumps(ids, indent=1, sort_keys=True), encoding="utf-8")
+        IDS.write_text(json.dumps(ids, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
         print(f"{name}: {asset_id}" + (" (updated)" if entry else " (new)"))
     write_ids(ids)
     print(f"{len(ids)} ids in MoveAnims.Ids")

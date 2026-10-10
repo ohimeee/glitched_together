@@ -181,7 +181,10 @@ local function spawnAt(parent: Instance, x: number, top: number, z: number)
 	s.Parent = parent
 end
 
-local function gate(parent: Instance, group: string, size: Vector3, cf: CFrame, latch: boolean?)
+-- A two-player gate. `wing` (default 14 studs, 0 = none): invisible walls past both ends, so nobody hops out over
+-- the edge round a gate's end or walks the floor strip beside a narrower gate (user, Oct 11). They reach high and
+-- low enough that no jump or dash arc gets round them; they stay put when the gate sinks open.
+local function gate(parent: Instance, group: string, size: Vector3, cf: CFrame, latch: boolean?, wing: number?)
 	block(parent, size, cf, {
 		name = `Gate_{group}`,
 		color = DUO,
@@ -190,6 +193,26 @@ local function gate(parent: Instance, group: string, size: Vector3, cf: CFrame, 
 		attrs = { Group = group, Latch = if latch == nil then true else latch },
 		transparency = 0.2,
 	})
+	local reach = wing or 14
+	if reach <= 0 then
+		return
+	end
+	local alongX = size.X >= size.Z -- the gate's long horizontal side
+	local half = (if alongX then size.X else size.Z) / 2
+	local thick = if alongX then size.Z else size.X
+	for _, side in { -1, 1 } do
+		local offset = side * (half + reach / 2)
+		local wingSize = if alongX
+			then Vector3.new(reach, size.Y + 40, thick)
+			else Vector3.new(thick, size.Y + 40, reach)
+		local wingCf = cf * CFrame.new(if alongX then offset else 0, 10, if alongX then 0 else offset)
+		local w = block(parent, wingSize, wingCf, {
+			name = "GateWing",
+			transparency = 1,
+			tags = { "ShotPass" },
+		})
+		w.CanQuery = false -- cameras, aim and floor rays pass through
+	end
 end
 
 local function waypoints(target: Instance, cfs: { CFrame })
@@ -358,7 +381,7 @@ local function buildPrologue(world: Model)
 		262,
 		{ color = NEUTRAL, tags = { "PressurePlate" }, attrs = { Group = "G1" }, name = "PlateLow" }
 	)
-	gate(world, "G1", Vector3.new(30, 16, 2), CFrame.new(0, 26, 271))
+	gate(world, "G1", Vector3.new(30, 20, 2), CFrame.new(0, 28, 271))
 
 	-- G: jump vent (blows DOWN until the partner pounds its button) → H
 	platform(world, Vector3.new(30, 4, 40), 0, 18, 292, { color = NAVY, name = "Extras" })
@@ -406,7 +429,7 @@ local function buildPrologue(world: Model)
 		362,
 		{ color = DUO, tags = { "DuoPound" }, attrs = { Group = "G2" }, name = "DuoPound" }
 	)
-	gate(world, "G2", Vector3.new(30, 16, 2), CFrame.new(0, 38, 379))
+	gate(world, "G2", Vector3.new(30, 20, 2), CFrame.new(0, 40, 379))
 
 	-- J: Heavy Lever → gate G3 → exit
 	platform(world, Vector3.new(30, 4, 30), 0, 30, 396, { color = NAVY, name = "LeverRoom" })
@@ -417,7 +440,7 @@ local function buildPrologue(world: Model)
 		{ color = DUO, tags = { "HeavyLever" }, attrs = { Group = "G3" }, name = "HeavyLever" }
 	)
 	lever.CFrame *= CFrame.Angles(math.rad(20), 0, 0)
-	gate(world, "G3", Vector3.new(30, 16, 2), CFrame.new(0, 38, 410))
+	gate(world, "G3", Vector3.new(30, 20, 2), CFrame.new(0, 40, 410))
 
 	platform(world, Vector3.new(30, 4, 30), 0, 30, 426, { color = NAVY, name = "NewGame" })
 	block(world, Vector3.new(12, 12, 3), CFrame.new(0, 36, 436), {
@@ -669,7 +692,7 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(30, 6, 30), -75, 0, 156, "KaiEnd")
 	plate("S1", -75, 0, 162, "PlateKai")
 	grass(Vector3.new(40, 6, 10), -40, 0, 160, "KaiReturn")
-	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160))
+	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160), nil, 0)
 
 	-- Miko's trial (east): a 60-stud grapple chasm, a crate to climb an 18-stud cliff, a lever for a bridge.
 	grass(Vector3.new(30, 6, 12), 45, 0, 0, "MikoPath")
@@ -696,7 +719,7 @@ local function buildPixelPlains(world: Model)
 		color = GRASS,
 		name = "Ramp",
 	})
-	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201))
+	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201), nil, 0)
 
 	-- The plaza where the two trials meet.
 	grass(Vector3.new(40, 6, 60), 0, 0, 180, "Plaza")
@@ -1120,7 +1143,7 @@ local function buildPixelPlains(world: Model)
 		attrs = { Mass = 20 },
 	})
 	plate("F3", -10, 62, 640)
-	gate(P, "F3", Vector3.new(8, 12, 1), CFrame.new(0, 68, 655.5), false)
+	gate(P, "F3", Vector3.new(8, 12, 1), CFrame.new(0, 68, 655.5), false, 0)
 
 	-- twist: crushers over a backward belt, and Kai only has one freeze
 	conveyor(Vector3.new(14, 2, 60), 0, 62, 686, 20)
@@ -1973,7 +1996,7 @@ local function buildGlitchedCore(world: Model)
 	wall(Vector3.new(24, 20, 2), -18, 20, 247) -- the back wall runs 10 past the floor so nobody jumps round it
 	wall(Vector3.new(24, 20, 2), 18, 20, 247)
 	wall(Vector3.new(12, 6, 2), 0, 20, 247)
-	gate(P, "C2", Vector3.new(12, 14, 2), CFrame.new(0, 7, 247))
+	gate(P, "C2", Vector3.new(12, 14, 2), CFrame.new(0, 7, 247), nil, 0)
 	floor(Vector3.new(12, 4, 14), 0, 0, 255, "CircuitExit") -- z 248..262
 
 	-- 3-1 twist: PASTE PAST THE DOOR (obstacles.md 2.4, P8 marker shortcut). A door opens while someone stands on
@@ -2018,7 +2041,7 @@ local function buildGlitchedCore(world: Model)
 	wall(Vector3.new(9, 34, 2), -7.5, 30, 42) -- the door wall, door at x -3..3
 	wall(Vector3.new(9, 34, 2), 7.5, 30, 42)
 	wall(Vector3.new(6, 16, 2), 0, 30, 42)
-	gate(P, "P1", Vector3.new(6, 14, 2), CFrame.new(0, 7, 42), false)
+	gate(P, "P1", Vector3.new(6, 14, 2), CFrame.new(0, 7, 42), false, 0)
 	local door = P:FindFirstChild("Gate_P1")
 	if door then
 		door:SetAttribute("AnyOf", "P1,P2") -- held by Miko on her plate, or by a paste on the code plate
@@ -2671,7 +2694,7 @@ local function buildStarfallCastle(world: Model)
 		attrs = { Group = "C1" },
 		name = "PlateB",
 	})
-	gate(world, "C1", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 150))
+	gate(world, "C1", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 150), nil, 0)
 
 	-- F: the way on (the old exit corridor now leads into 2-2)
 	wall(-10, 150, -10, 186)
@@ -2713,7 +2736,7 @@ local function buildStarfallCastle(world: Model)
 	wall(-25, 226, -7, 226)
 	wall(14, 226, 25, 226) -- x 6..14: the roller hall's side passage (gate C4) opens off this room
 	crystal("C2", "Reflected", 19, 220)
-	gate(world, "C2", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 226))
+	gate(world, "C2", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 226), nil, 0)
 	enemy(world, "StaticArcher", -18, 216)
 	enemy(world, "Skeleton", 14, 208)
 	for _, spot in { { -25, 196 }, { 25, 196 }, { -25, 216 }, { 25, 216 } } do
@@ -2727,7 +2750,7 @@ local function buildStarfallCastle(world: Model)
 	wall(6, 228, 6, 288)
 	floor(6, 226, 14, 288, "SidePassage") -- Miko's way round, behind a gate only Kai's plate opens
 	wall(14, 226, 14, 288)
-	gate(world, "C4", Vector3.new(8, WALL_H, 1), CFrame.new(10, WALL_H / 2, 227))
+	gate(world, "C4", Vector3.new(8, WALL_H, 1), CFrame.new(10, WALL_H / 2, 227), nil, 0)
 	platform(world, Vector3.new(4, 0.6, 4), 0, 0.6, 285, {
 		color = NEUTRAL,
 		tags = { "PressurePlate" },
@@ -2769,7 +2792,7 @@ local function buildStarfallCastle(world: Model)
 	wall(15, 300, 25, 300)
 	crystal("C3", "Reflected", 20, 304, 1.5)
 	mirror(20, 330, 45)
-	gate(world, "C3", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 340))
+	gate(world, "C3", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 340), nil, 0)
 	enemy(world, "ShieldGuard", -8, 318)
 	enemy(world, "SplitSlime", 6, 322)
 	for _, spot in { { -25, 300 }, { -25, 324 }, { 25, 326 }, { -7, 340 } } do
@@ -2889,7 +2912,7 @@ local function buildStarfallCastle(world: Model)
 	})
 	wall(-25, 410, -7, 410)
 	wall(7, 410, 25, 410)
-	gate(world, "C6", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 410))
+	gate(world, "C6", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 410), nil, 0)
 
 	-- J: Golem Hall (2-3 opener; obstacles.md 2.3 Golem Lure). An iron golem nothing can hurt. Kai burns the wooden
 	-- pillar braces (Ignite, E); Miko raises her shield to draw its charge and dodges (Dash) at the last moment, so it
@@ -2926,7 +2949,7 @@ local function buildStarfallCastle(world: Model)
 		attrs = { Group = "C5", GolemTrigger = true },
 	})
 	trigger.CanQuery = false
-	gate(world, "C5", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 480))
+	gate(world, "C5", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 480), nil, 0)
 	for _, spot in { { -30, 432 }, { 30, 432 }, { -30, 462 }, { 30, 462 } } do
 		torch(spot[1], spot[2])
 	end
@@ -3242,7 +3265,7 @@ local function buildStarfallCastle(world: Model)
 	end
 	enemy(world, "Skeleton", -10, 1458)
 	enemy(world, "Skeleton", 12, 1482)
-	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500))
+	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500), nil, 0)
 
 	floor(-10, 1500, 10, 1530, "ThroneApproach")
 	wall(-10, 1500, -10, 1530)

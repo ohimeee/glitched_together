@@ -2159,26 +2159,6 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		iron("GlassRail", v(thick + 0.7, 0.6, length + 0.6), base * CFrame.new(0, h - 0.3, 0))
 		iron("GlassRail", v(thick + 0.5, 0.4, length), base * CFrame.new(0, 9, 0))
 	end
-	-- Miko's pull levers sit up high (only her Pull reaches them) and hung in mid-air: a wooden post now runs from
-	-- the ground to the lever's foot, capped with an iron plate the lever pivots on (it throws over on its foot)
-	for _, lever in world:GetDescendants() do
-		if lever.Name ~= "PullLever" or not lever:IsA("BasePart") then
-			continue
-		end
-		local foot = lever.CFrame * Vector3.new(0, -lever.Size.Y / 2, 0)
-		local hit = workspace:Raycast(foot - Vector3.new(0, 0.1, 0), Vector3.new(0, -60, 0), params)
-		local h = hit and foot.Y - 0.3 - hit.Position.Y
-		if not (hit and h and h > 0.5) then
-			continue
-		end
-		local post =
-			hiddenPart("LeverPost", v(1.1, h, 1.1), CFrame.new(foot.X, hit.Position.Y + h / 2, foot.Z), lever.Parent)
-		apply(post, "SignPost")
-		local cap = hiddenPart("LeverCap", v(2.2, 0.4, 2.2), CFrame.new(foot.X, foot.Y - 0.5, foot.Z), lever.Parent)
-		cap.Transparency = 0
-		cap.Material = Enum.Material.Metal
-		cap.Color = IRON
-	end
 	for _, sign in world:GetDescendants() do
 		if sign.Name ~= "Sign" or not sign:IsA("BasePart") or sign:GetAttribute("Skinned") ~= "Sign" then
 			continue

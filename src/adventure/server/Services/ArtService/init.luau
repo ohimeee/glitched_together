@@ -32,6 +32,7 @@ local Worlds: { [string]: WorldArt } = {
 
 local StateInlay = require(script.StateInlay)
 local VentFan = require(script.VentFan)
+local LeverSupports = require(script.LeverSupports)
 local Rails = require(script.Rails)
 
 -- Pieces every world shares (Oct 2): realism-first generations (generate_mesh)
@@ -443,6 +444,7 @@ function ArtService.Dress(world: Instance, worldName: string)
 		end
 		if world.Parent then
 			dressShared(world, worldName)
+			LeverSupports(world, ArtService.Apply) -- posts / wall arms / footings: no lever floats
 		end
 	end)
 	-- parts spawned later (dropper blocks) get their skin too

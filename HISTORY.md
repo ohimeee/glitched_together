@@ -2,6 +2,13 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 22nd session (Oct 11, 2026)
+
+- **Move animations:** 17 keyframed R15 clips as data (`Config/MoveAnims.luau`), played by `MoveAnimController`, triggered from `MovementController` (one-shots: double jump flip, dash, pound spin/land, long jump dive, wall jump, ledge assist, hard land, vent flip; loops: sprint, crouch, crouch walk, wall cling, swing, grind, pound fall, vent float). Uploaded with Open Cloud (`tools/anim/upload.py`, key in `.env`); Studio uses temporary ids for unuploaded clips. Verified: uploaded ids load and play (track ids checked after simulated keys); user verified double jump, slide, crouch. Vent flip needed hysteresis (you bob in and out at a stream's top).
+- **Dash** 14 → 10 studs, 0.16 s (user ask); clip shortened to match.
+- **Levers grounded** (`ArtService/LeverSupports`): Core PlainsEcho lever floated ~9.5 studs (posts were Pixel Plains-only), PP M3 lever's post stood on the sinking bridge (now a crane on chains from the cliff), pull-lever base mesh was welded to the swinging lever (now anchored upright at the foot), heavy levers tilted on their centre (now upright). Data-checked all 9 PP levers + Core + Prologue heavy lever; M3 crane screenshot-checked.
+- **Gate corners** (user: "walls that need 2 players can be bypassed at the corners"): `gate()` wings (invisible, 14 studs each side); Prologue gates 16 → 20 high. Code-scout found MA3/C3 (Core) gates narrower than the floor beside them.
+
 ## Status (Oct 11, 2026, 21st session)
 
 - **BACK TO LOBBY exit (20th-session next step 5).** `buildEpilogue` adds a `PortalLedge` (36×16, past the gold pieces at z 198) with a hidden `WorldExit` (`Locked` + `AfterYes`) and a hidden "BACK TO LOBBY" sign. CreditsController's YES fires the new `ContinueYes` remote; Main (Epilogue only) unlocks `AfterYes` exits (`unlockExit`: field 0.65 + ExitArch) and shows `AfterYes` signs; boss deaths skip `AfterYes` exits. `WorldService.Advance` past the last world now teleports the duo to `Places.Lobby` (warn in Studio / id 0) and waits 3 s before it can fire again. Verified solo in Play (sources pushed into Edit by HttpService from a local server since the Rojo plugin wasn't connected): hidden + locked before YES; after the remote: unlocked, arch 29.6×31.9 on the ledge, sign lifted over the crown, screenshot reads well, no console errors. Not tested: the exit walk-in (needs 2 players) and the teleport (needs published ids).
