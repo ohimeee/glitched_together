@@ -3450,6 +3450,183 @@ local function buildStarfallCastle(world: Model)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.
+-- EPILOGUE "Continue" (Story Line): a short night walk over the finished kingdom, no tools, no danger. A path of
+-- voxel grass climbs past a Pixel Plains grove (left) and a castle corner (right) to a hilltop where the finished
+-- level waits (the six pieces from the final fight, in gold, round the pressed SAVE button). The whole duo on the
+-- hilltop plays Pip's goodbye; then Main plays the real-world ending and the credits roll. Far below, the three worlds
+-- sit whole under the stars.
+local function buildEpilogue(world: Model)
+	local W = "Epilogue"
+	local GOLD = rgb(255, 196, 92)
+	killFloor(world, -40)
+	workspace:SetAttribute("KillY", -60)
+	local function grass(size: Vector3, x: number, top: number, z: number, name: string?): Part
+		return platform(world, size, x, top, z, { name = name or "Grass", attrs = { Skin = "GrassBlock" } })
+	end
+	local function prop(skin: string, size: Vector3, x: number, top: number, z: number, yaw: number?): Part
+		local part = block(world, size, CFrame.new(x, top + size.Y / 2, z) * CFrame.Angles(0, math.rad(yaw or 0), 0), {
+			name = skin,
+			transparency = 1,
+			collide = false,
+			attrs = { Skin = skin },
+		})
+		part.CanQuery = false
+		return part
+	end
+	-- warm lantern posts along the path (small pools of light: memory subtle-lighting)
+	local function lantern(x: number, top: number, z: number)
+		block(world, Vector3.new(0.6, 6, 0.6), CFrame.new(x, top + 3, z), { name = "LanternPost", color = WOOD })
+		local lamp = block(world, Vector3.new(1.2, 1.4, 1.2), CFrame.new(x, top + 6.5, z), {
+			name = "Lantern",
+			color = rgb(255, 200, 120),
+			material = Enum.Material.Neon,
+			collide = false,
+		})
+		local light = Instance.new("PointLight")
+		light.Color = rgb(255, 190, 120)
+		light.Brightness = 0.8
+		light.Range = 14
+		light.Parent = lamp
+	end
+
+	-- start meadow
+	grass(Vector3.new(44, 6, 44), 0, 0, 0, "Start")
+	spawnAt(world, 0, 0, -10)
+	checkpoint(world, 1, 0, 0, -6, W, {
+		"No tools, no Glitch. Just walk up the hill together.",
+		"Pip is waiting at the top of the hill.",
+	})
+	sign(
+		world,
+		"EPILOGUE\nCONTINUE",
+		CFrame.new(-14, 8, 14) * CFrame.Angles(0, math.rad(20), 0),
+		Vector3.new(14, 6, 0.6)
+	)
+
+	-- the path: six 20-stud steps, one stud up each
+	for i = 0, 5 do
+		local z = 32 + i * 20
+		grass(Vector3.new(16, 6, 20), 0, i, z, "Path")
+		lantern(if i % 2 == 0 then -7 else 7, i, z)
+	end
+
+	-- left: a Pixel Plains grove, whole again
+	grass(Vector3.new(26, 6, 60), -21, 1, 70, "Grove")
+	for _, t in
+		{
+			{ "Tree", -20, 50, 0 },
+			{ "TreeApple", -28, 64, 40 },
+			{ "TreePine", -16, 80, 0 },
+			{ "TreeBirch", -27, 92, 70 },
+		}
+	do
+		prop(t[1], Vector3.new(12, 16, 12), t[2], 1, t[3], t[4])
+	end
+	for i, f in { { -12, 46 }, { -14, 60 }, { -22, 72 }, { -12, 88 }, { -31, 80 }, { -18, 98 } } do
+		prop(
+			if i % 3 == 0 then "Flowers3" elseif i % 2 == 0 then "Flowers2" else "Flowers",
+			Vector3.new(3.3, 3, 2.2),
+			f[1],
+			1,
+			f[2],
+			i * 50
+		)
+	end
+	prop("Bush", Vector3.new(2.9, 4, 2.9), -10, 1, 68)
+	prop("Rock2", Vector3.new(4, 3, 4), -32, 1, 50, 30)
+
+	-- right: a castle corner, its banners up
+	platform(world, Vector3.new(26, 4, 50), 21, 3, 110, { name = "CastleYard", material = Enum.Material.Cobblestone })
+	block(world, Vector3.new(10, 26, 10), CFrame.new(25, 16, 114), { name = "Tower", material = Enum.Material.Slate })
+	for _, c in { { -3.5, -3.5 }, { 3.5, -3.5 }, { -3.5, 3.5 }, { 3.5, 3.5 } } do
+		block(world, Vector3.new(2.5, 2.5, 2.5), CFrame.new(25 + c[1], 30.25, 114 + c[2]), {
+			name = "Merlon",
+			material = Enum.Material.Slate,
+		})
+	end
+	block(world, Vector3.new(3, 8, 30), CFrame.new(32.5, 7, 100), { name = "Wall", material = Enum.Material.Slate })
+	for _, z in { 98, 124 } do
+		local brazier = prop("BrazierSkin", Vector3.new(2, 3, 2), 12, 3, z)
+		local glow = Instance.new("PointLight")
+		glow.Color = rgb(255, 170, 90)
+		glow.Brightness = 0.9
+		glow.Range = 12
+		glow.Parent = brazier
+	end
+	prop("CheckpointBanner", Vector3.new(3, 8, 3), 17, 3, 111)
+
+	-- the hilltop: the finished level from the final fight, in gold round the pressed SAVE button
+	local hill = Vector3.new(0, 6, 166)
+	grass(Vector3.new(48, 6, 48), hill.X, hill.Y, hill.Z, "Hilltop")
+	block(
+		world,
+		Vector3.new(0.6, 10, 10),
+		CFrame.new(hill + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		{
+			name = "SavedButton",
+			color = GOLD,
+			material = Enum.Material.Neon,
+			shape = Enum.PartType.Cylinder,
+			collide = false,
+		}
+	)
+	for i, piece in
+		{
+			{ Vector3.new(4, 10, 4), nil },
+			{ Vector3.new(10, 6, 3), nil },
+			{ Vector3.new(8, 3, 8), nil },
+			{ Vector3.new(5, 5, 5), Enum.PartType.Ball },
+			{ Vector3.new(2, 9, 2), nil },
+			{ Vector3.new(12, 1.5, 5), nil },
+		}
+	do
+		local a = (i - 1) / 6 * math.pi * 2 + math.pi / 6
+		local size = piece[1] :: Vector3
+		local at = hill + Vector3.new(math.sin(a), 0, math.cos(a)) * 16 + Vector3.new(0, size.Y / 2, 0)
+		block(world, size, CFrame.lookAt(at, hill + Vector3.new(0, size.Y / 2, 0)), {
+			name = "FinishedPiece",
+			color = GOLD,
+			material = Enum.Material.Metal, -- polished brass, not toy plastic
+			shape = piece[2],
+		})
+	end
+	prop("SavePoint", Vector3.new(5.8, 5.5, 1.6), 9, hill.Y, 146)
+	lantern(-12, hill.Y, 150)
+	lantern(12, hill.Y, 182)
+	local goodbye = block(world, Vector3.new(48, 20, 48), CFrame.new(hill + Vector3.new(0, 10, 0)), {
+		name = "GoodbyeTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "CutsceneTrigger" },
+		attrs = { Cutscene = "Epilogue_Goodbye", Once = true }, -- the whole duo together
+	})
+	goodbye.CanQuery = false
+	goodbye.CanTouch = false
+
+	-- far below: the three worlds, whole, under the stars (no collisions, just the view from the hilltop)
+	local function far(size: Vector3, cf: CFrame, opts: Opts)
+		opts.collide = false
+		block(world, size, cf, opts).CanQuery = false
+	end
+	far(Vector3.new(70, 12, 70), CFrame.new(-120, -16, 300), { name = "FarPlains", attrs = { Skin = "GrassBlock" } })
+	for _, t in { { -130, 285 }, { -105, 310 }, { -138, 318 }, { -112, 280 } } do
+		prop("TreePine", Vector3.new(12, 16, 12), t[1], -10, t[2])
+	end
+	far(Vector3.new(50, 40, 50), CFrame.new(120, -30, 330), { name = "FarCrag", material = Enum.Material.Slate })
+	for _, t in { { 110, 320, 34 }, { 132, 340, 44 }, { 124, 318, 26 } } do
+		far(Vector3.new(10, t[3], 10), CFrame.new(t[1], -10 + t[3] / 2, t[2]), {
+			name = "FarTower",
+			material = Enum.Material.Slate,
+		})
+	end
+	for i, b in { { 0, 0, 30 }, { -14, 8, 18 }, { 12, 4, 22 }, { 4, 18, 12 } } do
+		far(Vector3.new(b[3], b[3] * 0.6, b[3]), CFrame.new(b[1], -20 + b[2], 430 + i * 4), {
+			name = "FarCore",
+			color = GOLD,
+		})
+	end
+end
+
 local function buildPlaceholder(world: Model, name: string)
 	local info = Worlds.ByName[name]
 	killFloor(world, -40)
@@ -3485,6 +3662,8 @@ function Greybox.Build(worldName: string): Model
 		buildStarfallCastle(world)
 	elseif worldName == "GlitchedCore" then
 		buildGlitchedCore(world)
+	elseif worldName == "Epilogue" then
+		buildEpilogue(world)
 	else
 		buildPlaceholder(world, worldName)
 	end

@@ -24,6 +24,7 @@ for _, name in
 		"LevelUp",
 		"LevelPick",
 		"StationInput",
+		"Credits",
 	}
 do
 	Net.event(name)
@@ -96,7 +97,7 @@ end)
 local BOSS_CUTSCENES = {
 	CrusherKing = { "W1_Memory1", "W1_End" },
 	HollowDragon = { "W2_Memory2", "W2_End" },
-	Unfinished = { "Epilogue_End" }, -- TODO: the Epilogue world (buildEpilogue) and its ending cutscenes
+	Unfinished = { "Final_Save" }, -- then the exit opens onto the Epilogue
 }
 BossService.Finished:Connect(function(name: string)
 	task.wait(2.5) -- let him come apart first
@@ -110,6 +111,39 @@ BossService.Finished:Connect(function(name: string)
 			ArtService.DressExit(exit)
 		end
 	end
+end)
+
+-- Epilogue (Story Line "Continue"): once Pip's hilltop goodbye (GoodbyeTrigger, Epilogue_Goodbye) has played, the
+-- real-world ending plays, the save is marked 100% complete and every client rolls the credits.
+WorldService.Loaded:Connect(function(worldName: string)
+	if worldName ~= "Epilogue" then
+		return
+	end
+	local world = workspace:FindFirstChild("World")
+	local trigger = world and world:FindFirstChild("GoodbyeTrigger", true)
+	if not trigger then
+		return
+	end
+	task.spawn(function()
+		while trigger.Parent and not trigger:GetAttribute("Played") do
+			task.wait(0.5)
+		end
+		if not trigger.Parent then
+			return -- the world was rebuilt
+		end
+		repeat -- the goodbye itself (CutsceneService flags everyone InCutscene while it runs)
+			task.wait(0.5)
+			local busy = false
+			for _, p in DuoService.Players() do
+				busy = busy or p:GetAttribute("InCutscene") == true
+			end
+		until not busy
+		task.wait(1.5)
+		CutsceneService.Play("Epilogue_End")
+		SaveService.Set({ complete = true })
+		task.spawn(SaveService.Flush)
+		Net.event("Credits"):FireAllClients()
+	end)
 end)
 
 -- Game over (both Downed): rebuild the world and restart at the checkpoint, so every room past it resets

@@ -27,6 +27,7 @@ local Worlds: { [string]: WorldArt } = {
 	PixelPlains = require(script.PixelPlains),
 	StarfallCastle = require(script.StarfallCastle),
 	GlitchedCore = require(script.GlitchedCore),
+	Epilogue = require(script.Epilogue),
 }
 
 local StateInlay = require(script.StateInlay)

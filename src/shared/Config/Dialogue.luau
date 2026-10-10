@@ -156,8 +156,30 @@ local Cutscenes: { [string]: { Line } } = {
 	Final_Phase3 = {
 		{ Speaker = "Pip", Text = "It's not a monster. It's the level you never finished." },
 	},
-	Epilogue_End = {
+	-- Final_Save (Story Line): both pounded the SAVE button; the golem becomes the finished level
+	Final_Save = {
+		{ Speaker = "???", Text = "SAVING GLITCHED_TOGETHER... 100%" },
+		{ Speaker = "Pip", Text = "It stopped. It's... it's not glitching anymore." },
+		{ Speaker = "Miko", Text = "We finished it, Kai. We actually finished it." },
+		{ Speaker = "Kai", Text = "Took us long enough." },
+	},
+	-- Epilogue "Continue" (Story Line): Pip's goodbye on the hilltop under the new starry sky
+	Epilogue_Goodbye = {
+		{ Speaker = "Pip", Text = "Look at it. Every world, finished. No holes, no static. Just stars." },
+		{
+			Speaker = "Pip",
+			Text = "I was a placeholder, you know. A helper you made up for a game that never shipped.",
+		},
+		{ Speaker = "Pip", Text = "Thanks for coming back for me. For it. For each other." },
 		{ Speaker = "Pip", Text = "Same time tomorrow, Player One? Player Two?" },
+	},
+	-- ...then the real world (Story Line steps 2-4), then the credits roll (CreditsController)
+	Epilogue_End = {
+		{ Speaker = "Memory", Text = "Two bedrooms, two screens, far apart. STARFALL KINGDOM: 100% COMPLETE." },
+		{ Speaker = "Miko", Text = "hey" },
+		{ Speaker = "Memory", Text = "She deletes it. Types it again. Sends it." },
+		{ Speaker = "Memory", Text = "Across the country, Kai's phone buzzes. He smiles, and calls her." },
+		{ Speaker = "Kai", Text = "Hey, Player Two." },
 	},
 }
 
