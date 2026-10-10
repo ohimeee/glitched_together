@@ -374,6 +374,7 @@ return {
 		BreathLength = 90,
 		BreathWidth = 5,
 		BreathTick = 0.5,
+		BreathDamage = 1, -- hearts (the Core counts hearts; HitInvuln spaces the ticks)
 		HeartHits = 4,
 		Zoom = 1.25,
 		CameraBack = 2.1,
@@ -383,6 +384,7 @@ return {
 		RingEvery = 3.2,
 		RingSpeed = 18, -- studs/s
 		RingHeight = 2.2, -- a jump clears it
+		RingDamage = 1,
 		-- phase 4: the duo builds the level; every filled slot slows its rings
 		CalmRing = 3, -- RingEvery grows by this per filled slot
 		SlotRadius = 6, -- a paste of the right piece this close fills the slot

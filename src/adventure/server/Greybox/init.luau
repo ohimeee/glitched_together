@@ -1789,7 +1789,8 @@ local function buildGlitchedCore(world: Model)
 			o.transparency = 1
 			o.collide = if o.collide == nil then false else o.collide
 			o.attrs = o.attrs or {}
-			(o.attrs :: any).Skin = (o.attrs :: any).Skin or ("Unf" .. name)
+			(o.attrs :: any).Skin = (o.attrs :: any).Skin or ("Unf" .. name);
+			(o.attrs :: any).Weld = true -- the boss module moves the parts; skins ride along
 			return block(golem, size, feet * CFrame.new(rel), o)
 		end
 		bodyPart("Torso", Vector3.new(36.25, 30.79, 22.16), Vector3.new(-0.25, 32.5, 0))

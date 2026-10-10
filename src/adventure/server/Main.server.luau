@@ -96,6 +96,7 @@ end)
 local BOSS_CUTSCENES = {
 	CrusherKing = { "W1_Memory1", "W1_End" },
 	HollowDragon = { "W2_Memory2", "W2_End" },
+	Unfinished = { "Epilogue_End" }, -- TODO: the Epilogue world (buildEpilogue) and its ending cutscenes
 }
 BossService.Finished:Connect(function(name: string)
 	task.wait(2.5) -- let him come apart first

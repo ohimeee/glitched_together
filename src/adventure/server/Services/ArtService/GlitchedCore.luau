@@ -61,6 +61,25 @@ local Skins: { [string]: MeshAssets.Skin } = {
 	),
 }
 
+-- The Unfinished (final boss): Meteor Golem by s8819296 (Sketchfab, CC BY 4.0; CREDITS.md), decimated and split
+-- (blender_assets/Unfinished.*), seams repainted Glitch magenta (textures/make_unfinished_tex.py). Each skin fills
+-- its grey-box part's box (the arms' gameplay box is slimmer than the mesh), welded so Bosses/Unfinished moves it.
+local UNF_TEX = "rbxassetid://72059496177930"
+local function unfSkin(id: string, design: Vector3, size: Vector3?): MeshAssets.Skin
+	return {
+		Design = design,
+		Meshes = {
+			Body = { Id = id, TextureId = UNF_TEX, Offset = v(0, 0, 0), Size = size or design, Material = SMOOTH },
+		},
+	}
+end
+Skins.UnfTorso = unfSkin("rbxassetid://96328420815669", v(36.25, 30.79, 22.16))
+Skins.UnfLegL = unfSkin("rbxassetid://79520773614564", v(18.35, 18.78, 13.76))
+Skins.UnfLegR = unfSkin("rbxassetid://116751801937624", v(18.56, 18.18, 13.97))
+Skins.UnfRock = unfSkin("rbxassetid://125829761908230", v(3.89, 4.46, 4.61))
+Skins.UnfArmL = unfSkin("rbxassetid://90595617034408", v(12, 24, 12), v(14.03, 23.86, 15.87))
+Skins.UnfArmR = unfSkin("rbxassetid://131113778987303", v(12, 24, 12), v(13.81, 24.17, 15.72))
+
 -- Blender kit: filled from the imported MeshIds (Offsets in Roblox axes from each piece's bbox center)
 local PLASTIC_DARK, STEEL, PAPER = Color3.fromHex("#3A3D44"), Color3.fromHex("#B9BDC4"), Color3.fromHex("#EDE8DA")
 local STAND, WIRE, BASEWOOD, BRASS =

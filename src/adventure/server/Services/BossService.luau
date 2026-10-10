@@ -23,7 +23,7 @@ export type Phase = {
 	Exit: (self: any) -> (),
 }
 
-local DISPLAY = { CrusherKing = "THE CRUSHER KING", HollowDragon = "THE HOLLOW DRAGON" }
+local DISPLAY = { CrusherKing = "THE CRUSHER KING", HollowDragon = "THE HOLLOW DRAGON", Unfinished = "THE UNFINISHED" }
 
 local finished = Instance.new("BindableEvent")
 BossService.Finished = finished.Event -- (bossName)
