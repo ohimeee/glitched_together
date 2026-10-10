@@ -692,7 +692,7 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(30, 6, 30), -75, 0, 156, "KaiEnd")
 	plate("S1", -75, 0, 162, "PlateKai")
 	grass(Vector3.new(40, 6, 10), -40, 0, 160, "KaiReturn")
-	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160), nil, 0)
+	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160))
 
 	-- Miko's trial (east): a 60-stud grapple chasm, a crate to climb an 18-stud cliff, a lever for a bridge.
 	grass(Vector3.new(30, 6, 12), 45, 0, 0, "MikoPath")
@@ -719,7 +719,7 @@ local function buildPixelPlains(world: Model)
 		color = GRASS,
 		name = "Ramp",
 	})
-	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201), nil, 0)
+	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(24, 10, 201))
 
 	-- The plaza where the two trials meet.
 	grass(Vector3.new(40, 6, 60), 0, 0, 180, "Plaza")
