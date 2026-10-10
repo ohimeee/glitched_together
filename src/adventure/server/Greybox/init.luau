@@ -68,7 +68,8 @@ end
 -- Section reveal (design.md §5 "show the next goal early", It Takes Two's arrival fly-overs): the first player to
 -- step into a new section gets a short fly-over of it, once per session. CutsceneService frames the shots from the
 -- section's own bounds, so no camera is placed by hand.
-local NO_REVEAL = { StarterMeadow = true, MissingTextures = true, GlitchChase = true } -- world intros / the chase
+-- world intros / the chase / the final stage (its boss intro pans instead)
+local NO_REVEAL = { StarterMeadow = true, MissingTextures = true, GlitchChase = true, FinalStage = true }
 local function revealTrigger(m: Model, entry: Vector3)
 	if NO_REVEAL[m.Name] then
 		return
@@ -1776,6 +1777,35 @@ local function buildGlitchedCore(world: Model)
 		})
 		trigger.CanQuery = false
 		trigger.CanTouch = false
+		-- its intro: the first player onto the walkway gets a pan up the golem (once a session)
+		local intro = block(P, Vector3.new(14, 12, 10), CFrame.new(0, 6, 6), {
+			name = "BossIntroTrigger",
+			transparency = 1,
+			collide = false,
+			tags = { "CutsceneTrigger" },
+			attrs = { Cutscene = "W3_BossIntro", Any = true, Once = true },
+		})
+		intro.CanQuery = false
+		intro.CanTouch = false
+		local camPath = Instance.new("Folder")
+		camPath.Name = "CamPath_W3_BossIntro"
+		camPath.Parent = P
+		for i, shot in
+			{
+				{ Vector3.new(0, 4, 58), Vector3.new(0, 28, 128), 2.4 }, -- low on the stage, up at it
+				{ Vector3.new(-12, 30, 100), Vector3.new(0, 29, 124), 2.8 }, -- its face
+				{ Vector3.new(40, 55, 18), Vector3.new(0, 6, 86), 2.6 }, -- the whole stage
+			}
+		do
+			local cam = block(camPath, Vector3.one, CFrame.lookAt(shot[1], shot[2]), {
+				name = tostring(i),
+				transparency = 1,
+				collide = false,
+				attrs = { Duration = shot[3] },
+			})
+			cam.CanQuery = false
+			cam.CanTouch = false
+		end
 
 		-- the golem: invisible grey-box boxes under its skins (Blender body split, briefs/Unfinished.md), feet at
 		-- `feet`; the boss module moves the whole model and throws the arms

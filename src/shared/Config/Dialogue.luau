@@ -147,6 +147,12 @@ local Cutscenes: { [string]: { Line } } = {
 		{ Speaker = "Miko", Text = "I was scared. I'm sorry. You're my best friend, Player One." },
 		{ Speaker = "Kai", Text = "...Let's finish it. Together." },
 	},
+	-- The Unfinished's arrival (Greybox CamPath_W3_BossIntro); phase 3 says what it really is, not this
+	W3_BossIntro = {
+		{ Speaker = "Pip", Text = "WARNING: FILE TOO BIG TO OPEN. ...It's opening itself!" },
+		{ Speaker = "Miko", Text = "It's made of pieces of every world we built." },
+		{ Speaker = "Pip", Text = "It'll keep changing the rules. Use whatever tools it hands you!" },
+	},
 	Final_Phase3 = {
 		{ Speaker = "Pip", Text = "It's not a monster. It's the level you never finished." },
 	},
