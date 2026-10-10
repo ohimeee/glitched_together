@@ -664,7 +664,6 @@ local function stageSet(world: Instance, apply: (BasePart, string) -> boolean)
 end
 
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
-	require(script.Parent.GlitchedCore).SavePoints(world, apply)
 	-- the faint neon pad read as a muddy brown slab on the navy panels: draw it as a highlighted save slot instead
 	-- (yellow rounded outline + a tint, yellow = checkpoint), the pad part itself goes invisible
 	for _, pad in world:GetDescendants() do
@@ -688,6 +687,16 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			rim.Color = Palette.Neutral
 			rim.Thickness = 7
 			rim.Parent = slot
+			local t = Instance.new("TextLabel")
+			t.AnchorPoint = Vector2.new(0.5, 0.5)
+			t.Position = UDim2.fromScale(0.5, 0.5)
+			t.Size = UDim2.fromScale(0.8, 0.2)
+			t.BackgroundTransparency = 1
+			t.Font = Enum.Font.GothamBold
+			t.TextScaled = true
+			t.TextColor3 = Palette.Neutral
+			t.Text = `SAVE SLOT {pad:GetAttribute("Order") or ""}`
+			t.Parent = slot
 		end
 	end
 	dialogGates(world)

@@ -24,7 +24,6 @@ local order = {
 	"FanController",
 	"PropMotionController",
 	"SwingPromptController",
-	"SaveDiskController",
 	"ToolFxController",
 	"AudioController",
 	"AmbientController",
