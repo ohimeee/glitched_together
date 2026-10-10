@@ -101,6 +101,7 @@ local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, 
 		name = "Sign",
 		collide = false,
 	})
+	s.CanQuery = false -- never in the way of aim, tool rays or the camera (user: a sign blocked a Pause Beam shot)
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = face
@@ -736,7 +737,8 @@ local function buildPixelPlains(world: Model)
 		"Kai: freeze a falling block in mid-air (left click). Miko: grapple it and swing across!",
 		"Miko: pull the teal lever on the far side to raise Kai's bridge.",
 	})
-	sign(P, "WINDMILL HILL", CFrame.new(0, 9, 28), Vector3.new(16, 3, 0.4))
+	-- over the path's entrance (walked under, behind you when you aim): at the chasm edge it hid the falling block
+	sign(P, "WINDMILL HILL", CFrame.new(0, 9, 2), Vector3.new(12, 3, 0.4))
 	-- a 65-stud chasm (z 30..95): nothing jumps it
 	local millDropper = block(P, Vector3.new(6, 1, 6), CFrame.new(4, 34, 62), {
 		name = "Dropper",
