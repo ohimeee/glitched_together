@@ -265,6 +265,13 @@ Recommended first: **Poly Haven** (free, no key), useful for textures and lighti
 - Lever posts (`PullLever`), vent fans (`VentFan.luau` shared, client spin in `FanController`), gallery glass frame: see the code comments.
 - Castle (`StarfallCastle.luau` fillEnvironment): foundations end at y −90 on 3 jittered rock tiers ("Crag"), trestles on rock piers.
 
+**Oct 10 (20th session), Epilogue (`blender_assets/EpilogueSky.blend`, `tools/epilogue_sky/build.py`):**
+- World shader: in a world, TexCoord `Generated` already IS the view direction: normalize it, never subtract 0.5 (that skewed the gradient into a wedge). Older scripts that subtract may only look right by luck.
+- Terrain colour: one ground shader (noise ramp + slope rock via Geometry normal + height snow) instead of per-face material indices: big near quads turned the indices into visible rectangles.
+- Long `execute_blender_code` builds (~110k trees) return "No data received" but keep running; poll with a small call before rendering. Render faces in separate calls.
+- Nothing closer than ~250 studs below the camera: near trees turn into giant blobs on the Dn face.
+- GPU: on a fresh Blender session set Preferences → Cycles → OptiX devices from Python (`cp.compute_device_type = "OPTIX"; cp.get_devices()`), else `device = "GPU"` silently renders on CPU.
+
 ## 10b. Generic kits placed by code (Prologue, Oct 3, 2026, 13th session)
 
 - Pieces modeled at the origin (`tools/prologue_kit/kit.py`, scene `PrologueKit`), one mesh per surface (`PK_<Piece>_<Surface>`), front = Blender −Y = Roblox −Z. `report()` prints each mesh centre/size in Roblox coords: those are the skin `Offset`/`Size` values (Blender X is mirrored: Roblox x = −bx).

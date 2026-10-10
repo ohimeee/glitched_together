@@ -225,19 +225,37 @@ local ByName: { [string]: World } = {
 		Title = "Continue",
 		Palette = { rgb(30, 45, 95), rgb(255, 225, 150), rgb(160, 190, 255) }, -- warm night blues
 		Look = {
-			ClockTime = 22,
-			Brightness = 1.5,
-			Ambient = rgb(60, 70, 120),
-			OutdoorAmbient = rgb(80, 95, 150),
-			AtmosphereDensity = 0.2,
-			AtmosphereHaze = 0.5,
-			AtmosphereColor = rgb(130, 150, 220),
-			AtmosphereDecay = rgb(255, 210, 150),
+			-- night on a day clock (Roblox dims custom skyboxes at night): ClockTime 7.65 at latitude 43 points the light
+			-- exactly at the baked moon over the castle, at moonlight brightness
+			ClockTime = 7.65,
+			Latitude = 43,
+			Brightness = 0.45,
+			EnvDiffuse = 0.5,
+			EnvSpecular = 0.5,
+			Ambient = rgb(70, 78, 130),
+			OutdoorAmbient = rgb(86, 98, 155),
+			AtmosphereDensity = 0.1,
+			AtmosphereHaze = 0, -- the panorama has its own night haze
+			AtmosphereColor = rgb(60, 72, 130),
+			AtmosphereDecay = rgb(255, 190, 120),
 			BloomIntensity = 1,
-			BloomThreshold = 1.3,
-			Saturation = 0.2,
-			Contrast = 0.05,
-			Tint = rgb(255, 245, 230),
+			BloomThreshold = 1.2,
+			Saturation = 0.15,
+			Contrast = 0.12,
+			Tint = rgb(240, 240, 255),
+			-- the finished kingdom at night, seen from the hilltop: Starfall Castle lit on its crag under the moon (left of
+			-- the path), the Glitched Core finished as a gold-ringed tower with the SAVE beacon straight ahead, a lakeside
+			-- hamlet with windmills (right), forests, sky lanterns rising everywhere, Milky Way
+			-- (blender_assets/EpilogueSky.blend, tools/epilogue_sky/)
+			Skybox = {
+				Bk = "rbxassetid://77687581741949",
+				Ft = "rbxassetid://89564086611149",
+				Lf = "rbxassetid://83667986122937",
+				Rt = "rbxassetid://93252440617566",
+				Up = "rbxassetid://134191220465430",
+				Dn = "rbxassetid://138970619726635",
+			},
+			BakedSky = true,
 		},
 	},
 }

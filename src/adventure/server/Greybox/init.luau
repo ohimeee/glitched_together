@@ -3453,8 +3453,8 @@ end
 -- EPILOGUE "Continue" (Story Line): a short night walk over the finished kingdom, no tools, no danger. A path of
 -- voxel grass climbs past a Pixel Plains grove (left) and a castle corner (right) to a hilltop where the finished
 -- level waits (the six pieces from the final fight, in gold, round the pressed SAVE button). The whole duo on the
--- hilltop plays Pip's goodbye; then Main plays the real-world ending and the credits roll. Far below, the three worlds
--- sit whole under the stars.
+-- hilltop plays Pip's goodbye; then Main plays the real-world ending and the credits roll. Far below, the finished
+-- kingdom sits under the stars (the Blender panorama).
 local function buildEpilogue(world: Model)
 	local W = "Epilogue"
 	local GOLD = rgb(255, 196, 92)
@@ -3603,28 +3603,7 @@ local function buildEpilogue(world: Model)
 	goodbye.CanQuery = false
 	goodbye.CanTouch = false
 
-	-- far below: the three worlds, whole, under the stars (no collisions, just the view from the hilltop)
-	local function far(size: Vector3, cf: CFrame, opts: Opts)
-		opts.collide = false
-		block(world, size, cf, opts).CanQuery = false
-	end
-	far(Vector3.new(70, 12, 70), CFrame.new(-120, -16, 300), { name = "FarPlains", attrs = { Skin = "GrassBlock" } })
-	for _, t in { { -130, 285 }, { -105, 310 }, { -138, 318 }, { -112, 280 } } do
-		prop("TreePine", Vector3.new(12, 16, 12), t[1], -10, t[2])
-	end
-	far(Vector3.new(50, 40, 50), CFrame.new(120, -30, 330), { name = "FarCrag", material = Enum.Material.Slate })
-	for _, t in { { 110, 320, 34 }, { 132, 340, 44 }, { 124, 318, 26 } } do
-		far(Vector3.new(10, t[3], 10), CFrame.new(t[1], -10 + t[3] / 2, t[2]), {
-			name = "FarTower",
-			material = Enum.Material.Slate,
-		})
-	end
-	for i, b in { { 0, 0, 30 }, { -14, 8, 18 }, { 12, 4, 22 }, { 4, 18, 12 } } do
-		far(Vector3.new(b[3], b[3] * 0.6, b[3]), CFrame.new(b[1], -20 + b[2], 430 + i * 4), {
-			name = "FarCore",
-			color = GOLD,
-		})
-	end
+	-- the three worlds, whole, under the stars, are the Blender panorama (Worlds.luau Epilogue Look.Skybox)
 end
 
 local function buildPlaceholder(world: Model, name: string)
