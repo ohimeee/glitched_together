@@ -688,16 +688,6 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			rim.Color = Palette.Neutral
 			rim.Thickness = 7
 			rim.Parent = slot
-			local t = Instance.new("TextLabel")
-			t.AnchorPoint = Vector2.new(0.5, 0.5)
-			t.Position = UDim2.fromScale(0.62, 0.5) -- clear of the floppy disk standing on the slot's left
-			t.Size = UDim2.fromScale(0.62, 0.2)
-			t.BackgroundTransparency = 1
-			t.Font = Enum.Font.GothamBold
-			t.TextScaled = true
-			t.TextColor3 = Palette.Neutral
-			t.Text = `SAVE SLOT {pad:GetAttribute("Order") or ""}`
-			t.Parent = slot
 		end
 	end
 	dialogGates(world)

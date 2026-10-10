@@ -1,7 +1,8 @@
 -- Floppy-disk save points (ArtService/GlitchedCore savePoints tags the holder "SaveDisk"; Prologue + Glitched Core).
--- Idle: the disk bobs and tilts gently in its clip stand. When its checkpoint saves (the server stamps `SavedAt`) the
--- disk sinks into the stand like a drive taking it, pops back up with a little overshoot, a drive light on the stand
--- turns green and "SAVED!" pops over it. Purely visual and local; the stand and clips never move.
+-- The checkpoint pad is a big disk lying face-up in the floor (holder local -Z = up, +X = along the shutter's slide).
+-- Under its metal shutter sits a drive window, dark until the first save. When its checkpoint saves (the server
+-- stamps `SavedAt`) the shutter slides open on the window lighting green, "SAVED!" pops, and the shutter springs
+-- back; the window stays green. Purely visual and local.
 -- Parts are tracked as they arrive (StreamingEnabled can deliver the holder before its meshes).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -11,17 +12,17 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 
 local SaveDiskController = {}
 
-local STATIC = { Stand = true, ClipF = true, ClipB = true }
-local LIGHT_OFF = Color3.fromRGB(60, 64, 70)
+local SHUTTER = { ShutterL = true, ShutterR = true, ShutterB = true, ShutterT = true }
+local LIGHT_OFF = Color3.fromRGB(28, 32, 40)
 local LIGHT_ON = Color3.fromRGB(90, 255, 120)
-local SAVE_TIME = 1.1 -- s for the sink + pop back
+local KIT_WIDTH = 5.8 -- the kit's design width (GlitchedCore KIT.SavePoint): scale = holder width / this
+local SLIDE = 1.1 -- kit studs the shutter slides open (stays on the disk)
+local OPEN, HOLD, CLOSE = 0.22, 0.9, 0.3 -- s
 
 type Disk = {
-	home: CFrame,
-	parts: { [BasePart]: CFrame },
-	phase: number,
+	parts: { [BasePart]: CFrame }, -- shutter pieces, relative to the holder
 	savedAt: number, -- os.clock() of the last save, -inf before
-	light: Part?,
+	window: Part?,
 	conns: { RBXScriptConnection },
 }
 local disks: { [BasePart]: Disk } = {}
@@ -29,7 +30,7 @@ local disks: { [BasePart]: Disk } = {}
 local function popText(holder: BasePart)
 	local gui = Instance.new("BillboardGui")
 	gui.Size = UDim2.fromOffset(150, 44)
-	gui.StudsOffsetWorldSpace = Vector3.new(0, holder.Size.Y / 2 + 1.5, 0)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 	gui.AlwaysOnTop = true
 	gui.LightInfluence = 0
 	gui.Adornee = holder
@@ -61,48 +62,39 @@ local function popText(holder: BasePart)
 	end)
 end
 
--- a small drive light on the front of the stand (local), dark until the first save
-local function makeLight(holder: BasePart, stand: BasePart): Part
-	local light = Instance.new("Part")
-	light.Name = "DriveLight"
-	light.Anchored = true
-	light.CanCollide = false
-	light.CanQuery = false
-	light.CanTouch = false
-	light.Material = Enum.Material.Neon
-	light.Color = LIGHT_OFF
-	light.Shape = Enum.PartType.Ball
-	local d = math.max(0.3, stand.Size.Y * 0.9)
-	light.Size = Vector3.new(d, d, d)
-	-- front (-Z) right corner of the stand
-	light.CFrame = stand.CFrame * CFrame.new(stand.Size.X * 0.4, 0, -stand.Size.Z / 2 - d * 0.2)
-	light.Parent = holder
-	return light
+-- the drive window under the shutter: a flat neon pane on the disk's face, covered while the shutter is shut
+local function makeWindow(holder: BasePart, shutter: BasePart): Part
+	local window = Instance.new("Part")
+	window.Name = "DriveWindow"
+	window.Anchored = true
+	window.CanCollide = false
+	window.CanQuery = false
+	window.CanTouch = false
+	window.Material = Enum.Material.Neon
+	window.Color = LIGHT_OFF
+	local local_ = holder.CFrame:ToObjectSpace(shutter.CFrame)
+	window.Size = Vector3.new(shutter.Size.X * 0.7, shutter.Size.Y * 0.8, 0.02)
+	-- on the body's face (kit: body 0.35 thick, shutter 0.39), under the shutter that stands proud of it
+	local body = shutter.Size.Z * 0.35 / 0.39
+	window.CFrame = holder.CFrame * local_ * CFrame.new(0, 0, -body / 2 - 0.012)
+	window.Parent = holder
+	return window
 end
 
 local function track(holder: BasePart)
-	local disk: Disk = {
-		home = holder.CFrame,
-		parts = {},
-		phase = (holder.Position.X + holder.Position.Z) * 0.07,
-		savedAt = -math.huge,
-		light = nil,
-		conns = {},
-	}
+	local disk: Disk = { parts = {}, savedAt = -math.huge, conns = {} }
 	local function add(p: Instance)
-		if not p:IsA("BasePart") or p.Name == "DriveLight" then
-			return
-		end
-		if STATIC[p.Name] then
-			if p.Name == "Stand" and not disk.light then
-				disk.light = makeLight(holder, p)
-				if disk.savedAt > -math.huge then
-					disk.light.Color = LIGHT_ON
-				end
-			end
+		if not p:IsA("BasePart") or not SHUTTER[p.Name] then
 			return
 		end
 		disk.parts[p] = holder.CFrame:ToObjectSpace(p.CFrame)
+		if p.Name == "ShutterL" and not disk.window then
+			local window = makeWindow(holder, p)
+			disk.window = window
+			if disk.savedAt > -math.huge then
+				window.Color = LIGHT_ON
+			end
+		end
 	end
 	for _, p in holder:GetChildren() do
 		add(p)
@@ -115,18 +107,15 @@ local function track(holder: BasePart)
 		end)
 	)
 	local function onSaved(animate: boolean)
-		local at = holder:GetAttribute("SavedAt")
-		if not at then
+		if not holder:GetAttribute("SavedAt") then
 			return
 		end
+		disk.savedAt = if animate then os.clock() else os.clock() - (OPEN + HOLD + CLOSE)
 		if animate then
-			disk.savedAt = os.clock()
 			popText(holder)
-		else
-			disk.savedAt = os.clock() - SAVE_TIME -- already saved before we saw it: just light up
 		end
-		if disk.light then
-			disk.light.Color = LIGHT_ON
+		if disk.window then
+			disk.window.Color = LIGHT_ON
 		end
 	end
 	table.insert(
@@ -145,11 +134,26 @@ local function untrack(holder: BasePart)
 		for _, c in disk.conns do
 			c:Disconnect()
 		end
-		if disk.light then
-			disk.light:Destroy()
+		if disk.window then
+			disk.window:Destroy()
 		end
 		disks[holder] = nil
 	end
+end
+
+-- 0 = shut, 1 = open: snaps open, holds, springs back with a small overshoot
+local function shutterOpen(t: number): number
+	if t < 0 then
+		return 0
+	elseif t < OPEN then
+		return math.sin(t / OPEN * math.pi / 2)
+	elseif t < OPEN + HOLD then
+		return 1
+	elseif t < OPEN + HOLD + CLOSE then
+		local u = (t - OPEN - HOLD) / CLOSE
+		return math.cos(u * math.pi / 2) - 0.08 * math.sin(u * math.pi)
+	end
+	return 0
 end
 
 function SaveDiskController.Init()
@@ -162,29 +166,14 @@ function SaveDiskController.Init()
 	end)
 
 	RunService.RenderStepped:Connect(function()
-		local t = os.clock()
+		local now = os.clock()
 		for holder, disk in disks do
-			local h = holder.Size.Y
-			-- idle: a slow bob and a slight rock, like it's waiting to be read
-			local s = (t * 0.45 + disk.phase) * math.pi * 2
-			local bob = math.sin(s) * h * 0.025
-			local tilt = math.sin(s * 0.5) * math.rad(2.5)
-			-- save: sink a third of its height into the stand, then spring back up past home and settle
-			local k = (t - disk.savedAt) / SAVE_TIME
-			if k >= 0 and k < 1 then
-				local dip
-				if k < 0.35 then
-					dip = -math.sin(k / 0.35 * math.pi / 2) * h * 0.33
-				else
-					local u = (k - 0.35) / 0.65
-					dip = (-0.33 * math.cos(u * math.pi / 2) + 0.08 * math.sin(u * math.pi)) * h
-				end
-				bob += dip
-				tilt *= 0.2
+			local t = now - disk.savedAt
+			if t > OPEN + HOLD + CLOSE + 0.1 then
+				continue -- shut and still: nothing to move
 			end
-			-- rock about the bottom edge of the disk (in the clip), not its middle
-			local foot = CFrame.new(0, -h / 2, 0)
-			local cf = disk.home * CFrame.new(0, bob, 0) * foot * CFrame.Angles(0, 0, tilt) * foot:Inverse()
+			local slide = shutterOpen(t) * SLIDE * holder.Size.X / KIT_WIDTH
+			local cf = holder.CFrame * CFrame.new(slide, 0, 0)
 			for p, offset in disk.parts do
 				if p.Parent then
 					p.CFrame = cf * offset

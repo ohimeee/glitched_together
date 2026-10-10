@@ -229,7 +229,10 @@ local function dressTerminal(world: Instance, apply: (BasePart, string) -> boole
 	end
 end
 
--- checkpoints: a floppy disk on a stand ("SAVE" in marker on its label) beside a faint pad
+-- checkpoints: the pad IS a big 3.5" floppy disk lying face-up in the floor ("SAVE" in marker on its label; user
+-- Oct 11: the small disk standing at the pad's edge "looks so random"). The kit's standing disk is laid flat (its
+-- front, -Z, turns up; the label's top points on along the route, +Z) and scaled to the pad; the stand and clips go.
+local FLAT_SCALE = 1.75 -- the kit's 5-stud disk → ~9 studs on the 10-stud pad
 local disksByPad: { [BasePart]: BasePart } = setmetatable({}, { __mode = "k" }) :: any
 local savedHooked = false
 local function savePoints(world: Instance, apply: (BasePart, string) -> boolean)
@@ -241,17 +244,25 @@ local function savePoints(world: Instance, apply: (BasePart, string) -> boolean)
 			continue
 		end
 		pad.Transparency = 0.75
-		local design = KIT.SavePoint.Design * 0.55 -- ~3 studs: a marker at the pad's edge, not a landmark (user: "too big")
+		local design = KIT.SavePoint.Design * FLAT_SCALE
+		local thick = KIT.SavePoint.Meshes.Body.Size.Z * FLAT_SCALE
 		local disk = holder(
 			"SavePoint",
 			design,
-			pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + design.Y / 2, pad.Size.Z / 2 - 0.8),
+			pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + thick / 2 + 0.02, 0) * CFrame.Angles(math.rad(90), 0, 0),
 			pad.Parent or world
 		)
 		if not apply(disk, "SavePoint") then
 			disk:Destroy()
 			continue
 		end
+		for _, name in { "Stand", "ClipF", "ClipB" } do
+			local part = disk:FindFirstChild(name)
+			if part then
+				part:Destroy()
+			end
+		end
+		disk:SetAttribute("Flat", true)
 		local label = disk:FindFirstChild("Label")
 		if label and label:IsA("BasePart") then
 			local gui = Instance.new("SurfaceGui")
@@ -270,8 +281,8 @@ local function savePoints(world: Instance, apply: (BasePart, string) -> boolean)
 			text.Text = "SAVE"
 			text.Parent = gui
 		end
-		-- the disk reacts when its checkpoint saves (client SaveDiskController: idle bob, slide into the stand, light,
-		-- "SAVED!" pop; user Oct 4: "the floppy disk didnt have any animation?")
+		-- the disk reacts when its checkpoint saves (client SaveDiskController: the shutter slides open on a green
+		-- glow, "SAVED!" pops; user Oct 4: "the floppy disk didnt have any animation?")
 		disksByPad[pad] = disk
 		disk:AddTag("SaveDisk")
 	end
