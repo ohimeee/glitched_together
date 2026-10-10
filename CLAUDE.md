@@ -10,6 +10,7 @@
 
 ## Subagent rules (Oct 3, 2026, after the 14th session; user: "so they don't hinder you and the tokens")
 
+- **Standing permission (user, Oct 10): spawn them on your own whenever a task fits; don't wait to be asked.** This rule is the user's ask, so the tool's "only when the user asks" default is already satisfied.
 - **Use them for:** playtests, measurements, screenshot checks (`studio-operator`); broad "find everything about X" research across many files/docs (`code-scout`). They keep screenshots and long reads out of the main context.
 - **Don't use them for:** single greps, small edits, reading one file, Blender modelling, the final art look before showing the user (do those in main: a cold agent costs ~70–130k tokens to re-learn the project).
 - **One operator per session:** spawn once, then `SendMessage` the same agent id for every later Studio check (a resumed agent keeps its context; much cheaper than a new spawn).
