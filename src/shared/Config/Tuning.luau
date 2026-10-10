@@ -397,6 +397,21 @@ return {
 	LayerShift = { Transition = 0.3, PullRange = 35 },
 
 	-- Pip, the floating companion (client-side)
+	-- Epilogue shooting stars (MeteorController, client only; user Oct 11: "with meteors")
+	Meteors = {
+		GapMin = 1.5, -- seconds between meteors
+		GapMax = 5,
+		BurstChance = 0.15, -- sometimes two or three at once
+		Distance = 1400, -- studs from the camera (in front of the skybox, behind everything else)
+		ElevationMin = 18, -- degrees above the horizon where a streak starts
+		ElevationMax = 70,
+		Length = 380, -- studs a streak travels
+		TimeMin = 0.45,
+		TimeMax = 0.9,
+		Head = 6, -- head glow size, studs (~4 px at Distance)
+		TrailWidth = 7,
+		TrailTime = 0.45,
+	},
 	Pip = {
 		Scale = 1,
 		Height = 6, -- studs above the duo's midpoint

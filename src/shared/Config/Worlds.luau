@@ -229,11 +229,11 @@ local ByName: { [string]: World } = {
 			-- exactly at the baked moon over the castle, at moonlight brightness
 			ClockTime = 7.65,
 			Latitude = 43,
-			Brightness = 0.45,
+			Brightness = 0.62, -- user (Oct 11): "a bit brighter"
 			EnvDiffuse = 0.5,
 			EnvSpecular = 0.5,
-			Ambient = rgb(70, 78, 130),
-			OutdoorAmbient = rgb(86, 98, 155),
+			Ambient = rgb(84, 92, 148),
+			OutdoorAmbient = rgb(104, 116, 176),
 			AtmosphereDensity = 0.1,
 			AtmosphereHaze = 0, -- the panorama has its own night haze
 			AtmosphereColor = rgb(60, 72, 130),
@@ -248,12 +248,12 @@ local ByName: { [string]: World } = {
 			-- hamlet with windmills (right), forests, sky lanterns rising everywhere, Milky Way
 			-- (blender_assets/EpilogueSky.blend, tools/epilogue_sky/)
 			Skybox = {
-				Bk = "rbxassetid://77687581741949",
-				Ft = "rbxassetid://89564086611149",
-				Lf = "rbxassetid://83667986122937",
-				Rt = "rbxassetid://93252440617566",
-				Up = "rbxassetid://134191220465430",
-				Dn = "rbxassetid://138970619726635",
+				Bk = "rbxassetid://89583265639008",
+				Ft = "rbxassetid://121750092783000",
+				Lf = "rbxassetid://94622962767537",
+				Rt = "rbxassetid://82356917709450",
+				Up = "rbxassetid://119623826763652",
+				Dn = "rbxassetid://125204753661498",
 			},
 			BakedSky = true,
 		},

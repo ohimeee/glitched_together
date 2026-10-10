@@ -164,6 +164,36 @@
           "RoughnessMap": "rbxassetid://121778544971756",
           "StudsPerTile": 12
         }
+      },
+      "EpGrass": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Grass",
+          "ColorMap": "rbxassetid://76450791593146",
+          "NormalMap": "rbxassetid://116553916636589",
+          "RoughnessMap": "rbxassetid://108590147260678",
+          "StudsPerTile": 12
+        }
+      },
+      "EpPath": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Ground",
+          "ColorMap": "rbxassetid://119074785511976",
+          "NormalMap": "rbxassetid://99245420332626",
+          "RoughnessMap": "rbxassetid://133969484892432",
+          "StudsPerTile": 10
+        }
+      },
+      "EpRock": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Rock",
+          "ColorMap": "rbxassetid://94958121461538",
+          "NormalMap": "rbxassetid://72158575557013",
+          "RoughnessMap": "rbxassetid://83579309964076",
+          "StudsPerTile": 16
+        }
       }
     },
     "SoundService": {

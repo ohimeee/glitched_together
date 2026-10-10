@@ -3460,8 +3460,14 @@ local function buildEpilogue(world: Model)
 	local GOLD = rgb(255, 196, 92)
 	killFloor(world, -40)
 	workspace:SetAttribute("KillY", -60)
-	local function grass(size: Vector3, x: number, top: number, z: number, name: string?): Part
-		return platform(world, size, x, top, z, { name = name or "Grass", attrs = { Skin = "GrassBlock" } })
+	-- ground: rock bodies under a meadow cap and a dirt trail (ArtService/Epilogue reads `Ground`)
+	local function grass(size: Vector3, x: number, top: number, z: number, name: string?, kind: string?): Part
+		return platform(world, size, x, top, z, {
+			name = name or "Grass",
+			color = rgb(74, 104, 58),
+			material = Enum.Material.Grass,
+			attrs = { Ground = kind or "Grass" },
+		})
 	end
 	local function prop(skin: string, size: Vector3, x: number, top: number, z: number, yaw: number?): Part
 		local part = block(world, size, CFrame.new(x, top + size.Y / 2, z) * CFrame.Angles(0, math.rad(yaw or 0), 0), {
@@ -3473,20 +3479,18 @@ local function buildEpilogue(world: Model)
 		part.CanQuery = false
 		return part
 	end
-	-- warm lantern posts along the path (small pools of light: memory subtle-lighting)
-	local function lantern(x: number, top: number, z: number)
-		block(world, Vector3.new(0.6, 6, 0.6), CFrame.new(x, top + 3, z), { name = "LanternPost", color = WOOD })
-		local lamp = block(world, Vector3.new(1.2, 1.4, 1.2), CFrame.new(x, top + 6.5, z), {
-			name = "Lantern",
-			color = rgb(255, 200, 120),
-			material = Enum.Material.Neon,
-			collide = false,
-		})
+	-- lantern posts along the path: an iron lantern hung from a wooden post, a small warm pool of light (memory
+	-- subtle-lighting). The light sits where the lantern hangs (+Z of the post, top third).
+	local function lantern(x: number, top: number, z: number, yaw: number?)
+		local post = prop("EP_Lantern", Vector3.new(2.1, 6.64, 3.52), x, top, z, yaw)
+		local at = Instance.new("Attachment")
+		at.Position = Vector3.new(0, 1.2, 1.1)
+		at.Parent = post
 		local light = Instance.new("PointLight")
 		light.Color = rgb(255, 190, 120)
 		light.Brightness = 0.8
 		light.Range = 14
-		light.Parent = lamp
+		light.Parent = at
 	end
 
 	-- start meadow
@@ -3503,37 +3507,16 @@ local function buildEpilogue(world: Model)
 		Vector3.new(14, 6, 0.6)
 	)
 
-	-- the path: six 20-stud steps, one stud up each
+	-- the path: six 20-stud steps, one stud up each, between meadows (dressed by ArtService/Epilogue)
 	for i = 0, 5 do
 		local z = 32 + i * 20
-		grass(Vector3.new(16, 6, 20), 0, i, z, "Path")
-		lantern(if i % 2 == 0 then -7 else 7, i, z)
+		grass(Vector3.new(16, 6, 20), 0, i, z, "Path", "Path")
+		lantern(if i % 2 == 0 then -7 else 7, i, z, if i % 2 == 0 then 90 else -90)
 	end
-
-	-- left: a Pixel Plains grove, whole again
+	grass(Vector3.new(26, 6, 18), -21, 0, 31, "MeadowW")
 	grass(Vector3.new(26, 6, 60), -21, 1, 70, "Grove")
-	for _, t in
-		{
-			{ "Tree", -20, 50, 0 },
-			{ "TreeApple", -28, 64, 40 },
-			{ "TreePine", -16, 80, 0 },
-			{ "TreeBirch", -27, 92, 70 },
-		}
-	do
-		prop(t[1], Vector3.new(12, 16, 12), t[2], 1, t[3], t[4])
-	end
-	for i, f in { { -12, 46 }, { -14, 60 }, { -22, 72 }, { -12, 88 }, { -31, 80 }, { -18, 98 } } do
-		prop(
-			if i % 3 == 0 then "Flowers3" elseif i % 2 == 0 then "Flowers2" else "Flowers",
-			Vector3.new(3.3, 3, 2.2),
-			f[1],
-			1,
-			f[2],
-			i * 50
-		)
-	end
-	prop("Bush", Vector3.new(2.9, 4, 2.9), -10, 1, 68)
-	prop("Rock2", Vector3.new(4, 3, 4), -32, 1, 50, 30)
+	grass(Vector3.new(26, 6, 42), -21, 2, 121, "GroveN")
+	grass(Vector3.new(26, 6, 63), 21, 0, 53.5, "MeadowE")
 
 	-- right: a castle corner, its banners up
 	platform(world, Vector3.new(26, 4, 50), 21, 3, 110, { name = "CastleYard", material = Enum.Material.Cobblestone })
@@ -3591,8 +3574,8 @@ local function buildEpilogue(world: Model)
 		})
 	end
 	prop("SavePoint", Vector3.new(5.8, 5.5, 1.6), 9, hill.Y, 146)
-	lantern(-12, hill.Y, 150)
-	lantern(12, hill.Y, 182)
+	lantern(-12, hill.Y, 150, 45)
+	lantern(12, hill.Y, 182, -135)
 	local goodbye = block(world, Vector3.new(48, 20, 48), CFrame.new(hill + Vector3.new(0, 10, 0)), {
 		name = "GoodbyeTrigger",
 		transparency = 1,

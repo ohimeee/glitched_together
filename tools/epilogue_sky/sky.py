@@ -8,7 +8,7 @@ try:
     SC.view_settings.look = "AgX - Medium High Contrast"
 except TypeError:
     pass
-SC.view_settings.exposure = 0.0
+SC.view_settings.exposure = 0.3  # user (Oct 11): a bit brighter
 
 MOON_DIR = Vector((-0.86, 0.33, 0.39)).normalized()  # over the castle (left of the path), ~23 degrees up
 MW_N = Vector((0.75, -0.2, 0.35)).normalized()  # Milky Way great circle: rises ahead-right, arcs over, sets behind-left
@@ -89,7 +89,7 @@ sky = mix_rgb(math_node("MULTIPLY", halo, None, vb=0.25), sky, lin("B8C8F0"), "A
 # Milky Way: soft band around a great circle, cloudy, with dark dust lanes and a warm core
 mwd = N("ShaderNodeVectorMath"); mwd.operation = "DOT_PRODUCT"; mwd.inputs[1].default_value = MW_N
 L(D, mwd.inputs[0])
-band = math_node("POWER", maprange(math_node("ABSOLUTE", mwd.outputs["Value"]), 0.0, 0.28, 1.0, 0.0), None, vb=2.2)
+band = math_node("POWER", maprange(math_node("ABSOLUTE", mwd.outputs["Value"]), 0.0, 0.36, 1.0, 0.0), None, vb=1.8)
 cl = N("ShaderNodeTexNoise"); cl.inputs["Scale"].default_value = 4.0; cl.inputs["Detail"].default_value = 10; cl.inputs["Roughness"].default_value = 0.62
 L(D, cl.inputs["Vector"])
 dust = N("ShaderNodeTexNoise"); dust.inputs["Scale"].default_value = 9.0; dust.inputs["Detail"].default_value = 8; dust.inputs["Roughness"].default_value = 0.6
@@ -99,30 +99,34 @@ lanes = maprange(dust.outputs["Fac"], 0.48, 0.6, 1.0, 0.25)
 above = maprange(Z, -0.02, 0.2)
 mw = math_node("MULTIPLY", math_node("MULTIPLY", band, cloud), math_node("MULTIPLY", lanes, above))
 core = math_node("POWER", band, None, vb=4.0)
-blue = N("ShaderNodeRGB"); blue.outputs[0].default_value = (*lin("9FB4F0"), 1)
-mwcol = mix_rgb(core, blue.outputs[0], lin("F2D7B0"))
-sky = mix_rgb(math_node("MULTIPLY", mw, None, vb=0.55), sky, mwcol, "ADD")
+blue = N("ShaderNodeRGB"); blue.outputs[0].default_value = (*lin("B39BEA"), 1)  # violet band (user ref, Oct 11)
+mwcol = mix_rgb(core, blue.outputs[0], lin("F4DCE6"))
+sky = mix_rgb(math_node("MULTIPLY", mw, None, vb=1.1), sky, mwcol, "ADD")
 
 # stars: two Voronoi layers (fine + a few bright), denser along the Milky Way, fading at the horizon
 
 
-def stars(scale, thresh, power, gain):
+def stars(scale, thresh, power, gain, radius):
     vor = N("ShaderNodeTexVoronoi"); vor.feature = "F1"; vor.inputs["Scale"].default_value = scale
     L(D, vor.inputs["Vector"])
-    pt = math_node("POWER", maprange(vor.outputs["Distance"], 0.0, 0.06, 1.0, 0.0), None, vb=power)
+    pt = math_node("POWER", maprange(vor.outputs["Distance"], 0.0, radius, 1.0, 0.0), None, vb=power)
     sc_ = N("ShaderNodeSeparateColor"); L(vor.outputs["Color"], sc_.inputs[0])
     gate = math_node("GREATER_THAN", sc_.outputs[0], None, vb=thresh)
     tw = maprange(sc_.outputs[1], 0.0, 1.0, 0.4, 1.0)  # per-star brightness
     return math_node("MULTIPLY", math_node("MULTIPLY", pt, gate), math_node("MULTIPLY", tw, None, vb=gain))
 
 
-s1 = stars(300, 0.45, 7, 2.2)
-s2 = stars(90, 0.82, 9, 5.0)
-dens = maprange(band, 0.0, 1.0, 0.55, 1.6)
-st = math_node("MULTIPLY", math_node("MULTIPLY", math_node("ADD", s1, s2), dens), maprange(Z, -0.01, 0.12))
+# user (Oct 11): "make more stars so appreciate the skies": lower gates (more cells lit) + a third fine dust layer
+# radius is in Voronoi cells: one 1024 face pixel is ~0.0015 rad, so a star needs radius ~ 0.0015 * scale to cover
+# a pixel (the first version used 0.06 everywhere: sub-pixel dots that the render averaged away)
+s1 = stars(300, 0.86, 2.5, 2.6, 0.4)
+s2 = stars(90, 0.74, 3, 6.0, 0.26)
+s3 = stars(450, 0.92, 2, 1.4, 0.5)
+dens = maprange(band, 0.0, 1.0, 0.6, 3.2)  # star fields pack along the Milky Way
+st = math_node("MULTIPLY", math_node("MULTIPLY", math_node("ADD", math_node("ADD", s1, s2), s3), dens), maprange(Z, -0.01, 0.12))
 sky = mix_rgb(st, sky, lin("EEF2FF"), "ADD")
 L(sky, bg.inputs["Color"])
-bg.inputs["Strength"].default_value = 1.0
+bg.inputs["Strength"].default_value = 1.25
 L(bg.outputs["Background"], out.inputs["Surface"])
 SC.world = w
 
