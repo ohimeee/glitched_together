@@ -3077,11 +3077,12 @@ local function buildStarfallCastle(world: Model)
 	wall(-10, 1500, -10, 1530)
 	wall(10, 1500, 10, 1530)
 
-	-- 2-3 THE HOLLOW THRONE: the Hollow Dragon (mechanics.md §5; fight logic in server/Bosses/HollowDragon). A 96-wide
-	-- hall; the dragon lies along the far half facing the door, wings over its flanks (they lift while it breathes, to
-	-- show Kai's four scales), its ribs broken open round a glowing heart. The exit behind it stays locked until it
-	-- falls (then Memory 2: the hidden room behind the throne).
-	floor(-48, 1530, 48, 1664, "ThroneHall")
+	-- 2-3 THE HOLLOW THRONE: the Hollow Dragon (mechanics.md §5; fight logic in server/Bosses/HollowDragon). The Glitch
+	-- has eaten the back of the hall: the floor ends at z 1600 in a broken edge, and the dragon hovers over the hole,
+	-- claws at floor level, tail hanging into the dark (art: the Celestial Dragon, restyled; ArtService DRAGON).
+	-- Kai's four scales glow on its legs (fireball height); its chest is open round the glowing heart, which sinks
+	-- to reflect height in phase 3. When it falls, the floor knits back over the hole to the hidden room (Memory 2).
+	floor(-48, 1530, 48, 1600, "ThroneHall")
 	wall(-48, 1530, -10, 1530)
 	wall(10, 1530, 48, 1530)
 	wall(-48, 1530, -48, 1664)
@@ -3091,9 +3092,42 @@ local function buildStarfallCastle(world: Model)
 	floor(-8, 1664, 8, 1682, "HiddenDoor")
 	wall(-8, 1664, -8, 1682)
 	wall(8, 1664, 8, 1682)
+	-- the broken edge: a knee-high stub of the old balustrade, and an invisible rail players can't cross (shots and
+	-- the camera pass through it: CanQuery off)
+	for i = -4, 3 do
+		if i ~= -1 and i ~= 2 then -- gaps: it's broken
+			local stub = block(world, Vector3.new(10, 1.6, 1.2), CFrame.new(i * 12 + 6, 0.8, 1599.4), {
+				name = "Balustrade",
+				color = P.Stone,
+				material = Enum.Material.Cobblestone,
+				collide = false,
+			})
+			stub.CanQuery = false
+		end
+	end
+	local rail = block(world, Vector3.new(96, 14, 1), CFrame.new(0, 7, 1600.5), {
+		name = "EdgeRail",
+		transparency = 1,
+	})
+	rail.CanQuery = false
 	for _, t in { { -47, 1550 }, { 47, 1550 }, { -47, 1590 }, { 47, 1590 }, { -47, 1630 }, { 47, 1630 } } do
 		torch(t[1], t[2])
 	end
+	-- the royal runner from the door to the broken edge
+	platform(world, Vector3.new(8, 0.2, 66), 0, 0.1, 1563, {
+		color = P.Banner,
+		material = Enum.Material.Fabric,
+		collide = false,
+		name = "Rug",
+	})
+	-- a kid detail (art-direction §8): Kai's crayon sign on the approach wall, ignored by the dragon
+	sign(
+		world,
+		"NO DRAGONS ALLOWED!!",
+		CFrame.new(-9.3, 3.5, 1514) * CFrame.Angles(0, math.rad(90), 0),
+		Vector3.new(9, 2.4, 0.3),
+		P.Royal
+	)
 	checkpoint(world, 12, 0, 0, 1540, W, {
 		"Miko: raise your shield in the dragon's breath. It stops the beam for anyone behind you.",
 		"Kai: its scales only open while it breathes. Burn them!",
@@ -3106,7 +3140,7 @@ local function buildStarfallCastle(world: Model)
 		Vector3.new(16, 4, 0.4),
 		P.Royal
 	)
-	local trigger = block(world, Vector3.new(94, 30, 132), CFrame.new(0, 15, 1597), {
+	local trigger = block(world, Vector3.new(94, 30, 68), CFrame.new(0, 15, 1565), {
 		name = "BossTrigger",
 		transparency = 1,
 		collide = false,
@@ -3129,9 +3163,9 @@ local function buildStarfallCastle(world: Model)
 	camPath.Parent = world
 	for i, shot in
 		{
-			{ Vector3.new(0, 16, 1540), Vector3.new(0, 10, 1600), 2.4 }, -- down the hall at it
-			{ Vector3.new(16, 16, 1578), Vector3.new(0, 10, 1592), 2.6 }, -- its face
-			{ Vector3.new(44, 70, 1545), Vector3.new(0, 0, 1612), 2.6 }, -- the whole hall from above (the fight's view)
+			{ Vector3.new(0, 10, 1538), Vector3.new(0, 26, 1606), 2.4 }, -- down the hall, up at it
+			{ Vector3.new(-14, 30, 1568), Vector3.new(12, 29, 1591), 2.6 }, -- its face
+			{ Vector3.new(44, 70, 1545), Vector3.new(0, 10, 1606), 2.6 }, -- the whole hall from above (the fight's view)
 		}
 	do
 		local cam = block(camPath, Vector3.one, CFrame.lookAt(shot[1], shot[2]), {
@@ -3143,8 +3177,8 @@ local function buildStarfallCastle(world: Model)
 		cam.CanQuery = false
 		cam.CanTouch = false
 	end
-	-- where it lands in phase 2 and where its minions climb in
-	for i, at in { Vector3.new(-24, 0, 1568), Vector3.new(24, 0, 1568), Vector3.new(0, 0, 1580) } do
+	-- where it lands in phase 2 (its 80-stud wings clear the side walls) and where its minions climb in
+	for i, at in { Vector3.new(-8, 0, 1572), Vector3.new(8, 0, 1572), Vector3.new(0, 0, 1584) } do
 		local spot = block(world, Vector3.new(1, 1, 1), CFrame.new(at), {
 			name = "LandSpot" .. i,
 			transparency = 1,
@@ -3156,10 +3190,10 @@ local function buildStarfallCastle(world: Model)
 		{
 			Vector3.new(-42, 0, 1540),
 			Vector3.new(42, 0, 1540),
-			Vector3.new(-42, 0, 1605),
-			Vector3.new(42, 0, 1605),
-			Vector3.new(-40, 0, 1655),
-			Vector3.new(40, 0, 1655),
+			Vector3.new(-42, 0, 1570),
+			Vector3.new(42, 0, 1570),
+			Vector3.new(-40, 0, 1594),
+			Vector3.new(40, 0, 1594),
 		}
 	do
 		local spot = block(world, Vector3.new(1, 1, 1), CFrame.new(at), {
@@ -3170,70 +3204,68 @@ local function buildStarfallCastle(world: Model)
 		spot.CanQuery = false
 	end
 
-	-- the dragon (grey-box; parts named for the boss module and the skins)
+	-- the dragon. Pivot = its claws at floor level over the hole. Body / wing parts are exactly their meshes' boxes
+	-- (ArtService scales a skin by part size / Design), so they never collide; gameplay lives in the small parts:
+	-- Head (the breath comes from its mouth), four Scale hurtboxes on its legs, the Heart in its open chest.
+	local PIVOT = Vector3.new(0, 0, 1612)
 	local dragon = Instance.new("Model")
 	dragon.Name = "HollowDragon"
 	dragon.Parent = world
-	local SCALE_PLUM = rgb(70, 46, 96)
-	local function part(name: string, size: Vector3, cf: CFrame, color: Color3, opts: { [string]: any }?)
+	local function part(name: string, size: Vector3, at: Vector3, color: Color3, opts: { [string]: any }?)
 		local o = opts or {}
-		return block(dragon, size, cf, {
+		local p = block(dragon, size, CFrame.new(PIVOT + at), {
 			name = name,
 			color = color,
 			material = o.material or Enum.Material.SmoothPlastic,
-			collide = if o.collide == nil then true else o.collide,
+			collide = false,
 			tags = o.tags,
 			attrs = o.attrs,
 		})
+		if o.invisible then
+			p.Transparency = 1
+		end
+		return p
 	end
+	local SCALE_PLUM = rgb(70, 46, 96)
 	-- Skin: ArtService/StarfallCastle DRAGON; Weld: the skins follow when the boss module moves these parts
-	local function skinned(name: string): { [string]: any }
-		return { attrs = { Skin = "Dragon" .. name, Weld = true } }
+	part(
+		"Body",
+		Vector3.new(53.06, 58.64, 47.35),
+		Vector3.new(-1.43, 14.52, 1.67),
+		SCALE_PLUM,
+		{ attrs = { Skin = "DragonBody", Weld = true } }
+	)
+	-- wings flap about their roots (Hinge, measured on the mesh)
+	part("WingL", Vector3.new(38.94, 43.38, 32.08), Vector3.new(-19.98, 26.95, 13.13), SCALE_PLUM, {
+		attrs = { Skin = "DragonWingL", Weld = true, Hinge = PIVOT + Vector3.new(-1.7, 18.5, -0.4) },
+	})
+	part("WingR", Vector3.new(36.9, 36.81, 41.4), Vector3.new(22.11, 30.98, 5.08), SCALE_PLUM, {
+		attrs = { Skin = "DragonWingR", Weld = true, Hinge = PIVOT + Vector3.new(4.6, 27.4, 6.0) },
+	})
+	part("Head", Vector3.new(4, 4, 4), Vector3.new(12, 29.2, -21), SCALE_PLUM, { invisible = true })
+	-- Kai's scales on its four legs, low enough for fireballs (~3 over the floor)
+	for i, at in
+		{ Vector3.new(-4.5, 3.5, -4), Vector3.new(4.5, 3.5, -4), Vector3.new(-4.5, 3.5, 3), Vector3.new(4.5, 3.5, 3) }
+	do
+		-- glowing ember-scales grown out of its legs (round: they read as part of it, not as blocks)
+		local scale = part("Scale" .. i, Vector3.new(3, 3, 3), at, Palette.Kai, {
+			material = Enum.Material.Neon,
+			tags = { "BossHurt" },
+			attrs = { Kind = "Scale" },
+		})
+		scale.Shape = Enum.PartType.Ball
 	end
-	part("Body", Vector3.new(24, 14, 30), CFrame.new(0, 7, 1622), SCALE_PLUM, skinned("Body"))
-	part("Neck", Vector3.new(8, 7, 14), CFrame.new(0, 9, 1602), SCALE_PLUM, skinned("Neck"))
-	part("Head", Vector3.new(10, 8, 12), CFrame.new(0, 10, 1590), SCALE_PLUM, skinned("Head"))
-	part("Tail", Vector3.new(6, 5, 26), CFrame.new(0, 3, 1650), SCALE_PLUM, skinned("Tail"))
-	for _, side in { -1, 1 } do
-		local s = if side < 0 then "L" else "R"
-		part(
-			"Wing" .. s,
-			Vector3.new(30, 2, 24),
-			CFrame.new(side * 27, 15, 1622),
-			rgb(52, 34, 74),
-			{ collide = false, attrs = { Skin = "DragonWing" .. s, Weld = true } }
-		)
-		for i, z in { 1614, 1630 } do
-			-- low on the flank: fireballs fly at chest height (~3 over the floor)
-			part("Scale" .. s .. i, Vector3.new(1.5, 6, 5), CFrame.new(side * 12.8, 3.5, z), Palette.Kai, {
-				material = Enum.Material.Neon,
-				tags = { "BossHurt" },
-				attrs = { Kind = "Scale" },
-			})
-		end
-		-- broken ribs round the open chest
-		for i = 0, 2 do
-			local rib = part(
-				"Rib" .. s .. i,
-				Vector3.new(1, 9, 1.2),
-				CFrame.new(side * 5, 8, 1604 + i * 2.5) * CFrame.Angles(0, 0, math.rad(side * -25)),
-				rgb(230, 222, 200),
-				{ collide = false, attrs = { Skin = "DragonRib", Weld = true } }
-			)
-			rib.CanQuery = false -- shots reach the heart between them
-		end
-	end
-	local heart = part("Heart", Vector3.new(4, 4, 4), CFrame.new(0, 3.5, 1605), Palette.Glitch, {
+	local heart = part("Heart", Vector3.new(4, 4, 4), Vector3.new(1.8, 12, -6), Palette.Glitch, {
 		material = Enum.Material.Neon,
 		tags = { "BossHurt" },
 		attrs = { Kind = "Heart" },
 	})
 	local glow = Instance.new("PointLight") -- the open chest lights the dragon from inside (and shows where to aim)
 	glow.Color = Palette.Glitch
-	glow.Range = 16
-	glow.Brightness = 1.2
+	glow.Range = 18
+	glow.Brightness = 1.4
 	glow.Parent = heart
-	dragon.WorldPivot = CFrame.new(0, 0, 1618)
+	dragon.WorldPivot = CFrame.new(PIVOT)
 
 	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1676), {
 		name = "WorldExit",

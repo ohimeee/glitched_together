@@ -295,8 +295,25 @@ return {
 	-- Miko 140).
 	HollowDragon = {
 		Zoom = 1.3, -- top-down camera pulled back in the throne hall (CameraController reads workspace TopDownZoom)
-		Focus = Vector3.new(0, 0, 1606), -- ...and drawn toward the dragon by this much (TopDownFocus / Weight)
-		FocusWeight = 0.55,
+		-- motion (user, Oct 10: the first cut moved stiffly): eased poses + procedural life
+		EaseBase = 4, -- 1/s, body follows its target
+		EaseHead = 5,
+		EaseWings = 4,
+		BreathRate = 0.28, -- Hz, idle chest rise
+		TailSway = 0.16, -- rad
+		Flap = 0.45, -- wing beat amplitude in flight (of the 65-degree lift)
+		FlapRate = 0.85, -- Hz
+		Bank = 0.22, -- rad roll while circling
+		Hover = 0.18, -- wingbeat while it hovers over the hole (Flap in full flight)
+		WingAngle = 28, -- deg per unit of lift / beat
+		Rear = 0.12, -- rad it tips back before a breath (the whole body, about its claws)
+		Lunge = 0.07, -- ...and forward into it
+		LoopX = 12, -- flight loop over the hall (its wings already span most of it)
+		LoopZ = 12,
+		Sink = 9, -- phase 3: how far it sinks so the heart is at reflect height
+		Focus = Vector3.new(0, 0, 1612), -- ...and drawn toward the dragon by this much (TopDownFocus / Weight)
+		FocusWeight = 0.5,
+		CameraBack = 1.9, -- camera this much further back (flatter): the 58-stud dragon ran off the top of the screen
 		-- phase 1: static breath at one player (alternating); flank scales open while it breathes, Kai burns them
 		BreathEvery = 6.5, -- s from one breath's end to the next windup
 		BreathWindup = 1.4, -- s the aim line shows before the beam
@@ -317,7 +334,7 @@ return {
 		SummonEvery = 6,
 		MaxMinions = 6,
 		MinionCharge = 0.2, -- Kai's ultimate charge per minion that falls in phase 2 (5 = one Meteor)
-		FlyHeight = 26, -- higher sat right under the top-down camera and filled the screen
+		FlyHeight = 8, -- its claws this high; it's 58 tall already (higher filled the top-down camera)
 		FlyGhost = 0.55, -- skin transparency while airborne (it hid the players under it)
 		-- phase 3: a static wall with one gap; only Miko's reflected light reaches the heart
 		HeartHits = 4,

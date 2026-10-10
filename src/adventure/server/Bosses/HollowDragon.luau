@@ -95,24 +95,59 @@ end
 
 -- the whole dragon from its home pose: `base` replaces the pivot, `yaw` turns head + neck about the neck's root,
 -- `lift` raises the wings (0 = folded over the flanks, 1 = up, scales showing)
-local function pose(self: any, base: CFrame, yaw: number, lift: number)
-	local turn = CFrame.Angles(0, yaw, 0)
-	for part, offset in self.offsets do
-		local cf = base * offset
-		if part == self.head or part == self.neck or self.headBits[part] then
-			cf = base * self.neckRoot * turn * self.neckRoot:Inverse() * offset
-		elseif self.wings[part] then
-			local side = self.wings[part]
-			local hinge = base * self.wingHinge[part]
-			cf = hinge * CFrame.Angles(0, 0, side * lift * math.rad(65)) * hinge:Inverse() * (base * offset)
-		end
-		part.CFrame = cf
+-- Phases set a target pose (pose()); animate() runs every frame, eases toward it and layers life on top (user, Oct 10:
+-- the first version's movement "feels hard": parts snapped and stayed rigid). `snap` jumps straight to the target.
+--   base  the whole body (pivot)        yaw   head + neck turn about the neck root
+--   lift  wings (0 folded, 1 up)        pitch head rears (-) / lunges (+)
+--   flap  wing beat amplitude (flight)
+local function pose(self: any, base: CFrame, yaw: number, lift: number, snap: boolean?)
+	self.target.base, self.target.yaw, self.target.lift = base, yaw, lift
+	if snap then
+		self.cur.base, self.cur.yaw, self.cur.lift = base, yaw, lift
 	end
 	self.base, self.yaw, self.lift = base, yaw, lift
 end
 
+local function ease(a: number, b: number, rate: number, dt: number): number
+	return b + (a - b) * math.exp(-rate * dt)
+end
+
+local function animate(self: any, dt: number)
+	local cur, tgt = self.cur, self.target
+	local k = 1 - math.exp(-T.EaseBase * dt)
+	cur.base = cur.base:Lerp(tgt.base, k)
+	cur.yaw = ease(cur.yaw, tgt.yaw, T.EaseHead, dt)
+	cur.lift = ease(cur.lift, tgt.lift, T.EaseWings, dt)
+	cur.pitch = ease(cur.pitch or 0, tgt.pitch or 0, T.EaseHead, dt)
+	cur.flap = ease(cur.flap or 0, tgt.flap or 0, 3, dt)
+	cur.roll = ease(cur.roll or 0, tgt.roll or 0, 2.5, dt)
+	local t = os.clock()
+	local airborne = (tgt.flap or 0) > 0
+	-- breathing: the chest rises and falls; slower and deeper while it lies still
+	local breathe = math.sin(t * T.BreathRate * math.pi * 2)
+	-- it hovers: a slow bob in time with the wingbeat (on the ground only the chest moves)
+	local bob = if airborne then math.sin(t * T.FlapRate * math.pi * 2 - 1.2) * 0.9 else breathe * 0.25
+	-- one body mesh: aiming turns the whole dragon about its claws; rearing (+) / lunging (-) tips it about them,
+	-- with a slight sway so it never stands frozen
+	local sway = math.sin(t * 0.7) * 0.03
+	local base = cur.base * CFrame.new(0, bob, 0) * CFrame.Angles(cur.pitch + 0.015 * breathe, cur.yaw + sway, cur.roll)
+	local beat = cur.flap * math.sin(t * T.FlapRate * math.pi * 2)
+	local wingAngle = math.rad(T.WingAngle) * (cur.lift + beat) + 0.02 * breathe
+	for part, offset in self.offsets do
+		local cf
+		if self.wings[part] then
+			local side = self.wings[part]
+			local hinge = base * self.wingHinge[part]
+			cf = hinge * CFrame.Angles(0, 0, side * wingAngle) * hinge:Inverse() * (base * offset)
+		else
+			cf = base * offset
+		end
+		part.CFrame = cf
+	end
+end
+
 local function mouth(self: any): Vector3
-	return (self.head.CFrame * CFrame.new(0, -1, -self.head.Size.Z / 2)).Position
+	return self.head.Position -- the Head part sits on its snout
 end
 
 local function setScales(self: any, open: boolean)
@@ -157,10 +192,13 @@ local function clearBreath(self: any)
 		self.aim:Destroy()
 		self.aim = nil
 	end
-	if self.beam then
-		self.beam:Destroy()
-		self.beam = nil
+	for _, name in { "beamFloor", "beamFall" } do
+		if self[name] then
+			self[name]:Destroy()
+			self[name] = nil
+		end
 	end
+	self.beam = nil
 end
 
 local function aimAt(self: any, target: Player?, dt: number?)
@@ -185,9 +223,9 @@ local function aimAt(self: any, target: Player?, dt: number?)
 	else
 		self.dir = want
 	end
-	-- the head follows (clamped: it can't look behind itself)
+	-- the dragon turns its whole body to follow (clamped: it never shows its back to the hall)
 	local yaw = math.atan2(-self.dir.X, -self.dir.Z)
-	pose(self, self.base, math.clamp(yaw, -1.1, 1.1), self.lift)
+	pose(self, self.base, math.clamp(yaw, -0.6, 0.6), self.lift)
 end
 
 -- how far the beam reaches: a raised shield facing the mouth stops it; returns (length, blocker)
@@ -208,14 +246,32 @@ local function beamReach(self: any, from: Vector3): (number, Player?)
 end
 
 local function drawBeam(self: any, from: Vector3, length: number)
-	local mid = from + self.dir * (length / 2)
-	local cf = CFrame.lookAt(Vector3.new(mid.X, 3, mid.Z), Vector3.new(mid.X, 3, mid.Z) + self.dir)
-	if not self.beam then
-		self.beam = fxPart(self, "StaticBreath", Vector3.new(T.BreathWidth, 3, length), cf, Palette.Glitch, 0.25)
-		CombatFx.Emit(self.beam, "Stars", 2, 40, Palette.Glitch)
+	-- from the mouth (high up) to the floor where it stops: the breath pours down onto the hall
+	local floorFrom = Vector3.new(from.X, 2, from.Z)
+	local stop = floorFrom + self.dir * length
+	local reach = Vector3.new(from.X, 2, from.Z) + self.dir * math.min(length, 14) -- it hits the floor near the mouth
+	local function bar(name: string, a: Vector3, b: Vector3): Part
+		local d = (b - a).Magnitude
+		local cf = CFrame.lookAt((a + b) / 2, b)
+		local bar = self[name]
+		if not bar then
+			bar = fxPart(
+				self,
+				"StaticBreath",
+				Vector3.new(T.BreathWidth, T.BreathWidth * 0.6, d),
+				cf,
+				Palette.Glitch,
+				0.25
+			)
+			CombatFx.Emit(bar, "Stars", 2, 30, Palette.Glitch)
+			self[name] = bar
+		end
+		bar.Size = Vector3.new(T.BreathWidth, T.BreathWidth * 0.6, d)
+		bar.CFrame = cf
+		return bar
 	end
-	self.beam.Size = Vector3.new(T.BreathWidth, 3, length)
-	self.beam.CFrame = cf
+	self.beam = bar("beamFloor", reach, stop)
+	bar("beamFall", from, reach)
 end
 
 local function stepBreath(self: any, dt: number)
@@ -231,6 +287,7 @@ local function stepBreath(self: any, dt: number)
 			b.state, b.t = "Windup", T.BreathWindup
 			setScales(self, true)
 			pose(self, self.base, self.yaw, 1)
+			self.target.pitch = T.Rear -- it rears back, wings up, drawing breath
 			aimAt(self, b.target)
 			Audio.play("GlitchCrackle", self.head.Position, 2)
 		end
@@ -246,6 +303,7 @@ local function stepBreath(self: any, dt: number)
 		self.aim.Transparency = 0.2 + 0.4 * (b.t / T.BreathWindup) -- brightens as it comes
 		if b.t <= 0 then
 			b.state, b.t, b.tick = "Breathe", T.BreathTime, 0
+			self.target.pitch = -T.Lunge -- ...and lunges into the breath
 			clearBreath(self)
 			Audio.play("StaticShot", self.head.Position, 2)
 		end
@@ -276,6 +334,7 @@ local function stepBreath(self: any, dt: number)
 			clearBreath(self)
 			setScales(self, false)
 			pose(self, self.base, 0, 0)
+			self.target.pitch = 0
 		end
 	end
 end
@@ -343,7 +402,8 @@ end
 local function setGrounded(self: any, on: boolean)
 	if on and not self.groundBox then
 		local body = self.body
-		self.groundBox = fxPart(self, "GroundedHurt", body.Size + Vector3.new(6, 0, 6), body.CFrame, Palette.Kai, 1)
+		self.groundBox =
+			fxPart(self, "GroundedHurt", Vector3.new(18, 12, 24), self.base * CFrame.new(0, 6, -2), Palette.Kai, 1)
 		CollectionService:AddTag(self.groundBox, "BossHurt")
 		self.groundBox:SetAttribute("Kind", "Body")
 	elseif not on and self.groundBox then
@@ -362,22 +422,27 @@ local function stepSkies(self: any, dt: number)
 	end
 	if s.state == "Rise" then
 		local a = 1 - math.max(s.t, 0) / 1.5
-		pose(self, self.home * CFrame.new(0, T.FlyHeight * a, 0), 0, a)
+		pose(self, self.home * CFrame.new(0, T.FlyHeight * a * a, 0), 0, 0.45)
+		self.target.flap = T.Flap * 1.4
 		if s.t <= 0 then
 			s.state, s.t, s.angle = "Fly", T.LandEvery, 0
 		end
 	elseif s.state == "Fly" then
 		s.angle += dt * 0.35
 		local c = self.center
-		local pos = c + Vector3.new(math.sin(s.angle) * 30, T.FlyHeight, math.cos(s.angle) * 22)
-		local ahead = c + Vector3.new(math.sin(s.angle + 0.1) * 30, T.FlyHeight, math.cos(s.angle + 0.1) * 22)
+		local pos = c + Vector3.new(math.sin(s.angle) * T.LoopX, T.FlyHeight, math.cos(s.angle) * T.LoopZ)
+		local ahead = c + Vector3.new(math.sin(s.angle + 0.1) * T.LoopX, T.FlyHeight, math.cos(s.angle + 0.1) * T.LoopZ)
 		-- the model's front is -Z: look along the path
-		pose(self, CFrame.lookAt(pos, ahead) * self.pivotTilt, 0, 0.6 + 0.4 * math.sin(os.clock() * 4))
+		pose(self, CFrame.lookAt(pos, ahead) * self.pivotTilt, 0, 0.45)
+		self.target.flap = T.Flap
+		self.target.roll = -T.Bank -- leaning into the circle
 		self.shadow.CFrame = CFrame.new(pos.X, 0.12, pos.Z) * CFrame.Angles(0, 0, math.pi / 2)
 		if s.t <= 0 then
 			s.spot = self.landSpots[math.random(#self.landSpots)]
 			s.from = self.base
 			s.state, s.t = "Warn", T.LandWarn
+			self.target.roll = 0
+			self.target.flap = T.Flap * 1.4 -- big back-beats as it drops
 			s.ring = CombatFx.AreaMarker(s.spot + Vector3.new(0, 0.12, 0), T.LandRadius, Palette.Danger)
 			s.ring.Parent = self.fx
 			Audio.play("GlitchCrackle", s.spot, 2)
@@ -385,11 +450,13 @@ local function stepSkies(self: any, dt: number)
 	elseif s.state == "Warn" then
 		local a = 1 - math.max(s.t, 0) / T.LandWarn
 		local over = CFrame.new(s.spot + Vector3.new(0, T.FlyHeight * (1 - a * a), 0)) * self.home.Rotation
-		pose(self, s.from:Lerp(over, math.min(a * 1.6, 1)), 0, 1 - a)
+		pose(self, s.from:Lerp(over, math.min(a * 1.6, 1)), 0, 0.45 * (1 - a))
 		self.shadow.CFrame = CFrame.new(self.base.Position.X, 0.12, self.base.Position.Z)
 			* CFrame.Angles(0, 0, math.pi / 2)
 		if s.t <= 0 then
 			pose(self, CFrame.new(s.spot) * self.home.Rotation, 0, 0)
+			self.target.flap = 0
+			self.cur.base = self.target.base -- it lands where the ring said
 			s.ring:Destroy()
 			s.ring = nil
 			Audio.play("MeteorImpact", s.spot, 1)
@@ -409,11 +476,13 @@ local function stepSkies(self: any, dt: number)
 			setGrounded(self, false)
 			setFlying(self, true)
 			s.from = self.base
+			self.target.flap = T.Hover
 			s.state, s.t = "TakeOff", 1.2
+			self.target.flap = T.Flap * 1.4
 		end
 	elseif s.state == "TakeOff" then
 		local a = 1 - math.max(s.t, 0) / 1.2
-		pose(self, s.from * CFrame.new(0, T.FlyHeight * a, 0), 0, a)
+		pose(self, s.from * CFrame.new(0, T.FlyHeight * a * a, 0), 0, 0.45)
 		if s.t <= 0 then
 			s.angle = math.atan2(self.base.Position.X - self.center.X, self.base.Position.Z - self.center.Z)
 			s.state, s.t = "Fly", T.LandEvery
@@ -516,6 +585,41 @@ local function stepWall(self: any, dt: number)
 	self.heart.Transparency = 0.1 + 0.15 * math.sin(os.clock() * 5)
 end
 
+-- When it falls the Glitch lets go of the hall: the floor knits back over the hole, tile by tile, to the hidden room
+local function knitBridge(self: any)
+	local world = self.world
+	local rail = world:FindFirstChild("EdgeRail", true)
+	if rail and rail:IsA("BasePart") then
+		for _, side in { -1, 1 } do -- keep the rail either side of the new path
+			local r = rail:Clone()
+			r.Size = Vector3.new(42, rail.Size.Y, rail.Size.Z)
+			r.Position = rail.Position + Vector3.new(side * 27, 0, 0)
+			r.Parent = rail.Parent
+		end
+		rail:Destroy()
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "KnitBridge"
+	folder.Parent = world
+	for i = 0, 7 do
+		local tile = Instance.new("Part")
+		tile.Name = "KnitFloor"
+		tile.Anchored = true
+		tile.Size = Vector3.new(12, 2, 8)
+		tile.Material = Enum.Material.Cobblestone
+		tile.Color = Palette.Castle.Stone
+		tile.Transparency = 1
+		tile.CanCollide = false
+		tile.CFrame = CFrame.new(0, -1, 1604 + i * 8)
+		tile.Parent = folder
+		task.delay(1 + i * 0.35, function()
+			tile.CanCollide = true
+			TweenService:Create(tile, TweenInfo.new(0.4), { Transparency = 0 }):Play()
+			CombatFx.Burst(tile.Position + Vector3.new(0, 1, 0), { { "Stars", 8, 1.2, Palette.Castle.Gold } })
+		end)
+	end
+end
+
 -- Setup ------------------------------------------------------------------------------------------------------------
 
 function Boss.Setup(self: any, world: Instance)
@@ -534,6 +638,8 @@ function Boss.Setup(self: any, world: Instance)
 	self.home = dragon.WorldPivot
 	self.base = self.home
 	self.yaw, self.lift = 0, 0
+	self.target = { base = self.home, yaw = 0, lift = 0, pitch = 0, flap = T.Hover, roll = 0 }
+	self.cur = { base = self.home, yaw = 0, lift = 0, pitch = 0, flap = 0, roll = 0 }
 	self.pivotTilt = CFrame.identity
 	self.offsets = {} :: { [BasePart]: CFrame }
 	self.headBits = {} :: { [BasePart]: boolean }
@@ -547,17 +653,17 @@ function Boss.Setup(self: any, world: Instance)
 	end
 	self.body = dragon:FindFirstChild("Body", true) :: BasePart
 	self.head = dragon:FindFirstChild("Head", true) :: BasePart
-	self.neck = dragon:FindFirstChild("Neck", true) :: BasePart
 	self.heart = dragon:FindFirstChild("Heart", true) :: BasePart
-	local neckRootWorld = self.neck.CFrame * CFrame.new(0, 0, self.neck.Size.Z / 2)
-	self.neckRoot = self.home:ToObjectSpace(CFrame.new(neckRootWorld.Position))
 	for _, s in { "L", "R" } do
 		local wing = dragon:FindFirstChild("Wing" .. s, true) :: BasePart
 		local side = if s == "L" then -1 else 1
 		self.wings[wing] = side
-		-- hinge on the wing's inner edge (along the spine)
-		local hinge = wing.CFrame * CFrame.new(-side * wing.Size.X / 2, 0, 0)
-		self.wingHinge[wing] = self.home:ToObjectSpace(CFrame.new(hinge.Position))
+		-- the wing's root on the shoulder (measured on the mesh; Greybox Hinge), else its inner edge
+		local root = wing:GetAttribute("Hinge")
+		local hinge = if typeof(root) == "Vector3"
+			then root
+			else (wing.CFrame * CFrame.new(-side * wing.Size.X / 2, 0, 0)).Position
+		self.wingHinge[wing] = self.home:ToObjectSpace(CFrame.new(hinge))
 	end
 	self.scales = {}
 	for _, d in dragon:GetDescendants() do
@@ -575,7 +681,7 @@ function Boss.Setup(self: any, world: Instance)
 			end
 		end
 	end
-	self.center = Vector3.new(0, 0, 1590)
+	self.center = Vector3.new(0, 0, 1582)
 	-- a round shadow under it while it flies (a flat cylinder; the square one read as a slab)
 	self.shadow = fxPart(self, "DragonShadow", Vector3.new(0.1, 30, 30), CFrame.new(0, -5, 0), Color3.new(0, 0, 0), 1)
 	self.shadow.Shape = Enum.PartType.Cylinder
@@ -592,6 +698,7 @@ function Boss.Setup(self: any, world: Instance)
 	-- the castle camera looks back from +Z, right over the dragon (it sat off the bottom edge): look from the door
 	-- side instead, and pull the view toward it
 	workspace:SetAttribute("TopDownFlip", true)
+	workspace:SetAttribute("TopDownBack", T.CameraBack)
 	workspace:SetAttribute("TopDownFocus", T.Focus)
 	workspace:SetAttribute("TopDownFocusWeight", T.FocusWeight)
 	setScales(self, false)
@@ -608,13 +715,17 @@ function Boss.Cleanup(self: any)
 	workspace:SetAttribute("TopDownZoom", nil)
 	workspace:SetAttribute("TopDownFocus", nil)
 	workspace:SetAttribute("TopDownFlip", nil)
+	workspace:SetAttribute("TopDownBack", nil)
 	workspace:SetAttribute("TopDownFocusWeight", nil)
 	if self.fx then
 		self.fx:Destroy()
 	end
 	-- back to the home pose if the fight stopped mid-flight (a game over rebuilds the world anyway)
 	if self.dragon.Parent then
-		pose(self, self.home, 0, 0)
+		pose(self, self.home, 0, 0, true)
+		self.target.flap, self.target.roll, self.target.pitch = 0, 0, 0
+		self.cur.flap, self.cur.roll, self.cur.pitch = 0, 0, 0
+		animate(self, 0)
 		setFlying(self, false)
 	end
 end
@@ -667,6 +778,7 @@ Boss.Phases = {
 		end,
 		Update = function(self, dt)
 			stepBreath(self, dt)
+			animate(self, dt)
 		end,
 		IsDone = function(self)
 			for _, s in self.scales do
@@ -680,7 +792,7 @@ Boss.Phases = {
 			self.onHit = nil
 			clearBreath(self)
 			setScales(self, false)
-			pose(self, self.home, 0, 0)
+			pose(self, self.home, 0, 0, true)
 		end,
 	},
 	{
@@ -713,6 +825,7 @@ Boss.Phases = {
 		end,
 		Update = function(self, dt)
 			stepSkies(self, dt)
+			animate(self, dt)
 		end,
 		IsDone = function(self)
 			return self.meteors >= T.MeteorHits
@@ -726,7 +839,7 @@ Boss.Phases = {
 				self.sky.ring:Destroy()
 			end
 			self.shadow.Transparency = 1
-			pose(self, self.home, 0, 0)
+			pose(self, self.home, 0, 0, true)
 			setFlying(self, false)
 		end,
 	},
@@ -738,7 +851,9 @@ Boss.Phases = {
 			self.hits = 4 + T.MeteorHits
 			self.heartHits = 0
 			setHealth(self)
-			pose(self, self.home, 0, 0)
+			-- worn out, it sinks over the hole until its open chest is level with the hall (reflect height)
+			pose(self, self.home * CFrame.new(0, -T.Sink, 0), 0, 0.3)
+			self.target.flap = T.Hover * 1.6
 			setFlying(self, false)
 			buildWall(self, 0)
 			-- anyone caught on the dragon's side is thrown back over it
@@ -771,6 +886,7 @@ Boss.Phases = {
 		end,
 		Update = function(self, dt)
 			stepWall(self, dt)
+			animate(self, dt)
 		end,
 		IsDone = function(self)
 			return self.heartHits >= T.HeartHits
@@ -803,6 +919,7 @@ Boss.Phases = {
 				end
 			end
 			table.clear(self.offsets)
+			knitBridge(self)
 		end,
 	},
 }

@@ -179,7 +179,8 @@ local function step(dt: number)
 		-- a boss hall can pull the view back (workspace TopDownZoom, set by the Hollow Dragon fight)
 		local zoom = math.clamp(1 + spread / 60, 1, 1.6) * ((workspace:GetAttribute("TopDownZoom") or 1) :: number)
 		-- ...and look from the other side (workspace TopDownFlip): the boss at the far end fills the top of the screen
-		local back = if workspace:GetAttribute("TopDownFlip") then -BACK else BACK
+		local back = (if workspace:GetAttribute("TopDownFlip") then -BACK else BACK)
+			* (workspace:GetAttribute("TopDownBack") or 1) :: number -- flatter angle: a tall boss stays in frame
 		local eye = mid + Vector3.new(0, HEIGHT * zoom, back * zoom)
 		camera.CFrame = camera.CFrame:Lerp(CFrame.lookAt(eye, mid), math.min(1, dt * 8))
 	elseif m == "SideOn" then

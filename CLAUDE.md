@@ -48,9 +48,10 @@
 
 1. **User feel tests:** walk the new throne hall (gate, banners, sun shafts gold after the win), boss phase-2 crossing (tune `ThrowTime`/`ThrowArc` or lap height), pounding a resting fist, phase-3 swing, droppers' new speed + Coin Bonk steps (`CoinFallSpeed` 9), chase rails (speed 40, hops), reveal pans, swing.
 2. **2-player run with the user** (everything since the 6th session).
-3. **Final boss: The Unfinished** (World 3, mechanics.md §5; reuses both bosses' patterns), then the final level/Epilogue. Feel-test the Hollow Dragon first (breath damage 5 / 0.35 s, LandEvery 20, MinionCharge 0.2, gap moves every 10 s).
-4. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); a decor cloud crosses the WindmillHill reveal shot; corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
-5. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
+3. **Hollow Dragon (in progress, Oct 10):** art switched to the Sketchfab Celestial Dragon (CC-BY, CREDITS.md; `blender_assets/HollowDragon2.*`, texture `textures/make_hollow_dragon_tex.py`), hovering over a hole in the hall (floor ends z 1600, bridge knits back when it falls). Eased procedural motion (animate() in Bosses/HollowDragon). NOT yet checked: the flatter camera (`TopDownBack` 1.9, Zoom 1.3, FocusWeight 0.5), scale orbs on its legs, phase 2/3 with the new body, the bridge; then user feel test.
+4. **Final boss: The Unfinished** (World 3, mechanics.md §5; reuses both bosses' patterns), then the final level/Epilogue. Feel-test the Hollow Dragon first (breath damage 5 / 0.35 s, LandEvery 20, MinionCharge 0.2, gap moves every 10 s).
+5. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); a decor cloud crosses the WindmillHill reveal shot; corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
+6. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
 
 ## History (moved Oct 8, 2026)
 
