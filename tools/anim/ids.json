@@ -1,0 +1,62 @@
+{
+ "Crouch": {
+  "hash": "a0cc04abd015df76c8c7bf2c22369e83ece17bbf",
+  "id": "79655492018259"
+ },
+ "CrouchWalk": {
+  "hash": "c31125434a7cfe009c456d27fc7ae79941555056",
+  "id": "117525133231587"
+ },
+ "Dash": {
+  "hash": "9447eed531435f4e0f129bb490f5d3a64cd81c5a",
+  "id": "85879401281012"
+ },
+ "DoubleJump": {
+  "hash": "eb6f83e1545d438df9098962a2cad833a0feb1aa",
+  "id": "140426401648051"
+ },
+ "Grind": {
+  "hash": "c12a00ba6b58795f138ff6d6000601333f02913e",
+  "id": "87687361770427"
+ },
+ "Land": {
+  "hash": "b5bbb1e08aa604bbd81170437c9f77aa58196688",
+  "id": "70900451462165"
+ },
+ "LedgeAssist": {
+  "hash": "354d7e5c416c7baeaed742e198e0d0157bb35afe",
+  "id": "138888968403569"
+ },
+ "LongJump": {
+  "hash": "91fe31cb6ecc0775048a3e7126cdc326bfa5ebae",
+  "id": "92043900512876"
+ },
+ "PoundFall": {
+  "hash": "a41c466a6bcf75cbbcb0d848c49b0190f4822c80",
+  "id": "140149202714000"
+ },
+ "PoundLand": {
+  "hash": "af33dfa8d163ad22844754eea3f956fc657e03e9",
+  "id": "73487794828208"
+ },
+ "PoundSpin": {
+  "hash": "c3e5a5188dbb90c94520ba7730344f2d14d07d28",
+  "id": "112920836236153"
+ },
+ "Sprint": {
+  "hash": "6e1e3ea48b8e76d90e49f8e36334c6796e0d9187",
+  "id": "104998793268361"
+ },
+ "Swing": {
+  "hash": "8a4bb881085baa2aec71faeb57c2eb100f2c4419",
+  "id": "122532924977746"
+ },
+ "WallCling": {
+  "hash": "8856068ead79967f1a7e1374bc973b549bc95a37",
+  "id": "84506645881258"
+ },
+ "WallJump": {
+  "hash": "b5a6590bf72a262d9e271fdaba3fdc9c89f3f805",
+  "id": "125651676279611"
+ }
+}

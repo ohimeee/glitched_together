@@ -17,3 +17,6 @@ graphify-out/
 
 # textures Blender unpacks next to FBX exports (copies of textures/ files)
 *.fbm/
+
+# Python bytecode
+__pycache__/

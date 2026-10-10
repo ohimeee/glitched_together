@@ -17,7 +17,23 @@ export type Key = { t: number, ease: string?, pose: { [string]: Pose } }
 export type Clip = { priority: string, loop: boolean?, keys: { Key } }
 
 -- Uploaded animation ids (rbxassetid://...) per clip. Empty = Studio-only temporary ids.
-local Ids: { [string]: string } = {}
+local Ids: { [string]: string } = {
+	Crouch = "rbxassetid://79655492018259",
+	CrouchWalk = "rbxassetid://117525133231587",
+	Dash = "rbxassetid://85879401281012",
+	DoubleJump = "rbxassetid://140426401648051",
+	Grind = "rbxassetid://87687361770427",
+	Land = "rbxassetid://70900451462165",
+	LedgeAssist = "rbxassetid://138888968403569",
+	LongJump = "rbxassetid://92043900512876",
+	PoundFall = "rbxassetid://140149202714000",
+	PoundLand = "rbxassetid://73487794828208",
+	PoundSpin = "rbxassetid://112920836236153",
+	Sprint = "rbxassetid://104998793268361",
+	Swing = "rbxassetid://122532924977746",
+	WallCling = "rbxassetid://84506645881258",
+	WallJump = "rbxassetid://125651676279611",
+}
 
 local function merge(...: { [string]: Pose }): { [string]: Pose }
 	local out = {}

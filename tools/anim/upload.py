@@ -114,14 +114,11 @@ def upload_one(key: str, name: str, rbxm: pathlib.Path, asset_id: str | None) ->
 def write_ids(ids: dict) -> None:
     lines = "".join(f'\t{name} = "rbxassetid://{entry["id"]}",\n' for name, entry in sorted(ids.items()))
     src = CONFIG.read_text(encoding="utf-8")
-    new = re.sub(
-        r"local Ids: \{ \[string\]: string \} = \{.*?\n\}",
-        "local Ids: { [string]: string } = {\n" + lines + "}",
-        src,
-        count=1,
-        flags=re.S,
-    )
-    new = new.replace("local Ids: { [string]: string } = {}", "local Ids: { [string]: string } = {\n" + lines + "}")
+    # the Ids table: "= {}" or "= {", one tab-indented line per clip, "}" (never runs past the table)
+    pattern = r"local Ids: \{ \[string\]: string \} = \{(?:\}|\n(?:\t[^\n]*\n)*\})"
+    if not re.search(pattern, src):
+        sys.exit("Ids table not found in MoveAnims.luau")
+    new = re.sub(pattern, lambda _: "local Ids: { [string]: string } = {\n" + lines + "}", src, count=1)
     CONFIG.write_text(new, encoding="utf-8", newline="\n")
 
 
