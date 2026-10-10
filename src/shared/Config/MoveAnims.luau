@@ -31,6 +31,8 @@ local Ids: { [string]: string } = {
 	PoundSpin = "rbxassetid://112920836236153",
 	Sprint = "rbxassetid://104998793268361",
 	Swing = "rbxassetid://122532924977746",
+	VentFlip = "rbxassetid://72702357684616",
+	VentFloat = "rbxassetid://127702530131428",
 	WallCling = "rbxassetid://84506645881258",
 	WallJump = "rbxassetid://125651676279611",
 }
@@ -228,6 +230,20 @@ local dash = { -- body thrown forward, arms swept back, one leg trailing
 	LeftLowerLeg = { -55, 0, 0 },
 }
 
+local float = { -- riding an updraft: arms up in a V, legs loose, head back to look up the stream
+	LowerTorso = { 6, 0, -5, 0, 0.3, 0 },
+	UpperTorso = { 8, 0, 0 },
+	Head = { 20, 0, 0 },
+	RightUpperArm = { 15, 0, 135 },
+	LeftUpperArm = { 25, 0, -118 },
+	RightLowerArm = { 20, 0, 0 },
+	LeftLowerArm = { 30, 0, 0 },
+	RightUpperLeg = { 30, 0, 12 },
+	LeftUpperLeg = { 5, 0, -16 },
+	RightLowerLeg = { -70, 0, 0 },
+	LeftLowerLeg = { -30, 0, 0 },
+}
+
 local function spin(rx: number, py: number): { [string]: Pose }
 	return merge(tuck, { LowerTorso = { rx, 0, 0, 0, py, 0 } })
 end
@@ -408,6 +424,37 @@ local Clips: { [string]: Clip } = {
 				}),
 			},
 			{ t = 0.9, pose = surf },
+		},
+	},
+	-- jump vent / fan updraft: a slow tucked flip on entering, then a skydiver float that flails while you ride it
+	VentFlip = {
+		priority = "Action2",
+		keys = {
+			{ t = 0, pose = merge(spread, { LowerTorso = { 0, 0, 0 } }) },
+			{ t = 0.14, ease = "Linear", pose = spin(-90, 0.5) },
+			{ t = 0.28, ease = "Linear", pose = spin(-180, 0.7) },
+			{ t = 0.42, ease = "Linear", pose = spin(-270, 0.5) },
+			{ t = 0.58, pose = merge(float, { LowerTorso = { 0, 0, 0, 0, 0.2, 0 } }) },
+		},
+	},
+	VentFloat = {
+		priority = "Action",
+		loop = true,
+		keys = {
+			{ t = 0, pose = float },
+			{
+				t = 0.8,
+				pose = merge(float, {
+					LowerTorso = { -6, 8, 7, 0, 0.35, 0 },
+					RightUpperArm = { 35, 0, 112 },
+					LeftUpperArm = { 5, 0, -140 },
+					RightUpperLeg = { 5, 0, 16 },
+					LeftUpperLeg = { 35, 0, -10 },
+					RightLowerLeg = { -25, 0, 0 },
+					LeftLowerLeg = { -75, 0, 0 },
+				}),
+			},
+			{ t = 1.6, pose = float },
 		},
 	},
 	Sprint = { -- 0.48 s stride cycle at Tuning.SprintSpeed (MoveAnimController scales the speed)

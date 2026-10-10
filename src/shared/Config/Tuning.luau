@@ -42,6 +42,8 @@ return {
 	MoveAnim = {
 		Fade = 0.08, -- s blend in/out of a clip
 		HardLandSpeed = 62, -- studs/s falling: faster than a jump's fall plays the landing squash
+		VentFlipGap = 1, -- s out of an updraft before entering one flips you again
+		VentFloatHold = 0.35, -- s the updraft float pose holds after you bob out of the stream's top
 	},
 
 	-- Follow camera (CameraController): mouse-look, cursor locked, crosshair = screen center

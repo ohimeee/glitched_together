@@ -1,7 +1,8 @@
 -- Run in Studio (Edit, Studio MCP execute_luau with this file's text) while `python tools/anim/upload.py receive`
 -- waits: sends every MoveAnims clip as a Rojo .model.json tree ({ [clipName] = tree }) to it on port 34998.
 local HttpService = game:GetService("HttpService")
-local MoveAnims = require(game:GetService("ReplicatedStorage").Shared.Config.MoveAnims)
+-- require a clone: Edit caches a required module, so the original would return the first version ever loaded
+local MoveAnims = require(game:GetService("ReplicatedStorage").Shared.Config.MoveAnims:Clone())
 
 local function cframe(cf: CFrame)
 	local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = cf:GetComponents()

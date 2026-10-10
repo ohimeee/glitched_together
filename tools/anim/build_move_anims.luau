@@ -1,7 +1,8 @@
 -- Run in Studio (Edit, command bar or Studio MCP execute_luau): builds every clip of Config/MoveAnims.luau as a
 -- KeyframeSequence into ServerStorage.MoveAnims. Upload each: right-click → Save to Roblox (owner = the
 -- experience's owner), then paste the ids into MoveAnims.Ids. Re-run after changing a clip and re-upload that one.
-local MoveAnims = require(game:GetService("ReplicatedStorage").Shared.Config.MoveAnims)
+-- require a clone: Edit caches a required module, so the original would return the first version ever loaded
+local MoveAnims = require(game:GetService("ReplicatedStorage").Shared.Config.MoveAnims:Clone())
 local ServerStorage = game:GetService("ServerStorage")
 
 local folder = ServerStorage:FindFirstChild("MoveAnims")

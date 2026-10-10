@@ -78,6 +78,7 @@ local function onCharacter(character: Model)
 	local lastLedgeAssist = 0
 	local poundStarted = 0
 	local fallSpeed = 0 -- last downward speed in the air (Landed fires after the stop)
+	local lastVent = -math.huge -- last time inside an upward jump vent stream (you bob in and out at its top)
 	local swing: Swing? = nil
 
 	local function inAir(): boolean
@@ -740,6 +741,7 @@ local function onCharacter(character: Model)
 		MoveAnim.Set("Grind", grind ~= nil and not hide)
 		MoveAnim.Set("WallCling", cling ~= nil and not hide)
 		MoveAnim.Set("PoundFall", pounding and not hide and now - poundStarted >= Tuning.PoundHang)
+		MoveAnim.Set("VentFloat", now - lastVent < Tuning.MoveAnim.VentFloatHold and not pounding and not hide)
 		MoveAnim.Set("Crouch", crouching and grounded and not moving and not hide)
 		MoveAnim.Set("CrouchWalk", crouching and grounded and moving and not hide)
 		MoveAnim.Set(
@@ -813,7 +815,8 @@ local function onCharacter(character: Model)
 			end
 		end
 
-		-- Jump vents: upward (or downward) air stream.
+		-- Jump vents: upward (or downward) air stream. Riding an upward one: flip in, then float.
+		local venting = false
 		for _, vent in CollectionService:GetTagged("JumpVent") do
 			if vent:IsA("BasePart") and vent:IsDescendantOf(workspace) then
 				local localPos = vent.CFrame:PointToObjectSpace(root.Position)
@@ -824,6 +827,7 @@ local function onCharacter(character: Model)
 					and math.abs(localPos.Z) <= half.Z
 				then
 					local dirSign = (vent:GetAttribute("Direction") or 1) :: number
+					venting = venting or dirSign > 0
 					local target = Tuning.VentForce * dirSign
 					setVelocity(Vector3.new(v.X, v.Y + (target - v.Y) * math.min(1, dt * 6), v.Z))
 					resetAir()
@@ -832,6 +836,12 @@ local function onCharacter(character: Model)
 					end
 				end
 			end
+		end
+		if venting then
+			if now - lastVent > Tuning.MoveAnim.VentFlipGap and not pounding then
+				MoveAnim.Play("VentFlip")
+			end
+			lastVent = now
 		end
 	end))
 
