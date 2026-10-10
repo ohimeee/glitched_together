@@ -42,6 +42,12 @@ local ENEMIES = Tuning.Enemies :: any
 
 local CombatService = {}
 
+-- Boss hurtboxes: parts tagged `BossHurt` take no damage themselves; a friendly shot or an area attack that reaches
+-- one fires this, and the boss module decides what it means (Hollow Dragon scales, its heart).
+--   (part, damage, owner: Player?, how: "Shot" | "Reflected" | "Area")
+local bossHit = Instance.new("BindableEvent")
+CombatService.BossHit = bossHit.Event
+
 type Foe = {
 	part: BasePart,
 	kind: string,
@@ -213,6 +219,9 @@ local function shieldFlash(p: Player)
 		)
 	end
 end
+
+-- Is `p` holding a raised shield toward `fromPos`? (Boss beams stop at it.)
+CombatService.ShieldCovers = shieldCovers
 
 function CombatService.HitPlayer(p: Player, amount: number, fromPos: Vector3)
 	if p:GetAttribute("Downed") or p:GetAttribute("Picking") then
@@ -856,6 +865,10 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 			if brazier then
 				CombatService.Ignite(brazier)
 			end
+			local hurt = Tags.find(inst, "BossHurt")
+			if hurt then
+				bossHit:Fire(hurt, shot.damage, shot.owner, if shot.reflectedBy then "Reflected" else "Shot")
+			end
 		end
 		CombatFx.Impact(hit.Position, shot.kind == "Fireball", shot.part.Color)
 		Audio.play(
@@ -940,6 +953,15 @@ function CombatService.Radial(pos: Vector3, radius: number, damage: number, owne
 			if CombatService.DamageEnemy(part, damage, owner, nil) > 0 then
 				hits += 1
 			end
+		end
+	end
+	for _, hurt in Tags.list("BossHurt") do
+		if
+			hurt:IsA("BasePart")
+			and flat(hurt.Position - pos).Magnitude <= radius + math.max(hurt.Size.X, hurt.Size.Z) / 2
+		then
+			bossHit:Fire(hurt, damage, owner, "Area")
+			hits += 1
 		end
 	end
 	return hits

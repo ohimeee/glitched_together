@@ -3073,19 +3073,177 @@ local function buildStarfallCastle(world: Model)
 	enemy(world, "Skeleton", 12, 1482)
 	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500))
 
-	-- exit: the throne hall door
 	floor(-10, 1500, 10, 1530, "ThroneApproach")
 	wall(-10, 1500, -10, 1530)
 	wall(10, 1500, 10, 1530)
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1524), {
+
+	-- 2-3 THE HOLLOW THRONE: the Hollow Dragon (mechanics.md §5; fight logic in server/Bosses/HollowDragon). A 96-wide
+	-- hall; the dragon lies along the far half facing the door, wings over its flanks (they lift while it breathes, to
+	-- show Kai's four scales), its ribs broken open round a glowing heart. The exit behind it stays locked until it
+	-- falls (then Memory 2: the hidden room behind the throne).
+	floor(-48, 1530, 48, 1664, "ThroneHall")
+	wall(-48, 1530, -10, 1530)
+	wall(10, 1530, 48, 1530)
+	wall(-48, 1530, -48, 1664)
+	wall(48, 1530, 48, 1664)
+	wall(-48, 1664, -8, 1664)
+	wall(8, 1664, 48, 1664)
+	floor(-8, 1664, 8, 1682, "HiddenDoor")
+	wall(-8, 1664, -8, 1682)
+	wall(8, 1664, 8, 1682)
+	for _, t in { { -47, 1550 }, { 47, 1550 }, { -47, 1590 }, { 47, 1590 }, { -47, 1630 }, { 47, 1630 } } do
+		torch(t[1], t[2])
+	end
+	checkpoint(world, 12, 0, 0, 1540, W, {
+		"Miko: raise your shield in the dragon's breath. It stops the beam for anyone behind you.",
+		"Kai: its scales only open while it breathes. Burn them!",
+	})
+	-- read from the door side (the fight's camera looks from there: HollowDragon sets TopDownFlip)
+	sign(
+		world,
+		"THE HOLLOW THRONE",
+		CFrame.new(0, 0.35, 1546) * CFrame.Angles(0, math.pi, 0) * CFrame.Angles(math.rad(-90), 0, 0),
+		Vector3.new(16, 4, 0.4),
+		P.Royal
+	)
+	local trigger = block(world, Vector3.new(94, 30, 132), CFrame.new(0, 15, 1597), {
+		name = "BossTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "BossTrigger" },
+		attrs = { Boss = "HollowDragon" },
+	})
+	trigger.CanQuery = false
+	trigger.CanTouch = false
+	local intro = block(world, Vector3.new(20, 10, 14), CFrame.new(0, 5, 1512), {
+		name = "BossIntroTrigger",
+		transparency = 1,
+		collide = false,
+		tags = { "CutsceneTrigger" },
+		attrs = { Cutscene = "W2_BossIntro", Any = true, Once = true },
+	})
+	intro.CanQuery = false
+	intro.CanTouch = false
+	local camPath = Instance.new("Folder")
+	camPath.Name = "CamPath_W2_BossIntro"
+	camPath.Parent = world
+	for i, shot in
+		{
+			{ Vector3.new(0, 16, 1540), Vector3.new(0, 10, 1600), 2.4 }, -- down the hall at it
+			{ Vector3.new(16, 16, 1578), Vector3.new(0, 10, 1592), 2.6 }, -- its face
+			{ Vector3.new(44, 70, 1545), Vector3.new(0, 0, 1612), 2.6 }, -- the whole hall from above (the fight's view)
+		}
+	do
+		local cam = block(camPath, Vector3.one, CFrame.lookAt(shot[1], shot[2]), {
+			name = tostring(i),
+			transparency = 1,
+			collide = false,
+			attrs = { Duration = shot[3] },
+		})
+		cam.CanQuery = false
+		cam.CanTouch = false
+	end
+	-- where it lands in phase 2 and where its minions climb in
+	for i, at in { Vector3.new(-24, 0, 1568), Vector3.new(24, 0, 1568), Vector3.new(0, 0, 1580) } do
+		local spot = block(world, Vector3.new(1, 1, 1), CFrame.new(at), {
+			name = "LandSpot" .. i,
+			transparency = 1,
+			collide = false,
+		})
+		spot.CanQuery = false
+	end
+	for i, at in
+		{
+			Vector3.new(-42, 0, 1540),
+			Vector3.new(42, 0, 1540),
+			Vector3.new(-42, 0, 1605),
+			Vector3.new(42, 0, 1605),
+			Vector3.new(-40, 0, 1655),
+			Vector3.new(40, 0, 1655),
+		}
+	do
+		local spot = block(world, Vector3.new(1, 1, 1), CFrame.new(at), {
+			name = "MinionSpawn" .. i,
+			transparency = 1,
+			collide = false,
+		})
+		spot.CanQuery = false
+	end
+
+	-- the dragon (grey-box; parts named for the boss module and the skins)
+	local dragon = Instance.new("Model")
+	dragon.Name = "HollowDragon"
+	dragon.Parent = world
+	local SCALE_PLUM = rgb(70, 46, 96)
+	local function part(name: string, size: Vector3, cf: CFrame, color: Color3, opts: { [string]: any }?)
+		local o = opts or {}
+		return block(dragon, size, cf, {
+			name = name,
+			color = color,
+			material = o.material or Enum.Material.SmoothPlastic,
+			collide = if o.collide == nil then true else o.collide,
+			tags = o.tags,
+			attrs = o.attrs,
+		})
+	end
+	-- Skin: ArtService/StarfallCastle DRAGON; Weld: the skins follow when the boss module moves these parts
+	local function skinned(name: string): { [string]: any }
+		return { attrs = { Skin = "Dragon" .. name, Weld = true } }
+	end
+	part("Body", Vector3.new(24, 14, 30), CFrame.new(0, 7, 1622), SCALE_PLUM, skinned("Body"))
+	part("Neck", Vector3.new(8, 7, 14), CFrame.new(0, 9, 1602), SCALE_PLUM, skinned("Neck"))
+	part("Head", Vector3.new(10, 8, 12), CFrame.new(0, 10, 1590), SCALE_PLUM, skinned("Head"))
+	part("Tail", Vector3.new(6, 5, 26), CFrame.new(0, 3, 1650), SCALE_PLUM, skinned("Tail"))
+	for _, side in { -1, 1 } do
+		local s = if side < 0 then "L" else "R"
+		part(
+			"Wing" .. s,
+			Vector3.new(30, 2, 24),
+			CFrame.new(side * 27, 15, 1622),
+			rgb(52, 34, 74),
+			{ collide = false, attrs = { Skin = "DragonWing" .. s, Weld = true } }
+		)
+		for i, z in { 1614, 1630 } do
+			-- low on the flank: fireballs fly at chest height (~3 over the floor)
+			part("Scale" .. s .. i, Vector3.new(1.5, 6, 5), CFrame.new(side * 12.8, 3.5, z), Palette.Kai, {
+				material = Enum.Material.Neon,
+				tags = { "BossHurt" },
+				attrs = { Kind = "Scale" },
+			})
+		end
+		-- broken ribs round the open chest
+		for i = 0, 2 do
+			local rib = part(
+				"Rib" .. s .. i,
+				Vector3.new(1, 9, 1.2),
+				CFrame.new(side * 5, 8, 1604 + i * 2.5) * CFrame.Angles(0, 0, math.rad(side * -25)),
+				rgb(230, 222, 200),
+				{ collide = false, attrs = { Skin = "DragonRib", Weld = true } }
+			)
+			rib.CanQuery = false -- shots reach the heart between them
+		end
+	end
+	local heart = part("Heart", Vector3.new(4, 4, 4), CFrame.new(0, 3.5, 1605), Palette.Glitch, {
+		material = Enum.Material.Neon,
+		tags = { "BossHurt" },
+		attrs = { Kind = "Heart" },
+	})
+	local glow = Instance.new("PointLight") -- the open chest lights the dragon from inside (and shows where to aim)
+	glow.Color = Palette.Glitch
+	glow.Range = 16
+	glow.Brightness = 1.2
+	glow.Parent = heart
+	dragon.WorldPivot = CFrame.new(0, 0, 1618)
+
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1676), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
-		transparency = 0.65,
+		transparency = 1,
 		collide = false,
 		tags = { "WorldExit" },
+		attrs = { Locked = true }, -- unlocked when the dragon falls (Main)
 	})
-	flatSign("BOSS: THE HOLLOW DRAGON (M6)", 0, 1512, 16)
 end
 
 -- Everything else: an arena with the world's title and an exit, so the run can be tested end to end.

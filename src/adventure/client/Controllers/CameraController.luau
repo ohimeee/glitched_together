@@ -170,8 +170,17 @@ local function step(dt: number)
 		local b = rootOf(partner())
 		local mid = if b then (a.Position + b.Position) / 2 else a.Position
 		local spread = if b then (a.Position - b.Position).Magnitude else 0
-		local zoom = math.clamp(1 + spread / 60, 1, 1.6)
-		local eye = mid + Vector3.new(0, HEIGHT * zoom, BACK * zoom)
+		-- a boss can pull the view toward itself so it stays in frame (workspace TopDownFocus + weight 0..1)
+		local focus = workspace:GetAttribute("TopDownFocus")
+		if typeof(focus) == "Vector3" then
+			local w = (workspace:GetAttribute("TopDownFocusWeight") or 0.35) :: number
+			mid = mid:Lerp(Vector3.new(focus.X, mid.Y, focus.Z), w)
+		end
+		-- a boss hall can pull the view back (workspace TopDownZoom, set by the Hollow Dragon fight)
+		local zoom = math.clamp(1 + spread / 60, 1, 1.6) * ((workspace:GetAttribute("TopDownZoom") or 1) :: number)
+		-- ...and look from the other side (workspace TopDownFlip): the boss at the far end fills the top of the screen
+		local back = if workspace:GetAttribute("TopDownFlip") then -BACK else BACK
+		local eye = mid + Vector3.new(0, HEIGHT * zoom, back * zoom)
 		camera.CFrame = camera.CFrame:Lerp(CFrame.lookAt(eye, mid), math.min(1, dt * 8))
 	elseif m == "SideOn" then
 		camera.CameraType = Enum.CameraType.Scriptable

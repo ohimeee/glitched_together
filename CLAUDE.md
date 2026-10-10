@@ -34,20 +34,21 @@
 - **Studio tooling:** `generate_mesh` only in Edit, never during Play. Screenshots without focus: `tools/screen/bgshot.ps1`; clicks need the user's OK (`tools/screen/ping.ps1`, memory mouse-ping); click scripts must be DPI-aware (Windows 125%). Scripted playtests can't press ProximityPrompts; emulated results must be labelled "emulated".
 - **Sources:** only commercial-safe licenses (CC0 first, CC-BY with credit), never ripped game audio/assets; full list in `TOOLS.md` (§3b sound). Blend Swap: commercial use needs the Artist plan, check before shipping. Tripo free keys are out of credit.
 - **Reach table** (studs, flat): jump ~9 walk / ~13 sprint; +double ~15 / ~22; +double+air dash ~34 / ~41; long jump ~18, +double ~24, +double+dash ~51. Height: jump 7.6, +double 13.5, +ledge assist ~16. Design gaps: plain jump ≤ 10, double 12–18, dash 24–27, tool/partner ≥ 55 or ≥ 18 up.
+- **Boss camera hooks (castle top-down):** workspace `TopDownZoom` (×), `TopDownFocus` (Vector3) + `TopDownFocusWeight`, `TopDownFlip` (look from the −Z side). Boss hurtboxes: tag `BossHurt` → `CombatService.BossHit(part, damage, owner, "Shot"|"Reflected"|"Area")`. In Studio, `require(CombatService)` from execute_luau is a separate copy (its shots never move): drive tools through the real `ToolUse` remote instead.
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
 
 ## Current status (17th session, Oct 10, 2026)
 
-- **Built:** Lobby (doll-sized bedroom, capsules), Prologue (stage set), World 1 Pixel Plains (28 checkpoints incl. Glitch Chase + **Crusher King boss**, voxel art pass), World 2 Starfall Castle (combat M3, set pieces incl. Siege Cart + Ember Fuse), World 3 Glitched Core (12 checkpoints incl. Memory Lane). Art passes, Blender-rendered skyboxes, UI themes and a sound first pass for every world. Overall ~55–60% (missing: Hollow Dragon + final boss, final level/Epilogue, ending cutscenes, 2P testing, publishing).
+- **Built:** Lobby (doll-sized bedroom, capsules), Prologue (stage set), World 1 Pixel Plains (28 checkpoints incl. Glitch Chase + **Crusher King boss**, voxel art pass), World 2 Starfall Castle (combat M3, set pieces incl. Siege Cart + Ember Fuse), World 2 boss **Hollow Dragon**, World 3 Glitched Core (12 checkpoints incl. Memory Lane). Art passes, Blender-rendered skyboxes, UI themes and a sound first pass for every world. Overall ~60–65% (missing: final boss, final level/Epilogue, ending cutscenes, 2P testing, publishing).
 - **16th session (all pushed):** dropper blocks fall slow-then-fast and freeze in place; save disks animate; Prologue fan/gear streaming bugs fixed; options slider art; swing points read as grabbable + "[F] SWING" prompt; boss checkpoint inside the arena + 2.5 s spawn immunity; boss music persists through respawns.
-- **17th session:** Crusher King throne hall built (voxel ruin kit `tools/boss_arena/kit.py`, `bossHall` in ArtService/PixelPlains; brief `blender_assets/briefs/BossArena.md`); checked in solo Play by screenshot, fight untouched.
+- **17th session:** **Hollow Dragon boss built** (castle 2-3 THE HOLLOW THRONE, `Bosses/HollowDragon.luau`, 3 phases, scripted Blender dragon + DragonScales hide; solo emulated test passed end to end; NOT felt with real input, NOT 2P). Crusher King throne hall built (voxel ruin kit `tools/boss_arena/kit.py`, `bossHall` in ArtService/PixelPlains; brief `blender_assets/briefs/BossArena.md`); checked in solo Play by screenshot, fight untouched.
 - **Most of it is only solo/emulated-tested.** Nothing since the 6th session has been played with 2 players.
 
 ## Next steps (in order)
 
 1. **User feel tests:** walk the new throne hall (gate, banners, sun shafts gold after the win), boss phase-2 crossing (tune `ThrowTime`/`ThrowArc` or lap height), pounding a resting fist, phase-3 swing, droppers' new speed + Coin Bonk steps (`CoinFallSpeed` 9), chase rails (speed 40, hops), reveal pans, swing.
 2. **2-player run with the user** (everything since the 6th session).
-3. **Hollow Dragon** (castle boss, same BossService pattern), then the final boss.
+3. **Final boss: The Unfinished** (World 3, mechanics.md §5; reuses both bosses' patterns), then the final level/Epilogue. Feel-test the Hollow Dragon first (breath damage 5 / 0.35 s, LandEvery 20, MinionCharge 0.2, gap moves every 10 s).
 4. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); a decor cloud crosses the WindmillHill reveal shot; corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
 5. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
 

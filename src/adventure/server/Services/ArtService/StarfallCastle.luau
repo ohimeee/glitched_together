@@ -71,6 +71,91 @@ local Skins: { [string]: MeshAssets.Skin } = {
 	),
 }
 
+-- The Hollow Dragon (tools/hollow_dragon/kit.py, blender_assets/HollowDragon.*): one mesh per surface per grey-box
+-- part, welded to the parts the boss module moves (Greybox gives them Weld). Numbers from kit.py report(): size +
+-- offset from the part's centre. Scales wear the DragonScales hide (textures/make_dragon_scales.py) tinted plum.
+local DRAGON_SURFACES: { [string]: { any } } = { -- surface → { material, variant?, color }
+	Scales = { SMOOTH, "DragonScales", Color3.fromRGB(150, 98, 196) }, -- lighter than it looks: night hall
+	Gold = { Enum.Material.Metal, nil, Color3.fromRGB(236, 176, 70) },
+	Bone = { SMOOTH, nil, Color3.fromRGB(232, 222, 196) },
+	Membrane = { Enum.Material.Fabric, nil, Color3.fromRGB(118, 70, 150) },
+	Static = { Enum.Material.Neon, nil, Palette.ForNeon(Palette.Glitch) },
+	Eye = { Enum.Material.Neon, nil, Palette.ForNeon(Palette.Glitch) },
+}
+local DRAGON: { [string]: { Design: Vector3, Meshes: { { any } } } } =
+	{ -- part → meshes { surface, id, size, offset }
+		DragonBody = {
+			Design = v(24, 14, 30),
+			Meshes = {
+				{ "Scales", "rbxassetid://119628406696158", v(29.46, 13.29, 35.58), v(0, -0.486, -0.471) },
+				{ "Gold", "rbxassetid://115683799761638", v(2.25, 5.89, 26.99), v(0, 6.976, 0.304) },
+				{ "Bone", "rbxassetid://100743327196218", v(28.53, 0.96, 33.44), v(0.032, -6.319, -4.581) },
+				{ "Static", "rbxassetid://78891090879020", v(11.99, 9.85, 2.65), v(0.731, -0.798, -16.684) },
+			},
+		},
+		DragonNeck = {
+			Design = v(8, 7, 14),
+			Meshes = {
+				{ "Scales", "rbxassetid://72189416827953", v(7.14, 7.74, 14.44), v(0, 0.394, -0.559) },
+				{ "Gold", "rbxassetid://82924400301894", v(1.8, 2.96, 14.23), v(0, 4.421, 0.485) },
+			},
+		},
+		DragonHead = {
+			Design = v(10, 8, 12),
+			Meshes = {
+				{ "Scales", "rbxassetid://130094412638312", v(6.8, 6.95, 10.47), v(0, 0.397, -0.556) },
+				{ "Bone", "rbxassetid://140225530138389", v(11.2, 8.17, 15.19), v(0, 2.287, 2.376) },
+				{ "Eye", "rbxassetid://73671808751742", v(6.43, 1.05, 2.1), v(0, 2, -0.5) },
+			},
+		},
+		DragonTail = {
+			Design = v(6, 5, 26),
+			Meshes = {
+				{ "Scales", "rbxassetid://80467970535173", v(9.12, 7.34, 27.98), v(0.363, 1.108, -0.511) },
+				{ "Gold", "rbxassetid://116167697455331", v(9.8, 10.3, 29.26), v(-1.9, 3.25, 3.869) },
+			},
+		},
+		DragonWingL = {
+			Design = v(30, 2, 24),
+			Meshes = {
+				{ "Membrane", "rbxassetid://120615004925966", v(30.03, 1.23, 25), v(-0.006, 0.016, -0.5) },
+				{ "Scales", "rbxassetid://102470441935344", v(29.71, 2.63, 25.8), v(-0.098, 0.174, -0.949) },
+				{ "Gold", "rbxassetid://132412839597551", v(2.96, 1.39, 2.73), v(-4.019, 0.705, -13.837) },
+			},
+		},
+		DragonWingR = {
+			Design = v(30, 2, 24),
+			Meshes = {
+				{ "Membrane", "rbxassetid://103509527508866", v(30.03, 1.23, 25), v(0.006, 0.016, -0.5) },
+				{ "Scales", "rbxassetid://105261346681880", v(29.71, 2.63, 25.8), v(0.098, 0.174, -0.949) },
+				{ "Gold", "rbxassetid://105361033973926", v(2.96, 1.39, 2.73), v(4.019, 0.705, -13.837) },
+			},
+		},
+		DragonRib = {
+			Design = v(1, 9, 1.2),
+			Meshes = { { "Bone", "rbxassetid://103878257362088", v(1.33, 8.88, 0.99), v(0.236, 0.012, 0) } },
+		},
+	}
+for name, info in DRAGON do
+	local meshes = {}
+	for i, m in info.Meshes do
+		local look = DRAGON_SURFACES[m[1]]
+		if m[2] ~= "" then
+			meshes[name .. "_" .. m[1] .. i] = {
+				Id = m[2],
+				Offset = m[4],
+				Size = m[3],
+				Material = look[1],
+				Variant = look[2],
+				Color = look[3],
+			}
+		end
+	end
+	if next(meshes) then
+		Skins[name] = { Design = info.Design, Meshes = meshes }
+	end
+end
+
 -- 2-2 Dark Library + Golem Hall props (Oct 1, obstacles.md 2.3): generated to the same storybook-realistic finish.
 -- Offsets put each model's foot on the floor (the grey-box parts float a little).
 Skins.IronGolem = enemy( -- a little castle-tower guardian; its visor faces +Z as generated

@@ -95,6 +95,16 @@
           "StudsPerTile": 6
         }
       },
+      "DragonScales": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "SmoothPlastic",
+          "ColorMap": "rbxassetid://133275172552760",
+          "NormalMap": "rbxassetid://134086493766854",
+          "RoughnessMap": "rbxassetid://131779963435065",
+          "StudsPerTile": 4
+        }
+      },
       "CastlePlanks": {
         "$className": "MaterialVariant",
         "$properties": {

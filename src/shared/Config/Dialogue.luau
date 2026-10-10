@@ -112,6 +112,24 @@ local Cutscenes: { [string]: { Line } } = {
 		{ Speaker = "Miko", Text = "Nice hat, wizard." },
 		{ Speaker = "Pip", Text = "Fire Mage and Shield Knight! Just like you drew them." },
 	},
+	-- The Hollow Dragon's arrival (Greybox CamPath_W2_BossIntro)
+	W2_BossIntro = {
+		{ Speaker = "Kai", Text = "Our dragon. We spent a whole weekend on its wings." },
+		{ Speaker = "Pip", Text = "It's hollow inside... the Glitch ate right through it!" },
+		{ Speaker = "Pip", Text = "Miko, shield up when it breathes! Kai, burn the scales it shows you!" },
+	},
+	-- Memory 2 "The Hidden Room" (Story Line, World 2): behind the throne, after the dragon
+	W2_Memory2 = {
+		{ Speaker = "Pip", Text = "MEMORY FILE 2 OF 3: HIDDEN_ROOM.SAV. ...Loading." },
+		{ Speaker = "Memory", Text = "A room behind the throne that Kai never knew about. Miko built it in secret." },
+		{
+			Speaker = "Memory",
+			Text = "Miko, fifteen, alone at her computer at night. She's crying, typing a long message.",
+		},
+		{ Speaker = "Memory", Text = "She hides it in this room." },
+		{ Speaker = "Miko", Text = "I'll show him at launch. He'll understand." },
+		{ Speaker = "???", Text = "FILE CORRUPTED." },
+	},
 	W2_End = {
 		{ Speaker = "Kai", Text = "You were going to tell me?" },
 		{ Speaker = "Miko", Text = "I waited for you. All day." },

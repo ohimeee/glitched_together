@@ -291,6 +291,44 @@ return {
 		-- phase 3: glitch shield; Kai freezes the whole king, Miko pulls the crown off
 		Phase3Speed = 1.3, -- fists move this much faster
 	},
+	-- The Hollow Dragon (World 2 boss, top-down; mechanics.md §5, Bosses/HollowDragon). Damage is castle HP (Kai 100,
+	-- Miko 140).
+	HollowDragon = {
+		Zoom = 1.3, -- top-down camera pulled back in the throne hall (CameraController reads workspace TopDownZoom)
+		Focus = Vector3.new(0, 0, 1606), -- ...and drawn toward the dragon by this much (TopDownFocus / Weight)
+		FocusWeight = 0.55,
+		-- phase 1: static breath at one player (alternating); flank scales open while it breathes, Kai burns them
+		BreathEvery = 6.5, -- s from one breath's end to the next windup
+		BreathWindup = 1.4, -- s the aim line shows before the beam
+		BreathTime = 2.6,
+		BreathTurn = 28, -- deg/s the beam follows its target
+		BreathLength = 95,
+		BreathWidth = 5,
+		BreathDamage = 5, -- per tick (~35 for a whole breath standing still; solo test: 6 / 0.3 s killed in two)
+		BreathTick = 0.35,
+		ScaleHits = 3, -- fireballs per scale (only while open)
+		-- phase 2: flies, summons minions, lands every LandEvery s; Kai Meteors it on the ground
+		LandEvery = 20,
+		LandWarn = 2.2, -- s the landing ring shows
+		LandRadius = 12,
+		LandDamage = 25,
+		Grounded = 7, -- s it stays down
+		MeteorHits = 2,
+		SummonEvery = 6,
+		MaxMinions = 6,
+		MinionCharge = 0.2, -- Kai's ultimate charge per minion that falls in phase 2 (5 = one Meteor)
+		FlyHeight = 26, -- higher sat right under the top-down camera and filled the screen
+		FlyGhost = 0.55, -- skin transparency while airborne (it hid the players under it)
+		-- phase 3: a static wall with one gap; only Miko's reflected light reaches the heart
+		HeartHits = 4,
+		GapWidth = 8,
+		GapMove = 10, -- s between gap moves
+		WallDamage = 10,
+		BombEvery = 3.5, -- static bombs lobbed over the wall
+		BombWarn = 1.5,
+		BombRadius = 6,
+		BombDamage = 15,
+	},
 	BossHitFlash = 0.25,
 
 	-- World 3
