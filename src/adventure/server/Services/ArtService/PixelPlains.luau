@@ -527,6 +527,30 @@ Skins.Bush = gen("rbxassetid://116906613547234", TREE_ATLAS, v(2.9, 4, 2.9), v(2
 Skins.Bush2 = gen("rbxassetid://99808273007113", TREE_ATLAS, v(2.9, 4, 2.9), v(2.54, 2.9, 2.9), v(0, -0.55, 0))
 local TREES = { "Tree", "TreeApple", "TreePine", "TreeBirch" }
 local BUSHES = { "Bush", "Bush2" }
+-- Crusher King throne hall (tools/boss_arena/kit.py, atlas textures/arena_palette.png): voxel ruin pieces at their
+-- real size (Design = mesh size), placed by bossHall below
+local ARENA_ATLAS = "rbxassetid://84416091769164"
+local ARENA: { [string]: { any } } = { -- name → { mesh id, size }
+	BA_Pillar = { "rbxassetid://125757701055742", v(12, 75, 12) },
+	BA_PillarBroken = { "rbxassetid://120930010774517", v(12, 52, 12) },
+	BA_PillarStump = { "rbxassetid://93380107224178", v(12, 27, 12) },
+	BA_Lintel = { "rbxassetid://98415486021594", v(28, 7, 8) },
+	BA_Banner = { "rbxassetid://103140405128731", v(12, 32, 3.5) },
+	BA_BannerTorn = { "rbxassetid://72126327008136", v(12, 32, 3.5) },
+	BA_BackWall = { "rbxassetid://117825756850990", v(84, 136, 12) },
+	BA_Tower = { "rbxassetid://127269975718155", v(26, 154, 28) },
+	BA_TowerBroken = { "rbxassetid://112924534029546", v(26, 108, 24) },
+	BA_Gate = { "rbxassetid://96179893394641", v(32, 41, 8) },
+	BA_Carpet = { "rbxassetid://89792813995144", v(8, 0.5, 20) },
+	BA_Rubble1 = { "rbxassetid://89189290516774", v(13, 7, 12) },
+	BA_Rubble2 = { "rbxassetid://127888772057192", v(10, 7, 14) },
+	BA_Brazier = { "rbxassetid://71754839277874", v(5, 6, 5) },
+}
+for name, info in ARENA do
+	if info[1] ~= "" then
+		Skins[name] = gen(info[1], ARENA_ATLAS, info[2], info[2])
+	end
+end
 
 -- Kit 3 (blender_assets/PixelPlainsKit3.*): signs, timed door, pull lever, dropper chute, "BY KAI + MIKO" letters.
 -- Real surfaces from Roblox materials (wood grain, metal); owner glow only on the gameplay part of each target.
@@ -951,9 +975,10 @@ local Decor: { { any } } = {
 	{ "Flowers", CFrame.new(10, 21.8, 250) * CFrame.Angles(0, math.rad(320), 0), 1.2, "CloudClimb" },
 	{ "Bush", CFrame.new(-10, 23, 342) * CFrame.Angles(0, math.rad(272), 0), 1.5, "CloudClimb" },
 	{ "Flowers", CFrame.new(12, 63.8, 414) * CFrame.Angles(0, math.rad(138), 0), 1.2, "CloudClimb" },
-	{ "Bush", CFrame.new(-12, 23.2, 1191) * CFrame.Angles(0, math.rad(212), 0), 1.6, "GlitchChase" },
-	{ "Flowers", CFrame.new(20, 22.1, 1235) * CFrame.Angles(0, math.rad(120), 0), 1.4, "GlitchChase" },
-	{ "Flowers", CFrame.new(-22, 22.1, 1265) * CFrame.Angles(0, math.rad(216), 0), 1.4, "GlitchChase" },
+	-- the chase landing (the throne hall's gate posts stand at x ±13, z 1190; braziers at x ±11, z 1209). Nothing on
+	-- the boss tiles: they drop away in phase 2 and decor would be left floating
+	{ "Bush", CFrame.new(-12, 23.2, 1201) * CFrame.Angles(0, math.rad(212), 0), 1.6, "GlitchChase" },
+	{ "Flowers", CFrame.new(12, 22.1, 1201) * CFrame.Angles(0, math.rad(120), 0), 1.4, "GlitchChase" },
 	{ "Tree", CFrame.new(-25, 6.4, -15) * CFrame.Angles(0, math.rad(20), 0), 0.8, "StarterMeadow" },
 	{ "Tree", CFrame.new(25, 5.6, -16) * CFrame.Angles(0, math.rad(309), 0), 0.7, "StarterMeadow" },
 	{ "Tree", CFrame.new(-87, 6.4, 12) * CFrame.Angles(0, math.rad(321), 0), 0.8, "StarterMeadow" },
@@ -1756,6 +1781,242 @@ end
 
 -- After dressing: wooden posts under every sign, from the ground up to just above the board (posts stand at the
 -- board's ends so they never cover the lettering).
+-- The Crusher King's throne hall (user, Oct 4: "the grandest place in Pixel Plains"; picked "Throne hall island" on
+-- Oct 10). The fight floor and the king stay exactly as tested: the 6×7 tiles + his rock become the raised dais of a
+-- ruined voxel throne hall. Around it, 34 studs down (below the void line, so nothing there is a landing or a safe
+-- spot): a U of island terraces carrying colonnades with royal banners, a back wall with a rose window over his
+-- head, two corner towers, rubble and crowds of trees. On the chase landing: an entrance arch, a velvet runner and
+-- two braziers. Sun shafts stream between the pillars onto the floor; they burn gold once he's beaten. Section-local
+-- numbers (Greybox buildPixelPlains, BOSS ARENA) are measured from the BossTrigger, so section shifts carry it.
+local HALL_DROP = 34 -- terrace tops under the fight floor (void respawn is 25 under the last ground)
+local SHAFT = Color3.fromRGB(255, 236, 196)
+local SHAFT_WON = Color3.fromRGB(255, 214, 120)
+
+local function bossHall(world: Instance, apply: (BasePart, string) -> boolean)
+	local trigger = world:FindFirstChild("BossTrigger", true)
+	if not (trigger and trigger:IsA("BasePart") and Skins.BA_Pillar) then
+		return
+	end
+	-- section-local (x, y above the floor top, z) → world
+	local origin = trigger.Position - v(0, 15, 1255)
+	local function at(x: number, y: number, z: number): Vector3
+		return origin + v(x, y, z)
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "ThroneHall"
+	folder.Parent = world
+	local L = -HALL_DROP
+	-- a piece standing on y (its base), facing `face` (its front, -Z, looks that way)
+	local function piece(skin: string, base: Vector3, face: Vector3?, collide: boolean?): Part?
+		local size = Skins[skin] and Skins[skin].Design
+		if not size then
+			return nil
+		end
+		local pos = base + v(0, size.Y / 2, 0)
+		local cf = if face then CFrame.lookAt(pos, pos + face) else CFrame.new(pos)
+		local p = hiddenPart(skin, size, cf, folder)
+		p.CanCollide = collide == true
+		if not apply(p, skin) then
+			p:Destroy()
+			return nil
+		end
+		return p
+	end
+	-- terraces: voxel ground islands (islandUndersides gives them dirt/stone tiers + edge foliage later)
+	for _, t in
+		{
+			{ v(40, 6, 152), at(-64, L - 3, 1272) },
+			{ v(40, 6, 152), at(64, L - 3, 1272) },
+			{ v(168, 6, 44), at(0, L - 3, 1370) },
+		}
+	do
+		local p = hiddenPart("HallTerrace", t[1], CFrame.new(t[2]), folder)
+		p.Transparency = 0
+		p:SetAttribute("Skin", "GrassBlock")
+		apply(p, "GrassBlock")
+	end
+	-- colonnades: six pillars a side, ruined in places; banners on the whole ones, lintels across some pairs
+	local ROWS = { 1218, 1240, 1262, 1284, 1306, 1328 }
+	local KINDS = {
+		[-1] = { "BA_Pillar", "BA_Pillar", "BA_PillarBroken", "BA_Pillar", "BA_Pillar", "BA_PillarStump" },
+		[1] = { "BA_Pillar", "BA_PillarStump", "BA_Pillar", "BA_Pillar", "BA_PillarBroken", "BA_Pillar" },
+	}
+	local LINTELS = { [-1] = { 1, 4 }, [1] = { 3 } } -- the first pillar of each spanned pair
+	local rng = Random.new(1326)
+	for _, side in { -1, 1 } do
+		local inward = v(-side, 0, 0)
+		for i, z in ROWS do
+			local kind = KINDS[side][i]
+			local base = at(side * 52, L, z)
+			-- quarter turns so the ivy and chips don't repeat down the row
+			piece(kind, base, CFrame.Angles(0, math.rad(rng:NextInteger(0, 3) * 90), 0).LookVector)
+			if kind == "BA_Pillar" then
+				local banner = if (i + side) % 4 == 0 then "BA_BannerTorn" else "BA_Banner"
+				piece(banner, base + inward * 4.75 + v(0, 75 - 11 - 32, 0), inward)
+			elseif kind ~= "BA_PillarStump" then
+				-- the snapped-off drum lies on the terrace beside it
+				piece(
+					"BA_Rubble" .. rng:NextInteger(1, 2),
+					base - inward * 12 + v(0, 0, rng:NextNumber(-6, 6)),
+					CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0).LookVector
+				)
+			end
+		end
+		for _, i in LINTELS[side] do
+			local z = (ROWS[i] + ROWS[i + 1]) / 2
+			piece("BA_Lintel", at(side * 52, L + 75, z), v(side, 0, 0)) -- long axis along the colonnade
+		end
+	end
+	-- the back wall (front face at z 1352, behind the throne) with its rose window over his crown, and the towers
+	piece("BA_BackWall", at(0, L, 1350))
+	piece("BA_Tower", at(56, L, 1360))
+	piece("BA_TowerBroken", at(-56, L, 1360)) -- the wall's collapsed end (Blender +x = Roblox -x)
+	piece("BA_Rubble1", at(-36, L, 1372), v(1, 0, 0.3))
+	piece("BA_Rubble2", at(72, L, 1300), v(-0.4, 0, 1))
+	-- crowds: trees down the outer half of the side terraces and round the towers, flowers and bushes between pillars
+	for _, side in { -1, 1 } do
+		for z = 1202, 1350, 10 do
+			local s = rng:NextNumber(1.4, 2.6)
+			local name = TREES[rng:NextInteger(1, #TREES)]
+			local design = Skins[name].Design * s
+			local p = hiddenPart(
+				name,
+				design,
+				CFrame.new(at(side * rng:NextNumber(68, 78), L + design.Y / 2, z + rng:NextNumber(-3, 3)))
+					* CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0),
+				folder
+			)
+			if not apply(p, name) then
+				p:Destroy()
+			end
+		end
+		for i = 1, #ROWS - 1 do
+			for _, skin in { FLOWERS[rng:NextInteger(1, 3)], BUSHES[rng:NextInteger(1, 2)] } do
+				local s = rng:NextNumber(1.2, 1.8)
+				local design = Skins[skin].Design * s
+				local p = hiddenPart(
+					skin,
+					design,
+					CFrame.new(
+						at(
+							side * rng:NextNumber(47, 60),
+							L + design.Y / 2,
+							(ROWS[i] + ROWS[i + 1]) / 2 + rng:NextNumber(-5, 5)
+						)
+					) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0),
+					folder
+				)
+				if not apply(p, skin) then
+					p:Destroy()
+				end
+			end
+		end
+	end
+	for _, x in { -78, -70, 70, 78 } do
+		local s = rng:NextNumber(2, 2.8)
+		local name = TREES[rng:NextInteger(1, #TREES)]
+		local design = Skins[name].Design * s
+		local p = hiddenPart(name, design, CFrame.new(at(x, L + design.Y / 2, 1380 + rng:NextNumber(-4, 4))), folder)
+		if not apply(p, name) then
+			p:Destroy()
+		end
+	end
+	-- the entrance on the chase landing: an arch (its posts collide), the runner up to the first row, two braziers
+	if piece("BA_Gate", at(0, 0, 1190)) then
+		for _, side in { -1, 1 } do
+			local post = hiddenPart("GatePost", v(4, 32, 4), CFrame.new(at(side * 13, 16, 1190)), folder)
+			post.CanCollide = true
+		end
+	end
+	piece("BA_Carpet", at(0, 0.02, 1203))
+	for _, side in { -1, 1 } do
+		local brazier = piece("BA_Brazier", at(side * 11, 0, 1209), nil, true)
+		if brazier then
+			local flame = hiddenPart("BrazierFlame", v(3, 1, 3), CFrame.new(at(side * 11, 6, 1209)), brazier)
+			CombatFx.Emit(flame, "Flame", 0.9, 30)
+			local light = Instance.new("PointLight") -- small warm pool (memory subtle-lighting)
+			light.Color = Color3.fromRGB(255, 170, 90)
+			light.Range = 12
+			light.Brightness = 0.8
+			light.Parent = flame
+		end
+	end
+	-- sun shafts: light from the real sun streams through the gaps of the sunny colonnade (under the lintels) onto
+	-- the floor, like light through a ruined hall (a shaft through the rose window lit his face like a glare). Faint
+	-- in the fight so slam marks stay readable, gold once he's beaten.
+	local sun = v(-0.672, 0.672, 0.313) -- Lighting:GetSunDirection() in Pixel Plains (ClockTime 15, measured Oct 10)
+	local beams = {}
+	local shafts = hiddenPart("SunShafts", v(1, 1, 1), CFrame.new(at(0, 0, 1255)), folder)
+	for i, z in { 1212, 1234, 1256, 1278 } do
+		-- the floor spot whose ray to the sun passes a gap of the colonnade on the sun's side
+		local foot = at(-sun.X / math.abs(sun.X) * 15, 0, z)
+		local a0 = Instance.new("Attachment")
+		a0.Position = shafts.CFrame:PointToObjectSpace(foot + sun * 110)
+		a0.Parent = shafts
+		local a1 = Instance.new("Attachment")
+		a1.Position = shafts.CFrame:PointToObjectSpace(foot)
+		a1.Parent = shafts
+		local beam = Instance.new("Beam")
+		beam.Name = "SunShaft" .. i
+		beam.Attachment0 = a0
+		beam.Attachment1 = a1
+		beam.Texture = "rbxassetid://131326791885754" -- textures/godray.png
+		beam.TextureMode = Enum.TextureMode.Stretch
+		beam.Width0 = 10
+		beam.Width1 = 13
+		beam.FaceCamera = true
+		beam.LightEmission = 1
+		beam.LightInfluence = 0
+		beam.Brightness = 2
+		beam.Segments = 1
+		beam.Parent = shafts
+		table.insert(beams, beam)
+		if i == 3 then
+			-- dust hanging in the light (It Takes Two's shed): slow warm motes along one shaft
+			local mid = foot + sun * 40
+			local dust = hiddenPart("ShaftDust", v(10, 10, 70), CFrame.lookAt(mid, foot), folder)
+			local motes = Instance.new("ParticleEmitter")
+			motes.Texture = "rbxassetid://107545947174130" -- Ambient.luau MOTE
+			motes.Shape = Enum.ParticleEmitterShape.Box
+			motes.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			motes.Rate = 14
+			motes.Lifetime = NumberRange.new(6, 10)
+			motes.Speed = NumberRange.new(0.1, 0.4)
+			motes.SpreadAngle = Vector2.new(180, 180)
+			motes.Acceleration = v(0, -0.05, 0)
+			motes.Size = NumberSequence.new(0.35)
+			motes.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.3, 0.35),
+				NumberSequenceKeypoint.new(0.7, 0.35),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			motes.Color = ColorSequence.new(SHAFT)
+			motes.LightEmission = 0.6
+			motes.LightInfluence = 0.3
+			motes.Parent = dust
+		end
+	end
+	local function light()
+		local won = trigger:GetAttribute("Played") == true
+		local fight = workspace:GetAttribute("BossFight") == true
+		local t = if won then 0.3 elseif fight then 0.75 else 0.55
+		for _, beam in beams do
+			beam.Transparency = NumberSequence.new(t)
+			beam.Color = ColorSequence.new(if won then SHAFT_WON else SHAFT)
+		end
+	end
+	light()
+	trigger:GetAttributeChangedSignal("Played"):Connect(light)
+	workspace:GetAttributeChangedSignal("BossFight"):Connect(light)
+	for _, d in folder:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CanQuery = false -- never in the way of aim rays (Grapple, Pause Beam, Pull)
+			d.CanTouch = false
+		end
+	end
+end
+
 local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
@@ -1839,6 +2100,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 			apply(d, if d.Color == PP.Grass then "GrassBlock" else "DirtWall")
 		end
 	end
+	bossHall(world, apply) -- before the undersides: its terraces get theirs too
 	islandUndersides(world, params, apply)
 	bossTileChunks(world)
 	-- the Fire Bar Run gallery glass was a bare pale slab: now real glass in a wooden frame (posts, sill, top rail),

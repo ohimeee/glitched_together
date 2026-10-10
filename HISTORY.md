@@ -2,6 +2,12 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## Status (Oct 10, 2026, 17th session)
+
+- **Crusher King throne hall (16th-session next step 1; user picked "Throne hall island" from three ASCII layouts).** Fight floor, king and attacks untouched. Voxel ruin kit `tools/boss_arena/kit.py` (14 BA_* meshes, atlas `textures/make_arena_palette.py`), brief `blender_assets/briefs/BossArena.md`. `bossHall` (ArtService/PixelPlains.luau, run in Extras before islandUndersides so its terraces get undersides): U of GrassBlock terraces 34 under the floor (`HALL_DROP`, below the 25-stud void line), 6 pillars a side with banners/lintels/rubble, back wall with rose window, towers, tree/flower crowds, gate + carpet + braziers on the chase landing, sun-shaft Beams (`textures/godray.png`) along the measured PP sun direction through the colonnade gaps: faint in the fight, gold once the BossTrigger is `Played`; dust motes in one shaft.
+- Fixed on the way: two decor flower patches sat on boss tiles (would float when rows drop) → moved to the landing; a bush stood inside the new gate post; the gate's crown keystone hung into the arch and hid the king (re-exported `BossArenaGate.fbx`, crown on top); shafts first came through the rose window and glared on the king's face → re-aimed along the sun.
+- Verified: solo Play (DebugCheckpoint 28), 88 hall meshes load, screenshots from the approach, the floor, wide side and the beaten state. Not felt with real input; not 2P.
+
 ## Status (Oct 4, 2026, 16th session, user asleep; PC shut down at 3:00 by `shutdown /s /t`)
 
 - **Done from the 15th-session user notes (all pushed, each checked in a solo Studio play by data/screenshot):**
