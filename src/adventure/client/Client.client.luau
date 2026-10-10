@@ -4,6 +4,7 @@ Input.Init()
 
 local Controllers = script.Parent.Controllers
 local order = {
+	"MoveAnimController",
 	"MovementController",
 	"StationController",
 	"CameraController",

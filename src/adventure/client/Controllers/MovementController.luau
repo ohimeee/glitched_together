@@ -14,6 +14,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
+local MoveAnim = require(script.Parent.MoveAnimController)
 
 local player = Players.LocalPlayer
 local groundPoundEvent = Net.event("GroundPound")
@@ -75,6 +76,8 @@ local function onCharacter(character: Model)
 	local cling: { normal: Vector3, started: number }? = nil
 	local grind: { rail: BasePart, dir: number, z: number }? = nil
 	local lastLedgeAssist = 0
+	local poundStarted = 0
+	local fallSpeed = 0 -- last downward speed in the air (Landed fires after the stop)
 	local swing: Swing? = nil
 
 	local function inAir(): boolean
@@ -223,7 +226,7 @@ local function onCharacter(character: Model)
 			boost = boost,
 			rope = rope,
 			anchorAt = anchorAt,
-			pose = hangPose(),
+			pose = if MoveAnim.Has("Swing") then nil else hangPose(), -- the Swing clip, else the scripted hang
 			blocked = 0,
 			onEnd = onEnd,
 		}
@@ -434,6 +437,7 @@ local function onCharacter(character: Model)
 	local function doubleJump()
 		airJumps += 1
 		Audio.play("DoubleJump", root)
+		MoveAnim.Play("DoubleJump")
 		local v = root.AssemblyLinearVelocity
 		setVelocity(Vector3.new(v.X, Tuning.DoubleJumpVelocity, v.Z))
 	end
@@ -443,6 +447,7 @@ local function onCharacter(character: Model)
 		cling = nil
 		resetAir()
 		Audio.play("WallJump", root)
+		MoveAnim.Play("WallJump")
 		setVelocity(c.normal * Tuning.WallJumpAway + Vector3.new(0, Tuning.WallJumpUp, 0))
 		root.CFrame = CFrame.lookAt(root.Position, root.Position + c.normal)
 	end
@@ -478,6 +483,7 @@ local function onCharacter(character: Model)
 				crouching = false
 				local dir = flat(humanoid.MoveDirection).Unit
 				Audio.play("LongJump", root)
+				MoveAnim.Play("LongJump")
 				task.defer(function()
 					setVelocity(dir * Tuning.LongJumpForward + Vector3.new(0, Tuning.LongJumpUp, 0))
 					-- hold the horizontal speed through the rise (the humanoid's air control would otherwise
@@ -530,10 +536,14 @@ local function onCharacter(character: Model)
 			jumpedSinceGround = false
 			if pounding then
 				pounding = false
+				MoveAnim.Play("PoundLand")
 				Audio.play("PoundImpact", root)
 				Audio.play("PoundDebris", root)
 				groundPoundEvent:FireServer(root.Position)
+			elseif fallSpeed < -Tuning.MoveAnim.HardLandSpeed then
+				MoveAnim.Play("Land")
 			end
+			fallSpeed = 0
 			if os.clock() - bufferedJumpAt <= Tuning.JumpBuffer and not player:GetAttribute("NoJump") then
 				bufferedJumpAt = -math.huge
 				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -566,6 +576,7 @@ local function onCharacter(character: Model)
 		end
 		cling = nil
 		Audio.play("Dash", root)
+		MoveAnim.Play("Dash")
 		local dir = if humanoid.MoveDirection.Magnitude > 0
 			then flat(humanoid.MoveDirection).Unit
 			else root.CFrame.LookVector
@@ -588,6 +599,8 @@ local function onCharacter(character: Model)
 		pounding = true
 		cling = nil
 		Audio.play("PoundStart", root)
+		MoveAnim.Play("PoundSpin")
+		poundStarted = os.clock()
 		burst(Vector3.zero, Tuning.PoundHang) -- brief hang in the air
 		task.delay(Tuning.PoundHang, function()
 			if pounding then
@@ -719,6 +732,22 @@ local function onCharacter(character: Model)
 		humanoid.WalkSpeed = speed
 		humanoid.JumpHeight = if player:GetAttribute("NoJump") or blocked() then 0 else Tuning.JumpHeight
 
+		-- looping move animations follow the state
+		local hide = blocked() or player:GetAttribute("Downed") == true
+		local grounded = not inAir()
+		local run = flat(root.AssemblyLinearVelocity).Magnitude
+		MoveAnim.Set("Swing", swing ~= nil and not hide)
+		MoveAnim.Set("Grind", grind ~= nil and not hide)
+		MoveAnim.Set("WallCling", cling ~= nil and not hide)
+		MoveAnim.Set("PoundFall", pounding and not hide and now - poundStarted >= Tuning.PoundHang)
+		MoveAnim.Set("Crouch", crouching and grounded and not moving and not hide)
+		MoveAnim.Set("CrouchWalk", crouching and grounded and moving and not hide)
+		MoveAnim.Set(
+			"Sprint",
+			sprinting and grounded and moving and not crouching and not hide and run > Tuning.WalkSpeed + 2,
+			math.max(run / Tuning.SprintSpeed, 0.6)
+		)
+
 		if swing then
 			stepSwing(dt)
 			return
@@ -730,6 +759,9 @@ local function onCharacter(character: Model)
 
 		local v = root.AssemblyLinearVelocity
 		local airborne = inAir()
+		if airborne then
+			fallSpeed = v.Y
+		end
 
 		-- Land on a rail from above. A fast fall can touch down on the (solid) rail between two frames, so standing
 		-- on top of one catches it too (only from above: walking past a rail end at its height doesn't).
@@ -772,6 +804,7 @@ local function onCharacter(character: Model)
 					local top = workspace:Raycast(probe, Vector3.new(0, -(reach + 0.5), 0), rayParams)
 					if top and top.Normal.Y > 0.7 then
 						lastLedgeAssist = now
+						MoveAnim.Play("LedgeAssist")
 						local lift = top.Position.Y - feet.Y + 0.2
 						root.CFrame += Vector3.new(0, lift, 0) + dir * 0.8
 						setVelocity(dir * math.max(flat(v).Magnitude, 8))

@@ -38,6 +38,11 @@ return {
 	LongJumpHold = 0.45,
 	LedgeAssistReach = 2.5, -- studs a near-miss ledge pulls you up
 	MobileAutoSprintAfter = 1.5,
+	-- Move animations (Config/MoveAnims.luau, MoveAnimController)
+	MoveAnim = {
+		Fade = 0.08, -- s blend in/out of a clip
+		HardLandSpeed = 62, -- studs/s falling: faster than a jump's fall plays the landing squash
+	},
 
 	-- Follow camera (CameraController): mouse-look, cursor locked, crosshair = screen center
 	Camera = {
