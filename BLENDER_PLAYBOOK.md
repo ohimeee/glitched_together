@@ -215,6 +215,8 @@ Naming: PascalCase, world prefix for world-specific assets: `Pip`, `Capsule_Kai`
 
 ---
 
+**Sky shader lesson (Oct 11):** procedural stars must be at least ~1 px on the rendered face (one 1024 face pixel ≈ 0.0015 rad; a Voronoi star radius of r cells at scale S covers r/S rad). The first Epilogue sky had 1/7-px stars that the render averaged away ("more stars" from the user). Check star size at full face resolution, never in a downscaled preview.
+
 ## 9. Integrations the user can switch on
 
 All in Blender: sidebar **N → MCP for Blender**, then reconnect.

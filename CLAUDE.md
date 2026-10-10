@@ -38,10 +38,11 @@
 - **Boss camera hooks (castle top-down):** workspace `TopDownZoom` (×), `TopDownFocus` (Vector3) + `TopDownFocusWeight`, `TopDownFlip` (look from the −Z side). Boss hurtboxes: tag `BossHurt` → `CombatService.BossHit(part, damage, owner, "Shot"|"Reflected"|"Area")`. In Studio, `require(CombatService)` from execute_luau is a separate copy (its shots never move): drive tools through the real `ToolUse` remote instead.
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
 
-## Current status (19th session, Oct 10, 2026)
+## Current status (21st session, Oct 11, 2026)
 
 - **Built:** Lobby (doll-sized bedroom, capsules), Prologue (stage set), World 1 Pixel Plains (28 checkpoints incl. Glitch Chase + **Crusher King boss** + throne hall, voxel art pass), World 2 Starfall Castle (combat M3, set pieces incl. Siege Cart + Ember Fuse) + boss **Hollow Dragon** (Sketchfab Celestial Dragon), World 3 Glitched Core (13 checkpoints incl. Memory Lane) + **final boss The Unfinished** (Meteor Golem skins, 4 phases, `server/Bosses/Unfinished.luau`) + **Epilogue** (night walk, Pip goodbye, real-world ending, credits + CONTINUE? YES). Art passes, Blender skyboxes, UI themes, sound first pass everywhere. Epilogue night panorama (Blender, 20th session). BACK TO LOBBY exit after CONTINUE? YES, realistic Epilogue walk, denser star sky + meteors (21st session). Overall ~82% (missing: 2P testing, publishing).
-- **19th session:** final boss playable end to end + Epilogue built (solo/emulated; details in HISTORY.md).
+- **21st session:** BACK TO LOBBY exit, credits name = Roblox `buldak0555`, realistic Epilogue walk, star sky + meteors (details in HISTORY.md). Git clean, all pushed.
+- **Studio state at handoff:** the Rojo Studio plugin was NOT connected this session; changed sources were pushed into Edit by hand (HttpService from a local server, TOOLS.md §1). First thing next session: reconnect the Rojo plugin (user click) so Edit matches disk again.
 - **Most of it is only solo/emulated-tested.** Nothing since the 6th session has been played with 2 players.
 
 ## Next steps (in order)
