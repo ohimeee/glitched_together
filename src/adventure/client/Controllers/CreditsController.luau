@@ -41,6 +41,10 @@ local function roll()
 	gui.IgnoreGuiInset = true
 	gui.DisplayOrder = 20 -- over the cutscene bars and the HUD
 	gui.Parent = player:WaitForChild("PlayerGui")
+	player:SetAttribute("FreeCursor", true) -- CameraController unlocks the mouse so YES can be clicked
+	gui.Destroying:Connect(function()
+		player:SetAttribute("FreeCursor", nil)
+	end)
 
 	local back = Instance.new("Frame")
 	back.Size = UDim2.fromScale(1, 1)
@@ -111,6 +115,7 @@ local function roll()
 		yes.TextTransparency = 1
 		yes.Text = "YES"
 		yes.AutoButtonColor = true
+		yes.Modal = true -- frees the cursor even in first person
 		yes.Parent = card
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0, THEME.Corner)

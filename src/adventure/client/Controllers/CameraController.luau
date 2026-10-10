@@ -117,11 +117,13 @@ local function followStep(dt: number, root: BasePart?)
 	camera.FieldOfView += (fov - camera.FieldOfView) * math.min(1, dt * 4)
 end
 
--- The cursor is locked (mouse-look) in Follow mode unless a menu/cutscene needs it or Alt is held.
+-- The cursor is locked (mouse-look) in Follow mode unless a menu/cutscene needs it (MenuContext, or a screen like the
+-- credits card that sets the player's FreeCursor attribute) or Alt is held.
 local function wantsLock(m: string): boolean
 	return m == "Follow"
 		and override == nil
 		and not Input.isEnabled("MenuContext")
+		and not player:GetAttribute("FreeCursor")
 		and not UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt)
 		and UserInputService.MouseEnabled
 end
