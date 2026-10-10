@@ -29,16 +29,26 @@ end
 -- tagged `KitZone` with `Kit` = a world name hands whoever stands in it that world's kit and camera (Prologue = no
 -- tools). Outside every zone you hold the current world's kit.
 local zoneOf: { [Player]: string } = {}
+-- the final boss swaps everyone's kit per phase (ForceKit) without leaving the Core; beats any zone
+local forced: string? = nil
 
 local function applyKit(p: Player)
 	local role = p:GetAttribute("Role")
-	local kit = Kits.Worlds[zoneOf[p] or WorldService.Current]
+	local kit = Kits.Worlds[forced or zoneOf[p] or WorldService.Current]
 	if not (role and kit) then
 		return
 	end
 	WorldService.SetKit(p, (kit :: any)[role], kit.Camera)
 	-- Castle is top-down with no jumping (mechanics.md §4, World 2).
 	p:SetAttribute("NoJump", kit.Camera == "TopDown")
+end
+
+-- Hand every player `world`'s kit and camera (nil = back to the current world's own)
+function WorldService.ForceKit(world: string?)
+	forced = world
+	for _, p in DuoService.Players() do
+		applyKit(p)
+	end
 end
 
 function WorldService.SpawnPlayer(p: Player)
@@ -83,6 +93,7 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 
 	CheckpointService.Reset(worldName, checkpoint or 0)
 	table.clear(zoneOf)
+	forced = nil
 	for _, p in DuoService.Players() do
 		applyKit(p)
 		WorldService.SpawnPlayer(p)

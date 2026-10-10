@@ -1728,6 +1728,154 @@ local function buildGlitchedCore(world: Model)
 		platform(P, size, x, top, z, { color = KAI, name = name, tags = { "Copyable" } })
 	end
 
+	-- FINAL STAGE: The Unfinished (mechanics.md §5, blender_assets/briefs/Unfinished.md). A round scale-model stage
+	-- over the void after Memory 3; the golem stands in the void behind its far rim. Its phases swap everyone's kit
+	-- (Bosses/Unfinished). Phase 4's six Code Layer pieces float outside the rail; their slots wait on the stage.
+	local function finalStage()
+		section("FinalStage", Vector3.zero, Vector3.new(0, 0, 130))
+		local C = Vector3.new(0, 0, 70) -- stage centre (section-local), radius 46: z 24..116
+		local R = 46
+		floor(Vector3.new(10, 4, 26), 0, 0, 12, "StageWalk")
+		block(P, Vector3.new(4, R * 2, R * 2), CFrame.new(C.X, -2, C.Z) * CFrame.Angles(0, 0, math.rad(90)), {
+			name = "FinalStage",
+			color = GREY,
+			shape = Enum.PartType.Cylinder,
+			attrs = { Radius = R },
+		})
+		-- an invisible rail round the rim (open at the walkway): nobody falls off mid-fight, shots fly over it
+		for i = 0, 23 do
+			local a = (i + 0.5) / 24 * math.pi * 2 -- 0 = toward the golem (+Z)
+			if math.abs(a - math.pi) > 0.2 then
+				local at = C + Vector3.new(math.sin(a), 0, math.cos(a)) * (R + 0.5)
+				local rail = block(
+					P,
+					Vector3.new(13, 10, 1),
+					CFrame.lookAt(at + Vector3.new(0, 5, 0), C + Vector3.new(0, 5, 0)),
+					{
+						name = "StageRail",
+						transparency = 1,
+						tags = { "ShotPass" },
+					}
+				)
+				rail.CanQuery = false
+			end
+		end
+		checkpoint(P, nextOrder(), 0, 0, 32, W, {
+			"Kai: freeze a falling arm. Miko: climb on and pound its crystal.",
+			"It changes the rules every phase. Use the tools it gives you.",
+		})
+		-- until the fight module exists the stage is just a room and its exit stays open
+		local ready = script.Parent:FindFirstChild("Bosses") ~= nil
+			and (script.Parent :: any).Bosses:FindFirstChild("Unfinished") ~= nil
+		local trigger = block(P, Vector3.new(96, 40, 96), CFrame.new(C.X, 20, C.Z), {
+			name = "BossTrigger",
+			transparency = 1,
+			collide = false,
+			tags = if ready then { "BossTrigger" } else nil,
+			attrs = { Boss = "Unfinished" },
+		})
+		trigger.CanQuery = false
+		trigger.CanTouch = false
+
+		-- the golem: invisible grey-box boxes under its skins (Blender body split, briefs/Unfinished.md), feet at
+		-- `feet`; the boss module moves the whole model and throws the arms
+		local golem = Instance.new("Model")
+		golem.Name = "Unfinished"
+		golem.Parent = P
+		local feet = CFrame.new(0, -Tuning.Unfinished.StandDrop, 128)
+		local function bodyPart(name: string, size: Vector3, rel: Vector3, opts: Opts?): Part
+			local o: Opts = opts or {}
+			o.name = name
+			o.transparency = 1
+			o.collide = if o.collide == nil then false else o.collide
+			o.attrs = o.attrs or {}
+			(o.attrs :: any).Skin = (o.attrs :: any).Skin or ("Unf" .. name)
+			return block(golem, size, feet * CFrame.new(rel), o)
+		end
+		bodyPart("Torso", Vector3.new(36.25, 30.79, 22.16), Vector3.new(-0.25, 32.5, 0))
+		bodyPart("LegL", Vector3.new(18.35, 18.78, 13.76), Vector3.new(-8.25, 9.38, -2.32))
+		bodyPart("LegR", Vector3.new(18.56, 18.18, 13.97), Vector3.new(8.28, 9.37, -2.21))
+		bodyPart("Rock", Vector3.new(3.89, 4.46, 4.61), Vector3.new(-11.25, 47.26, 3.41))
+		for _, arm in { { "L", -17.97, 22.9, -2.01 }, { "R", 18.1, 22.47, -2.03 } } do
+			-- 12 x 24 x 12 gameplay box (the mesh is a little bulkier): thrown flat, its top is a double jump up
+			local part = bodyPart("Arm" .. arm[1], Vector3.new(12, 24, 12), Vector3.new(arm[2], arm[3], arm[4]), {
+				collide = true,
+				tags = { "Freezable" },
+				attrs = { Side = arm[1] },
+			})
+			block(golem, Vector3.new(3, 3, 3), part.CFrame * CFrame.new(0, -8, -7.5), {
+				name = "Crystal" .. arm[1],
+				color = MIKO,
+				material = NEON,
+				collide = false,
+			})
+		end
+		bodyPart("Head", Vector3.new(4, 4, 4), Vector3.new(0, 44, -8), { attrs = { Skin = "" } })
+		block(golem, Vector3.new(6, 6, 2), feet * CFrame.new(0, 33, -11.5), {
+			name = "Heart",
+			color = GLITCH,
+			material = NEON,
+			collide = false,
+			tags = { "BossHurt" },
+			attrs = { Kind = "Heart" },
+		})
+		golem.WorldPivot = feet
+
+		-- phase 4: six level pieces hidden in the Code Layer outside the rail, each with a slot on the stage (a
+		-- ghost of its shape, shown once the duo starts building)
+		local slots = Instance.new("Folder")
+		slots.Name = "LevelSlots"
+		slots.Parent = P
+		local pieces = {
+			{ "PieceTower", Vector3.new(4, 10, 4), nil },
+			{ "PieceArch", Vector3.new(10, 6, 3), nil },
+			{ "PieceStep", Vector3.new(8, 3, 8), nil },
+			{ "PieceOrb", Vector3.new(5, 5, 5), Enum.PartType.Ball },
+			{ "PiecePillar", Vector3.new(2, 9, 2), nil },
+			{ "PieceSlab", Vector3.new(12, 1.5, 5), nil },
+		}
+		for i, piece in pieces do
+			local a = (i - 1) / #pieces * math.pi * 2 + math.pi / 6
+			local dir = Vector3.new(math.sin(a), 0, math.cos(a))
+			local size = piece[2] :: Vector3
+			local slotAt = C + dir * 28 + Vector3.new(0, size.Y / 2, 0)
+			block(slots, size, CFrame.lookAt(slotAt, C + Vector3.new(0, size.Y / 2, 0)), {
+				name = "Slot",
+				color = NEUTRAL,
+				material = Enum.Material.ForceField,
+				transparency = 1,
+				collide = false,
+				shape = piece[3],
+				attrs = { Piece = piece[1], Index = i },
+			}).CanQuery =
+				false
+			local codeAt = C + dir * (R + 9) + Vector3.new(0, 3 + size.Y / 2, 0)
+			block(P, size, CFrame.lookAt(codeAt, C + Vector3.new(0, codeAt.Y, 0)), {
+				name = piece[1],
+				color = MIKO,
+				shape = piece[3],
+				tags = { "CodeLayer" },
+			})
+		end
+		-- the SAVE button rises out of the stage's middle at the end; both pound it together
+		block(P, Vector3.new(1.5, 18, 18), CFrame.new(C.X, -2, C.Z) * CFrame.Angles(0, 0, math.rad(90)), {
+			name = "SaveButton",
+			color = DUO,
+			collide = false,
+			transparency = 1,
+			shape = Enum.PartType.Cylinder,
+		})
+		block(P, Vector3.new(12, 12, 3), CFrame.new(0, 6, 104), {
+			name = "WorldExit",
+			color = DUO,
+			material = NEON,
+			transparency = if ready then 1 else 0.65,
+			collide = false,
+			tags = { "WorldExit" },
+			attrs = { Locked = if ready then true else nil },
+		})
+	end
+
 	-- 3-1 MISSING TEXTURES -------------------------------------------------------------------------
 	section("MissingTextures", Vector3.zero, Vector3.new(0, 0, 262))
 	floor(Vector3.new(40, 4, 30), 0, 0, 0, "MissingTextures")
@@ -2301,15 +2449,7 @@ local function buildGlitchedCore(world: Model)
 	})
 	memory.CanQuery = false
 	memory.CanTouch = false
-	block(P, Vector3.new(12, 12, 3), CFrame.new(0, 6, 174), {
-		name = "WorldExit",
-		color = DUO,
-		material = NEON,
-		transparency = 0.65,
-		collide = false,
-		tags = { "WorldExit" },
-	})
-	sign(P, "THE UNFINISHED (M6)", CFrame.new(0, 16, 174), Vector3.new(22, 3, 0.4))
+	finalStage()
 
 	-- chain: each section's entry snaps onto the previous section's exit
 	local cursor = chunks[1].entry
