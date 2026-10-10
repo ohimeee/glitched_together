@@ -172,8 +172,14 @@ local function setFlying(self: any, flying: boolean)
 		part.CanCollide = (not flying) and part:GetAttribute("Collide") == true
 	end
 	-- airborne it's half static: see-through, so it never hides the players under it from the top-down camera
+	-- (skins only: a grey-box holder still waiting for its mesh must never be stored as "solid", or it shows up as a
+	-- box after landing)
 	for _, d in self.dragon:GetDescendants() do
-		if d:IsA("BasePart") and d.Transparency < 1 or d:GetAttribute("SolidT") ~= nil then
+		if
+			d:IsA("BasePart")
+			and d:GetAttribute("Skin") == nil
+			and (d.Transparency < 1 or d:GetAttribute("SolidT") ~= nil)
+		then
 			if flying and d:GetAttribute("SolidT") == nil then
 				d:SetAttribute("SolidT", d.Transparency)
 				d.Transparency = math.max(d.Transparency, T.FlyGhost)
@@ -428,14 +434,16 @@ local function stepSkies(self: any, dt: number)
 			s.state, s.t, s.angle = "Fly", T.LandEvery, 0
 		end
 	elseif s.state == "Fly" then
-		s.angle += dt * 0.35
-		local c = self.center
+		-- a wide, slow strafe over the hole that always faces the hall (user, Oct 10: the tight loop over the players
+		-- spun it round and tipped it sideways: "quite broken when flying"); it only leans and turns a little toward
+		-- where it's going, like a boss keeping its eyes on you
+		s.angle += dt * math.pi * 2 / T.LapTime
+		local c = self.loopCenter
 		local pos = c + Vector3.new(math.sin(s.angle) * T.LoopX, T.FlyHeight, math.cos(s.angle) * T.LoopZ)
-		local ahead = c + Vector3.new(math.sin(s.angle + 0.1) * T.LoopX, T.FlyHeight, math.cos(s.angle + 0.1) * T.LoopZ)
-		-- the model's front is -Z: look along the path
-		pose(self, CFrame.lookAt(pos, ahead) * self.pivotTilt, 0, 0.45)
+		local side = math.cos(s.angle) -- -1..1: sideways speed (+X)
+		pose(self, CFrame.new(pos) * self.home.Rotation * CFrame.Angles(0, -side * T.FlyTurn, 0), 0, 0.45)
 		self.target.flap = T.Flap
-		self.target.roll = -T.Bank -- leaning into the circle
+		self.target.roll = side * T.Bank
 		self.shadow.CFrame = CFrame.new(pos.X, 0.12, pos.Z) * CFrame.Angles(0, 0, math.pi / 2)
 		if s.t <= 0 then
 			s.spot = self.landSpots[math.random(#self.landSpots)]
@@ -484,7 +492,8 @@ local function stepSkies(self: any, dt: number)
 		local a = 1 - math.max(s.t, 0) / 1.2
 		pose(self, s.from * CFrame.new(0, T.FlyHeight * a * a, 0), 0, 0.45)
 		if s.t <= 0 then
-			s.angle = math.atan2(self.base.Position.X - self.center.X, self.base.Position.Z - self.center.Z)
+			local rel = self.base.Position - self.loopCenter
+			s.angle = math.atan2(rel.X / T.LoopX, rel.Z / T.LoopZ)
 			s.state, s.t = "Fly", T.LandEvery
 		end
 	end
@@ -682,6 +691,15 @@ function Boss.Setup(self: any, world: Instance)
 		end
 	end
 	self.center = Vector3.new(0, 0, 1582)
+	self.loopCenter = Vector3.new(0, 0, T.LoopCenterZ)
+	-- the heart is hidden in its chest until phase 3 opens it (a neon cube glowing through the ghosted body read as
+	-- a loose pink block in flight)
+	self.heart.Transparency = 1
+	self.heart.Shape = Enum.PartType.Ball
+	local glow = self.heart:FindFirstChildOfClass("PointLight")
+	if glow then
+		glow.Enabled = false
+	end
 	-- a round shadow under it while it flies (a flat cylinder; the square one read as a slab)
 	self.shadow = fxPart(self, "DragonShadow", Vector3.new(0.1, 30, 30), CFrame.new(0, -5, 0), Color3.new(0, 0, 0), 1)
 	self.shadow.Shape = Enum.PartType.Cylinder
@@ -850,6 +868,10 @@ Boss.Phases = {
 			burnAllScales(self)
 			self.hits = 4 + T.MeteorHits
 			self.heartHits = 0
+			local glow = self.heart:FindFirstChildOfClass("PointLight")
+			if glow then
+				glow.Enabled = true
+			end
 			setHealth(self)
 			-- worn out, it sinks over the hole until its open chest is level with the hall (reflect height)
 			pose(self, self.home * CFrame.new(0, -T.Sink, 0), 0, 0.3)

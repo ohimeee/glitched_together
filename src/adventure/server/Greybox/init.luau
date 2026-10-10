@@ -3108,8 +3108,8 @@ local function buildStarfallCastle(world: Model)
 	local rail = block(world, Vector3.new(96, 14, 1), CFrame.new(0, 7, 1600.5), {
 		name = "EdgeRail",
 		transparency = 1,
+		tags = { "ShotPass" }, -- shots fly over it to the dragon's heart and scales
 	})
-	rail.CanQuery = false
 	for _, t in { { -47, 1550 }, { 47, 1550 }, { -47, 1590 }, { 47, 1590 }, { -47, 1630 }, { 47, 1630 } } do
 		torch(t[1], t[2])
 	end

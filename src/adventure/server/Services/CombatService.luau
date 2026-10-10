@@ -826,7 +826,21 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 	for _, cart in Tags.list("Cart") do
 		table.insert(exclude, cart)
 	end
+	-- walls only for walking (the Hollow Dragon's EdgeRail): CanQuery can't be off on a colliding part
+	for _, pass in Tags.list("ShotPass") do
+		table.insert(exclude, pass)
+	end
 	local hit = workspace:Raycast(pos, move, worldParams(exclude))
+	-- boss hurtboxes don't collide (players walk through scales and hearts), so the world ray skips them
+	if shot.friendly then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = Tags.list("BossHurt")
+		local hurt = workspace:Raycast(pos, move, params)
+		if hurt and (not hit or hurt.Distance < hit.Distance) then
+			hit = hurt
+		end
+	end
 	if hit and Tags.find(hit.Instance, "Mirror") then
 		local n = unitOr(flat(hit.Normal), -shot.dir)
 		shot.dir = unitOr(shot.dir - 2 * shot.dir:Dot(n) * n, n)

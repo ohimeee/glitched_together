@@ -303,17 +303,20 @@ return {
 		TailSway = 0.16, -- rad
 		Flap = 0.45, -- wing beat amplitude in flight (of the 65-degree lift)
 		FlapRate = 0.85, -- Hz
-		Bank = 0.22, -- rad roll while circling
+		Bank = 0.12, -- rad lean into its strafe
 		Hover = 0.18, -- wingbeat while it hovers over the hole (Flap in full flight)
 		WingAngle = 28, -- deg per unit of lift / beat
 		Rear = 0.12, -- rad it tips back before a breath (the whole body, about its claws)
 		Lunge = 0.07, -- ...and forward into it
-		LoopX = 12, -- flight loop over the hall (its wings already span most of it)
-		LoopZ = 12,
+		LoopX = 22, -- flight path: a wide oval strafe over the hole, facing the hall (12 x 12 over the players spun it)
+		LoopZ = 7,
+		LoopCenterZ = 1598, -- the hole starts at z 1600 (further back ran off the top of the screen)
+		LapTime = 16, -- s per lap
+		FlyTurn = 0.35, -- rad it turns toward where it's going (never shows its back)
 		Sink = 9, -- phase 3: how far it sinks so the heart is at reflect height
 		Focus = Vector3.new(0, 0, 1612), -- ...and drawn toward the dragon by this much (TopDownFocus / Weight)
-		FocusWeight = 0.5,
-		CameraBack = 1.9, -- camera this much further back (flatter): the 58-stud dragon ran off the top of the screen
+		FocusWeight = 0.6,
+		CameraBack = 2.3, -- camera this much further back (flatter): the 58-stud dragon ran off the top of the screen (1.9 still clipped the wing tips)
 		-- phase 1: static breath at one player (alternating); flank scales open while it breathes, Kai burns them
 		BreathEvery = 6.5, -- s from one breath's end to the next windup
 		BreathWindup = 1.4, -- s the aim line shows before the beam
@@ -334,8 +337,8 @@ return {
 		SummonEvery = 6,
 		MaxMinions = 6,
 		MinionCharge = 0.2, -- Kai's ultimate charge per minion that falls in phase 2 (5 = one Meteor)
-		FlyHeight = 8, -- its claws this high; it's 58 tall already (higher filled the top-down camera)
-		FlyGhost = 0.55, -- skin transparency while airborne (it hid the players under it)
+		FlyHeight = 5, -- its claws this high; it's 58 tall already (higher filled the top-down camera)
+		FlyGhost = 0.2, -- skin transparency while airborne (0.55 hid its thin tail: the tip looked like a loose shard; it flies over the hole now, not the players)
 		-- phase 3: a static wall with one gap; only Miko's reflected light reaches the heart
 		HeartHits = 4,
 		GapWidth = 8,
@@ -345,6 +348,45 @@ return {
 		BombWarn = 1.5,
 		BombRadius = 6,
 		BombDamage = 15,
+	},
+	-- The Unfinished (final boss, World 3; mechanics.md §5, blender_assets/briefs/Unfinished.md). The Core counts
+	-- hearts, so every hit is 1 heart.
+	Unfinished = {
+		Ease = 2.5, -- 1/s, the body glides to its pose (stand / slump / rise)
+		StandDrop = 14, -- phase 1 + 3: its feet this far under the stage (it towers over the rim)
+		SlumpDrop = 29.6, -- phase 2: sunk until its chest core is at reflect height (like the Hollow Dragon)
+		Bob = 0.6, -- studs of idle breathing
+		-- phase 1: it throws its forearms (Crusher King rhythm); Kai freezes one, Miko pounds its crystal
+		Hover = 22,
+		Track = 1.9,
+		SlamTime = 0.25,
+		Rest = 1.3,
+		Rise = 0.9,
+		Gap = 0.8,
+		SlamPad = 2, -- studs around a slammed arm that still hurt
+		CrystalHits = 3,
+		ShakeOff = 0.6,
+		-- phase 2: static breath at one player (shield blocks it), its chest core takes reflected shots only
+		BreathEvery = 5,
+		BreathWindup = 1.5,
+		BreathTime = 2.2,
+		BreathTurn = 26,
+		BreathLength = 90,
+		BreathWidth = 5,
+		BreathTick = 0.5,
+		HeartHits = 4,
+		Zoom = 1.25,
+		CameraBack = 2.1,
+		FocusWeight = 0.55,
+		-- phase 3: hits do nothing; static rings roll out over the stage (jump them)
+		TrueFormTime = 16,
+		RingEvery = 3.2,
+		RingSpeed = 18, -- studs/s
+		RingHeight = 2.2, -- a jump clears it
+		-- phase 4: the duo builds the level; every filled slot slows its rings
+		CalmRing = 3, -- RingEvery grows by this per filled slot
+		SlotRadius = 6, -- a paste of the right piece this close fills the slot
+		SaveRise = 2.5,
 	},
 	BossHitFlash = 0.25,
 
