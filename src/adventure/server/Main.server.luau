@@ -27,6 +27,7 @@ for _, name in
 		"StationInput",
 		"Credits",
 		"ContinueYes",
+		"SupportThanks",
 	}
 do
 	Net.event(name)
@@ -53,6 +54,8 @@ local CombatService = require(Services.CombatService)
 local EncounterService = require(Services.EncounterService)
 local BossService = require(Services.BossService)
 local ArtService = require(Services.ArtService)
+local SupportService = require(Services.SupportService)
+SupportService.Init() -- the credits tip jar's receipts
 
 Players.CharacterAutoLoads = true
 

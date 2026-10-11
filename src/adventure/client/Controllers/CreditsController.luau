@@ -2,7 +2,9 @@
 -- real-world ending cutscene: a night-blue screen, the credits (Config/Credits) scroll up, then the title card
 -- "CONTINUE?" with one answer, YES. YES fades the screen away, leaves the duo free under the stars and tells the
 -- server to open the BACK TO LOBBY exit on the hilltop ledge (Main).
--- Space / click / tap skips straight to the title card.
+-- Space / click / tap skips straight to the title card. Under it sits a small, optional tip jar (Config/Products.Support,
+-- server SupportService): "Enjoyed it? Support our next game", three Robux buttons, thank-you on purchase.
+local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -10,6 +12,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Credits = require(ReplicatedStorage.Shared.Config.Credits)
+local Products = require(ReplicatedStorage.Shared.Config.Products)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 
 local CreditsController = {}
@@ -29,6 +32,84 @@ local function label(parent: Instance, text: string, size: number, font: Enum.Fo
 	t.Text = text
 	t.Parent = parent
 	return t
+end
+
+-- the tip jar under the title card: a line of thanks-in-advance and one button per Products.Support entry
+local function supportPanel(parent: Instance): Frame
+	local panel = Instance.new("Frame")
+	panel.AnchorPoint = Vector2.new(0.5, 1)
+	panel.Position = UDim2.new(0.5, 0, 1, -36)
+	panel.Size = UDim2.fromOffset(460, 150)
+	panel.BackgroundColor3 = THEME.Panel
+	panel.BackgroundTransparency = 1
+	panel.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, THEME.Corner)
+	corner.Parent = panel
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = THEME.Stroke
+	stroke.Thickness = 2
+	stroke.Transparency = 1
+	stroke.Parent = panel
+	local head = label(panel, "Enjoyed Glitched Together?", 26, THEME.TitleFont, THEME.Accent)
+	head.Position = UDim2.fromOffset(0, 10)
+	local sub =
+		label(panel, "If you liked our game, you can support us in making the next one.", 18, THEME.Font, THEME.SubInk)
+	sub.Position = UDim2.fromOffset(0, 44)
+	local row = Instance.new("Frame")
+	row.AnchorPoint = Vector2.new(0.5, 1)
+	row.Position = UDim2.new(0.5, 0, 1, -14)
+	row.Size = UDim2.fromOffset(420, 44)
+	row.BackgroundTransparency = 1
+	row.Parent = panel
+	local list = Instance.new("UIListLayout")
+	list.FillDirection = Enum.FillDirection.Horizontal
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.Padding = UDim.new(0, 14)
+	list.Parent = row
+	local fades: { GuiObject } = { head, sub }
+	for _, product in Products.Support do
+		local b = Instance.new("TextButton")
+		b.Size = UDim2.fromOffset(120, 44)
+		b.BackgroundColor3 = THEME.Accent
+		b.Font = THEME.TitleFont
+		b.TextSize = 24
+		b.TextColor3 = THEME.Shadow
+		b.Text = `{product.Robux} R$`
+		b.AutoButtonColor = true
+		b.Parent = row
+		local c = Instance.new("UICorner")
+		c.CornerRadius = UDim.new(0, THEME.Corner)
+		c.Parent = b
+		table.insert(fades, b)
+		b.Activated:Connect(function()
+			if product.Id == 0 then
+				sub.Text = "(Not set up yet: the product ids go in Config/Products.)"
+				return
+			end
+			MarketplaceService:PromptProductPurchase(player, product.Id)
+		end)
+	end
+	for _, g in fades do
+		local goal: { [string]: number } = { TextTransparency = 0 }
+		if g:IsA("TextButton") then
+			goal.BackgroundTransparency = 0
+		end
+		for k in goal do
+			(g :: any)[k] = 1
+		end
+		TweenService:Create(g, TweenInfo.new(1), goal :: any):Play()
+	end
+	TweenService:Create(panel, TweenInfo.new(1), { BackgroundTransparency = THEME.PanelTransparency + 0.25 }):Play()
+	TweenService:Create(stroke, TweenInfo.new(1), { Transparency = 0.6 }):Play()
+	local thanks = Net.event("SupportThanks").OnClientEvent:Connect(function()
+		head.Text = "THANK YOU!"
+		sub.Text = "Your support goes into our next game."
+	end)
+	panel.Destroying:Connect(function()
+		thanks:Disconnect()
+	end)
+	return panel
 end
 
 local function roll()
@@ -122,6 +203,9 @@ local function roll()
 		corner.CornerRadius = UDim.new(0, THEME.Corner)
 		corner.Parent = yes
 		task.delay(0.8, function()
+			if back.Parent then
+				supportPanel(back)
+			end
 			TweenService:Create(q, TweenInfo.new(1), { TextTransparency = 0 }):Play()
 			TweenService:Create(yes, TweenInfo.new(1), { TextTransparency = 0, BackgroundTransparency = 0 }):Play()
 			-- YES blinks like an old title screen cursor until it's pressed
@@ -138,6 +222,11 @@ local function roll()
 			Net.event("ContinueYes"):FireServer()
 			TweenService:Create(back, TweenInfo.new(1.2), { BackgroundTransparency = 1 }):Play()
 			card:Destroy()
+			for _, child in back:GetChildren() do
+				if child ~= column and child:IsA("Frame") then
+					child:Destroy() -- the tip jar goes with the card
+				end
+			end
 			task.delay(1.3, gui.Destroy, gui)
 		end)
 	end

@@ -46,7 +46,8 @@
 - **MoveAnims joints:** a joint not listed in any key of a clip gets a weightless Pose, so the idle animation keeps driving it: list rest joints (`{0,0,0}`) in poses where held gear must stay put (Miko's block). Generated-mesh fixes: edit with EditableMesh, upload with `tools/mesh/upload.py` (Open Cloud Model, glTF).
 - **Breakable props (castle):** wooden/cloth room dressing is tagged `Breakable` (`Services/Breakables`); a new tool or area attack should call `Breakables.InBox` / `Near` / `Segment` so it smashes them too. Shards: `Debris` collision group.
 - **Upload gotcha:** a fresh image upload can stay `AssetFetchStatus.Failure` for good (FX_FireLoop: 4 uploads); check `ContentProvider:PreloadAsync` status after every upload before building on it.
-- **Before publishing:** fill place ids in `src/shared/Config/Places.luau`.
+- **Before publishing:** fill place ids in `src/shared/Config/Places.luau` and create the 3 support developer products (10/50/100 R$) → ids in `src/shared/Config/Products.luau`.
+- **Tip jar (Oct 12):** end-credits panel under CONTINUE? YES (`CreditsController.supportPanel`), receipts in `SupportService` (the only `ProcessReceipt`: any future product must go through it). Grants nothing; never call it charity (Roblox rule).
 
 ## Current status (25th session, Oct 12, 2026)
 
