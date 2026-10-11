@@ -35,6 +35,7 @@ local InteractableService = require(script.Parent.InteractableService)
 local XpService = require(script.Parent.XpService)
 local CombatFx = require(script.Parent.CombatFx)
 local MoverService = require(script.Parent.MoverService)
+local Breakables = require(script.Parent.Breakables)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local C = Tuning.Combat
@@ -851,6 +852,15 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 		table.insert(exclude, pass)
 	end
 	local hit = workspace:Raycast(pos, move, worldParams(exclude))
+	-- friendly shots smash breakable props in their way (props have no collision, so the ray can't see them)
+	if shot.friendly then
+		local at = Breakables.Segment(pos, if hit then move * (hit.Distance / move.Magnitude) else move)
+		if at then
+			CombatFx.Impact(at, shot.kind == "Fireball" and not shot.reflectedBy, shot.part.Color)
+			Audio.play(if shot.kind:find("Fireball") then "FireImpact" else "GlitchStatic", at)
+			return false
+		end
+	end
 	-- boss hurtboxes don't collide (players walk through scales and hearts), so the world ray skips them
 	if shot.friendly then
 		local params = RaycastParams.new()
@@ -987,6 +997,7 @@ function CombatService.Radial(pos: Vector3, radius: number, damage: number, owne
 			hits += 1
 		end
 	end
+	Breakables.Near(pos, radius)
 	return hits
 end
 
@@ -1052,6 +1063,8 @@ function CombatService.MeleeBox(cf: CFrame, size: Vector3, damage: number, owner
 		end
 	end
 	CombatFx.Slash(cf, size, swing)
+	local root = rootOf(owner)
+	Breakables.InBox(cf, size, root and root.Position) -- props don't count as hits (no Ultimate farming)
 	Audio.play("SwordSwing", cf.Position)
 	if hits > 0 then
 		Audio.play("SwordHit", cf.Position)
@@ -1077,6 +1090,7 @@ function CombatService.ChargeLine(from: Vector3, dir: Vector3, length: number, d
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = characters()
+	Breakables.InBox(cf, Vector3.new(5, 6, reach), from)
 	for _, part in workspace:GetPartBoundsInBox(cf, Vector3.new(5, 6, reach), params) do
 		local wall = Tags.find(part, "CrackedWall")
 		if wall and wall:IsA("BasePart") and wall.Parent then
@@ -1449,6 +1463,7 @@ local function stepWalls()
 		end
 		if now >= w.nextTick then
 			w.nextTick = now + T.TickEvery
+			Breakables.InBox(w.part.CFrame, w.part.Size + Vector3.new(0, 4, 0))
 			for part, foe in foes do
 				local lp = w.part.CFrame:PointToObjectSpace(part.Position)
 				local r = part.Size.X / 2

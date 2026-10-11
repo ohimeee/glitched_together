@@ -203,6 +203,17 @@ return {
 
 	-- World 2 (castle)
 	Castle = { Tether = 60, ShieldArc = 120, ShieldSpeedMult = 0.6, TauntRadius = 20, ReflectMult = 1.5 },
+	-- breakable castle props (Services/Breakables): wooden/cloth room dressing bursts into shards when hit
+	Breakables = {
+		Squash = 0.06, -- s the prop squashes on the hit before it bursts
+		ShardSpeed = { 8, 18 }, -- studs/s outward
+		ShardUp = { 10, 20 }, -- studs/s upward kick
+		ShardSpin = 14, -- rad/s max tumble per axis
+		ShardLife = 3.5, -- s shards lie on the floor before fading
+		ShardFade = 0.8,
+		ShotRadius = 0.6, -- a shot's padding against a prop's box
+		BoxReach = 0.15, -- a hit box counts a prop once it overlaps it by (1/2 - this) of its width
+	},
 	-- castle room fights (EncounterService): hidden enemies rise when a player enters the room, in waves
 	Encounters = {
 		ParkDepth = 600, -- studs under its spot a waiting enemy hides

@@ -76,6 +76,14 @@ local Sfx: { [string]: Def } = {
 	Reflect = { Id = pse(9113147683), Volume = 0.45, Pitch = 1.2 }, -- phasey arc zap
 	ShieldCharge = { Id = pse(9126229255), Volume = 0.5, Pitch = 0.9 },
 	Ignite = { Id = pse(9114442751), Volume = 0.45 },
+	-- breakable room props (Services/Breakables)
+	CrateBreak = { -- crunchy wood crate smashes
+		Ids = { pse(9120961670), pse(9120962130), pse(9120961746), pse(9126242477) },
+		Volume = 0.55,
+		PitchVar = 0.08,
+	},
+	SackBreak = { Ids = { pse(9113827650), pse(9113835765) }, Volume = 0.5, Pitch = 0.85, PitchVar = 0.08 }, -- cloth rip
+	BookcaseBreak = { Id = pse(9113549604), Volume = 0.55, PitchVar = 0.05 }, -- books scatter on the floor
 
 	-- Enemies
 	EnemyHit = { Ids = { pse(9117972730), pse(9117972870), pse(9117973315) }, Volume = 0.45, PitchVar = 0.08 },

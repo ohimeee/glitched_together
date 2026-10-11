@@ -729,6 +729,10 @@ local ROOM_THEME: { [string]: { string } } = {
 	ThroneApproach = { "Armor", "Candelabra" },
 	ThroneHall = { "Armor", "Candelabra", "Armor", "Candelabra", "WeaponRack" },
 }
+-- wooden / cloth props break when a tool hits them (Services/Breakables); metal ones (armour, candelabras, weapon
+-- racks) stay put
+local BREAKABLE: { [string]: string } =
+	{ Crates = "Wood", Keg = "Wood", WritingDesk = "Wood", Sacks = "Sack", Bookcase = "Books" }
 local SPACING = 6.5 -- studs between props along a wall
 local FILL = 0.7 -- share of slots that get a prop (gaps read natural)
 -- libraries line their walls with shelves end to end (Bookcase width + a hair)
@@ -894,6 +898,10 @@ local function dressRooms(world: Instance)
 				m.CanCollide = false
 				m.CanQuery = false
 				m.CanTouch = false
+				if BREAKABLE[name] then
+					m:SetAttribute("Breakable", BREAKABLE[name])
+					CollectionService:AddTag(m, "Breakable")
+				end
 				m.Parent = folder
 				if name == "Candelabra" then
 					candles += 1

@@ -21,7 +21,7 @@ function CollisionService.SetShifted(p: Player, shifted: boolean)
 end
 
 function CollisionService.Init()
-	for _, name in { "CodeLayer", "Kai", "Miko", "MikoShifted", "Ghost" } do
+	for _, name in { "CodeLayer", "Kai", "Miko", "MikoShifted", "Ghost", "Debris" } do
 		PhysicsService:RegisterCollisionGroup(name)
 	end
 	PhysicsService:CollisionGroupSetCollidable("CodeLayer", "Default", false)
@@ -32,6 +32,10 @@ function CollisionService.Init()
 	-- Players never block each other (a partner standing in a doorway shouldn't trap you).
 	PhysicsService:CollisionGroupSetCollidable("Kai", "Miko", false)
 	PhysicsService:CollisionGroupSetCollidable("Kai", "MikoShifted", false)
+	-- broken-prop shards (Breakables) land on floors and walls but never trip a player
+	for _, group in { "Kai", "Miko", "MikoShifted", "Ghost", "CodeLayer" } do
+		PhysicsService:CollisionGroupSetCollidable("Debris", group, false)
+	end
 
 	Tags.each("CodeLayer", function(inst)
 		if inst:IsA("BasePart") then
