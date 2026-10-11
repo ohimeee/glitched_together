@@ -13,6 +13,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
 local TopDownAim = require(script.Parent.Parent.TopDownAim)
+local MoveAnim = require(script.Parent.Parent.Controllers.MoveAnimController)
 
 local player = Players.LocalPlayer
 local toolUse = Net.event("ToolUse")
@@ -109,8 +110,11 @@ function FireMage:Start()
 	local wall = Input.action("CastleTools", "Tool2")
 	local lastBlink = { t = -math.huge }
 
+	local hand = 1 -- auto-fire throws with alternating hands
+	local lastWall, lastIgnite = -math.huge, -math.huge -- the cast animation only plays when the server will cast
 	local function meteor(): boolean
 		if fire:IsDown() and wall:IsDown() and ultimateReady() then
+			MoveAnim.Play("CastMeteor")
 			toolUse:FireServer(4, nil, TopDownAim.point())
 			return true
 		end
@@ -126,6 +130,8 @@ function FireMage:Start()
 				if wall:IsDown() then
 					break
 				end
+				MoveAnim.Play(if hand > 0 then "CastFireR" else "CastFireL")
+				hand = -hand
 				toolUse:FireServer(1, nil, TopDownAim.point())
 				local cooldown = if player:GetAttribute("Up_FasterCast")
 					then Tuning.Combat.FasterCast
@@ -138,11 +144,20 @@ function FireMage:Start()
 		if busy() or meteor() then
 			return
 		end
+		if os.clock() - lastWall >= T.FlameWall.Cooldown then
+			lastWall = os.clock()
+			MoveAnim.Play("CastWall")
+		end
 		toolUse:FireServer(2, nil, TopDownAim.point())
 	end))
 	trove:Add(Input.action("CastleTools", "Ignite").Pressed:Connect(function()
 		if not busy() then
-			toolUse:FireServer(3, nearestIgnitable(), TopDownAim.point())
+			local target = nearestIgnitable()
+			if target and os.clock() - lastIgnite >= T.Ignite.Cooldown then
+				lastIgnite = os.clock()
+				MoveAnim.Play("CastIgnite")
+			end
+			toolUse:FireServer(3, target, TopDownAim.point())
 		end
 	end))
 	trove:Add(Input.action("BaseContext", "Dash").Pressed:Connect(function()

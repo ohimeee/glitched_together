@@ -249,7 +249,133 @@ local function spin(rx: number, py: number): { [string]: Pose }
 end
 
 -- Clips ---------------------------------------------------------------------------------------------------------
+-- Kai's Fire Mage casts (user, Oct 11). Upper body only (legs keep walking): torso, head and arms.
+-- A fireball throw, `side` 1 = right hand, -1 = left (auto-fire alternates hands): cock the hand back by the
+-- shoulder, then punch it out at the aim with the torso turning into it; the other arm swings back for balance.
+local function throwPose(side: number, phase: string): { [string]: Pose }
+	local hand, other = if side > 0 then "Right" else "Left", if side > 0 then "Left" else "Right"
+	local s = side
+	if phase == "cock" then
+		return {
+			UpperTorso = { 4, -22 * s, 0 },
+			Head = { 0, 22 * s, 0 },
+			[hand .. "UpperArm"] = { 55, 0, 35 * s },
+			[hand .. "LowerArm"] = { 110, 0, 0 },
+			[other .. "UpperArm"] = { 45, 0, -15 * s },
+			[other .. "LowerArm"] = { 40, 0, 0 },
+		}
+	end
+	return { -- "push": arm straight out at the aim, palm first
+		UpperTorso = { -6, 24 * s, 0 },
+		Head = { 4, -24 * s, 0 },
+		[hand .. "UpperArm"] = { 92, 0, -6 * s },
+		[hand .. "LowerArm"] = { 4, 0, 0 },
+		[hand .. "Hand"] = { -35, 0, 0 },
+		[other .. "UpperArm"] = { -30, 0, -22 * s },
+		[other .. "LowerArm"] = { 35, 0, 0 },
+	}
+end
+
+local function throwClip(side: number): Clip
+	return {
+		priority = "Action",
+		keys = {
+			{ t = 0, pose = {} },
+			{ t = 0.06, pose = throwPose(side, "cock") },
+			{ t = 0.12, ease = "Linear", pose = throwPose(side, "push") },
+			{ t = 0.2, pose = throwPose(side, "push") },
+			{ t = 0.34, pose = {} },
+		},
+	}
+end
+
+local armsUp = { -- both hands high, gathering fire overhead
+	UpperTorso = { 12, 0, 0 },
+	Head = { 18, 0, 0 },
+	RightUpperArm = { 165, 0, 18 },
+	LeftUpperArm = { 165, 0, -18 },
+	RightLowerArm = { 25, 0, 0 },
+	LeftLowerArm = { 25, 0, 0 },
+}
+local palmsDown = { -- both palms driven at the floor ahead, bent over them
+	UpperTorso = { -28, 0, 0 },
+	Head = { 18, 0, 0 },
+	RightUpperArm = { 62, 0, 32 },
+	LeftUpperArm = { 62, 0, -32 },
+	RightLowerArm = { 8, 0, 0 },
+	LeftLowerArm = { 8, 0, 0 },
+	RightHand = { -50, 0, 0 },
+	LeftHand = { -50, 0, 0 },
+}
+
 local Clips: { [string]: Clip } = {
+	CastFireR = throwClip(1),
+	CastFireL = throwClip(-1),
+	-- Flame Wall: hands up, then both palms slammed down at the floor where the wall rises
+	CastWall = {
+		priority = "Action",
+		keys = {
+			{ t = 0, pose = {} },
+			{ t = 0.14, pose = armsUp },
+			{ t = 0.24, ease = "Linear", pose = palmsDown },
+			{ t = 0.42, pose = palmsDown },
+			{ t = 0.6, pose = {} },
+		},
+	},
+	-- Ignite: wind the hand in by the chest, then flick two fingers out at the target (the snap sends the spark)
+	CastIgnite = {
+		priority = "Action",
+		keys = {
+			{ t = 0, pose = {} },
+			{
+				t = 0.08,
+				pose = {
+					UpperTorso = { 0, -14, 0 },
+					Head = { 0, 14, 0 },
+					RightUpperArm = { 45, 0, -10 },
+					RightLowerArm = { 120, 0, 0 },
+					RightHand = { 30, 0, 0 },
+				},
+			},
+			{
+				t = 0.15,
+				ease = "Linear",
+				pose = {
+					UpperTorso = { -4, 16, 0 },
+					Head = { 4, -16, 0 },
+					RightUpperArm = { 98, 0, 4 },
+					RightLowerArm = { 6, 0, 0 },
+					RightHand = { -40, 0, 0 },
+					LeftUpperArm = { -15, 0, -18 },
+				},
+			},
+			{
+				t = 0.32,
+				pose = {
+					UpperTorso = { -2, 14, 0 },
+					Head = { 2, -14, 0 },
+					RightUpperArm = { 92, 0, 4 },
+					RightLowerArm = { 10, 0, 0 },
+					RightHand = { -25, 0, 0 },
+					LeftUpperArm = { -10, 0, -14 },
+				},
+			},
+			{ t = 0.5, pose = {} },
+		},
+	},
+	-- Meteor: arms raised through the 1.2 s cast (Tuning.FireMage.Meteor.Cast), then thrown down as it lands
+	CastMeteor = {
+		priority = "Action",
+		keys = {
+			{ t = 0, pose = {} },
+			{ t = 0.18, pose = armsUp },
+			{ t = 0.6, pose = merge(armsUp, { UpperTorso = { 16, 0, 0 } }) },
+			{ t = 1.05, pose = merge(armsUp, { RightUpperArm = { 175, 0, 12 }, LeftUpperArm = { 175, 0, -12 } }) },
+			{ t = 1.18, ease = "Linear", pose = palmsDown },
+			{ t = 1.4, pose = palmsDown },
+			{ t = 1.6, pose = {} },
+		},
+	},
 	-- double jump: tucked front flip, opens into the star at the top
 	DoubleJump = {
 		priority = "Action2",

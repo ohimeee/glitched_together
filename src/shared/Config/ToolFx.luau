@@ -106,6 +106,12 @@ return {
 		Slash = "rbxassetid://100311078346030",
 		Smoke = "rbxassetid://75304585987337",
 		AreaRing = "rbxassetid://119208032301514",
+		-- Kai's "real" fire (textures/make_fireball.py, Oct 11): fire flipbook, ember, trail streak, scorch decal.
+		-- FX_FireLoop never became fetchable on Roblox (4 uploads, all AssetFetchStatus.Failure): FireBurst does both.
+		FireBurst = "rbxassetid://96128480844430",
+		Ember = "rbxassetid://126720728128289",
+		FireTrail = "rbxassetid://82745210768012",
+		Scorch = "rbxassetid://76340242738009",
 	},
 	Fire = Color3.fromRGB(255, 170, 70), -- firelight (lights only; targets keep Palette.Kai)
 	Ice = Color3.fromRGB(190, 225, 255), -- the pause ripple: never an owner color (timings: Tuning.ToolFx)

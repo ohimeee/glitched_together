@@ -2569,6 +2569,28 @@ local function buildStarfallCastle(world: Model)
 	local function flatSign(text: string, x: number, z: number, w: number)
 		sign(world, text, CFrame.new(x, 0.35, z) * CFrame.Angles(math.rad(-90), 0, 0), Vector3.new(w, 4, 0.4), P.Royal)
 	end
+	-- Room fight (user, Oct 11: enemies already standing at the entrance; later rooms too easy). The room's enemies
+	-- stay hidden (EncounterService parks them under the world) until a player steps into the zone (x0..x1, z0..z1),
+	-- then rise in waves: waves[1] at once, each later wave once the one before is nearly gone.
+	local function encounter(name: string, x0: number, z0: number, x1: number, z1: number, waves: { { { any } } })
+		local zone = block(world, Vector3.new(x1 - x0, 12, z1 - z0), CFrame.new((x0 + x1) / 2, 6, (z0 + z1) / 2), {
+			name = "EncounterZone",
+			transparency = 1,
+			collide = false,
+			tags = { "EncounterZone" },
+			attrs = { Encounter = name },
+		})
+		zone.CanQuery = false
+		zone.CanTouch = false
+		for wave, list in waves do
+			for _, foe in list do
+				local body = enemy(world, foe[1] :: string, foe[2] :: number, foe[3] :: number)
+				body:SetAttribute("Encounter", name)
+				body:SetAttribute("Wave", wave)
+				body:SetAttribute("Dormant", true)
+			end
+		end
+	end
 
 	-- floors + the rug path that leads the way
 	floor(-20, -20, 20, 20, "Gatehouse")
@@ -2595,8 +2617,10 @@ local function buildStarfallCastle(world: Model)
 	wall(20, -20, 20, 20)
 	wall(-20, 20, -7, 20)
 	wall(7, 20, 20, 20)
-	enemy(world, "Skeleton", -6, 15) -- > Combat.Aggro from the spawn: they wait until you walk up
-	enemy(world, "Skeleton", 6, 16)
+	encounter("Gatehouse", -20, 4, 20, 20, {
+		{ { "Skeleton", -6, 15 }, { "Skeleton", 6, 16 } },
+		{ { "Skeleton", -14, 17 }, { "Skeleton", 14, 17 } },
+	})
 	for _, spot in { { -20, -8 }, { 20, -8 }, { -20, 10 }, { 20, 10 } } do
 		torch(spot[1], spot[2])
 	end
@@ -2628,13 +2652,24 @@ local function buildStarfallCastle(world: Model)
 	wall(7, 40, 25, 40)
 	wall(-25, 40, -25, 90)
 	wall(25, 40, 25, 90)
-	enemy(world, "Skeleton", -10, 55)
-	enemy(world, "Skeleton", 10, 58)
-	enemy(world, "Skeleton", 0, 66)
-	enemy(world, "SplitSlime", -14, 70)
-	enemy(world, "ShieldGuard", 4, 74)
-	enemy(world, "StaticArcher", -16, 84)
-	enemy(world, "StaticArcher", 16, 84)
+	encounter("Barracks", -25, 42, 25, 90, {
+		{
+			{ "Skeleton", -10, 55 },
+			{ "Skeleton", 10, 58 },
+			{ "Skeleton", 0, 66 },
+			{ "SplitSlime", -14, 70 },
+			{ "ShieldGuard", 4, 74 },
+			{ "StaticArcher", -16, 84 },
+			{ "StaticArcher", 16, 84 },
+		},
+		{
+			{ "Skeleton", -12, 84 },
+			{ "Skeleton", 12, 84 },
+			{ "ShieldGuard", 0, 80 },
+			{ "SplitSlime", -19, 62 },
+			{ "StaticArcher", 19, 62 },
+		},
+	})
 	for _, spot in { { -25, 50 }, { 25, 50 }, { -25, 66 }, { 25, 66 }, { -25, 82 }, { 25, 82 } } do
 		torch(spot[1], spot[2])
 	end
@@ -2681,10 +2716,22 @@ local function buildStarfallCastle(world: Model)
 	wall(25, 100, 25, 150)
 	wall(-25, 150, -7, 150)
 	wall(7, 150, 25, 150)
-	enemy(world, "StaticMage", 0, 130)
-	enemy(world, "Skeleton", -12, 120)
-	enemy(world, "Skeleton", 12, 124)
-	enemy(world, "SplitSlime", 0, 118)
+	encounter("Hall", -25, 100, 25, 150, {
+		{ { "StaticMage", 0, 130 }, { "Skeleton", -12, 120 }, { "Skeleton", 12, 124 }, { "SplitSlime", 0, 118 } },
+		{
+			{ "StaticMage", 16, 140 },
+			{ "ShieldGuard", 0, 142 },
+			{ "Skeleton", -18, 132 },
+			{ "Skeleton", 18, 120 },
+			{ "StaticArcher", -20, 112 },
+		},
+		{
+			{ "Skeleton", -10, 138 },
+			{ "Skeleton", 10, 138 },
+			{ "SplitSlime", -18, 124 },
+			{ "SplitSlime", 18, 128 },
+		},
+	})
 	for _, spot in
 		{ { -25, 110 }, { 25, 112 }, { -25, 128 }, { 25, 128 }, { -25, 144 }, { 25, 144 }, { -10, 164 }, { 10, 164 } }
 	do
@@ -2739,8 +2786,10 @@ local function buildStarfallCastle(world: Model)
 	wall(14, 226, 25, 226) -- x 6..14: the roller hall's side passage (gate C4) opens off this room
 	crystal("C2", "Reflected", 19, 220)
 	gate(world, "C2", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 226), nil, 0)
-	enemy(world, "StaticArcher", -18, 216)
-	enemy(world, "Skeleton", 14, 208)
+	encounter("ReadingRoom", -25, 194, 25, 226, {
+		{ { "StaticArcher", -18, 216 }, { "Skeleton", 14, 208 } },
+		{ { "Skeleton", -12, 220 }, { "SplitSlime", 8, 214 }, { "StaticArcher", -20, 200 } },
+	})
 	for _, spot in { { -25, 196 }, { 25, 196 }, { -25, 216 }, { 25, 216 } } do
 		torch(spot[1], spot[2])
 	end
@@ -2795,8 +2844,11 @@ local function buildStarfallCastle(world: Model)
 	crystal("C3", "Reflected", 20, 304, 1.5)
 	mirror(20, 330, 45)
 	gate(world, "C3", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 340), nil, 0)
-	enemy(world, "ShieldGuard", -8, 318)
-	enemy(world, "SplitSlime", 6, 322)
+	encounter("MirrorRoom", -25, 298, 25, 340, {
+		{ { "ShieldGuard", -8, 318 }, { "SplitSlime", 6, 322 } },
+		{ { "Skeleton", -18, 332 }, { "Skeleton", 4, 334 }, { "StaticArcher", -20, 304 } },
+		{ { "ShieldGuard", 8, 312 }, { "Skeleton", -12, 306 }, { "StaticMage", 0, 330 } },
+	})
 	for _, spot in { { -25, 300 }, { -25, 324 }, { 25, 326 }, { -7, 340 } } do
 		torch(spot[1], spot[2])
 	end
@@ -3265,8 +3317,10 @@ local function buildStarfallCastle(world: Model)
 			attrs = { Range = 24 },
 		})
 	end
-	enemy(world, "Skeleton", -10, 1458)
-	enemy(world, "Skeleton", 12, 1482)
+	encounter("PowderHall", -30, 1436, 30, 1500, {
+		{ { "Skeleton", -10, 1458 }, { "Skeleton", 12, 1482 } },
+		{ { "Skeleton", -24, 1490 }, { "Skeleton", 24, 1490 }, { "ShieldGuard", 0, 1476 } },
+	})
 	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500), nil, 0)
 
 	floor(-10, 1500, 10, 1530, "ThroneApproach")

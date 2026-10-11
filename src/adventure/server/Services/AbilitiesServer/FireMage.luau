@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local CombatService = require(script.Parent.Parent.CombatService)
+local CombatFx = require(script.Parent.Parent.CombatFx)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local T = Tuning.FireMage
@@ -84,8 +85,13 @@ local function ignite(p: Player, root: BasePart, target: Instance?)
 			and inst:IsDescendantOf(workspace)
 			and (Tags.position(inst) - root.Position).Magnitude <= range
 	end
+	-- a spark flicks from Kai's hand to the target (the cast animation's snap), then it catches
+	local function light(inst: Instance)
+		local delay = CombatFx.IgniteBolt(root.Position + root.CFrame.LookVector * 1.5, Tags.position(inst))
+		task.delay(delay, CombatService.Ignite, inst)
+	end
 	if target and ok(target) then
-		CombatService.Ignite(target)
+		light(target)
 		return
 	end
 	-- no (valid) target sent: light the nearest thing in range
@@ -101,7 +107,7 @@ local function ignite(p: Player, root: BasePart, target: Instance?)
 		end
 	end
 	if best then
-		CombatService.Ignite(best)
+		light(best)
 	end
 end
 

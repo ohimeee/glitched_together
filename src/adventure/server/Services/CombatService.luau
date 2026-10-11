@@ -375,7 +375,7 @@ end
 -- Returns the damage actually dealt (0 when a Shield Guard blocks it).
 function CombatService.DamageEnemy(part: BasePart, amount: number, source: Player?, fromPos: Vector3?): number
 	local foe = foes[part]
-	if not foe or foe.dead or amount <= 0 then
+	if not foe or foe.dead or amount <= 0 or part:GetAttribute("Dormant") then
 		return 0
 	end
 	if foe.spec.Immune then
@@ -723,7 +723,7 @@ function CombatService.Fire(spec: ShotSpec)
 		Size = Vector3.one * size,
 		CFrame = CFrame.new(spec.origin),
 		Color = spec.color or FIRE,
-		Transparency = if spec.kind == "Fireball" then 0.35 else 0, -- a hot core inside the flames
+		Transparency = if spec.kind == "Fireball" then 1 else 0, -- a fireball is all particles (CombatFx.Fire)
 	})
 	Audio.play(
 		if spec.kind == "Fireball" then "FireballCast" elseif spec.kind == "Arrow" then "ArrowShoot" else "StaticShot",
@@ -731,6 +731,7 @@ function CombatService.Fire(spec: ShotSpec)
 	)
 	if spec.kind == "Fireball" then
 		CombatFx.Fire(part, size)
+		CombatFx.CastFlash(spec.origin, size)
 	else
 		CombatFx.Emit(part, "Stars", size * 0.8, 18, spec.color or DANGER)
 	end
@@ -762,6 +763,7 @@ local function reflect(shot: Shot, miko: Player, at: Vector3)
 		shot.owner = miko
 	end
 	shot.part.Color = Palette.Glow.Miko -- reflected: now Miko's shot
+	shot.part.Transparency = 0.35 -- a teal core shows where the painted fire was
 	CombatFx.Tint(shot.part, Palette.Miko)
 	shot.part.Name = shot.kind .. "Reflected"
 	shot.part.CFrame = CFrame.new(at + shot.dir * 1.5)
@@ -884,7 +886,7 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 				bossHit:Fire(hurt, shot.damage, shot.owner, if shot.reflectedBy then "Reflected" else "Shot")
 			end
 		end
-		CombatFx.Impact(hit.Position, shot.kind == "Fireball", shot.part.Color)
+		CombatFx.Impact(hit.Position, shot.kind == "Fireball" and not shot.reflectedBy, shot.part.Color)
 		Audio.play(
 			if shot.kind:find("Fireball")
 				then "FireImpact"
@@ -910,18 +912,7 @@ function CombatService.FlameWall(cf: CFrame, owner: Player?)
 		Color = FIRE,
 		Transparency = 1,
 	})
-	local flames = CombatFx.Emit(part, "Flame", 2.4, T.Length * 7)
-	flames.Shape = Enum.ParticleEmitterShape.Box
-	flames.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
-	local stars = CombatFx.Emit(part, "Stars", 1.2, T.Length * 2, CombatFx.Gold)
-	stars.Shape = Enum.ParticleEmitterShape.Box
-	local smoke = CombatFx.Emit(part, "Smoke", 1.6, T.Length * 0.8, Color3.new(1, 1, 1))
-	smoke.Shape = Enum.ParticleEmitterShape.Box
-	local light = Instance.new("PointLight")
-	light.Color = FIRE
-	light.Range = T.Length + 8
-	light.Brightness = 3
-	light.Parent = part
+	CombatFx.FlameWall(part, T.Life)
 	Audio.play("FlameWall", part)
 	table.insert(walls, { part = part, owner = owner, untilTime = os.clock() + T.Life, nextTick = os.clock() })
 end
@@ -1147,12 +1138,15 @@ function CombatService.Ignite(inst: Instance)
 		fire.Shape = Enum.ParticleEmitterShape.Box
 		CombatFx.Emit(inst, "Smoke", 1.4, 3, Color3.fromRGB(90, 80, 100))
 	elseif Tags.has(inst, "Burnable") and inst:IsA("BasePart") and inst.Parent then
-		inst.Color = FIRE
-		inst.Material = Enum.Material.Neon
-		inst:SetAttribute("Burning", true)
+		if inst:GetAttribute("Burning") then
+			return
+		end
+		local IT = Tuning.FireMage.Ignite
+		inst:SetAttribute("Burning", true) -- the Siege Cart rolls through a burning barricade
+		Audio.play("Ignite", inst)
 		Audio.play("FlameWall", inst.Position, 0.7)
-		TweenService:Create(inst, TweenInfo.new(1), { Transparency = 1 }):Play()
-		task.delay(1, function()
+		CombatFx.BurnAway(inst, IT.Spread, IT.BurnTime)
+		task.delay(IT.BurnTime, function()
 			inst:Destroy()
 			InteractableService.Evaluate()
 		end)
@@ -1391,13 +1385,16 @@ local function stepFoes(dt: number)
 			foe.shieldDownUntil = 0
 			setShieldVisible(foe, true)
 		end
-		if now < foe.stunUntil then
-			continue
+		if now < foe.stunUntil or part:GetAttribute("Dormant") then
+			continue -- Dormant: still hidden under its room (EncounterService)
 		end
 		local target, dist = pickTarget(foe)
 		if not target then
 			foe.state = "Chase"
 			continue
+		end
+		if not foe.awake and part:GetAttribute("Hunting") then
+			foe.awake = true -- risen in a room fight: no waiting to be walked up to
 		end
 		if not foe.awake then
 			-- posted (Rooted) archers watch the whole reach of their bow, not just the usual aggro ring

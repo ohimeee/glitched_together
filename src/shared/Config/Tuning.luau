@@ -203,10 +203,19 @@ return {
 
 	-- World 2 (castle)
 	Castle = { Tether = 60, ShieldArc = 120, ShieldSpeedMult = 0.6, TauntRadius = 20, ReflectMult = 1.5 },
+	-- castle room fights (EncounterService): hidden enemies rise when a player enters the room, in waves
+	Encounters = {
+		ParkDepth = 600, -- studs under its spot a waiting enemy hides
+		Telegraph = 0.8, -- s the glitch rift shows on the floor before the enemy climbs out
+		Rise = 0.45, -- s to climb out of the floor
+		Stagger = 0.2, -- s between enemies of one wave
+		NextWaveAt = 1, -- the next wave comes when this many (or fewer) of the room's enemies are left
+		WaveGap = 1.5, -- s after that before its rifts open
+	},
 	FireMage = {
 		Fireball = { Damage = 10, Cooldown = 0.35, Speed = 80 },
 		FlameWall = { Tick = 4, TickEvery = 0.5, Cooldown = 8, Length = 12, Life = 5 },
-		Ignite = { Cooldown = 1, Range = 30 },
+		Ignite = { Cooldown = 1, Range = 30, Spread = 0.6, BurnTime = 1.3 }, -- Burnable wood: flames spread, then it falls
 		Blink = { Distance = 10, Cooldown = 3 },
 		Meteor = { Damage = 40, Charge = 300, Radius = 12, Cast = 1.2 },
 	},
