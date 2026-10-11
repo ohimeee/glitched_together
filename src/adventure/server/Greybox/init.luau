@@ -3707,15 +3707,30 @@ local function buildEpilogue(world: Model)
 	-- beside the exit, a village notice board (user, Oct 12): favorite the game, support the next one. Both prompts are
 	-- handled on the client (CreditsController: the same tip-jar panel as the credits, plus Roblox's favorite prompt).
 	-- Nothing in game is given for either (Roblox rules: no rewards for favorites or likes).
-	local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09), 13, hill.Y, 197) -- east of the exit: a tree hides the west side
+	-- big (x1.6) on the hilltop's right front corner near the exit, seen between the gold pieces from the top of the
+	-- path and turned toward it (user: "make the position noticable and make it a bit bigger")
+	local BOARD = 1.6
+	local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * BOARD, 17, hill.Y, 186, 23)
 	board.CanCollide = true
 	local note = sign(
 		world,
 		"ENJOYED OUR GAME?\n★ Favorite it & leave a Like\nSupport our next game",
-		board.CFrame * CFrame.new(0, 0.27, -0.12),
-		Vector3.new(4.6, 3.2, 0.05)
+		board.CFrame * CFrame.new(0, 0.27 * BOARD, -0.12 * BOARD),
+		Vector3.new(4.6, 3.2, 0.05) * BOARD
 	)
 	note.Transparency = 1
+	-- a small warm lamp under its roof washes the board face, so it reads at night from the hilltop (subtle-lighting)
+	local lamp = Instance.new("Attachment")
+	lamp.Position = Vector3.new(0, 3.2, -1.2) * BOARD
+	lamp.Orientation = Vector3.new(-120, 0, 0) -- down and back onto the planks
+	lamp.Parent = board
+	local spot = Instance.new("SpotLight")
+	spot.Color = rgb(255, 196, 130)
+	spot.Brightness = 1.6
+	spot.Range = 12
+	spot.Angle = 70
+	spot.Face = Enum.NormalId.Front
+	spot.Parent = lamp
 	for _, p in
 		{
 			{ "SupportPrompt", "Support", "Next game", Enum.KeyCode.E },
