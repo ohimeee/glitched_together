@@ -67,7 +67,7 @@ local Held: { [string]: { HeldItem } } = {
 			TextureId = "rbxassetid://118163519261188",
 			Size = v(2.86, 3.24, 0.57),
 			Hand = "LeftHand",
-			Grip = CFrame.new(-0.55, 0.45, -0.4) * CFrame.Angles(0, 0, math.pi), -- point down, painted face out
+			Grip = CFrame.new(-0.55, 0.45, -0.4) * CFrame.Angles(0, math.pi, 0), -- painted face (mesh +Z) forward, point down
 			GlowWhile = "Blocking",
 		},
 	},
