@@ -1,4 +1,28 @@
 {
+ "Block": {
+  "hash": "efd0fd3af1ecdfda06c7419ececd92c9dddda4a3",
+  "id": "134365471269463"
+ },
+ "CastFireL": {
+  "hash": "bf09d2e64d2d7d5ea7a307dfacfb3048968aeedc",
+  "id": "83759915052742"
+ },
+ "CastFireR": {
+  "hash": "362c341599f450ee2f5fc7d4aa00b04a567aff60",
+  "id": "137987086705806"
+ },
+ "CastIgnite": {
+  "hash": "da69f0b701381c5a00e1b295aa79ac8fad1205f5",
+  "id": "79890236579518"
+ },
+ "CastMeteor": {
+  "hash": "6c0e2ac1b5a2fcfa9bae853396904955db32bde1",
+  "id": "77432697088318"
+ },
+ "CastWall": {
+  "hash": "5fc098d2bf0331ae858d3c96e10948bd54e89177",
+  "id": "115244283165353"
+ },
  "Crouch": {
   "hash": "a0cc04abd015df76c8c7bf2c22369e83ece17bbf",
   "id": "79655492018259"
@@ -42,6 +66,26 @@
  "PoundSpin": {
   "hash": "c3e5a5188dbb90c94520ba7730344f2d14d07d28",
   "id": "112920836236153"
+ },
+ "Rally": {
+  "hash": "d05cc97c61f0803cd9d33f03fbbb527e76310315",
+  "id": "106056118660961"
+ },
+ "ShieldCharge": {
+  "hash": "b33177f572ed61aa83ae29e0e6c8ea211960972d",
+  "id": "121490007141424"
+ },
+ "Slash1": {
+  "hash": "5935a86592ab769cf63d08078cd7bbf662f961d1",
+  "id": "130781386849900"
+ },
+ "Slash2": {
+  "hash": "7a6fba4cc5a1365de6c9960ea47e6563a47364bf",
+  "id": "124797225742944"
+ },
+ "Slash3": {
+  "hash": "fc5398f64da175ba83e83e2653205ab7f840225d",
+  "id": "99118253035674"
  },
  "Sprint": {
   "hash": "6e1e3ea48b8e76d90e49f8e36334c6796e0d9187",
