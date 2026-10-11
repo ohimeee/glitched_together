@@ -5,7 +5,6 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
@@ -15,7 +14,6 @@ local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
 local TopDownAim = require(script.Parent.Parent.TopDownAim)
 local MoveAnim = require(script.Parent.Parent.Controllers.MoveAnimController)
-local KeyPrompt = require(script.Parent.Parent.Controllers.KeyPromptController)
 
 local player = Players.LocalPlayer
 local toolUse = Net.event("ToolUse")
@@ -152,27 +150,6 @@ function FireMage:Start()
 		end
 		toolUse:FireServer(2, nil, TopDownAim.point())
 	end))
-	-- "[E] IGNITE" over what Ignite would light (2P playtest Oct 11: Kai shot at the Torch Run braziers instead), only
-	-- when he can see it: through a wall it gave the Torch Run away (user: "it just makes the game easier")
-	local sight = RaycastParams.new()
-	sight.FilterType = Enum.RaycastFilterType.Exclude
-	sight.RespectCanCollide = true
-	trove:Add(RunService.RenderStepped:Connect(function()
-		local ready = not busy() and os.clock() - lastIgnite >= T.Ignite.Cooldown
-		local target = if ready then nearestIgnitable() else nil
-		local root = rootOf()
-		if target and root then
-			sight.FilterDescendantsInstances = { player.Character :: Model, target }
-			local to = Tags.position(target)
-			if workspace:Raycast(root.Position, to - root.Position, sight) then
-				target = nil
-			end
-		end
-		KeyPrompt.Focus(target, "Ignite", "IGNITE")
-	end))
-	trove:Add(function()
-		KeyPrompt.Focus(nil)
-	end)
 	trove:Add(Input.action("CastleTools", "Ignite").Pressed:Connect(function()
 		if not busy() then
 			local target = nearestIgnitable()
