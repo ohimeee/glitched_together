@@ -328,14 +328,23 @@ local function slash(cock: { [string]: Pose }, hit: { [string]: Pose }): Clip
 		},
 	}
 end
-local blockPose = { -- shield up and forward, left shoulder leading, sword held low behind it
-	UpperTorso = { -8, -22, 0 },
-	Head = { 2, 22, 0 },
-	LeftUpperArm = { 55, -25, 0 },
-	LeftLowerArm = { 40, 0, 0 },
-	LeftHand = { -95, 0, 0 },
-	RightUpperArm = { 15, 0, 28 },
-	RightLowerArm = { 45, 0, 0 },
+local blockPose = { -- hiding behind the shield (user ref, Oct 11): crouched and hunched, the left arm swings the shield
+	-- across to the middle of her body (pose solved in Play: shield centred within 0.3 studs, upright, ~30 deg off
+	-- square), head tucked so only the top of it peeks over the rim; the sword arm hangs relaxed at her side
+	LowerTorso = { -4, 0, 0, 0, -0.6, 0 },
+	UpperTorso = { -14, -20, 0 },
+	Head = { 14, 20, 0 },
+	LeftUpperArm = { 60, -85, 0 },
+	LeftLowerArm = { 90, 0, 0 },
+	LeftHand = { -150, -80, 25 },
+	RightUpperArm = { 15, 0, 18 },
+	RightLowerArm = { 30, 0, 0 },
+	RightUpperLeg = { 40, 0, 6 },
+	LeftUpperLeg = { 40, 0, -6 },
+	RightLowerLeg = { -60, 0, 0 },
+	LeftLowerLeg = { -60, 0, 0 },
+	RightFoot = { 20, 0, 0 },
+	LeftFoot = { 20, 0, 0 },
 }
 
 local Clips: { [string]: Clip } = {
@@ -379,8 +388,8 @@ local Clips: { [string]: Clip } = {
 		loop = true,
 		keys = {
 			{ t = 0, pose = blockPose },
-			{ t = 0.6, pose = merge(blockPose, { UpperTorso = { -10, -22, 0 } }) },
-			{ t = 1.2, pose = blockPose },
+			{ t = 0.7, pose = merge(blockPose, { UpperTorso = { -16, -20, 0 }, Head = { 10, 22, 0 } }) }, -- breathing
+			{ t = 1.4, pose = blockPose },
 		},
 	},
 	-- Shield Charge: bent low behind the shield for the rush (0.3 s), then up
