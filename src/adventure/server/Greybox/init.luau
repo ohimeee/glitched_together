@@ -3704,47 +3704,55 @@ local function buildEpilogue(world: Model)
 		end
 	end
 
-	-- beside the exit, a village notice board (user, Oct 12): favorite the game, support the next one. Both prompts are
-	-- handled on the client (CreditsController: the same tip-jar panel as the credits, plus Roblox's favorite prompt).
-	-- Nothing in game is given for either (Roblox rules: no rewards for favorites or likes).
-	-- big (x1.6) on the hilltop's right front corner near the exit, seen between the gold pieces from the top of the
-	-- path and turned toward it (user: "make the position noticable and make it a bit bigger")
+	-- two village notice boards in front of the way home (user, Oct 12: "favorite and support board should be
+	-- seperate", "make the position noticable and make it a bit bigger"): x1.6 size, either side of the approach,
+	-- turned toward the top of the path, clear of the portal arch that rises round the exit after YES (~30 wide, z 193+).
+	-- Their prompts are handled on the client (CreditsController): SUPPORT opens the tip-jar panel, FAVORITE Roblox's
+	-- favorite prompt. Nothing in game is given for either (Roblox rules: no rewards for favorites, likes or tips).
 	local BOARD = 1.6
-	local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * BOARD, 17, hill.Y, 186, 23)
-	board.CanCollide = true
-	local note = sign(
-		world,
-		"ENJOYED OUR GAME?\n★ Favorite it & leave a Like\nSupport our next game",
-		board.CFrame * CFrame.new(0, 0.27 * BOARD, -0.12 * BOARD),
-		Vector3.new(4.6, 3.2, 0.05) * BOARD
-	)
-	note.Transparency = 1
-	-- a small warm lamp under its roof washes the board face, so it reads at night from the hilltop (subtle-lighting)
-	local lamp = Instance.new("Attachment")
-	lamp.Position = Vector3.new(0, 3.2, -1.2) * BOARD
-	lamp.Orientation = Vector3.new(-120, 0, 0) -- down and back onto the planks
-	lamp.Parent = board
-	local spot = Instance.new("SpotLight")
-	spot.Color = rgb(255, 196, 130)
-	spot.Brightness = 1.6
-	spot.Range = 12
-	spot.Angle = 70
-	spot.Face = Enum.NormalId.Front
-	spot.Parent = lamp
-	for _, p in
+	for _, b in
 		{
-			{ "SupportPrompt", "Support", "Next game", Enum.KeyCode.E },
-			{ "FavoritePrompt", "Favorite", "Glitched Together", Enum.KeyCode.F },
+			{
+				"FavoriteBoard",
+				-19.5,
+				-29,
+				"ENJOYED OUR GAME?\n★ Favorite it\nand leave a Like!",
+				"FavoritePrompt",
+				"Favorite",
+			},
+			{ "SupportBoard", 19.5, 29, "SUPPORT US\nHelp us make\nour next game", "SupportPrompt", "Support" },
 		}
 	do
+		local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * BOARD, b[2], hill.Y, 176, b[3])
+		board.CanCollide = true
+		board:SetAttribute("Board", b[1])
+		local note = sign(
+			world,
+			b[4],
+			board.CFrame * CFrame.new(0, 0.27 * BOARD, -0.12 * BOARD),
+			Vector3.new(4.6, 3.2, 0.05) * BOARD
+		)
+		note.Transparency = 1
+		-- a small warm lamp under its roof washes the board face, so it reads at night (subtle-lighting)
+		local lamp = Instance.new("Attachment")
+		lamp.Position = Vector3.new(0, 3.2, -1.2) * BOARD
+		lamp.Orientation = Vector3.new(-120, 0, 0) -- down and back onto the planks
+		lamp.Parent = board
+		local spot = Instance.new("SpotLight")
+		spot.Color = rgb(255, 196, 130)
+		spot.Brightness = 1.6
+		spot.Range = 12
+		spot.Angle = 70
+		spot.Face = Enum.NormalId.Front
+		spot.Parent = lamp
 		local prompt = Instance.new("ProximityPrompt")
-		prompt.Name = p[1]
-		prompt.ActionText = p[2]
-		prompt.ObjectText = p[3]
-		prompt.KeyboardKeyCode = p[4]
+		prompt.Name = b[5]
+		prompt.ActionText = b[6]
+		prompt.ObjectText = "Glitched Together"
+		prompt.KeyboardKeyCode = Enum.KeyCode.E
 		prompt.HoldDuration = 0
 		prompt.RequiresLineOfSight = false
-		prompt.MaxActivationDistance = 10
+		prompt.MaxActivationDistance = 12
 		prompt.Parent = board
 	end
 
