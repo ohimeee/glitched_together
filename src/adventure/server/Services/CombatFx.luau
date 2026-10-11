@@ -570,8 +570,10 @@ function CombatFx.AreaMarker(pos: Vector3, radius: number, color: Color3): Part
 	return p
 end
 
--- The sword's arc: a white crescent decal lying in the swing's box, gone in a blink
-function CombatFx.Slash(cf: CFrame, size: Vector3)
+-- The sword's arc: a white crescent decal lying in the swing's box, gone in a blink. `swing` follows the blade:
+-- 1 forehand (her right to left: bright leading edge ends on her left), 2 backhand (the mirrored texture), 3 overhead
+-- chop (squeezed into a streak straight ahead, as seen from above). The part turns 180 so the arc bulges outward.
+function CombatFx.Slash(cf: CFrame, size: Vector3, swing: number?)
 	local p = Instance.new("Part")
 	p.Name = "FxSlash"
 	p.Anchored = true
@@ -579,11 +581,12 @@ function CombatFx.Slash(cf: CFrame, size: Vector3)
 	p.CanQuery = false
 	p.CanTouch = false
 	p.Transparency = 1
-	p.Size = Vector3.new(size.X * 1.3, 0.1, size.Z * 1.3)
-	p.CFrame = cf
+	local width = if swing == 3 then size.X * 0.35 else size.X * 1.3
+	p.Size = Vector3.new(width, 0.1, size.Z * 1.3)
+	p.CFrame = cf * CFrame.Angles(0, math.pi, 0)
 	local decal = Instance.new("Decal")
 	decal.Face = Enum.NormalId.Top
-	decal.Texture = TEX.Slash
+	decal.Texture = if swing == 2 then TEX.SlashBack else TEX.Slash
 	decal.Parent = p
 	p.Parent = workspace
 	TweenService:Create(decal, TweenInfo.new(0.18), { Transparency = 1 }):Play()

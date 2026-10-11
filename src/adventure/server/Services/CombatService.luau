@@ -1034,8 +1034,9 @@ function CombatService.Rally(pos: Vector3, owner: Player?)
 	CombatService.Stun(pos, T.Radius, T.Stun)
 end
 
--- Sword arc: a box in front of the attacker. Returns how many enemies it hit.
-function CombatService.MeleeBox(cf: CFrame, size: Vector3, damage: number, owner: Player?): number
+-- Sword arc: a box in front of the attacker (`swing` = combo step, picks the slash look). Returns how many enemies
+-- it hit.
+function CombatService.MeleeBox(cf: CFrame, size: Vector3, damage: number, owner: Player?, swing: number?): number
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = characters()
@@ -1050,7 +1051,7 @@ function CombatService.MeleeBox(cf: CFrame, size: Vector3, damage: number, owner
 			end
 		end
 	end
-	CombatFx.Slash(cf, size)
+	CombatFx.Slash(cf, size, swing)
 	Audio.play("SwordSwing", cf.Position)
 	if hits > 0 then
 		Audio.play("SwordHit", cf.Position)

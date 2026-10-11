@@ -683,12 +683,44 @@ local function giveHeld(p: Player)
 				elseif not p:GetAttribute(attr) and h then
 					h:Destroy()
 				end
+				if item.GlowGrip then
+					weld.C0 = if p:GetAttribute(attr) then item.GlowGrip :: CFrame else item.Grip
+				end
 			end
 			local conn = p:GetAttributeChangedSignal(attr):Connect(glow)
 			handle.Destroying:Once(function()
 				conn:Disconnect()
 			end)
 			glow()
+		end
+		if item.Trail and item.TrailWhile then
+			local a0 = Instance.new("Attachment")
+			a0.Position = item.Trail[1]
+			a0.Parent = handle
+			local a1 = Instance.new("Attachment")
+			a1.Position = item.Trail[2]
+			a1.Parent = handle
+			local trail = Instance.new("Trail")
+			trail.Attachment0 = a0
+			trail.Attachment1 = a1
+			trail.Lifetime = 0.16
+			trail.LightEmission = 0.6
+			trail.FaceCamera = false
+			trail.Color = ColorSequence.new(Color3.new(1, 1, 1), Palette.Miko)
+			trail.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.15),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			trail.WidthScale = NumberSequence.new(1)
+			trail.Enabled = false
+			trail.Parent = handle
+			local attr = item.TrailWhile
+			local conn = p:GetAttributeChangedSignal(attr):Connect(function()
+				trail.Enabled = p:GetAttribute(attr) == true
+			end)
+			handle.Destroying:Once(function()
+				conn:Disconnect()
+			end)
 		end
 		if item.ShiftedGrip then
 			local function place()

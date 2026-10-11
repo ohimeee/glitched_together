@@ -328,9 +328,22 @@ local function slash(cock: { [string]: Pose }, hit: { [string]: Pose }): Clip
 		},
 	}
 end
-local blockPose = { -- hiding behind the shield (user ref, Oct 11): crouched and hunched, the left arm swings the shield
-	-- across to the middle of her body (pose solved in Play: shield centred within 0.3 studs, upright, ~30 deg off
-	-- square), head tucked so only the top of it peeks over the rim; the sword arm hangs relaxed at her side
+local blockPose = { -- standing tall behind the raised shield (user ref photo, Oct 11): the left forearm crosses her
+	-- belly with the elbow out, and while Blocking the shield moves to ToolFx GlowGrip: centred, square and upright,
+	-- top at her chin so her whole head shows over it; the sword arm hangs relaxed at her side. Rest joints are listed
+	-- so the idle animation can't tilt the shield through her hips or wrist
+	LowerTorso = { 0, 0, 0 },
+	UpperTorso = { 0, 0, 0 },
+	Head = { 0, 0, 0 },
+	LeftUpperArm = { -10, -90, -20 },
+	LeftLowerArm = { 45, 0, 0 },
+	LeftHand = { 0, 0, 0 },
+	RightUpperArm = { 12, 0, 14 },
+	RightLowerArm = { 25, 0, 0 },
+}
+local chargePose = { -- the Shield Charge rush (shield on its normal grip): crouched and hunched, the left arm swings
+	-- the shield across to the middle of her body (pose solved in Play: shield centred within 0.3 studs, upright,
+	-- ~30 deg off square), head tucked so only the top of it peeks over the rim
 	LowerTorso = { -4, 0, 0, 0, -0.6, 0 },
 	UpperTorso = { -14, -20, 0 },
 	Head = { 14, 20, 0 },
@@ -388,7 +401,7 @@ local Clips: { [string]: Clip } = {
 		loop = true,
 		keys = {
 			{ t = 0, pose = blockPose },
-			{ t = 0.7, pose = merge(blockPose, { UpperTorso = { -16, -20, 0 }, Head = { 10, 22, 0 } }) }, -- breathing
+			{ t = 0.7, pose = merge(blockPose, { UpperTorso = { -2, 0, 0 }, Head = { 2, 0, 0 } }) }, -- breathing
 			{ t = 1.4, pose = blockPose },
 		},
 	},
@@ -396,9 +409,9 @@ local Clips: { [string]: Clip } = {
 	ShieldCharge = {
 		priority = "Action2",
 		keys = {
-			{ t = 0, pose = blockPose },
-			{ t = 0.05, pose = merge(blockPose, { UpperTorso = { -28, -18, 0 }, Head = { 22, 18, 0 } }) },
-			{ t = 0.32, pose = merge(blockPose, { UpperTorso = { -28, -18, 0 }, Head = { 22, 18, 0 } }) },
+			{ t = 0, pose = chargePose },
+			{ t = 0.05, pose = merge(chargePose, { UpperTorso = { -28, -18, 0 }, Head = { 22, 18, 0 } }) },
+			{ t = 0.32, pose = merge(chargePose, { UpperTorso = { -28, -18, 0 }, Head = { 22, 18, 0 } }) },
 			{ t = 0.5, pose = {} },
 		},
 	},

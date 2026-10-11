@@ -73,6 +73,8 @@ alpha = band ** 0.6 * sweep ** 1.3 * (ang < -0.2)
 arr[..., :3] = 255
 arr[..., 3] = np.clip(alpha, 0, 1) * 255
 Image.fromarray(arr.astype(np.uint8), "RGBA").filter(ImageFilter.GaussianBlur(1.2)).save(OUT + "FX_Slash.png")
+# the backhand swing sweeps the other way: the same swoosh mirrored
+Image.open(OUT + "FX_Slash.png").transpose(Image.FLIP_LEFT_RIGHT).save(OUT + "FX_SlashBack.png")
 
 # 4) Smoke puff: soft lumpy cloud, grey-white (tinted), 128
 S = 128

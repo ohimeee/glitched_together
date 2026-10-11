@@ -14,6 +14,9 @@ export type HeldItem = {
 	Muzzle: Vector3?, -- where beams / ropes / spells leave the item, in the item's space
 	ShiftedGrip: CFrame?, -- where it moves while the player is Shifted (Layer Shift goggles over the eyes)
 	GlowWhile: string?, -- a player attribute: while it's set the item's rim glows the owner's color (Miko's shield)
+	GlowGrip: CFrame?, -- where it moves while GlowWhile is set (Miko's shield, raised square in front of her)
+	Trail: { Vector3 }?, -- two points in the item's space (blade base, tip): a swoosh follows the blade while...
+	TrailWhile: string?, -- ...this player attribute is set (Miko's sword: `Swinging`, set by the server per swing)
 }
 
 local Held: { [string]: { HeldItem } } = {
@@ -51,24 +54,30 @@ local Held: { [string]: { HeldItem } } = {
 		},
 	},
 	-- chunky broadsword: steel blade, wide brass crossguard, leather grip (user, Oct 11: replaced the old sword;
-	-- Studio generate_mesh). Blade along the mesh's +Y, grip 1.4 below its centre: carried lowered and forward.
+	-- Studio generate_mesh; its crossguard came out mid-blade, so the guard was slid down onto the handle and the mesh
+	-- re-uploaded). Blade along the mesh's +Y, grip 1.4 below its centre: carried lowered and forward.
 	-- teal heater shield with a steel rim in the left hand, bigger than the old round buckler (user, Oct 11; Studio
-	-- generate_mesh); front face along the mesh's +Z, glows teal while Miko blocks
+	-- generate_mesh); the convex painted face bulges toward the mesh's -Z (the hollow back is +Z), glows teal while
+	-- Miko blocks. GlowGrip (solved on the R15 rig): strapped to the forearm across her belly, the shield stands
+	-- centred, square and upright in front of her with its top at her chin (user ref, Oct 11)
 	ShieldKnight = {
 		{
-			Id = "rbxassetid://89930179423167",
+			Id = "rbxassetid://92156473474192",
 			TextureId = "rbxassetid://105233299353515",
 			Size = v(1.07, 3.88, 0.4),
 			Hand = "RightHand",
 			Grip = CFrame.new(0, -0.68, -1.32) * CFrame.Angles(rad(-110), 0, 0),
+			Trail = { v(0, -0.5, 0), v(0, 1.9, 0) }, -- just above the crossguard to the tip
+			TrailWhile = "Swinging",
 		},
 		{
 			Id = "rbxassetid://90349811404835",
 			TextureId = "rbxassetid://118163519261188",
 			Size = v(2.86, 3.24, 0.57),
 			Hand = "LeftHand",
-			Grip = CFrame.new(-0.55, 0.45, -0.4) * CFrame.Angles(0, math.pi, 0), -- painted face (mesh +Z) forward, point down
+			Grip = CFrame.new(-0.55, 0.45, -0.4), -- painted face (mesh -Z) forward, point down
 			GlowWhile = "Blocking",
+			GlowGrip = CFrame.new(-0.147, -0.29, 0.047) * CFrame.fromEulerAnglesYXZ(rad(-14), rad(104.43), rad(-36.78)),
 		},
 	},
 	-- chunky grey copier with orange trim and a clipboard on its little screen (scanner window along the mesh's +Z)
@@ -108,6 +117,7 @@ return {
 		Flame = "rbxassetid://120721842836471",
 		StarSpark = "rbxassetid://122158522084345",
 		Slash = "rbxassetid://100311078346030",
+		SlashBack = "rbxassetid://70739552910543", -- the same swoosh mirrored (backhand)
 		Smoke = "rbxassetid://75304585987337",
 		AreaRing = "rbxassetid://119208032301514",
 		-- Kai's "real" fire (textures/make_fireball.py, Oct 11): fire flipbook, ember, trail streak, scorch decal.

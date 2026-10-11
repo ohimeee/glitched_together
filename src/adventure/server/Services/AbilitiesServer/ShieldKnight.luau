@@ -39,7 +39,14 @@ local function sword(p: Player, root: BasePart, aim: Vector3)
 	local dir = flatDir(root.Position, aim, root.CFrame.LookVector)
 	local reach = C.SwordCombo.Reach
 	local cf = CFrame.lookAt(root.Position, root.Position + dir) * CFrame.new(0, 0, -reach / 2 - 0.5)
-	CombatService.MeleeBox(cf, Vector3.new(C.SwordCombo.Width, 5, reach), T.Sword.Damage[c.step], p)
+	CombatService.MeleeBox(cf, Vector3.new(C.SwordCombo.Width, 5, reach), T.Sword.Damage[c.step], p, c.step)
+	-- the blade's swoosh trail (ArtService, ToolFx TrailWhile) for this swing
+	p:SetAttribute("Swinging", true)
+	task.delay(C.SwordCombo.Swing * 0.85, function()
+		if c.last == now then
+			p:SetAttribute("Swinging", nil)
+		end
+	end)
 end
 
 function ShieldKnight.Use(p: Player, useIndex: number, _target: Instance?, aim: any)
