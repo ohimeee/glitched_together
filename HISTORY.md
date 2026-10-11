@@ -2,6 +2,10 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 26th session (Oct 12, 2026): The Unfinished intro motion
+
+- **`Boss.Intro` for The Unfinished** (`server/Bosses/Unfinished.luau`): during W3_BossIntro the golem breathes (Tuning.Unfinished.Bob) and sways, forearms swing from the shoulder (top of the 24-stud box) with crystals riding along, and at its face shot (+0.3..1.1 s) it rises 3 studs, leans back and throws both arms wide (~70° out, forward 0.35 rad) with a CameraShake (0.8, 1.4 s) and Glitch star burst off the heart; arms lower over the wide stage shot. No new SFX (boss music only). Stop fn eases out over 0.8 s and restores every anchored part exactly. Verified by data (Studio Play, real CamPath durations): arm out −11 / up +11 studs at peak, crystal-arm distance constant, restore error 0.0000. Not watched on screen yet.
+
 ## 25th session (Oct 12, 2026): mash respawn, Hollow Dragon retune, bigger ultimates
 
 - **It Takes Two respawn (next step 0f):** new `client/Controllers/ReviveController.luau`: a 24-segment radial meter mid-screen (role color, themed key chip SPACE / A / TAP that pulses per press, "MASH TO RESPAWN"), the same meter as a studs-sized BillboardGui over a downed partner (pulses on `MashCount`), pop on return; server `HealthService`: partner hold-revive ProximityPrompt removed, mash works in every world (`RespawnMash`, `Tuning.ReviveMeter.MashMinGap` 0.06 s anti-autoclick), `RespawnTotal` attr for the meter, spark burst in the player's color on revive. Old HUD "DOWNED · partner revives (E)" line + prompt hider removed; MovementController no longer sends mash. Docs: mechanics §3, implementation, design, Story Line. Verified by the operator (emulated solo: ring at 40% / full / cleared, remote +5, no prompt, no console errors). Real mash speed not measured (needs a real Down = 2P).

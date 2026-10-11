@@ -13,11 +13,13 @@
 --      Then the SAVE button rises; both ground-pound it together.
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Services = script.Parent.Parent.Services
 local CombatService = require(Services.CombatService)
 local CombatFx = require(Services.CombatFx)
@@ -677,6 +679,101 @@ function Boss.Cleanup(self: any)
 		table.clear(self.detached)
 		self.drop, self.dropTarget = 0, 0
 		placeBody(self, 0)
+	end
+end
+
+-- Intro (user, Oct 12: every boss alive in its drone intro): while W3_BossIntro plays the golem breathes and sways
+-- in the void, its forearms swing from the shoulders and its heart pulses; as the camera reaches its face it rises,
+-- throws both arms wide (camera shake, static sparks off the heart) and lowers them again over the wide stage shot.
+-- The stop function eases everything back and lands it exactly as built, so the fight's Setup measures the same pose.
+function Boss.Intro(world: Instance, shots: { any }): () -> ()
+	local golem = world:FindFirstChild("Unfinished", true) :: Model?
+	if not golem then
+		return function() end
+	end
+	local saved: { [BasePart]: CFrame } = {}
+	for _, d in golem:GetDescendants() do
+		if d:IsA("BasePart") and d.Anchored then
+			saved[d] = d.CFrame
+		end
+	end
+	local pivot = golem.WorldPivot
+	local arms: { { part: BasePart, crystal: BasePart?, side: number } } = {}
+	for _, s in { "L", "R" } do
+		local part = golem:FindFirstChild("Arm" .. s)
+		if part and part:IsA("BasePart") and saved[part] then
+			local crystal = golem:FindFirstChild("Crystal" .. s)
+			table.insert(arms, {
+				part = part,
+				crystal = if crystal and crystal:IsA("BasePart") and saved[crystal] then crystal else nil,
+				side = if s == "L" then -1 else 1,
+			})
+		end
+	end
+	local heart = golem:FindFirstChild("Heart") :: BasePart?
+	-- its face shot starts after the drone flight and the first plain shot
+	local face, plain = 0, 0
+	for _, shot in shots do
+		if shot.Glide then
+			face += shot.Duration
+		elseif plain == 0 then
+			plain = shot.Duration
+		end
+	end
+	face += plain
+	local t, roared = 0, false
+	local blend = 1 -- 1 = alive, eased to 0 by stop()
+	local function pose()
+		local k = t - face
+		-- 0..1: risen with arms wide from the face shot (k 0.3..1.1), held, lowered over the wide shot (k 2.8..4.2)
+		local wide = math.clamp((k - 0.3) / 0.8, 0, 1) - math.clamp((k - 2.8) / 1.4, 0, 1)
+		wide = math.sin(math.max(wide, 0) * math.pi / 2)
+		local breathe = math.sin(t * 0.3 * math.pi * 2)
+		local body = CFrame.new(0, (breathe * T.Bob + wide * 3) * blend, 0)
+			* CFrame.Angles(wide * 0.06 * blend, math.sin(t * 0.45) * 0.03 * blend, 0)
+		local at = pivot * body
+		for part, cf in saved do
+			part.CFrame = at * pivot:ToObjectSpace(cf)
+		end
+		for i, a in arms do
+			-- swing from the shoulder (the top of the 24-stud box): a slow idle sway, then out to the side and forward
+			local home = at * pivot:ToObjectSpace(saved[a.part])
+			local shoulder = home * CFrame.new(0, a.part.Size.Y / 2, 0)
+			local sway = math.sin(t * 0.9 + i * 2) * 0.08
+			local out = (sway + wide * 1.2) * a.side * blend
+			local fwd = (math.sin(t * 0.7 + i) * 0.06 + wide * 0.35) * blend
+			local swung = shoulder * CFrame.Angles(fwd, 0, out) * shoulder:ToObjectSpace(home)
+			a.part.CFrame = swung
+			if a.crystal then
+				a.crystal.CFrame = swung * saved[a.part]:ToObjectSpace(saved[a.crystal])
+			end
+		end
+		if not roared and k >= 0.6 then
+			roared = true
+			local from = if heart then heart.Position else at.Position + Vector3.new(0, 33, 0)
+			Net.event("CameraShake"):FireAllClients(from, 0.8, 1.4)
+			CombatFx.Burst(from, { { "Stars", 24, 2.5, Palette.Glitch } }, Palette.Glitch, 40)
+		end
+	end
+	local conn = RunService.Heartbeat:Connect(function(dt)
+		t += dt
+		pose()
+	end)
+	return function()
+		conn:Disconnect()
+		local left = 0.8
+		conn = RunService.Heartbeat:Connect(function(dt)
+			t += dt
+			left -= dt
+			blend = math.max(0, left / 0.8)
+			pose()
+			if left <= 0 then
+				conn:Disconnect()
+				for part, cf in saved do
+					part.CFrame = cf
+				end
+			end
+		end)
 	end
 end
 
