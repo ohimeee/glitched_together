@@ -144,6 +144,8 @@ Source: [Roblox mesh specifications](https://create.roblox.com/docs/art/modeling
 
 ## 6. Pipeline: Blender → Studio
 
+**No-click route (Oct 12, Hollow Dragon hall):** export each piece as GLB (`bpy.ops.export_scene.gltf(use_selection=True, use_active_scene=True, export_format="GLB", export_materials="NONE")`: without `use_active_scene` the default Scene's Cube leaked into every file) → `python tools/mesh/upload_model.py blender_assets/<kit>/*.glb` (Open Cloud Model upload, prints asset ids) → in Studio Edit `InsertService:LoadAsset(id)` and read each MeshPart's `MeshId` + `Size` → ids into the ArtService data table. **Orientation:** the import turns pieces 180° about Y: Blender -Y (front) = Roblox -Z, Blender +X = Roblox -X; offsets between pieces of one kit must be flipped the same way (`tools/dragon_hall/kit.py` prints them). Exact booleans: cut a clean manifold slab first, join overlapping dressing afterwards, and recalc normals outward (inside-out cutters silently do nothing).
+
 1. **Reference** (§3) → write a brief in `blender_assets/briefs/<Name>.md`: references looked at, direction, size in studs, silhouette, colors from §4, build plan. Example: `briefs/LobbyCapsule.md`.
 2. **Block out** in Blender with scripted primitives/bmesh at game scale. Screenshot.
 3. **Refine**: bevels, proportions, materials. Screenshot from the gameplay camera angle (slightly above, ~20 studs away).
