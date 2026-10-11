@@ -1,6 +1,6 @@
 # Glitched Together (Roblox, Luau, Rojo)
 
-- Docs: `design.md` (why), `mechanics.md` (numbers), `implementation.md` (how), `art-direction.md` (**the art spec**: reserved owner colors, palette, shapes, Blender guide), `Glitched Together — Story Line.md`, `research.md` (It Takes Two art/feel research), `obstacles.md` (It Takes Two obstacle patterns → our obstacle catalog + engine pieces).
+- Docs: `LAUNCH.md` (publishing plan), `design.md` (why), `mechanics.md` (numbers), `implementation.md` (how), `art-direction.md` (**the art spec**: reserved owner colors, palette, shapes, Blender guide), `Glitched Together — Story Line.md`, `research.md` (It Takes Two art/feel research), `obstacles.md` (It Takes Two obstacle patterns → our obstacle catalog + engine pieces).
 - **Any 3D / Blender / art task: read `BLENDER_PLAYBOOK.md` first** (tools, reference search, art rules, Roblox limits, Blender → Studio pipeline, asset backlog).
 - Blender files (.blend sources, .fbx exports) live in `blender_assets/`; design briefs in `blender_assets/briefs/`.
 - Every tuning number lives in `src/shared/Config/Tuning.luau`; don't hardcode numbers elsewhere.
@@ -64,6 +64,7 @@
    - **Saved runs per partner in the lobby:** `SaveService` already keeps one save per pair (`DuoSaves`, key `duo_<min>_<max>`, flushed at every checkpoint/world/boss phase/close; Studio ids ≤ 0 skip saving). Missing: a per-player partner list (who + world/checkpoint), lobby UI "Continue with <partner>" vs new partner = fresh start, and a live test after publishing.
    - **Art:** Epilogue gold pieces (step 5) and the rest of the art backlog.
    - **Monetization plan** (no pay-to-win; tip jar done; check DevEx/Roblox rules).
+   - **Launch / publishing plan: `LAUNCH.md`** (title `[2 PLAYER] Glitched Together 👾`, description draft, icon/thumbnails from the Blender paintings, maturity answers, PC + mobile + console with mobile/console passes, 8 badges worlds + bosses, order of work).
 0. **Castle polish, user still to judge:** Flame Wall curtain, room-fight pacing, Miko's standing block (walking while blocking may shuffle), sword trail + slash arcs, breakable props (look + sounds), charge/rally, Kai's cast anims. (All combat clips are uploaded now.)
 0b. **2P playtest fixes to see on the next run:** cart rider carry + walls hold (`CartRideController`, ridden once before the wall fix), crystal light-up, portcullis open, [SHIFT] BLINK chip + orange rim on blinkable bars (`KeyPromptController`; the [E] IGNITE chip was removed: user), studs-sized HP bars / partner tag / chips (`Tuning.OverheadBar`, `RoleTag`, `KeyPromptSize`), kit change clears `Blocking`.
 0c. **Powder Hall / Ember Fuse (built 26th session, user to feel-test in 2P):** hall +36 studs (`Tuning.Castle.HallShift`; everything after it shifted), 3rd fuse leg + 4th trap, swivelling wall crossbows (`tools/trap_kit`), red wind-up glow, visible arrows with trails, dimmer fuse spark.
