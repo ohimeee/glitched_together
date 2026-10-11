@@ -450,6 +450,23 @@ local function turrets(folder: Instance, foundations: { BasePart })
 		})
 	end
 	local placed: { Vector3 } = {}
+	-- room floors (cobblestone slabs): a turret standing on one would sit inside a room, over its gameplay (the
+	-- Hall's gate turrets hid Plate B from the top-down camera, 2P playtest Oct 11)
+	local floors: { BasePart } = {}
+	for _, d in (folder.Parent :: Instance):GetDescendants() do
+		if d:IsA("BasePart") and d.Material == Enum.Material.Cobblestone and d.Size.Y <= 2.5 then
+			table.insert(floors, d)
+		end
+	end
+	local function onFloor(pos: Vector3): boolean
+		for _, fl in floors do
+			local lp = fl.CFrame:PointToObjectSpace(Vector3.new(pos.X, fl.Position.Y, pos.Z))
+			if math.abs(lp.X) < fl.Size.X / 2 and math.abs(lp.Z) < fl.Size.Z / 2 then
+				return true
+			end
+		end
+		return false
+	end
 	for _, f in foundations do
 		if f.Size.X < 20 or f.Size.Z < 20 then
 			continue -- tiles and small pads inside rooms
@@ -483,6 +500,9 @@ local function turrets(folder: Instance, foundations: { BasePart })
 				end
 				table.insert(placed, corner)
 				local c = corner + out * 3.2
+				if onFloor(c) then
+					continue
+				end
 				-- roofs only where nothing of the castle lies behind the turret (on screen, above it): at room joints a
 				-- roof would sit in the middle of the top-down view
 				local far = sz < 0
