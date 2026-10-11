@@ -22,6 +22,11 @@ local function cartUnder(root: BasePart, character: Model): Model?
 	return if cart and cart:IsA("Model") then cart else nil
 end
 
+local WALL_GAP = 1.1 -- studs kept between the body's middle and a wall (the torso is ~2 wide)
+local wallParams = RaycastParams.new()
+wallParams.FilterType = Enum.RaycastFilterType.Exclude
+wallParams.RespectCanCollide = true
+
 function CartRideController.Init()
 	local riding: Model? = nil
 	local rel: CFrame? = nil -- the root in the cart's space after last frame's correction
@@ -39,20 +44,31 @@ function CartRideController.Init()
 			return
 		end
 		local cartCf = cart:GetPivot()
+		wallParams.FilterDescendantsInstances = { character :: Model }
 		if cart == riding and rel then
 			-- where the cart carried our old spot, plus this frame's own walking; height stays with physics
 			local carried = cartCf * rel
 			local walk = humanoid.MoveDirection * humanoid.WalkSpeed * dt
-			local target = Vector3.new(carried.X + walk.X, root.Position.Y, carried.Z + walk.Z)
+			walk = Vector3.new(walk.X, 0, walk.Z)
+			-- the step stops at the cart's walls (and anything else solid): walking can't push you out of the cart
+			local from = Vector3.new(carried.X, root.Position.Y, carried.Z)
+			if walk.Magnitude > 1e-4 then
+				local dir, step = walk.Unit, walk.Magnitude
+				for _, dy in { -1.4, 0, 1 } do
+					local hit = workspace:Raycast(from + Vector3.new(0, dy, 0), dir * (step + WALL_GAP), wallParams)
+					if hit then
+						step = math.max(0, math.min(step, hit.Distance - WALL_GAP))
+					end
+				end
+				walk = dir * step
+			end
+			local target = from + walk
 			root.CFrame = root.CFrame.Rotation + target
 			-- start the next physics step at the cart's speed, so the humanoid doesn't fight the correction
 			local v = root.AssemblyLinearVelocity
 			local cartV = (cart.PrimaryPart and cart.PrimaryPart:GetVelocityAtPosition(target)) or Vector3.zero
-			root.AssemblyLinearVelocity = Vector3.new(
-				cartV.X + humanoid.MoveDirection.X * humanoid.WalkSpeed,
-				v.Y,
-				cartV.Z + humanoid.MoveDirection.Z * humanoid.WalkSpeed
-			)
+			local walkV = if dt > 0 then walk / dt else Vector3.zero
+			root.AssemblyLinearVelocity = Vector3.new(cartV.X + walkV.X, v.Y, cartV.Z + walkV.Z)
 		end
 		riding = cart
 		rel = cartCf:ToObjectSpace(root.CFrame)
