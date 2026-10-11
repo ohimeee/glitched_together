@@ -50,9 +50,9 @@ local function promptFavorite(): boolean
 	return true
 end
 
--- the tip jar under the credits' title card and behind the Epilogue notice board: thanks-in-advance, a favorite
--- button and one button per Products.Support entry. `centred` = the board's pop-up (mid-screen) instead of the
--- strip under the title card.
+-- the tip jar under the credits' title card and behind the Epilogue SUPPORT board: thanks-in-advance and one button
+-- per Products.Support entry, plus a favorite button under the credits only. `centred` = the board's pop-up
+-- (mid-screen, support only: the favorite has its own board; user, Oct 12) instead of the strip under the title card.
 local function supportPanel(parent: Instance, centred: boolean?): Frame
 	local panel = Instance.new("Frame")
 	panel.AnchorPoint = Vector2.new(0.5, if centred then 0.5 else 1)
@@ -69,9 +69,23 @@ local function supportPanel(parent: Instance, centred: boolean?): Frame
 	stroke.Thickness = 2
 	stroke.Transparency = 1
 	stroke.Parent = panel
-	local head = label(panel, "Enjoyed Glitched Together?", 26, THEME.TitleFont, THEME.Accent)
+	local head = label(
+		panel,
+		if centred then "Support our next game" else "Enjoyed Glitched Together?",
+		26,
+		THEME.TitleFont,
+		THEME.Accent
+	)
 	head.Position = UDim2.fromOffset(0, 10)
-	local sub = label(panel, "Favorite it, leave a Like, or support our next game.", 18, THEME.Font, THEME.SubInk)
+	local sub = label(
+		panel,
+		if centred
+			then "Every tip helps us build more worlds. Thank you!"
+			else "Favorite it, leave a Like, or support our next game.",
+		18,
+		THEME.Font,
+		THEME.SubInk
+	)
 	sub.Position = UDim2.fromOffset(0, 44)
 	local row = Instance.new("Frame")
 	row.AnchorPoint = Vector2.new(0.5, 1)
@@ -101,11 +115,13 @@ local function supportPanel(parent: Instance, centred: boolean?): Frame
 		table.insert(fades, b)
 		b.Activated:Connect(onPress)
 	end
-	button("★ FAVORITE", 160, THEME.Ink, function()
-		if not promptFavorite() then
-			sub.Text = "(Favorites work once the game is published.)"
-		end
-	end)
+	if not centred then
+		button("★ FAVORITE", 160, THEME.Ink, function()
+			if not promptFavorite() then
+				sub.Text = "(Favorites work once the game is published.)"
+			end
+		end)
+	end
 	for _, product in Products.Support do
 		button(`{product.Robux} R$`, 108, THEME.Accent, function()
 			if product.Id == 0 then
@@ -330,7 +346,7 @@ function CreditsController.Init()
 		if prompt.Name == "SupportPrompt" then
 			openBoard()
 		elseif prompt.Name == "FavoritePrompt" and not promptFavorite() then
-			openBoard() -- Studio: no place id, the panel says so on its favorite button
+			warn("[Favorite] the favorite prompt works once the game is published (Places.Lobby)") -- Studio
 		end
 	end)
 end
