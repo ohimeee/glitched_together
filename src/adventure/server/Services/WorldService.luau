@@ -24,6 +24,12 @@ WorldService.Loaded = loaded.Event -- (worldName, restart: boolean?)
 local advancing = false
 
 function WorldService.SetKit(p: Player, tool: string?, camera: string?)
+	if p:GetAttribute("Kit") ~= tool then
+		-- a held tool state never carries into the next kit (2P playtest Oct 11: Miko's raised shield followed her into
+		-- the Glitched Core: the client's "release" reached the server after the kit had already changed)
+		p:SetAttribute("Blocking", nil)
+		p:SetAttribute("SwordSwing", nil)
+	end
 	p:SetAttribute("Kit", tool)
 	p:SetAttribute("CameraMode", camera or "Follow")
 end
