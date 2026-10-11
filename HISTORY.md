@@ -2,7 +2,14 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
-## 24th session (Oct 11, 2026): Miko's shield + sword fixes (user ref photo)
+## 24th session (Oct 11, 2026): Miko's shield + sword fixes, breakable props, first 2P castle playtest
+
+- **2P playtest (user, Studio Test → 2 clients):** castle start → Hollow Dragon beaten → into the Glitched Core. I drove teleports and Miko's block for the user from the server/client windows. Findings fixed this session are listed below; notes for later went to CLAUDE.md next steps (Powder Hall longer + visible arrow traps, ultimates' animation/impact, Hollow Dragon tuning "entertaining, not a speedrun", It Takes Two mash revive everywhere without partner revive).
+- **Uploaded** the castle combat clips (Kai casts, Slash1-3, Block, ShieldCharge, Rally): 28 ids in `MoveAnims.Ids`, so the partner sees them.
+- **UI sizes:** overhead HP bars, partner tag and key chips were fixed pixel sizes (huge in the small test windows, piling up in the cart): now sized in studs (`Tuning.OverheadBar`, `RoleTag` (+ a pixel minimum), `KeyPromptSize`). The [E] IGNITE chip was built, limited to line of sight, then removed (user: makes the Torch Run too easy).
+- **Cart ride walls:** the first `CartRideController` added walking straight to the CFrame and let riders walk out through the sides; steps now stop at walls (three height rays).
+- **Kit change clears `Blocking` / `SwordSwing`** (`WorldService.SetKit`): Miko's raised shield followed her into the Glitched Core (the client's release reached the server after the kit had changed).
+
 
 - **Shield faced backwards:** the heater shield's convex painted face bulges toward mesh **-Z** (measured from EditableMesh vertices: centre reaches -Z, rim curls to +Z). `ToolFx.Held.ShieldKnight` Grip lost its `Angles(0, pi, 0)`.
 - **Block pose = standing tall behind a raised shield** (user photo: shield square in front, top at the chin, whole head showing). Her arm can't hold a 2.86x3.24 shield there on the idle grip, so the shield is "strapped to the forearm": new ToolFx `GlowGrip` (ArtService swaps the weld C0 while `GlowWhile`/`Blocking` is set). Arm pose + grip solved by forward kinematics on the real R15 joints (`blockPose`: forearm across the belly, elbow out). The old hunched pose lives on as `chargePose` for Shield Charge (no `Blocking`, idle grip). Verified in Play: shield centred (x 0.02), square (face·fwd 1.00), upright (1.00), top 1.0 vs head centre 1.46. Rest joints are listed in `blockPose` (see the gotcha in CLAUDE.md).
