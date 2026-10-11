@@ -450,19 +450,36 @@ local function turrets(folder: Instance, foundations: { BasePart })
 		})
 	end
 	local placed: { Vector3 } = {}
-	-- room floors (cobblestone slabs): a turret standing on one would sit inside a room, over its gameplay (the
-	-- Hall's gate turrets hid Plate B from the top-down camera, 2P playtest Oct 11)
-	local floors: { BasePart } = {}
-	for _, d in (folder.Parent :: Instance):GetDescendants() do
-		if d:IsA("BasePart") and d.Material == Enum.Material.Cobblestone and d.Size.Y <= 2.5 then
-			table.insert(floors, d)
-		end
-	end
-	local function onFloor(pos: Vector3): boolean
-		for _, fl in floors do
-			local lp = fl.CFrame:PointToObjectSpace(Vector3.new(pos.X, fl.Position.Y, pos.Z))
-			if math.abs(lp.X) < fl.Size.X / 2 and math.abs(lp.Z) < fl.Size.Z / 2 then
-				return true
+	-- gameplay pieces a turret must never stand over: from the top-down camera its roof hides them (the Hall's gate
+	-- turret hid Plate B, 2P playtest Oct 11); turrets over plain floor stay (user: "I like them")
+	local GAMEPLAY_TAGS = {
+		"PressurePlate",
+		"Checkpoint",
+		"Hazard",
+		"FireSwitch",
+		"Mirror",
+		"DuoGate",
+		"Mover",
+		"Station",
+		"HeavyLever",
+		"DuoPound",
+		"Brazier",
+		"Burnable",
+		"IronBars",
+		"CrackedWall",
+		"FuseStart",
+		"FuseBreak",
+	}
+	local world = folder.Parent :: Instance
+	local function overGameplay(pos: Vector3): boolean
+		for _, tag in GAMEPLAY_TAGS do
+			for _, inst in CollectionService:GetTagged(tag) do
+				if inst:IsA("BasePart") and inst:IsDescendantOf(world) then
+					local d = Vector3.new(inst.Position.X - pos.X, 0, inst.Position.Z - pos.Z).Magnitude
+					if d < TURRET_R + 1 + math.min(math.max(inst.Size.X, inst.Size.Z) / 2, 4) then
+						return true
+					end
+				end
 			end
 		end
 		return false
@@ -500,7 +517,7 @@ local function turrets(folder: Instance, foundations: { BasePart })
 				end
 				table.insert(placed, corner)
 				local c = corner + out * 3.2
-				if onFloor(c) then
+				if overGameplay(c) then
 					continue
 				end
 				-- roofs only where nothing of the castle lies behind the turret (on screen, above it): at room joints a
