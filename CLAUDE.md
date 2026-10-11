@@ -1,6 +1,6 @@
 # Glitched Together (Roblox, Luau, Rojo)
 
-- Docs: `LAUNCH.md` (publishing plan), `design.md` (why), `mechanics.md` (numbers), `implementation.md` (how), `art-direction.md` (**the art spec**: reserved owner colors, palette, shapes, Blender guide), `Glitched Together — Story Line.md`, `research.md` (It Takes Two art/feel research), `obstacles.md` (It Takes Two obstacle patterns → our obstacle catalog + engine pieces).
+- Docs: `LAUNCH.md` (publishing plan), `TO_PLAN.md` (open decisions), `design.md` (why), `mechanics.md` (numbers), `implementation.md` (how), `art-direction.md` (**the art spec**: reserved owner colors, palette, shapes, Blender guide), `Glitched Together — Story Line.md`, `research.md` (It Takes Two art/feel research), `obstacles.md` (It Takes Two obstacle patterns → our obstacle catalog + engine pieces).
 - **Any 3D / Blender / art task: read `BLENDER_PLAYBOOK.md` first** (tools, reference search, art rules, Roblox limits, Blender → Studio pipeline, asset backlog).
 - Blender files (.blend sources, .fbx exports) live in `blender_assets/`; design briefs in `blender_assets/briefs/`.
 - Every tuning number lives in `src/shared/Config/Tuning.luau`; don't hardcode numbers elsewhere.
