@@ -104,7 +104,7 @@ return {
 	HpRegen = { Delay = 4, PerSecond = 5 }, -- castle HP: s without a hit before it refills, then HP per second
 	HitInvuln = 1,
 	SpawnInvuln = 2.5, -- s of safety after a respawn or a game-over reload (user, Oct 4: respawning into boss slams)
-	SpawnInvulnBoss = 5, -- ...the same during a boss fight (user, Oct 12: "the spawn immunity please")
+	SpawnInvulnBoss = 3, -- ...the same during a boss fight (user, Oct 12: "the spawn immunity please")
 	KillZoneRespawnDelay = 1,
 	SafePosEvery = 0.25,
 	VoidDrop = 25, -- studs below your last safe ground, falling with nothing under you (VoidProbe deep) = a fall
