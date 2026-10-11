@@ -66,6 +66,8 @@ type Foe = {
 	shieldDownUntil: number,
 	color: Color3,
 	fill: Frame?,
+	shield: BasePart?, -- a Shield Guard's shield, carried along every Heartbeat
+	shieldRel: CFrame?,
 	dead: boolean,
 }
 
@@ -316,6 +318,22 @@ local function register(inst: Instance)
 		fill = nil,
 		dead = false,
 	}
+	-- the shield's WeldConstraint is made before the world is parented and never holds once the body is moved by
+	-- CFrame (shields stayed floating where the guard was built): anchor it and carry it every frame instead
+	local shield = part:FindFirstChild("Shield")
+	if shield and shield:IsA("BasePart") then
+		for _, w in shield:GetChildren() do
+			if w:IsA("WeldConstraint") then
+				w:Destroy()
+			end
+		end
+		shield.Anchored = true
+		foe.shield = shield
+		-- measured from where the guard was built: EncounterService may already have parked it (Home = that spot)
+		local home = part:GetAttribute("Home")
+		local built = if typeof(home) == "CFrame" then home else part.CFrame
+		foe.shieldRel = built:ToObjectSpace(shield.CFrame)
+	end
 	foes[part] = foe
 	part:SetAttribute("HP", hp)
 	makeBar(foe)
@@ -1558,6 +1576,12 @@ function CombatService.Init()
 	end)
 
 	RunService.Heartbeat:Connect(function(dt)
+		-- shields ride with their guards even while paused (EncounterService parks and raises guards by CFrame)
+		for part, foe in foes do
+			if foe.shield and foe.shield.Parent == part then
+				foe.shield.CFrame = part.CFrame * (foe.shieldRel :: CFrame)
+			end
+		end
 		if paused() then
 			return
 		end

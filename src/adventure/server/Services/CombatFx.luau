@@ -336,99 +336,152 @@ function CombatFx.IgniteBolt(from: Vector3, to: Vector3): number
 end
 
 -- Kai's Flame Wall on its (invisible) gameplay part, local X = its length (user, Oct 11: "remake the firewall
--- animation"). It erupts from the middle outward along a burning line on the floor, roars with tall flames, embers
--- and smoke, flickers its light, then dies down over the last 0.8 s of `life` (CombatService removes the part).
+-- animation", then "doesn't feel like a wall of fire"). A continuous curtain: a sheet of tall flames packed along the
+-- whole length (box emitters, ~7 studs high) standing on a molten line in the floor, flame tongues licking higher,
+-- an ember stream and dark smoke over the top. It erupts from the middle outward, roars, then dies down over the last
+-- 0.9 s of `life` (CombatService removes the part).
 function CombatFx.FlameWall(part: BasePart, life: number)
 	local length = part.Size.X
-	local count = math.max(3, math.round(length / 1.6))
-	local floorY = -part.Size.Y / 2 + 0.1
-	local sources = {}
-	for i = 1, count do
-		local x = ((i - 0.5) / count - 0.5) * length
-		local at = Instance.new("Attachment")
-		at.Name = "FxWall"
-		at.Position = Vector3.new(x, floorY, 0)
-		at.Parent = part
-		local fire = makeEmitter(at, "WoodFire", 1.7, nil)
-		fire.Rate = 0
-		local embers = makeEmitter(at, "Embers", 1.2, FIRE_ORANGE)
-		embers.Rate = 0
-		local smoke = makeEmitter(at, "Smoke", 1.8, Color3.fromRGB(70, 60, 64))
-		smoke.Rate = 0
-		smoke.Acceleration = Vector3.new(0, 3, 0)
-		table.insert(sources, { at = at, fire = fire, embers = embers, smoke = smoke, x = x })
+	local floorY = -part.Size.Y / 2
+	local segments = math.max(3, math.round(length / 3)) -- the curtain lights segment by segment from the middle
+	local emitters: { { e: ParticleEmitter, full: number } } = {}
+	local segs = {}
+	for i = 1, segments do
+		local x = ((i - 0.5) / segments - 0.5) * length
+		local seg = Instance.new("Part")
+		seg.Name = "FxWallSeg"
+		seg.Anchored = true
+		seg.CanCollide = false
+		seg.CanQuery = false
+		seg.CanTouch = false
+		seg.Transparency = 1
+		seg.Size = Vector3.new(length / segments, 0.6, 0.9)
+		seg.CFrame = part.CFrame * CFrame.new(x, floorY + 0.4, 0)
+		seg.Parent = part
+		local function add(preset: string, scale: number, rate: number, color: Color3?): ParticleEmitter
+			local e = makeEmitter(seg, preset, scale, color)
+			e.Shape = Enum.ParticleEmitterShape.Box
+			e.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			e.Rate = 0
+			table.insert(emitters, { e = e, full = rate })
+			return e
+		end
+		-- the curtain: dense, tall, rising fast so the flames join into one sheet
+		local sheet = add("WoodFire", 2, 34)
+		sheet.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1.8),
+			NumberSequenceKeypoint.new(0.35, 3),
+			NumberSequenceKeypoint.new(1, 0.8),
+		})
+		sheet.Speed = NumberRange.new(6, 9)
+		sheet.Lifetime = NumberRange.new(0.55, 0.8)
+		sheet.SpreadAngle = Vector2.new(6, 6)
+		-- tongues: fewer, faster, licking above the sheet
+		local tongues = add("WoodFire", 1.4, 8)
+		tongues.Speed = NumberRange.new(10, 14)
+		tongues.Lifetime = NumberRange.new(0.5, 0.7)
+		-- base fire: big rolling flames low on the line, so the wall has a solid foot
+		local base = add("FireBurst", 0.9, 10)
+		base.Speed = NumberRange.new(0.5, 1.5)
+		base.Lifetime = NumberRange.new(0.5, 0.7)
+		base.EmissionDirection = Enum.NormalId.Top
+		add("Embers", 1.3, 10, FIRE_ORANGE).EmissionDirection = Enum.NormalId.Top
+		local smoke = add("Smoke", 2.2, 1.5, Color3.fromRGB(60, 50, 56))
+		smoke.Speed = NumberRange.new(5, 7)
+		smoke.Lifetime = NumberRange.new(1, 1.4)
+		table.insert(segs, { seg = seg, x = x, from = #emitters - 4, to = #emitters })
 	end
-	-- the burning line it stands on
+	-- the molten line it stands on: a glowing crack in a scorch mark
 	local line = Instance.new("Part")
-	line.Name = "FxWallScorch"
+	line.Name = "FxWallLine"
 	line.Anchored = true
 	line.CanCollide = false
 	line.CanQuery = false
 	line.CanTouch = false
+	line.Material = Enum.Material.Neon
+	line.Color = Color3.fromRGB(255, 140, 50)
 	line.Transparency = 1
-	line.Size = Vector3.new(length + 2, 0.05, 3.2)
-	line.CFrame = part.CFrame * CFrame.new(0, floorY - 0.05, 0)
+	line.Size = Vector3.new(0.05, 0.08, 0.05)
+	line.CFrame = part.CFrame * CFrame.new(0, floorY + 0.05, 0)
+	line.Parent = workspace
+	local scorch = Instance.new("Part")
+	scorch.Name = "FxWallScorch"
+	scorch.Anchored = true
+	scorch.CanCollide = false
+	scorch.CanQuery = false
+	scorch.CanTouch = false
+	scorch.Transparency = 1
+	scorch.Size = Vector3.new(length + 2.5, 0.05, 3.6)
+	scorch.CFrame = part.CFrame * CFrame.new(0, floorY + 0.03, 0)
 	local decal = Instance.new("Decal")
 	decal.Face = Enum.NormalId.Top
 	decal.Texture = TEX.Scorch
 	decal.Transparency = 1
-	decal.Parent = line
-	local glow = Instance.new("Decal")
-	glow.Face = Enum.NormalId.Top
-	glow.Texture = TEX.FireTrail
-	glow.Color3 = Color3.fromRGB(255, 170, 90)
-	glow.Transparency = 1
-	glow.Parent = line
-	line.Parent = workspace
-	TweenService:Create(decal, TweenInfo.new(0.3), { Transparency = 0.1 }):Play()
-	TweenService:Create(glow, TweenInfo.new(0.3), { Transparency = 0.35 }):Play()
+	decal.Parent = scorch
+	scorch.Parent = workspace
+	TweenService:Create(decal, TweenInfo.new(0.3), { Transparency = 0 }):Play()
+	TweenService:Create(line, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(length, 0.08, 0.5),
+		Transparency = 0.15,
+	}):Play()
 
-	local light = Instance.new("PointLight")
-	light.Color = ToolFx.Fire
-	light.Range = 4
-	light.Brightness = 0
-	light.Parent = part
-	-- erupt: each source bursts up in turn from the middle outward
+	local lights = {}
+	for _, x in { -length / 3, 0, length / 3 } do
+		local at = Instance.new("Attachment")
+		at.Position = Vector3.new(x, floorY + 3, 0)
+		at.Parent = part
+		local light = Instance.new("PointLight")
+		light.Color = ToolFx.Fire
+		light.Range = 4
+		light.Brightness = 0
+		light.Shadows = false
+		light.Parent = at
+		table.insert(lights, light)
+		TweenService:Create(light, TweenInfo.new(0.35), { Range = length * 0.6 + 6, Brightness = 2.4 }):Play()
+	end
+
+	-- erupt: segments light from the middle outward, each with a whoosh of fire
 	local half = length / 2
-	for _, src in sources do
-		task.delay(math.abs(src.x) / half * 0.28, function()
+	for _, s in segs do
+		task.delay(math.abs(s.x) / half * 0.25, function()
 			if not part.Parent then
 				return
 			end
-			src.fire.Rate = 14
-			src.embers.Rate = 5
-			src.smoke.Rate = 1.2
-			src.fire:Emit(3)
-			src.embers:Emit(6)
-			CombatFx.Burst((part.CFrame * CFrame.new(src.x, floorY + 0.8, 0)).Position, { { "FireBurst", 1, 0.9 } })
+			for i = s.from, s.to do
+				local item = emitters[i]
+				item.e.Rate = item.full
+				item.e:Emit(math.ceil(item.full / 6))
+			end
+			CombatFx.Burst((part.CFrame * CFrame.new(s.x, floorY + 1, 0)).Position, { { "FireBurst", 2, 1.1 } })
 		end)
 	end
-	TweenService:Create(light, TweenInfo.new(0.3), { Range = length + 8, Brightness = 3 }):Play()
 	task.spawn(function()
 		local born = os.clock()
 		while part.Parent and os.clock() < born + life - 0.9 do
 			task.wait(0.07)
-			if os.clock() - born > 0.35 then -- after the eruption tween
-				light.Brightness = 2.5 + math.random() * 1
+			if os.clock() - born > 0.4 then -- flicker once the eruption tweens are done
+				for _, light in lights do
+					light.Brightness = 2 + math.random() * 1
+				end
 			end
 		end
-		-- die down
-		for _, src in sources do
-			src.fire.Rate = 5
-			src.embers.Rate = 2
-			src.smoke.Rate = 2.5
+		-- die down: flames shrink back into the line
+		for _, item in emitters do
+			item.e.Rate = item.full * 0.3
 		end
-		TweenService:Create(light, TweenInfo.new(0.8), { Brightness = 0 }):Play()
-		TweenService:Create(glow, TweenInfo.new(0.8), { Transparency = 1 }):Play()
-		task.wait(0.45)
-		for _, src in sources do
-			src.fire.Rate = 0
-			src.embers.Rate = 0
+		for _, light in lights do
+			TweenService:Create(light, TweenInfo.new(0.8), { Brightness = 0 }):Play()
 		end
-		TweenService:Create(decal, TweenInfo.new(1.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 1), {
-			Transparency = 1,
-		}):Play()
-		Debris:AddItem(line, 3)
+		TweenService:Create(line, TweenInfo.new(0.9), { Transparency = 1, Size = Vector3.new(length, 0.08, 0.1) })
+			:Play()
+		task.wait(0.5)
+		for _, item in emitters do
+			item.e.Rate = 0
+		end
+		local fade = TweenInfo.new(1.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 1)
+		TweenService:Create(decal, fade, { Transparency = 1 }):Play()
+		Debris:AddItem(line, 1)
+		Debris:AddItem(scorch, 3)
 	end)
 end
 

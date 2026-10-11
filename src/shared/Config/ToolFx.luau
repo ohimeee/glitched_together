@@ -13,6 +13,7 @@ export type HeldItem = {
 	Grip: CFrame, -- the item's CFrame relative to that part (arm hanging / head: -Z = forward)
 	Muzzle: Vector3?, -- where beams / ropes / spells leave the item, in the item's space
 	ShiftedGrip: CFrame?, -- where it moves while the player is Shifted (Layer Shift goggles over the eyes)
+	GlowWhile: string?, -- a player attribute: while it's set the item's rim glows the owner's color (Miko's shield)
 }
 
 local Held: { [string]: { HeldItem } } = {
@@ -49,22 +50,25 @@ local Held: { [string]: { HeldItem } } = {
 			Muzzle = v(0, 1.9, 0),
 		},
 	},
-	-- short broad sword with a teal grip (hilt at +Y, blade toward -Y), carried lowered and forward;
-	-- round wooden shield with a teal rim on the left forearm (front face along the mesh's +Z)
+	-- chunky broadsword: steel blade, wide brass crossguard, leather grip (user, Oct 11: replaced the old sword;
+	-- Studio generate_mesh). Blade along the mesh's +Y, grip 1.4 below its centre: carried lowered and forward.
+	-- teal heater shield with a steel rim in the left hand, bigger than the old round buckler (user, Oct 11; Studio
+	-- generate_mesh); front face along the mesh's +Z, glows teal while Miko blocks
 	ShieldKnight = {
 		{
-			Id = "rbxassetid://76223678025449",
-			TextureId = "rbxassetid://126013892781258",
-			Size = v(1.2, 3.08, 0.39),
+			Id = "rbxassetid://89930179423167",
+			TextureId = "rbxassetid://105233299353515",
+			Size = v(1.07, 3.88, 0.4),
 			Hand = "RightHand",
-			Grip = CFrame.new(0, -0.15, -0.15) * CFrame.Angles(rad(70), 0, 0) * CFrame.new(0, -1.05, 0),
+			Grip = CFrame.new(0, -0.68, -1.32) * CFrame.Angles(rad(-110), 0, 0),
 		},
 		{
-			Id = "rbxassetid://136688146427078",
-			TextureId = "rbxassetid://136723078936180",
-			Size = v(2.2, 2.2, 0.75),
+			Id = "rbxassetid://90349811404835",
+			TextureId = "rbxassetid://118163519261188",
+			Size = v(2.86, 3.24, 0.57),
 			Hand = "LeftHand",
-			Grip = CFrame.new(-0.35, 0.45, -0.4) * CFrame.Angles(0, math.pi, 0),
+			Grip = CFrame.new(-0.55, 0.45, -0.4) * CFrame.Angles(0, 0, math.pi), -- point down, painted face out
+			GlowWhile = "Blocking",
 		},
 	},
 	-- chunky grey copier with orange trim and a clipboard on its little screen (scanner window along the mesh's +Z)

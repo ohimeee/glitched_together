@@ -667,6 +667,29 @@ local function giveHeld(p: Player)
 		weld.C0 = item.Grip
 		weld.Parent = handle
 		handle.Parent = character
+		if item.GlowWhile then
+			local attr = item.GlowWhile
+			local function glow()
+				local h = handle:FindFirstChild("Glow")
+				if p:GetAttribute(attr) and not h then
+					local hl = Instance.new("Highlight")
+					hl.Name = "Glow"
+					hl.FillColor = Palette.Miko
+					hl.FillTransparency = 0.8
+					hl.OutlineColor = Palette.Glow.Miko
+					hl.OutlineTransparency = 0.1
+					hl.DepthMode = Enum.HighlightDepthMode.Occluded
+					hl.Parent = handle
+				elseif not p:GetAttribute(attr) and h then
+					h:Destroy()
+				end
+			end
+			local conn = p:GetAttributeChangedSignal(attr):Connect(glow)
+			handle.Destroying:Once(function()
+				conn:Disconnect()
+			end)
+			glow()
+		end
 		if item.ShiftedGrip then
 			local function place()
 				weld.C0 = if p:GetAttribute("Shifted") then item.ShiftedGrip :: CFrame else item.Grip

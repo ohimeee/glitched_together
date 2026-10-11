@@ -308,7 +308,136 @@ local palmsDown = { -- both palms driven at the floor ahead, bent over them
 	LeftHand = { -50, 0, 0 },
 }
 
+-- Miko's Shield Knight (user, Oct 11): sword in the right hand, shield in the left (ToolFx.Held). Upper body only.
+-- The shield faces the way the hand's back does, so the left arm's pitches (shoulder + elbow + wrist) sum to ~0:
+-- the shield stays upright with its face forward however high the arm lifts it.
+local guard = { -- the shield arm between swings: lifted a little in front of the left side
+	LeftUpperArm = { 30, 0, -10 },
+	LeftLowerArm = { 50, 0, 0 },
+	LeftHand = { -80, 0, 0 },
+}
+local function slash(cock: { [string]: Pose }, hit: { [string]: Pose }): Clip
+	return {
+		priority = "Action",
+		keys = {
+			{ t = 0, pose = guard },
+			{ t = 0.07, pose = merge(guard, cock) },
+			{ t = 0.14, ease = "Linear", pose = merge(guard, hit) },
+			{ t = 0.22, pose = merge(guard, hit) },
+			{ t = 0.36, pose = {} },
+		},
+	}
+end
+local blockPose = { -- shield up and forward, left shoulder leading, sword held low behind it
+	UpperTorso = { -8, -22, 0 },
+	Head = { 2, 22, 0 },
+	LeftUpperArm = { 55, -25, 0 },
+	LeftLowerArm = { 40, 0, 0 },
+	LeftHand = { -95, 0, 0 },
+	RightUpperArm = { 15, 0, 28 },
+	RightLowerArm = { 45, 0, 0 },
+}
+
 local Clips: { [string]: Clip } = {
+	-- the 3-hit sword combo (Tuning.Combat.SwordCombo): forehand, backhand, overhead chop
+	Slash1 = slash({
+		UpperTorso = { 0, -28, 0 },
+		Head = { 0, 28, 0 },
+		RightUpperArm = { 92, -75, 0 },
+		RightLowerArm = { 45, 0, 0 },
+	}, {
+		UpperTorso = { -4, 32, 0 },
+		Head = { 2, -30, 0 },
+		RightUpperArm = { 86, 58, 0 },
+		RightLowerArm = { 8, 0, 0 },
+	}),
+	Slash2 = slash({
+		UpperTorso = { 0, 30, 0 },
+		Head = { 0, -30, 0 },
+		RightUpperArm = { 92, 62, 0 },
+		RightLowerArm = { 95, 0, 0 },
+	}, {
+		UpperTorso = { -4, -28, 0 },
+		Head = { 2, 28, 0 },
+		RightUpperArm = { 86, -70, 0 },
+		RightLowerArm = { 8, 0, 0 },
+	}),
+	Slash3 = slash({
+		UpperTorso = { 12, 0, 0 },
+		Head = { 10, 0, 0 },
+		RightUpperArm = { 172, 0, 8 },
+		RightLowerArm = { 65, 0, 0 },
+	}, {
+		UpperTorso = { -28, 0, 0 },
+		Head = { 20, 0, 0 },
+		RightUpperArm = { 62, 0, 4 },
+		RightLowerArm = { 0, 0, 0 },
+	}),
+	-- held while Miko blocks (MoveAnimController.Set)
+	Block = {
+		priority = "Action",
+		loop = true,
+		keys = {
+			{ t = 0, pose = blockPose },
+			{ t = 0.6, pose = merge(blockPose, { UpperTorso = { -10, -22, 0 } }) },
+			{ t = 1.2, pose = blockPose },
+		},
+	},
+	-- Shield Charge: bent low behind the shield for the rush (0.3 s), then up
+	ShieldCharge = {
+		priority = "Action2",
+		keys = {
+			{ t = 0, pose = blockPose },
+			{ t = 0.05, pose = merge(blockPose, { UpperTorso = { -28, -18, 0 }, Head = { 22, 18, 0 } }) },
+			{ t = 0.32, pose = merge(blockPose, { UpperTorso = { -28, -18, 0 }, Head = { 22, 18, 0 } }) },
+			{ t = 0.5, pose = {} },
+		},
+	},
+	-- Rally: sword thrust to the sky, then driven down into the floor as the shockwave goes out
+	Rally = {
+		priority = "Action2",
+		keys = {
+			{ t = 0, pose = {} },
+			{
+				t = 0.15,
+				pose = merge(guard, {
+					UpperTorso = { 10, 0, 0 },
+					Head = { 20, 0, 0 },
+					RightUpperArm = { 178, 0, 6 },
+					RightLowerArm = { 5, 0, 0 },
+				}),
+			},
+			{
+				t = 0.4,
+				pose = merge(guard, {
+					UpperTorso = { 12, 0, 0 },
+					Head = { 24, 0, 0 },
+					RightUpperArm = { 178, 0, 6 },
+					RightLowerArm = { 5, 0, 0 },
+				}),
+			},
+			{
+				t = 0.52,
+				ease = "Linear",
+				pose = merge(guard, {
+					UpperTorso = { -32, 0, 0 },
+					Head = { 20, 0, 0 },
+					RightUpperArm = { 40, 0, 4 },
+					RightLowerArm = { 5, 0, 0 },
+				}),
+			},
+			{
+				t = 0.8,
+				pose = merge(guard, {
+					UpperTorso = { -32, 0, 0 },
+					Head = { 20, 0, 0 },
+					RightUpperArm = { 40, 0, 4 },
+					RightLowerArm = { 5, 0, 0 },
+				}),
+			},
+			{ t = 1, pose = {} },
+		},
+	},
 	CastFireR = throwClip(1),
 	CastFireL = throwClip(-1),
 	-- Flame Wall: hands up, then both palms slammed down at the floor where the wall rises

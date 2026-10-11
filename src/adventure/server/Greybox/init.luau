@@ -2569,7 +2569,8 @@ local function buildStarfallCastle(world: Model)
 	local function flatSign(text: string, x: number, z: number, w: number)
 		sign(world, text, CFrame.new(x, 0.35, z) * CFrame.Angles(math.rad(-90), 0, 0), Vector3.new(w, 4, 0.4), P.Royal)
 	end
-	-- Room fight (user, Oct 11: enemies already standing at the entrance; later rooms too easy). The room's enemies
+	-- Room fight (user, Oct 11: enemies already standing at the entrance; later rooms too easy). Keep zones and spawn
+	-- spots clear of checkpoints and the world spawn: nothing may rise where a player (re)spawns. The room's enemies
 	-- stay hidden (EncounterService parks them under the world) until a player steps into the zone (x0..x1, z0..z1),
 	-- then rise in waves: waves[1] at once, each later wave once the one before is nearly gone.
 	local function encounter(name: string, x0: number, z0: number, x1: number, z1: number, waves: { { { any } } })
@@ -2617,10 +2618,7 @@ local function buildStarfallCastle(world: Model)
 	wall(20, -20, 20, 20)
 	wall(-20, 20, -7, 20)
 	wall(7, 20, 20, 20)
-	encounter("Gatehouse", -20, 4, 20, 20, {
-		{ { "Skeleton", -6, 15 }, { "Skeleton", 6, 16 } },
-		{ { "Skeleton", -14, 17 }, { "Skeleton", 14, 17 } },
-	})
+	-- no fight here: it's the spawn room (user, Oct 11). The two practice skeletons open the Barracks fight instead.
 	for _, spot in { { -20, -8 }, { 20, -8 }, { -20, 10 }, { 20, 10 } } do
 		torch(spot[1], spot[2])
 	end
@@ -2652,23 +2650,11 @@ local function buildStarfallCastle(world: Model)
 	wall(7, 40, 25, 40)
 	wall(-25, 40, -25, 90)
 	wall(25, 40, 25, 90)
+	-- each room opens small and the waves grow; rooms deeper in the castle bring more (user, Oct 11)
 	encounter("Barracks", -25, 42, 25, 90, {
-		{
-			{ "Skeleton", -10, 55 },
-			{ "Skeleton", 10, 58 },
-			{ "Skeleton", 0, 66 },
-			{ "SplitSlime", -14, 70 },
-			{ "ShieldGuard", 4, 74 },
-			{ "StaticArcher", -16, 84 },
-			{ "StaticArcher", 16, 84 },
-		},
-		{
-			{ "Skeleton", -12, 84 },
-			{ "Skeleton", 12, 84 },
-			{ "ShieldGuard", 0, 80 },
-			{ "SplitSlime", -19, 62 },
-			{ "StaticArcher", 19, 62 },
-		},
+		{ { "Skeleton", -6, 62 }, { "Skeleton", 6, 64 } },
+		{ { "Skeleton", -12, 84 }, { "Skeleton", 12, 84 }, { "SplitSlime", -14, 70 } },
+		{ { "ShieldGuard", 0, 80 }, { "StaticArcher", 18, 62 } },
 	})
 	for _, spot in { { -25, 50 }, { 25, 50 }, { -25, 66 }, { 25, 66 }, { -25, 82 }, { 25, 82 } } do
 		torch(spot[1], spot[2])
@@ -2716,21 +2702,10 @@ local function buildStarfallCastle(world: Model)
 	wall(25, 100, 25, 150)
 	wall(-25, 150, -7, 150)
 	wall(7, 150, 25, 150)
-	encounter("Hall", -25, 100, 25, 150, {
-		{ { "StaticMage", 0, 130 }, { "Skeleton", -12, 120 }, { "Skeleton", 12, 124 }, { "SplitSlime", 0, 118 } },
-		{
-			{ "StaticMage", 16, 140 },
-			{ "ShieldGuard", 0, 142 },
-			{ "Skeleton", -18, 132 },
-			{ "Skeleton", 18, 120 },
-			{ "StaticArcher", -20, 112 },
-		},
-		{
-			{ "Skeleton", -10, 138 },
-			{ "Skeleton", 10, 138 },
-			{ "SplitSlime", -18, 124 },
-			{ "SplitSlime", 18, 128 },
-		},
+	encounter("Hall", -25, 110, 25, 150, { -- starts past checkpoint 3 (z 104): nothing rises at a spawn
+		{ { "Skeleton", -12, 120 }, { "SplitSlime", 0, 118 }, { "Skeleton", 12, 124 } },
+		{ { "StaticMage", 0, 130 }, { "Skeleton", -18, 132 }, { "Skeleton", 18, 120 } },
+		{ { "ShieldGuard", 0, 142 }, { "StaticArcher", 20, 136 }, { "Skeleton", -10, 138 }, { "Skeleton", 10, 138 } },
 	})
 	for _, spot in
 		{ { -25, 110 }, { 25, 112 }, { -25, 128 }, { 25, 128 }, { -25, 144 }, { 25, 144 }, { -10, 164 }, { 10, 164 } }
@@ -2787,8 +2762,9 @@ local function buildStarfallCastle(world: Model)
 	crystal("C2", "Reflected", 19, 220)
 	gate(world, "C2", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 226), nil, 0)
 	encounter("ReadingRoom", -25, 194, 25, 226, {
-		{ { "StaticArcher", -18, 216 }, { "Skeleton", 14, 208 } },
-		{ { "Skeleton", -12, 220 }, { "SplitSlime", 8, 214 }, { "StaticArcher", -20, 200 } },
+		{ { "StaticArcher", -18, 216 }, { "Skeleton", 14, 208 }, { "Skeleton", -12, 220 } },
+		{ { "SplitSlime", 8, 214 }, { "StaticArcher", -20, 200 }, { "ShieldGuard", 0, 218 } },
+		{ { "Skeleton", -8, 208 }, { "Skeleton", 10, 200 }, { "SplitSlime", -16, 206 } },
 	})
 	for _, spot in { { -25, 196 }, { 25, 196 }, { -25, 216 }, { 25, 216 } } do
 		torch(spot[1], spot[2])
@@ -2845,9 +2821,9 @@ local function buildStarfallCastle(world: Model)
 	mirror(20, 330, 45)
 	gate(world, "C3", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 340), nil, 0)
 	encounter("MirrorRoom", -25, 298, 25, 340, {
-		{ { "ShieldGuard", -8, 318 }, { "SplitSlime", 6, 322 } },
-		{ { "Skeleton", -18, 332 }, { "Skeleton", 4, 334 }, { "StaticArcher", -20, 304 } },
-		{ { "ShieldGuard", 8, 312 }, { "Skeleton", -12, 306 }, { "StaticMage", 0, 330 } },
+		{ { "ShieldGuard", -8, 318 }, { "SplitSlime", 6, 322 }, { "Skeleton", -18, 332 } },
+		{ { "Skeleton", 4, 334 }, { "StaticArcher", -20, 304 }, { "Skeleton", -12, 306 }, { "SplitSlime", 0, 326 } },
+		{ { "ShieldGuard", 8, 312 }, { "StaticMage", 0, 330 }, { "StaticArcher", -20, 322 }, { "Skeleton", -4, 312 } },
 	})
 	for _, spot in { { -25, 300 }, { -25, 324 }, { 25, 326 }, { -7, 340 } } do
 		torch(spot[1], spot[2])
@@ -3320,6 +3296,7 @@ local function buildStarfallCastle(world: Model)
 	encounter("PowderHall", -30, 1436, 30, 1500, {
 		{ { "Skeleton", -10, 1458 }, { "Skeleton", 12, 1482 } },
 		{ { "Skeleton", -24, 1490 }, { "Skeleton", 24, 1490 }, { "ShieldGuard", 0, 1476 } },
+		{ { "Skeleton", -18, 1446 }, { "SplitSlime", 10, 1470 }, { "Skeleton", 20, 1460 } },
 	})
 	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500), nil, 0)
 
