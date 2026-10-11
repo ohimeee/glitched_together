@@ -10,11 +10,13 @@
 --      through: Kai fires into Miko's raised shield at the gap and the reflected shots hit the open heart.
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Services = script.Parent.Parent.Services
 local CombatService = require(Services.CombatService)
 local CombatFx = require(Services.CombatFx)
@@ -629,21 +631,8 @@ local function knitBridge(self: any)
 	end
 end
 
--- Setup ------------------------------------------------------------------------------------------------------------
-
-function Boss.Setup(self: any, world: Instance)
-	local dragon = world:FindFirstChild("HollowDragon", true) :: Model
-	assert(dragon, "[HollowDragon] hall not built")
-	self.world = world
-	self.dragon = dragon
-	self.turn = 0
-	self.token = 0
-	self.hits = 0
-	self.minions = {} :: { [BasePart]: boolean }
-	self.fx = Instance.new("Folder")
-	self.fx.Name = "BossFx"
-	self.fx.Parent = world
-
+-- The pose rig (Setup and the intro): every grey-box part's offset from the pivot, the wings and their shoulder hinges.
+local function rig(self: any, dragon: Model)
 	self.home = dragon.WorldPivot
 	self.base = self.home
 	self.yaw, self.lift = 0, 0
@@ -674,6 +663,24 @@ function Boss.Setup(self: any, world: Instance)
 			else (wing.CFrame * CFrame.new(-side * wing.Size.X / 2, 0, 0)).Position
 		self.wingHinge[wing] = self.home:ToObjectSpace(CFrame.new(hinge))
 	end
+end
+
+-- Setup ------------------------------------------------------------------------------------------------------------
+
+function Boss.Setup(self: any, world: Instance)
+	local dragon = world:FindFirstChild("HollowDragon", true) :: Model
+	assert(dragon, "[HollowDragon] hall not built")
+	self.world = world
+	self.dragon = dragon
+	self.turn = 0
+	self.token = 0
+	self.hits = 0
+	self.minions = {} :: { [BasePart]: boolean }
+	self.fx = Instance.new("Folder")
+	self.fx.Name = "BossFx"
+	self.fx.Parent = world
+
+	rig(self, dragon)
 	self.scales = {}
 	for _, d in dragon:GetDescendants() do
 		if d:IsA("BasePart") and d:GetAttribute("Kind") == "Scale" then
@@ -755,6 +762,69 @@ local function burnAllScales(self: any)
 		if not s.burnt then
 			burnScale(s)
 		end
+	end
+end
+
+-- Intro (user, Oct 12: "the body is not moving... and what about the sounds"): while W2_BossIntro plays the dragon
+-- hovers alive (breathing, wing beats), and as the camera reaches its face it rears back, wings up (camera shake,
+-- static sparks). The stop function eases it back and lands every part where it was built, so the fight's Setup
+-- measures the same pose.
+function Boss.Intro(world: Instance, shots: { any }): () -> ()
+	local dragon = world:FindFirstChild("HollowDragon", true) :: Model?
+	if not dragon then
+		return function() end
+	end
+	local self: any = {}
+	local saved: { [BasePart]: CFrame } = {}
+	for _, d in dragon:GetChildren() do
+		if d:IsA("BasePart") then
+			saved[d] = d.CFrame
+		end
+	end
+	rig(self, dragon)
+	-- the close-up starts after the drone flight and the first plain shot
+	local face, plain = 0, 0
+	for _, shot in shots do
+		if shot.Glide then
+			face += shot.Duration
+		elseif plain == 0 then
+			plain = shot.Duration
+		end
+	end
+	face += plain
+	local t, roared, settled = 0, false, false
+	local conn = RunService.Heartbeat:Connect(function(dt)
+		t += dt
+		if not roared and t >= face + 0.3 then
+			roared = true
+			self.target.pitch = -T.Rear * 2.4
+			self.target.lift = 1.3
+			self.target.flap = T.Flap * 1.5
+			Net.event("CameraShake"):FireAllClients(self.head.Position, 0.6, 1.6)
+			CombatFx.Burst(self.head.Position, { { "Stars", 20, 2, Palette.Glitch } }, Palette.Glitch, 30)
+		elseif roared and not settled and t >= face + 2.6 then
+			settled = true
+			self.target.pitch = T.Lunge
+			self.target.lift = 0.4
+			self.target.flap = T.Hover
+		end
+		animate(self, dt)
+	end)
+	return function()
+		-- settle: wings down, no hover bob, head level, then land exactly on the built pose (an instant snap popped)
+		self.target.pitch, self.target.lift, self.target.flap = 0, 0, 0
+		local left = 0.9
+		conn:Disconnect()
+		conn = RunService.Heartbeat:Connect(function(dt)
+			left -= dt
+			animate(self, dt)
+			if left <= 0 then
+				conn:Disconnect()
+				for part, cf in saved do
+					part.CFrame = cf
+				end
+			end
+		end)
 	end
 end
 

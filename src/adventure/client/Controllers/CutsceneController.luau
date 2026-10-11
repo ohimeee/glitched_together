@@ -103,7 +103,15 @@ function CutsceneController.Init()
 	-- Shots come from the server (built from the loaded world) or, for story scenes, ReplicatedStorage.Cutscenes.<id>.
 	-- The camera glides from where it is through each shot, then back to where it started, and only then is the
 	-- cutscene done on this client.
-	type Shot = { CFrame: CFrame, Duration: number }
+	-- A run of `Glide` shots is one drone flight (user, Oct 12: "each boss should have intro camera or that drone view
+	-- so they will appreciate the arts"): the camera flows through them on a Catmull-Rom curve without stopping, eased
+	-- only at the start and end of the whole run. Other shots glide in and settle (Sine in/out per shot).
+	type Shot = { CFrame: CFrame, Duration: number, Glide: boolean? }
+	local function catmull(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: number): Vector3
+		local t2, t3 = t * t, t * t * t
+		return 0.5
+			* ((2 * p1) + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (3 * p1 - p0 - 3 * p2 + p3) * t3)
+	end
 	local function playCamera(id: string, myToken: number, shots: { Shot }?)
 		local list: { Shot } = shots or {}
 		if #list == 0 then
@@ -132,7 +140,60 @@ function CutsceneController.Init()
 			return cam
 		end)
 		table.insert(list, { CFrame = home, Duration = 1.2 })
-		for _, shot in list do
+		local i = 1
+		while i <= #list do
+			if list[i].Glide then
+				local pts: { CFrame } = { cam }
+				local total = 0
+				while i <= #list and list[i].Glide do
+					table.insert(pts, list[i].CFrame)
+					total += list[i].Duration
+					i += 1
+				end
+				-- constant drone speed: pace by distance along the curve (an arc-length table), not time per shot
+				-- (measured Oct 12: per-shot timing slowed it ~45% at every waypoint)
+				local function at(k: number, s: number): Vector3
+					local a, b = pts[k], pts[k + 1]
+					return catmull((pts[k - 1] or a).Position, a.Position, b.Position, (pts[k + 2] or b).Position, s)
+				end
+				local lut: { { number } } = { { 0, 1, 0 } } -- { distance, segment, s }
+				local length = 0
+				for k = 1, #pts - 1 do
+					local prev = at(k, 0)
+					for step = 1, 24 do
+						local s = step / 24
+						local p = at(k, s)
+						length += (p - prev).Magnitude
+						prev = p
+						table.insert(lut, { length, k, s })
+					end
+				end
+				local t0 = os.clock()
+				local j = 1
+				while os.clock() - t0 < total and token == myToken do
+					local d = TweenService:GetValue(
+						(os.clock() - t0) / total,
+						Enum.EasingStyle.Sine,
+						Enum.EasingDirection.InOut
+					) * length
+					while j < #lut - 1 and lut[j + 1][1] < d do
+						j += 1
+					end
+					local lo, hi = lut[j], lut[j + 1] or lut[j]
+					local f = if hi[1] > lo[1] then math.clamp((d - lo[1]) / (hi[1] - lo[1]), 0, 1) else 0
+					local k = hi[2]
+					local s = if hi[2] == lo[2] then lo[3] + (hi[3] - lo[3]) * f else hi[3] * f
+					cam = CFrame.new(at(k, s)) * pts[k].Rotation:Lerp(pts[k + 1].Rotation, s)
+					task.wait()
+				end
+				if token ~= myToken then
+					return
+				end
+				cam = pts[#pts]
+				continue
+			end
+			local shot = list[i]
+			i += 1
 			local start = cam
 			local t0 = os.clock()
 			while os.clock() - t0 < shot.Duration and token == myToken do

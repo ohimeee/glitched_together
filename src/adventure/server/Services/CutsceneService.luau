@@ -16,7 +16,11 @@ local doneEvent = Net.event("CutsceneDone")
 local playing: string? = nil
 local seen: { [string]: boolean } = {} -- `Once` triggers: played this session (survives game-over reloads)
 
-export type Shot = { CFrame: CFrame, Duration: number }
+export type Shot = { CFrame: CFrame, Duration: number, Glide: boolean? }
+
+-- Called as a cutscene starts (Main points it at BossService.Intro: the boss comes alive for its intro); may return a
+-- function that's called when the cutscene ends.
+CutsceneService.OnStart = nil :: ((id: string, shots: { Shot }?) -> (() -> ())?)?
 
 -- Camera shots for a cutscene in the loaded world (sent to clients, so streaming never hides a path part):
 --   Reveal_<Section>: a fly-over framed from the section's bounds (high 3/4 over its start, then across to its far end)
@@ -59,7 +63,11 @@ function CutsceneService.Shots(id: string): { Shot }?
 	local shots = {}
 	for _, p in points do
 		if p:IsA("BasePart") then
-			table.insert(shots, { CFrame = p.CFrame, Duration = (p:GetAttribute("Duration") or 2) :: number })
+			table.insert(shots, {
+				CFrame = p.CFrame,
+				Duration = (p:GetAttribute("Duration") or 2) :: number,
+				Glide = p:GetAttribute("Glide") == true, -- drone flight: flows through to the next shot (no stop)
+			})
 		end
 	end
 	return shots
@@ -93,7 +101,17 @@ function CutsceneService.Play(id: string)
 	for _, p in DuoService.Players() do
 		p:SetAttribute("InCutscene", true)
 	end
-	cutsceneEvent:FireAllClients(id, lines, CutsceneService.Shots(id))
+	local shots = CutsceneService.Shots(id)
+	cutsceneEvent:FireAllClients(id, lines, shots)
+	local stop: (() -> ())? = nil
+	if CutsceneService.OnStart then
+		local ok, result = pcall(CutsceneService.OnStart, id, shots)
+		if ok then
+			stop = result
+		else
+			warn("[CutsceneService] OnStart", result)
+		end
+	end
 
 	local start = os.clock()
 	while os.clock() - start < 60 do
@@ -107,6 +125,9 @@ function CutsceneService.Play(id: string)
 	end
 
 	cutsceneEvent:FireAllClients(nil) -- end on every client
+	if stop then
+		pcall(stop)
+	end
 	for _, p in DuoService.Players() do
 		p:SetAttribute("InCutscene", nil)
 	end

@@ -198,4 +198,35 @@ function BossService.Init()
 	end)
 end
 
+-- A boss's intro cutscene (W<n>_BossIntro; CutsceneService.OnStart): the boss track starts with the drone flight
+-- (user, Oct 12: "the boss sound is not playing in the drone shot"; BossMusic keeps it through the fight), and a boss
+-- module with `Intro(world, shots)` comes alive for it (it returns a stop function that puts the boss back exactly as
+-- built, so the fight's Setup measures the same pose).
+function BossService.Intro(id: string, shots: { any }?): (() -> ())?
+	if not string.match(id, "^W%d_BossIntro$") then
+		return nil
+	end
+	local world = workspace:FindFirstChild("World")
+	local name: string? = nil
+	for _, trigger in Tags.list("BossTrigger") do
+		if world and trigger:IsDescendantOf(world) then
+			name = trigger:GetAttribute("Boss") :: string
+		end
+	end
+	workspace:SetAttribute("BossMusic", true)
+	local module = name and Bosses:FindFirstChild(name)
+	local stopBoss: (() -> ())? = nil
+	if module and module:IsA("ModuleScript") then
+		local boss = require(module) :: any
+		if boss.Intro and world then
+			stopBoss = boss.Intro(world, shots or {})
+		end
+	end
+	return function()
+		if stopBoss then
+			stopBoss()
+		end
+	end
+end
+
 return BossService

@@ -1,4 +1,5 @@
--- Shooting stars over the Epilogue (user, Oct 11: "with meteors"). Client only, pure decoration: every few seconds a
+-- Shooting stars over the Epilogue (user, Oct 11: "with meteors") and over Starfall Castle (Oct 12: the Hollow Dragon's
+-- open-roofed hall). Client only, pure decoration: every few seconds a
 -- white-blue streak crosses the sky dome far from the camera (in front of the baked panorama, behind the level),
 -- falling at a slant, its trail fading behind it. Numbers: Tuning.Meteors.
 local RunService = game:GetService("RunService")
@@ -9,7 +10,7 @@ local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local MeteorController = {}
 
 local T = Tuning.Meteors
-local WORLD = "Epilogue"
+local WORLDS = { Epilogue = true, StarfallCastle = true }
 local rng = Random.new()
 
 local function streak()
@@ -76,7 +77,7 @@ function MeteorController.Init()
 	task.spawn(function()
 		while true do
 			task.wait(rng:NextNumber(T.GapMin, T.GapMax))
-			if workspace:GetAttribute("World") == WORLD then
+			if WORLDS[workspace:GetAttribute("World") :: string] then
 				streak()
 				if rng:NextNumber() < T.BurstChance then
 					for _ = 1, rng:NextInteger(1, 2) do

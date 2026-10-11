@@ -143,6 +143,11 @@ function HealthService.SetMode(worldName: string)
 	end
 end
 
+local function spawnInvuln(): number
+	local boss = workspace:GetAttribute("BossFight") or workspace:GetAttribute("BossMusic")
+	return if boss then Tuning.SpawnInvulnBoss else Tuning.SpawnInvuln
+end
+
 function HealthService.Restore(p: Player, amount: number)
 	p:SetAttribute("MaxHealth", maxHealth(p))
 	p:SetAttribute("Health", math.min(amount, maxHealth(p)))
@@ -173,7 +178,7 @@ function HealthService.Revive(p: Player)
 	end
 	back = back or (s.history[1] and s.history[1].cf)
 	place(p, back or CheckpointService.SpawnCFrame(p))
-	s.invulnUntil = os.clock() + Tuning.SpawnInvuln
+	s.invulnUntil = os.clock() + spawnInvuln()
 	Audio.play("Revive", rootOf(p))
 	revivePop(p)
 end
@@ -202,7 +207,7 @@ local function bothDown()
 	end
 	for _, p in DuoService.Players() do
 		-- hazard touches queued before the restart land after it, and a boss gets a beat before it can hit
-		state(p).invulnUntil = os.clock() + Tuning.SpawnInvuln
+		state(p).invulnUntil = os.clock() + spawnInvuln()
 	end
 	gameOverRunning = false
 end

@@ -9,6 +9,7 @@ local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local CombatFx = require(script.Parent.Parent.CombatFx)
+local DragonHall = require(script.Parent.DragonHall)
 
 local SMOOTH = Enum.Material.SmoothPlastic
 local v = Vector3.new
@@ -1025,6 +1026,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	end
 	fillEnvironment(world) -- after the surfaces, so the foundations keep their darker stone
 	task.spawn(dressRooms, world) -- meshes load async; the rooms are playable meanwhile
+	task.spawn(DragonHall.Build, world) -- the Hollow Dragon's "Shattered Cathedral"
 	dressFuse(world, apply)
 	-- checkpoints: a royal banner standard beside a faint gold pad (the neon pad glared from above)
 	for _, pad in world:GetDescendants() do

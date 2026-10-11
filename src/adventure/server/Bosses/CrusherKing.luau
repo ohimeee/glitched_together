@@ -9,11 +9,13 @@
 --      grapples up onto his lap and pulls the crown off.
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Services = script.Parent.Parent.Services
 local HealthService = require(Services.HealthService)
 local InteractableService = require(Services.InteractableService)
@@ -488,6 +490,130 @@ function Boss.Cleanup(self: any)
 end
 
 -- Phases --------------------------------------------------------------------------------------------------------
+
+-- Intro (user, Oct 12: "same with the last world pixel plain boss"): while W1_BossIntro plays he breathes and sways
+-- on his throne, his fists bob, and as the camera reaches his face both fists rise and slam the floor (no damage:
+-- camera shake + dust). The stop function eases everything back and lands it exactly as built.
+function Boss.Intro(world: Instance, shots: { any }): () -> ()
+	local king = world:FindFirstChild("CrusherKing", true) :: Model?
+	local floor = world:FindFirstChild("BossFloor", true)
+	if not (king and floor) then
+		return function() end
+	end
+	local floorTop = -math.huge
+	for _, tile in floor:GetChildren() do
+		if tile:IsA("BasePart") then
+			floorTop = math.max(floorTop, tile.Position.Y + tile.Size.Y / 2)
+		end
+	end
+	local saved: { [BasePart]: CFrame } = {}
+	for _, d in king:GetDescendants() do
+		if d:IsA("BasePart") and d.Anchored then
+			saved[d] = d.CFrame
+		end
+	end
+	local fists: { BasePart } = {}
+	for _, s in { "L", "R" } do
+		local f = king:FindFirstChild("Fist" .. s, true)
+		if f and f:IsA("BasePart") then
+			table.insert(fists, f)
+		end
+	end
+	local pivot = king:GetPivot()
+	-- his close-up starts after the drone flight and the first plain shot
+	local face, plain = 0, 0
+	for _, shot in shots do
+		if shot.Glide then
+			face += shot.Duration
+		elseif plain == 0 then
+			plain = shot.Duration
+		end
+	end
+	face += plain
+	local closeUp, plains = 3, 0
+	for _, shot in shots do
+		if not shot.Glide then
+			plains += 1
+			if plains == 2 then
+				closeUp = shot.Duration -- the second plain shot: his face
+				break
+			end
+		end
+	end
+	local SLAM = closeUp + 0.9
+	local t, slammed = 0, false
+	local blend = 1 -- 1 = alive, eased to 0 by stop()
+	local function pose()
+		local breathe = math.sin(t * 0.35 * math.pi * 2)
+		local body = CFrame.new(0, breathe * 0.35 * blend, 0) * CFrame.Angles(0, math.sin(t * 0.5) * 0.025 * blend, 0)
+		for part, cf in saved do
+			part.CFrame = pivot * body * pivot:ToObjectSpace(cf)
+		end
+		-- fists: a slow hover, then up (face + 0.4..1.2 s) and down onto the floor (by face + 1.5), held, back up
+		local k = t - face
+		for i, f in fists do
+			local home = saved[f]
+			local lift = math.sin(t * 1.3 + i) * 0.8
+			-- up beside his head during the close-up (k 0.4..1.4), held, then slammed down early in the wide arena shot
+			-- (SLAM: the face shot frames only his head, so a slam there fell out of view), held, back up
+			local floorLift = floorTop + f.Size.Y / 2 - home.Position.Y
+			if k > 0.4 and k < 1.4 then
+				lift += 9 * math.sin((k - 0.4) / 1.0 * math.pi / 2)
+			elseif k >= 1.4 and k < SLAM - 0.3 then
+				lift += 9
+			elseif k >= SLAM - 0.3 and k < SLAM then
+				lift = 9 + (floorLift - 9) * ((k - SLAM + 0.3) / 0.3) ^ 2
+			elseif k >= SLAM and k < SLAM + 2 then
+				lift = floorLift * (1 - math.clamp((k - SLAM - 0.9) / 1.1, 0, 1))
+			end
+			f.CFrame = f.CFrame + Vector3.new(0, lift * blend, 0)
+		end
+		if not slammed and k >= SLAM then
+			slammed = true
+			Net.event("CameraShake"):FireAllClients(pivot.Position, 1.2, 0.8)
+			for _, f in fists do
+				local at = Vector3.new(f.Position.X, floorTop, f.Position.Z)
+				Audio.play("PoundImpact", at)
+				local dust = Instance.new("Part")
+				dust.Anchored, dust.CanCollide, dust.CanQuery, dust.CanTouch = true, false, false, false
+				dust.Transparency, dust.Size, dust.Position = 1, Vector3.one, at
+				local e = Instance.new("ParticleEmitter")
+				e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+				e.Color = ColorSequence.new(Color3.fromRGB(220, 210, 190))
+				e.Size = NumberSequence.new(3, 7)
+				e.Transparency = NumberSequence.new(0.4, 1)
+				e.Lifetime = NumberRange.new(0.8, 1.4)
+				e.Speed = NumberRange.new(10, 18)
+				e.SpreadAngle = Vector2.new(80, 10)
+				e.Enabled = false
+				e.Parent = dust
+				dust.Parent = workspace
+				e:Emit(24)
+				task.delay(2, dust.Destroy, dust)
+			end
+		end
+	end
+	local conn = RunService.Heartbeat:Connect(function(dt)
+		t += dt
+		pose()
+	end)
+	return function()
+		conn:Disconnect()
+		local left = 0.8
+		conn = RunService.Heartbeat:Connect(function(dt)
+			t += dt
+			left -= dt
+			blend = math.max(0, left / 0.8)
+			pose()
+			if left <= 0 then
+				conn:Disconnect()
+				for part, cf in saved do
+					part.CFrame = cf
+				end
+			end
+		end)
+	end
+end
 
 Boss.Phases = {
 	{

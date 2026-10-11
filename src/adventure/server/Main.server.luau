@@ -109,6 +109,8 @@ local function unlockExit(exit: BasePart)
 	ArtService.DressExit(exit)
 end
 
+CutsceneService.OnStart = BossService.Intro -- bosses come alive for their intro cutscenes
+
 BossService.Finished:Connect(function(name: string)
 	task.wait(2.5) -- let him come apart first
 	for _, id in BOSS_CUTSCENES[name] or {} do

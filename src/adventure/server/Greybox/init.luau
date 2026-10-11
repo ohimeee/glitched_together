@@ -1509,6 +1509,11 @@ local function buildPixelPlains(world: Model)
 	camPath.Parent = P
 	for i, shot in
 		{
+			-- drone flight round the throne hall first (user, Oct 12: show the art), high over the towers, down to the landing
+			{ Vector3.new(-140, floorTop + 125, 1430), Vector3.new(0, floorTop + 10, 1290), 2.8, true },
+			{ Vector3.new(-155, floorTop + 80, 1265), Vector3.new(0, floorTop + 15, 1300), 2.8, true },
+			{ Vector3.new(-80, floorTop + 45, 1170), Vector3.new(0, floorTop + 20, 1300), 2.6, true },
+			{ Vector3.new(0, floorTop + 16, 1200), Vector3.new(0, floorTop + 35, 1320), 2.4, true },
 			{ Vector3.new(0, floorTop + 8, 1262), Vector3.new(0, floorTop + 40, 1320), 2.2 }, -- low, looking up at him
 			{ Vector3.new(6, floorTop + 50, 1291), Vector3.new(0, floorTop + 52, 1320), 3.0 }, -- his face
 			{ Vector3.new(38, floorTop + 46, 1222), Vector3.new(0, floorTop + 18, 1292), 2.6 }, -- the whole arena
@@ -1518,7 +1523,7 @@ local function buildPixelPlains(world: Model)
 			name = tostring(i),
 			transparency = 1,
 			collide = false,
-			attrs = { Duration = shot[3] },
+			attrs = { Duration = shot[3], Glide = shot[4] },
 		})
 		cam.CanQuery = false
 		cam.CanTouch = false
@@ -1817,6 +1822,11 @@ local function buildGlitchedCore(world: Model)
 		camPath.Parent = P
 		for i, shot in
 			{
+				-- drone flight round the stage first (user, Oct 12: show the art)
+				{ Vector3.new(-110, 80, -10), Vector3.new(0, 10, 90), 2.8, true },
+				{ Vector3.new(-105, 45, 110), Vector3.new(0, 25, 100), 2.8, true },
+				{ Vector3.new(60, 35, 20), Vector3.new(0, 20, 110), 2.6, true },
+				{ Vector3.new(0, 6, 40), Vector3.new(0, 28, 128), 2.2, true },
 				{ Vector3.new(0, 4, 58), Vector3.new(0, 28, 128), 2.4 }, -- low on the stage, up at it
 				{ Vector3.new(-12, 30, 100), Vector3.new(0, 29, 124), 2.8 }, -- its face
 				{ Vector3.new(40, 55, 18), Vector3.new(0, 6, 86), 2.6 }, -- the whole stage
@@ -1826,7 +1836,7 @@ local function buildGlitchedCore(world: Model)
 				name = tostring(i),
 				transparency = 1,
 				collide = false,
-				attrs = { Duration = shot[3] },
+				attrs = { Duration = shot[3], Glide = shot[4] },
 			})
 			cam.CanQuery = false
 			cam.CanTouch = false
@@ -3390,8 +3400,13 @@ local function buildStarfallCastle(world: Model)
 	camPath.Parent = world
 	for i, shot in
 		{
+			-- drone flight first (user, Oct 12: show the art): wide over the piers, past the torn rose window, down the nave
+			{ Vector3.new(120, 115, 1470), Vector3.new(0, 30, 1640), 2.8, true },
+			{ Vector3.new(105, 50, 1590), Vector3.new(0, 45, 1665), 2.8, true },
+			{ Vector3.new(35, 22, 1505), Vector3.new(0, 40, 1660), 2.4, true },
+			{ Vector3.new(0, 14, 1500), Vector3.new(0, 50, 1690), 2.2, true },
 			{ Vector3.new(0, 10, 1538), Vector3.new(0, 26, 1606), 2.4 }, -- down the hall, up at it
-			{ Vector3.new(-14, 30, 1568), Vector3.new(12, 29, 1591), 2.6 }, -- its face
+			{ Vector3.new(-24, 22, 1554), Vector3.new(4, 30, 1600), 3.4 }, -- its face as it rears and roars (pulled back: up close its texture read pixelated)
 			{ Vector3.new(44, 70, 1545), Vector3.new(0, 10, 1606), 2.6 }, -- the whole hall from above (the fight's view)
 		}
 	do
@@ -3399,7 +3414,7 @@ local function buildStarfallCastle(world: Model)
 			name = tostring(i),
 			transparency = 1,
 			collide = false,
-			attrs = { Duration = shot[3] },
+			attrs = { Duration = shot[3], Glide = shot[4] },
 		})
 		cam.CanQuery = false
 		cam.CanTouch = false

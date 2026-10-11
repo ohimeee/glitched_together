@@ -84,7 +84,9 @@ function AudioController.Init()
 	refresh()
 
 	Net.event("Cutscene").OnClientEvent:Connect(function(id: string?)
-		setDuck(if id then Sounds.CutsceneDuck else 1)
+		-- boss intros keep the boss track at full volume (it starts with the drone flight); other scenes duck it
+		local bossIntro = id ~= nil and string.match(id, "^W%d_BossIntro$") ~= nil
+		setDuck(if id and not bossIntro then Sounds.CutsceneDuck else 1)
 	end)
 end
 
