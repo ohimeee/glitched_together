@@ -523,6 +523,109 @@ end
 
 -- projectiles ----------------------------------------------------------------------------------
 
+-- an arrow you can see coming (user, Oct 11: "their arrows can't be seen"): a wooden shaft with an iron head and
+-- fletching rides the shot (welded, so it follows the hitbox ball; sized to read from the top-down camera), with a
+-- red trail behind it; the ball itself
+-- shrinks to a small glow at the tip
+local function arrowLook(part: Part, dir: Vector3, color: Color3)
+	local look = CFrame.lookAt(part.Position, part.Position + unitOr(flat(dir), Vector3.zAxis))
+	part.CFrame = look
+	part.Size = Vector3.one * 0.5
+	local function piece(name: string, size: Vector3, offset: CFrame, c: Color3, mat: Enum.Material): Part
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.CFrame = look * offset
+		p.Color = c
+		p.Material = mat
+		p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow, p.Massless = false, false, false, false, true
+		local w = Instance.new("WeldConstraint")
+		w.Part0, w.Part1 = part, p
+		w.Parent = p
+		p.Parent = part
+		return p
+	end
+	-- the ball's front is -Z (lookAt): the head sits at the ball, the shaft trails behind it
+	local shaft = piece(
+		"Shaft",
+		Vector3.new(0.32, 0.32, 4.2),
+		CFrame.new(0, 0, 2.1),
+		Color3.fromRGB(150, 105, 60),
+		Enum.Material.Wood
+	)
+	piece("Head", Vector3.new(0.7, 0.2, 0.9), CFrame.new(0, 0, -0.3), Color3.fromRGB(70, 70, 76), Enum.Material.Metal)
+	piece(
+		"FletchA",
+		Vector3.new(1.1, 0.08, 1),
+		CFrame.new(0, 0, 3.8),
+		Color3.fromRGB(235, 230, 220),
+		Enum.Material.Fabric
+	)
+	piece(
+		"FletchB",
+		Vector3.new(0.08, 1.1, 1),
+		CFrame.new(0, 0, 3.8),
+		Color3.fromRGB(235, 230, 220),
+		Enum.Material.Fabric
+	)
+	local a0 = Instance.new("Attachment")
+	a0.Position = Vector3.new(0, 0.35, 2.1)
+	a0.Parent = shaft
+	local a1 = Instance.new("Attachment")
+	a1.Position = Vector3.new(0, -0.35, 2.1)
+	a1.Parent = shaft
+	local trail = Instance.new("Trail")
+	trail.Attachment0, trail.Attachment1 = a0, a1
+	trail.Color = ColorSequence.new(color)
+	trail.LightEmission = 1
+	trail.Lifetime = 0.35
+	trail.Transparency = NumberSequence.new(0, 1)
+	trail.WidthScale = NumberSequence.new(1, 0.2)
+	trail.FaceCamera = true
+	trail.Parent = shaft
+	-- no light: it tinted the shaft red and washed it out from the top-down camera (operator, Oct 12)
+end
+
+-- a wall crossbow (Greybox ArrowTrap + its TrapBow child): the bow turns toward `toward` (flat), at most
+-- Tuning.Fuse.TrapSwivel degrees off the holder's front, at TrapTurn degrees/s; returns where a bolt leaves its nose
+local function aimTrap(trap: BasePart, toward: Vector3, dt: number): Vector3
+	local bow = trap:FindFirstChild("TrapBow") :: BasePart?
+	if not bow then
+		return trap.Position + unitOr(toward, Vector3.zAxis) * (trap.Size.X / 2 + 0.3)
+	end
+	local FT = Tuning.Fuse
+	local pivot = trap.CFrame * CFrame.new(0, 0, -0.35)
+	local localDir = trap.CFrame:VectorToObjectSpace(toward)
+	local want = math.clamp(math.atan2(-localDir.X, -localDir.Z), -math.rad(FT.TrapSwivel), math.rad(FT.TrapSwivel))
+	local now = (bow:GetAttribute("Yaw") :: number?) or 0
+	local step = math.rad(FT.TrapTurn) * dt
+	now += math.clamp(want - now, -step, step)
+	bow:SetAttribute("Yaw", now)
+	bow.CFrame = pivot * CFrame.Angles(0, now, 0)
+	return (bow.CFrame * CFrame.new(0, 0, -3.2)).Position
+end
+
+-- a trap's wind-up (Tuning.Fuse.TrapWindup): a red glow swells at the bow's nose, then it shoots
+local function trapWindup(nose: Vector3)
+	local glow = effect({
+		Name = "TrapWindup",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.one * 0.3,
+		CFrame = CFrame.new(nose),
+		Color = DANGER,
+		Transparency = 0.2,
+	})
+	task.delay(Tuning.Fuse.TrapWindup + 0.1, glow.Destroy, glow)
+	local light = Instance.new("PointLight")
+	light.Color = DANGER
+	light.Range = 0
+	light.Brightness = 3
+	light.Parent = glow
+	local info = TweenInfo.new(Tuning.Fuse.TrapWindup, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	TweenService:Create(glow, info, { Size = Vector3.one * 1.1 }):Play()
+	TweenService:Create(light, info, { Range = 10 }):Play()
+end
+
 -- Ember Fuse ------------------------------------------------------------------------------------
 type Fuse = {
 	model: Model,
@@ -535,6 +638,7 @@ type Fuse = {
 	spark: BasePart?,
 	done: boolean,
 	trapShots: { [BasePart]: number },
+	trapWarned: { [BasePart]: boolean },
 }
 local fuses: { [Model]: Fuse } = {}
 local FT = Tuning.Fuse
@@ -586,6 +690,7 @@ local function resetFuse(f: Fuse, fizzle: boolean)
 	end
 	f.lit, f.s, f.nextIndex, f.waitUntil = false, 0, 2, nil
 	setRopes(f, 0)
+	table.clear(f.trapWarned)
 	local start = f.model:FindFirstChild("FuseStart")
 	if start then
 		start:SetAttribute("Lit", nil)
@@ -604,13 +709,21 @@ local function lightFuse(f: Fuse)
 	if start then
 		start:SetAttribute("Lit", true)
 	end
-	local spark = effect({ Name = "FuseSpark", Shape = Enum.PartType.Ball, Size = Vector3.one * 1.2, Color = FIRE })
+	-- small and soft (user, Oct 12: "so bright i can barely see the arrows"): a 1.2 neon ball with a 14-stud light
+	-- bloomed over the arrows flying at it
+	local spark = effect({
+		Name = "FuseSpark",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.one * 0.5,
+		Color = FIRE,
+		Transparency = 0.25,
+	})
 	spark.Position = fusePoint(f)
-	CombatFx.Fire(spark, 0.7)
+	CombatFx.Fire(spark, 0.35)
 	local light = Instance.new("PointLight")
 	light.Color = FIRE
-	light.Range = 14
-	light.Brightness = 2
+	light.Range = 6
+	light.Brightness = 0.7
 	light.Parent = spark
 	f.spark = spark
 	Audio.play("Ignite", spark)
@@ -681,16 +794,23 @@ local function stepFuse(f: Fuse, dt: number)
 		if to.Magnitude > ((trap:GetAttribute("Range") or FT.TrapRange) :: number) then
 			continue
 		end
+		local nose = aimTrap(trap, to, dt)
 		local last = f.trapShots[trap]
 		if not last then
 			-- first sight: wait a moment (Delay) before the first arrow
 			last = now - FT.TrapEvery + ((trap:GetAttribute("Delay") or 0.6) :: number)
 			f.trapShots[trap] = last
 		end
+		if now - last >= FT.TrapEvery - FT.TrapWindup and not f.trapWarned[trap] then
+			f.trapWarned[trap] = true
+			trapWindup(nose)
+		end
 		if now - last >= FT.TrapEvery then
 			f.trapShots[trap] = now
-			local origin = Vector3.new(trap.Position.X, spark.Position.Y, trap.Position.Z)
-				+ unitOr(to, Vector3.zAxis) * 2
+			f.trapWarned[trap] = nil
+			-- from the bow's nose, at the spark's height (a shot only snuffs it within 4 studs up/down)
+			local origin = Vector3.new(nose.X, spark.Position.Y, nose.Z)
+			to = flat(spark.Position - origin)
 			CombatService.Fire({
 				origin = origin,
 				dir = to,
@@ -752,6 +872,8 @@ function CombatService.Fire(spec: ShotSpec)
 	if spec.kind == "Fireball" then
 		CombatFx.Fire(part, size)
 		CombatFx.CastFlash(spec.origin, size)
+	elseif spec.kind == "Arrow" then
+		arrowLook(part, spec.dir, spec.color or DANGER)
 	else
 		CombatFx.Emit(part, "Stars", size * 0.8, 18, spec.color or DANGER)
 	end
@@ -925,7 +1047,7 @@ local function stepShot(shot: Shot, dt: number): boolean -- false = remove
 		)
 		return false
 	end
-	shot.part.CFrame = CFrame.new(pos + move)
+	shot.part.CFrame = CFrame.lookAt(pos + move, pos + move + shot.dir) -- arrows point where they fly
 	shot.travelled += move.Magnitude
 	return shot.travelled < MAX_SHOT_DISTANCE
 end
@@ -1648,6 +1770,7 @@ function CombatService.Init()
 			spark = nil,
 			done = false,
 			trapShots = {},
+			trapWarned = {},
 		}
 		fuses[inst] = f
 		resetFuse(f, false)

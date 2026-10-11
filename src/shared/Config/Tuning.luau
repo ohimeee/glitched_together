@@ -211,7 +211,14 @@ return {
 	},
 
 	-- World 2 (castle)
-	Castle = { Tether = 60, ShieldArc = 120, ShieldSpeedMult = 0.6, TauntRadius = 20, ReflectMult = 1.5 },
+	Castle = {
+		Tether = 60,
+		ShieldArc = 120,
+		ShieldSpeedMult = 0.6,
+		TauntRadius = 20,
+		ReflectMult = 1.5,
+		HallShift = 36,
+	}, -- HallShift: studs the Powder Hall grew (user, Oct 11); the throne hall + Hollow Dragon sit that much further on
 	KeyPromptRange = 14, -- studs: kit key chips ("[SHIFT] BLINK") show this close (KeyPromptController)
 	KeyPromptSize = Vector2.new(4.6, 1.2), -- studs: kit key chips
 	OverheadBar = Vector2.new(3.6, 0.5), -- studs: the HP bar over each player in the castle (HUDController)
@@ -265,6 +272,9 @@ return {
 		BreakWait = 3, -- s a spark waits at a break for Kai's Ignite before it fizzles
 		SnuffRadius = 2, -- an enemy shot passing this close puts the spark out
 		TrapEvery = 2.2, -- s between one trap's arrows
+		TrapSwivel = 70, -- degrees a wall crossbow turns off its front to aim at the spark
+		TrapTurn = 160, -- degrees/s it turns
+		TrapWindup = 0.6, -- s of red glow on a trap before each arrow (user: the traps must read)
 		TrapRange = 38,
 		ArrowSpeed = 40,
 		ArrowDamage = 10,

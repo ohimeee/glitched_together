@@ -24,7 +24,8 @@ local DuoService = require(Services.DuoService)
 
 local T = Tuning.HollowDragon
 local TOTAL_HITS = 4 + T.MeteorHits + T.HeartHits -- scales, grounded Meteors, heart: the boss bar
-local WALL_Z = 1575 -- section-free: the castle is built in absolute coordinates (Greybox)
+local SHIFT = Tuning.Castle.HallShift -- the throne hall moved on by the longer Powder Hall
+local WALL_Z = 1575 + SHIFT -- section-free: the castle is built in absolute coordinates (Greybox)
 local GAPS = { -28, 0, 28 }
 local CLOSED = Color3.fromRGB(120, 70, 40) -- a shut scale: dull, still Kai's color family
 local BURNT = Color3.fromRGB(30, 26, 34)
@@ -621,7 +622,7 @@ local function knitBridge(self: any)
 		tile.Color = Palette.Castle.Stone
 		tile.Transparency = 1
 		tile.CanCollide = false
-		tile.CFrame = CFrame.new(0, -1, 1604 + i * 8)
+		tile.CFrame = CFrame.new(0, -1, 1604 + SHIFT + i * 8)
 		tile.Parent = folder
 		task.delay(1 + i * 0.35, function()
 			tile.CanCollide = true
@@ -697,8 +698,8 @@ function Boss.Setup(self: any, world: Instance)
 			end
 		end
 	end
-	self.center = Vector3.new(0, 0, 1582)
-	self.loopCenter = Vector3.new(0, 0, T.LoopCenterZ)
+	self.center = Vector3.new(0, 0, 1582 + SHIFT)
+	self.loopCenter = Vector3.new(0, 0, T.LoopCenterZ + SHIFT)
 	-- the heart is hidden in its chest until phase 3 opens it (a neon cube glowing through the ghosted body read as
 	-- a loose pink block in flight)
 	self.heart.Transparency = 1
@@ -724,7 +725,7 @@ function Boss.Setup(self: any, world: Instance)
 	-- side instead, and pull the view toward it
 	workspace:SetAttribute("TopDownFlip", true)
 	workspace:SetAttribute("TopDownBack", T.CameraBack)
-	workspace:SetAttribute("TopDownFocus", T.Focus)
+	workspace:SetAttribute("TopDownFocus", T.Focus + Vector3.new(0, 0, SHIFT))
 	workspace:SetAttribute("TopDownFocusWeight", T.FocusWeight)
 	setScales(self, false)
 	setHealth(self)

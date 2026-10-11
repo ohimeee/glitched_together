@@ -1,6 +1,7 @@
 -- Readable targets (art-direction.md §6): every target glows in its OWNER's color: Kai's (Freezable, Copyable,
 -- Burnable) orange, Miko's (GrappleRing, Pullable) teal. Frozen objects get a blue-white pause look + ⏸ timer (§12).
 -- Every client draws these from server-set tags/attributes.
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -71,6 +72,7 @@ local function onFreezable(inst: Instance)
 		sel.Color3 = Palette.Kai
 		sel.LineThickness = 0.06
 		sel.SurfaceTransparency = 1
+		sel.Visible = not Players.LocalPlayer:GetAttribute("InCutscene")
 		sel.Parent = inst
 	end
 end
@@ -99,6 +101,16 @@ function EffectsController.Init()
 		local frame = inst:FindFirstChild("FreezableFrame")
 		if frame then
 			frame:Destroy() -- e.g. boss floor tiles: Freezable only while they fall
+		end
+	end)
+	-- cutscenes are cinematic: the orange frames hide (user saw them round the final boss's arms in its intro)
+	Players.LocalPlayer:GetAttributeChangedSignal("InCutscene"):Connect(function()
+		local show = not Players.LocalPlayer:GetAttribute("InCutscene")
+		for _, inst in Tags.list("Freezable") do
+			local frame = inst:FindFirstChild("FreezableFrame")
+			if frame and frame:IsA("SelectionBox") then
+				frame.Visible = show
+			end
 		end
 	end)
 	outline("GrappleRing", Palette.Miko)

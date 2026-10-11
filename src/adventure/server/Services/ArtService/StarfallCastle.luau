@@ -191,8 +191,41 @@ Skins.BrazierSkin =
 -- the archers' posts: a lookout platform, squashed a little so its deck sits where the archer stands (2 up)
 Skins.LookoutSkin =
 	enemy(v(6, 2, 6), "rbxassetid://110960545732210", "rbxassetid://75028846197346", v(6, 2.9, 6), 0.45, 0)
-Skins.ArrowTrapSkin =
-	enemy(v(2, 2, 2), "rbxassetid://120914557930002", "rbxassetid://87319073910538", v(2.2, 2.5, 2), 0, 0)
+-- the Powder Hall's wall crossbows (tools/trap_kit/kit.py, user: the traps must read): a riveted iron mount on the
+-- ArrowTrap holder (its back against the wall), and the bow on its TrapBow child, which CombatService swivels at the
+-- spark (pivot = the mount's collar, 0.35 in front of the holder's centre)
+local TRAP_IRON, TRAP_WOOD = Color3.fromRGB(58, 58, 64), Color3.fromRGB(126, 84, 50)
+Skins.ArrowTrapSkin = {
+	Design = v(2, 2, 2),
+	Meshes = {
+		Mount = {
+			Id = "rbxassetid://86159224009145",
+			Offset = v(0, 0, 0.165),
+			Size = v(2.6, 2.4, 1.67),
+			Material = Enum.Material.Metal,
+			Color = TRAP_IRON,
+		},
+	},
+}
+Skins.TrapBowSkin = {
+	Design = v(1, 1, 1),
+	Meshes = {
+		Wood = {
+			Id = "rbxassetid://97677706264845",
+			Offset = v(0, -0.05, -0.389),
+			Size = v(4.308, 0.648, 3.621),
+			Material = Enum.Material.Wood,
+			Color = TRAP_WOOD,
+		},
+		Iron = {
+			Id = "rbxassetid://123440794540753",
+			Offset = v(0, -0.023, -1.091),
+			Size = v(4.4, 1.007, 3.418),
+			Material = Enum.Material.Metal,
+			Color = TRAP_IRON,
+		},
+	},
+}
 Skins.KegSkin = enemy(v(3, 3.5, 3), "rbxassetid://128811076776832", "rbxassetid://118383684707806", v(3, 3.5, 3), 0, 0)
 local DOOR, DOOR_TEX = "rbxassetid://92590501034362", "rbxassetid://80776194066568"
 Skins.WoodenDoorSkin = { -- two arched oak doors side by side fill the 12-stud doorway
@@ -243,6 +276,7 @@ local Dressing: { [string]: string } = {
 	Barricade = "BarricadeSkin",
 	ArcherPost = "LookoutSkin",
 	ArrowTrap = "ArrowTrapSkin",
+	TrapBow = "TrapBowSkin",
 	Keg = "KegSkin",
 	WoodenDoor = "WoodenDoorSkin",
 	CartBase = "CartSkin",

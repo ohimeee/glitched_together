@@ -2538,6 +2538,7 @@ local function buildStarfallCastle(world: Model)
 	workspace:SetAttribute("KillY", -60)
 	local P = Palette.Castle
 	local WALL_H = 6
+	local D = Tuning.Castle.HallShift -- the Powder Hall's extra length: everything past it sits this much further on
 
 	local function floor(x0: number, z0: number, x1: number, z1: number, name: string)
 		platform(world, Vector3.new(x1 - x0, 2, z1 - z0), (x0 + x1) / 2, 0, (z0 + z1) / 2, {
@@ -3201,7 +3202,7 @@ local function buildStarfallCastle(world: Model)
 	-- (an arrow that passes it puts it out, back to the start), so Miko walks beside it with her shield up on the
 	-- trap's side. At two breaks the spark waits 3 s for Kai to light it again. The traps' ranges never overlap and
 	-- both breaks sit where no trap reaches. Skeletons go for Miko while she blocks: Kai keeps them off her.
-	floor(-30, 1416, 30, 1500, "PowderHall")
+	floor(-30, 1416, 30, 1500 + D, "PowderHall")
 	checkpoint(world, 11, 0, 0, 1420, W, {
 		"Kai: light the fuse (E). Miko: walk beside the spark with your shield up. Arrows put it out!",
 		"The spark stops at the orange breaks: Kai, light it again (E) within 3 seconds.",
@@ -3209,10 +3210,10 @@ local function buildStarfallCastle(world: Model)
 	flatSign("2-3 THE POWDER HALL", 0, 1430, 18)
 	wall(-30, 1416, -10, 1416)
 	wall(10, 1416, 30, 1416)
-	wall(-30, 1416, -30, 1500)
-	wall(30, 1416, 30, 1500)
-	wall(-30, 1500, -7, 1500)
-	wall(7, 1500, 30, 1500)
+	wall(-30, 1416, -30, 1500 + D)
+	wall(30, 1416, 30, 1500 + D)
+	wall(-30, 1500 + D, -7, 1500 + D)
+	wall(7, 1500 + D, 30, 1500 + D)
 	for _, spot in
 		{
 			{ -30, 1424 },
@@ -3221,10 +3222,11 @@ local function buildStarfallCastle(world: Model)
 			{ 30, 1446 },
 			{ -30, 1468 },
 			{ 30, 1470 },
-			{ -30, 1490 },
+			{ -30, 1512 },
 			{ 30, 1490 },
-			{ -20, 1500 },
-			{ 20, 1500 },
+			{ 30, 1514 },
+			{ -20, 1536 },
+			{ 20, 1536 },
 		}
 	do
 		torch(spot[1], spot[2])
@@ -3236,12 +3238,15 @@ local function buildStarfallCastle(world: Model)
 	path.Parent = fuse
 	local points = {
 		{ -22, 1422 },
-		{ -22, 1446 },
-		{ 0, 1446, true }, -- break 1: out of every trap's reach
-		{ 22, 1446 },
-		{ 22, 1470 },
-		{ 0, 1470, true }, -- break 2
-		{ 0, 1490 },
+		{ -22, 1450 },
+		{ 0, 1450, true }, -- break 1: out of every trap's reach
+		{ 22, 1450 },
+		{ 22, 1478 },
+		{ 0, 1478, true }, -- break 2
+		{ -22, 1478 }, -- the longer hall (user, Oct 11): one more leg back along the west wall
+		{ -22, 1506 },
+		{ 0, 1506 },
+		{ 0, 1526 },
 	}
 	for i, pt in points do
 		local at = Vector3.new(pt[1] :: number, 0.3, pt[2] :: number)
@@ -3278,12 +3283,12 @@ local function buildStarfallCastle(world: Model)
 		material = Enum.Material.Neon,
 		tags = { "FuseStart" },
 	})
-	block(fuse, Vector3.new(3, 3.5, 3), CFrame.new(0, 1.75, 1493), {
+	block(fuse, Vector3.new(3, 3.5, 3), CFrame.new(0, 1.75, 1529), {
 		name = "Keg",
 		color = rgb(110, 70, 40),
 		material = Enum.Material.Wood,
 	})
-	local kegSwitch = block(fuse, Vector3.new(1, 1, 1), CFrame.new(0, -3, 1493), {
+	local kegSwitch = block(fuse, Vector3.new(1, 1, 1), CFrame.new(0, -3, 1529), {
 		name = "KegSwitch",
 		transparency = 1,
 		collide = false,
@@ -3293,47 +3298,59 @@ local function buildStarfallCastle(world: Model)
 	kegSwitch.CanQuery = false
 	fuse.Parent = world
 	CollectionService:AddTag(fuse, "Fuse")
-	-- arrow traps (24-stud reach each): west covers the first leg, east the right side, north the last stretch
-	for _, trap in { { -29, 1434, 90 }, { 29, 1460, -90 }, { -14, 1499, 180 } } do
-		block(world, Vector3.new(2, 2, 2), CFrame.new(trap[1], 3, trap[2]) * CFrame.Angles(0, math.rad(trap[3]), 0), {
+	-- arrow traps (24-stud reach each, none reaches a break or overlaps another): west covers the first leg, east
+	-- the right side, west 2 the leg back along the west wall, north the last stretch to the keg
+	-- (the angle turns the holder's front, -Z, into the hall: the crossbow skin looks out from the wall)
+	for _, trap in { { -29, 1436, -90 }, { 29, 1464, 90 }, { -29, 1492, -90 }, { -14, 1535, 0 } } do
+		local cf = CFrame.new(trap[1], 3, trap[2]) * CFrame.Angles(0, math.rad(trap[3]), 0)
+		local holder = block(world, Vector3.new(2, 2, 2), cf, {
 			name = "ArrowTrap",
 			color = Palette.Danger,
 			material = Enum.Material.Metal,
 			tags = { "ArrowTrap" },
-			attrs = { Range = 24 },
+			attrs = { Range = 24, Delay = 1.5 }, -- Delay: first sight → first arrow, time for Miko to step in
 		})
+		-- the bow CombatService turns toward the spark (its skin rides along: Weld)
+		local bow = block(holder, Vector3.one, cf * CFrame.new(0, 0, -0.35), {
+			name = "TrapBow",
+			transparency = 1,
+			collide = false,
+			attrs = { Weld = true },
+		})
+		bow.CanQuery = false
+		bow.CanTouch = false
 	end
-	encounter("PowderHall", -30, 1436, 30, 1500, {
-		{ { "Skeleton", -10, 1458 }, { "Skeleton", 12, 1482 } },
-		{ { "Skeleton", -24, 1490 }, { "Skeleton", 24, 1490 }, { "ShieldGuard", 0, 1476 } },
-		{ { "Skeleton", -18, 1446 }, { "SplitSlime", 10, 1470 }, { "Skeleton", 20, 1460 } },
+	encounter("PowderHall", -30, 1436, 30, 1500 + D, {
+		{ { "Skeleton", -10, 1462 }, { "Skeleton", 12, 1500 } },
+		{ { "Skeleton", -24, 1524 }, { "Skeleton", 24, 1524 }, { "ShieldGuard", 0, 1494 } },
+		{ { "Skeleton", -18, 1452 }, { "SplitSlime", 10, 1488 }, { "Skeleton", 20, 1470 } },
 	})
-	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500), nil, 0)
+	gate(world, "C9", Vector3.new(14, WALL_H, 1), CFrame.new(0, WALL_H / 2, 1500 + D), nil, 0)
 
-	floor(-10, 1500, 10, 1530, "ThroneApproach")
-	wall(-10, 1500, -10, 1530)
-	wall(10, 1500, 10, 1530)
+	floor(-10, 1500 + D, 10, 1530 + D, "ThroneApproach")
+	wall(-10, 1500 + D, -10, 1530 + D)
+	wall(10, 1500 + D, 10, 1530 + D)
 
 	-- 2-3 THE HOLLOW THRONE: the Hollow Dragon (mechanics.md §5; fight logic in server/Bosses/HollowDragon). The Glitch
-	-- has eaten the back of the hall: the floor ends at z 1600 in a broken edge, and the dragon hovers over the hole,
+	-- has eaten the back of the hall: the floor ends at z 1600 (+ D) in a broken edge, and the dragon hovers over the hole,
 	-- claws at floor level, tail hanging into the dark (art: the Celestial Dragon, restyled; ArtService DRAGON).
 	-- Kai's four scales glow on its legs (fireball height); its chest is open round the glowing heart, which sinks
 	-- to reflect height in phase 3. When it falls, the floor knits back over the hole to the hidden room (Memory 2).
-	floor(-48, 1530, 48, 1600, "ThroneHall")
-	wall(-48, 1530, -10, 1530)
-	wall(10, 1530, 48, 1530)
-	wall(-48, 1530, -48, 1664)
-	wall(48, 1530, 48, 1664)
-	wall(-48, 1664, -8, 1664)
-	wall(8, 1664, 48, 1664)
-	floor(-8, 1664, 8, 1682, "HiddenDoor")
-	wall(-8, 1664, -8, 1682)
-	wall(8, 1664, 8, 1682)
+	floor(-48, 1530 + D, 48, 1600 + D, "ThroneHall")
+	wall(-48, 1530 + D, -10, 1530 + D)
+	wall(10, 1530 + D, 48, 1530 + D)
+	wall(-48, 1530 + D, -48, 1664 + D)
+	wall(48, 1530 + D, 48, 1664 + D)
+	wall(-48, 1664 + D, -8, 1664 + D)
+	wall(8, 1664 + D, 48, 1664 + D)
+	floor(-8, 1664 + D, 8, 1682 + D, "HiddenDoor")
+	wall(-8, 1664 + D, -8, 1682 + D)
+	wall(8, 1664 + D, 8, 1682 + D)
 	-- the broken edge: a knee-high stub of the old balustrade, and an invisible rail players can't cross (shots and
 	-- the camera pass through it: CanQuery off)
 	for i = -4, 3 do
 		if i ~= -1 and i ~= 2 then -- gaps: it's broken
-			local stub = block(world, Vector3.new(10, 1.6, 1.2), CFrame.new(i * 12 + 6, 0.8, 1599.4), {
+			local stub = block(world, Vector3.new(10, 1.6, 1.2), CFrame.new(i * 12 + 6, 0.8, 1599.4 + D), {
 				name = "Balustrade",
 				color = P.Stone,
 				material = Enum.Material.Cobblestone,
@@ -3342,16 +3359,25 @@ local function buildStarfallCastle(world: Model)
 			stub.CanQuery = false
 		end
 	end
-	local rail = block(world, Vector3.new(96, 14, 1), CFrame.new(0, 7, 1600.5), {
+	local rail = block(world, Vector3.new(96, 14, 1), CFrame.new(0, 7, 1600.5 + D), {
 		name = "EdgeRail",
 		transparency = 1,
 		tags = { "ShotPass" }, -- shots fly over it to the dragon's heart and scales
 	})
-	for _, t in { { -47, 1550 }, { 47, 1550 }, { -47, 1590 }, { 47, 1590 }, { -47, 1630 }, { 47, 1630 } } do
+	for _, t in
+		{
+			{ -47, 1550 + D },
+			{ 47, 1550 + D },
+			{ -47, 1590 + D },
+			{ 47, 1590 + D },
+			{ -47, 1630 + D },
+			{ 47, 1630 + D },
+		}
+	do
 		torch(t[1], t[2])
 	end
 	-- the royal runner from the door to the broken edge
-	platform(world, Vector3.new(8, 0.2, 66), 0, 0.1, 1563, {
+	platform(world, Vector3.new(8, 0.2, 66), 0, 0.1, 1563 + D, {
 		color = P.Banner,
 		material = Enum.Material.Fabric,
 		collide = false,
@@ -3361,11 +3387,11 @@ local function buildStarfallCastle(world: Model)
 	sign(
 		world,
 		"NO DRAGONS ALLOWED!!",
-		CFrame.new(-9.3, 3.5, 1514) * CFrame.Angles(0, math.rad(90), 0),
+		CFrame.new(-9.3, 3.5, 1514 + D) * CFrame.Angles(0, math.rad(90), 0),
 		Vector3.new(9, 2.4, 0.3),
 		P.Royal
 	)
-	checkpoint(world, 12, 0, 0, 1540, W, {
+	checkpoint(world, 12, 0, 0, 1540 + D, W, {
 		"Miko: raise your shield in the dragon's breath. It stops the beam for anyone behind you.",
 		"Kai: its scales only open while it breathes. Burn them!",
 	})
@@ -3373,11 +3399,11 @@ local function buildStarfallCastle(world: Model)
 	sign(
 		world,
 		"THE HOLLOW THRONE",
-		CFrame.new(0, 0.35, 1546) * CFrame.Angles(0, math.pi, 0) * CFrame.Angles(math.rad(-90), 0, 0),
+		CFrame.new(0, 0.35, 1546 + D) * CFrame.Angles(0, math.pi, 0) * CFrame.Angles(math.rad(-90), 0, 0),
 		Vector3.new(16, 4, 0.4),
 		P.Royal
 	)
-	local trigger = block(world, Vector3.new(94, 30, 68), CFrame.new(0, 15, 1565), {
+	local trigger = block(world, Vector3.new(94, 30, 68), CFrame.new(0, 15, 1565 + D), {
 		name = "BossTrigger",
 		transparency = 1,
 		collide = false,
@@ -3386,7 +3412,7 @@ local function buildStarfallCastle(world: Model)
 	})
 	trigger.CanQuery = false
 	trigger.CanTouch = false
-	local intro = block(world, Vector3.new(20, 10, 14), CFrame.new(0, 5, 1512), {
+	local intro = block(world, Vector3.new(20, 10, 14), CFrame.new(0, 5, 1512 + D), {
 		name = "BossIntroTrigger",
 		transparency = 1,
 		collide = false,
@@ -3401,13 +3427,13 @@ local function buildStarfallCastle(world: Model)
 	for i, shot in
 		{
 			-- drone flight first (user, Oct 12: show the art): wide over the piers, past the torn rose window, down the nave
-			{ Vector3.new(120, 115, 1470), Vector3.new(0, 30, 1640), 2.8, true },
-			{ Vector3.new(105, 50, 1590), Vector3.new(0, 45, 1665), 2.8, true },
-			{ Vector3.new(35, 22, 1505), Vector3.new(0, 40, 1660), 2.4, true },
-			{ Vector3.new(0, 14, 1500), Vector3.new(0, 50, 1690), 2.2, true },
-			{ Vector3.new(0, 10, 1538), Vector3.new(0, 26, 1606), 2.4 }, -- down the hall, up at it
-			{ Vector3.new(-24, 22, 1554), Vector3.new(4, 30, 1600), 3.4 }, -- its face as it rears and roars (pulled back: up close its texture read pixelated)
-			{ Vector3.new(44, 70, 1545), Vector3.new(0, 10, 1606), 2.6 }, -- the whole hall from above (the fight's view)
+			{ Vector3.new(120, 115, 1470 + D), Vector3.new(0, 30, 1640 + D), 2.8, true },
+			{ Vector3.new(105, 50, 1590 + D), Vector3.new(0, 45, 1665 + D), 2.8, true },
+			{ Vector3.new(35, 30, 1520 + D), Vector3.new(0, 40, 1660 + D), 2.4, true }, -- past the gatehouse arch
+			{ Vector3.new(0, 14, 1522 + D), Vector3.new(0, 50, 1690 + D), 2.2, true },
+			{ Vector3.new(0, 10, 1538 + D), Vector3.new(0, 26, 1606 + D), 2.4 }, -- down the hall, up at it
+			{ Vector3.new(-24, 22, 1554 + D), Vector3.new(4, 30, 1600 + D), 3.4 }, -- its face as it rears and roars (pulled back: up close its texture read pixelated)
+			{ Vector3.new(44, 70, 1545 + D), Vector3.new(0, 10, 1606 + D), 2.6 }, -- the whole hall from above (the fight's view)
 		}
 	do
 		local cam = block(camPath, Vector3.one, CFrame.lookAt(shot[1], shot[2]), {
@@ -3420,7 +3446,7 @@ local function buildStarfallCastle(world: Model)
 		cam.CanTouch = false
 	end
 	-- where it lands in phase 2 (its 80-stud wings clear the side walls) and where its minions climb in
-	for i, at in { Vector3.new(-8, 0, 1572), Vector3.new(8, 0, 1572), Vector3.new(0, 0, 1584) } do
+	for i, at in { Vector3.new(-8, 0, 1572 + D), Vector3.new(8, 0, 1572 + D), Vector3.new(0, 0, 1584 + D) } do
 		local spot = block(world, Vector3.new(1, 1, 1), CFrame.new(at), {
 			name = "LandSpot" .. i,
 			transparency = 1,
@@ -3430,12 +3456,12 @@ local function buildStarfallCastle(world: Model)
 	end
 	for i, at in
 		{
-			Vector3.new(-42, 0, 1540),
-			Vector3.new(42, 0, 1540),
-			Vector3.new(-42, 0, 1570),
-			Vector3.new(42, 0, 1570),
-			Vector3.new(-40, 0, 1594),
-			Vector3.new(40, 0, 1594),
+			Vector3.new(-42, 0, 1540 + D),
+			Vector3.new(42, 0, 1540 + D),
+			Vector3.new(-42, 0, 1570 + D),
+			Vector3.new(42, 0, 1570 + D),
+			Vector3.new(-40, 0, 1594 + D),
+			Vector3.new(40, 0, 1594 + D),
 		}
 	do
 		local spot = block(world, Vector3.new(1, 1, 1), CFrame.new(at), {
@@ -3449,7 +3475,7 @@ local function buildStarfallCastle(world: Model)
 	-- the dragon. Pivot = its claws at floor level over the hole. Body / wing parts are exactly their meshes' boxes
 	-- (ArtService scales a skin by part size / Design), so they never collide; gameplay lives in the small parts:
 	-- Head (the breath comes from its mouth), four Scale hurtboxes on its legs, the Heart in its open chest.
-	local PIVOT = Vector3.new(0, 0, 1612)
+	local PIVOT = Vector3.new(0, 0, 1612 + D)
 	local dragon = Instance.new("Model")
 	dragon.Name = "HollowDragon"
 	dragon.Parent = world
@@ -3509,7 +3535,7 @@ local function buildStarfallCastle(world: Model)
 	glow.Parent = heart
 	dragon.WorldPivot = CFrame.new(PIVOT)
 
-	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1676), {
+	block(world, Vector3.new(12, 10, 3), CFrame.new(0, 5, 1676 + D), {
 		name = "WorldExit",
 		color = DUO,
 		material = Enum.Material.Neon,
