@@ -47,7 +47,7 @@
 - **Breakable props (castle):** wooden/cloth room dressing is tagged `Breakable` (`Services/Breakables`); a new tool or area attack should call `Breakables.InBox` / `Near` / `Segment` so it smashes them too. Shards: `Debris` collision group.
 - **Upload gotcha:** a fresh image upload can stay `AssetFetchStatus.Failure` for good (FX_FireLoop: 4 uploads); check `ContentProvider:PreloadAsync` status after every upload before building on it.
 - **Before publishing:** fill place ids in `src/shared/Config/Places.luau` and create the 3 support developer products (10/50/100 R$) → ids in `src/shared/Config/Products.luau`.
-- **Tip jar (Oct 12):** end-credits panel under CONTINUE? YES (`CreditsController.supportPanel`), receipts in `SupportService` (the only `ProcessReceipt`: any future product must go through it). Grants nothing; never call it charity (Roblox rule).
+- **Tip jar (Oct 12):** end-credits panel under CONTINUE? YES (`CreditsController.supportPanel`), receipts in `SupportService` (the only `ProcessReceipt`: any future product must go through it). Also on the Epilogue notice board beside the BACK TO LOBBY exit ([E] SUPPORT / [F] FAVORITE, client `ProximityPromptService` in CreditsController); ★ FAVORITE uses `AvatarEditorService:PromptSetFavorite` on `Places.Lobby`. Grants nothing (no rewards for favorites/likes/support); never call it charity (Roblox rule).
 
 ## Current status (25th session, Oct 12, 2026)
 

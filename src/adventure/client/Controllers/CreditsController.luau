@@ -4,14 +4,17 @@
 -- server to open the BACK TO LOBBY exit on the hilltop ledge (Main).
 -- Space / click / tap skips straight to the title card. Under it sits a small, optional tip jar (Config/Products.Support,
 -- server SupportService): "Enjoyed it? Support our next game", three Robux buttons, thank-you on purchase.
+local AvatarEditorService = game:GetService("AvatarEditorService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Credits = require(ReplicatedStorage.Shared.Config.Credits)
+local Places = require(ReplicatedStorage.Shared.Config.Places)
 local Products = require(ReplicatedStorage.Shared.Config.Products)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 
@@ -34,12 +37,27 @@ local function label(parent: Instance, text: string, size: number, font: Enum.Fo
 	return t
 end
 
--- the tip jar under the title card: a line of thanks-in-advance and one button per Products.Support entry
-local function supportPanel(parent: Instance): Frame
+-- Roblox's own "favorite this experience?" prompt, for the start place (the lobby) once published. A Like can't be
+-- prompted: the board and the panel only ask for one. False when there's no place id yet (Studio).
+local function promptFavorite(): boolean
+	local id = if Places.Lobby ~= 0 then Places.Lobby else game.PlaceId
+	if id == 0 then
+		return false
+	end
+	pcall(function()
+		AvatarEditorService:PromptSetFavorite(id, Enum.AvatarItemType.Asset, true)
+	end)
+	return true
+end
+
+-- the tip jar under the credits' title card and behind the Epilogue notice board: thanks-in-advance, a favorite
+-- button and one button per Products.Support entry. `centred` = the board's pop-up (mid-screen) instead of the
+-- strip under the title card.
+local function supportPanel(parent: Instance, centred: boolean?): Frame
 	local panel = Instance.new("Frame")
-	panel.AnchorPoint = Vector2.new(0.5, 1)
-	panel.Position = UDim2.new(0.5, 0, 1, -36)
-	panel.Size = UDim2.fromOffset(460, 150)
+	panel.AnchorPoint = Vector2.new(0.5, if centred then 0.5 else 1)
+	panel.Position = if centred then UDim2.fromScale(0.5, 0.5) else UDim2.new(0.5, 0, 1, -36)
+	panel.Size = UDim2.fromOffset(560, 150)
 	panel.BackgroundColor3 = THEME.Panel
 	panel.BackgroundTransparency = 1
 	panel.Parent = parent
@@ -53,36 +71,43 @@ local function supportPanel(parent: Instance): Frame
 	stroke.Parent = panel
 	local head = label(panel, "Enjoyed Glitched Together?", 26, THEME.TitleFont, THEME.Accent)
 	head.Position = UDim2.fromOffset(0, 10)
-	local sub =
-		label(panel, "If you liked our game, you can support us in making the next one.", 18, THEME.Font, THEME.SubInk)
+	local sub = label(panel, "Favorite it, leave a Like, or support our next game.", 18, THEME.Font, THEME.SubInk)
 	sub.Position = UDim2.fromOffset(0, 44)
 	local row = Instance.new("Frame")
 	row.AnchorPoint = Vector2.new(0.5, 1)
 	row.Position = UDim2.new(0.5, 0, 1, -14)
-	row.Size = UDim2.fromOffset(420, 44)
+	row.Size = UDim2.fromOffset(540, 44)
 	row.BackgroundTransparency = 1
 	row.Parent = panel
 	local list = Instance.new("UIListLayout")
 	list.FillDirection = Enum.FillDirection.Horizontal
 	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	list.Padding = UDim.new(0, 14)
+	list.Padding = UDim.new(0, 12)
 	list.Parent = row
 	local fades: { GuiObject } = { head, sub }
-	for _, product in Products.Support do
+	local function button(text: string, width: number, color: Color3, onPress: () -> ())
 		local b = Instance.new("TextButton")
-		b.Size = UDim2.fromOffset(120, 44)
-		b.BackgroundColor3 = THEME.Accent
+		b.Size = UDim2.fromOffset(width, 44)
+		b.BackgroundColor3 = color
 		b.Font = THEME.TitleFont
 		b.TextSize = 24
 		b.TextColor3 = THEME.Shadow
-		b.Text = `{product.Robux} R$`
+		b.Text = text
 		b.AutoButtonColor = true
 		b.Parent = row
 		local c = Instance.new("UICorner")
 		c.CornerRadius = UDim.new(0, THEME.Corner)
 		c.Parent = b
 		table.insert(fades, b)
-		b.Activated:Connect(function()
+		b.Activated:Connect(onPress)
+	end
+	button("★ FAVORITE", 160, THEME.Ink, function()
+		if not promptFavorite() then
+			sub.Text = "(Favorites work once the game is published.)"
+		end
+	end)
+	for _, product in Products.Support do
+		button(`{product.Robux} R$`, 108, THEME.Accent, function()
 			if product.Id == 0 then
 				sub.Text = "(Not set up yet: the product ids go in Config/Products.)"
 				return
@@ -257,8 +282,57 @@ local function roll()
 	end)
 end
 
+-- the Epilogue notice board's pop-up: the same panel mid-screen, with a close button (the cursor is free while open)
+local function openBoard()
+	if player.PlayerGui:FindFirstChild("SupportBoard") then
+		return
+	end
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "SupportBoard"
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 15
+	gui.Parent = player.PlayerGui
+	player:SetAttribute("FreeCursor", true)
+	gui.Destroying:Connect(function()
+		player:SetAttribute("FreeCursor", nil)
+	end)
+	local panel = supportPanel(gui, true)
+	local close = Instance.new("TextButton")
+	close.AnchorPoint = Vector2.new(1, 0)
+	close.Position = UDim2.new(1, -8, 0, 8)
+	close.Size = UDim2.fromOffset(32, 32)
+	close.BackgroundTransparency = 1
+	close.Font = THEME.TitleFont
+	close.TextSize = 24
+	close.TextColor3 = THEME.SubInk
+	close.Text = "✕"
+	close.Modal = true -- frees the cursor even in first person
+	close.Parent = panel
+	close.Activated:Connect(function()
+		gui:Destroy()
+	end)
+	-- walking away closes it
+	task.spawn(function()
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local from = root and root.Position
+		while gui.Parent and root and from do
+			task.wait(0.3)
+			if (root.Position - from).Magnitude > 14 then
+				gui:Destroy()
+			end
+		end
+	end)
+end
+
 function CreditsController.Init()
 	Net.event("Credits").OnClientEvent:Connect(roll)
+	ProximityPromptService.PromptTriggered:Connect(function(prompt: ProximityPrompt)
+		if prompt.Name == "SupportPrompt" then
+			openBoard()
+		elseif prompt.Name == "FavoritePrompt" and not promptFavorite() then
+			openBoard() -- Studio: no place id, the panel says so on its favorite button
+		end
+	end)
 end
 
 return CreditsController

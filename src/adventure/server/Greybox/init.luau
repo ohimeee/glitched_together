@@ -3704,6 +3704,35 @@ local function buildEpilogue(world: Model)
 		end
 	end
 
+	-- beside the exit, a village notice board (user, Oct 12): favorite the game, support the next one. Both prompts are
+	-- handled on the client (CreditsController: the same tip-jar panel as the credits, plus Roblox's favorite prompt).
+	-- Nothing in game is given for either (Roblox rules: no rewards for favorites or likes).
+	local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09), 13, hill.Y, 197) -- east of the exit: a tree hides the west side
+	board.CanCollide = true
+	local note = sign(
+		world,
+		"ENJOYED OUR GAME?\n★ Favorite it & leave a Like\nSupport our next game",
+		board.CFrame * CFrame.new(0, 0.27, -0.12),
+		Vector3.new(4.6, 3.2, 0.05)
+	)
+	note.Transparency = 1
+	for _, p in
+		{
+			{ "SupportPrompt", "Support", "Next game", Enum.KeyCode.E },
+			{ "FavoritePrompt", "Favorite", "Glitched Together", Enum.KeyCode.F },
+		}
+	do
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = p[1]
+		prompt.ActionText = p[2]
+		prompt.ObjectText = p[3]
+		prompt.KeyboardKeyCode = p[4]
+		prompt.HoldDuration = 0
+		prompt.RequiresLineOfSight = false
+		prompt.MaxActivationDistance = 10
+		prompt.Parent = board
+	end
+
 	-- the three worlds, whole, under the stars, are the Blender panorama (Worlds.luau Epilogue Look.Skybox)
 end
 

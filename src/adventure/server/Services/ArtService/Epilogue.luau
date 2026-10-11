@@ -26,6 +26,33 @@ local Skins: { [string]: MeshAssets.Skin } = {
 	EP_Flowers = mesh("rbxassetid://108570217073539", "rbxassetid://91004377568198", v(2.64, 1.6, 2.6)),
 	EP_Fence = mesh("rbxassetid://84201958927401", "rbxassetid://102454777643168", v(4.48, 2.84, 0.8)),
 	EP_Lantern = mesh("rbxassetid://112755272091930", "rbxassetid://133305895822929", v(0.96, 3.02, 1.6)),
+	-- the support notice board beside the BACK TO LOBBY exit (tools/support_board/kit.py; text + prompts: Greybox)
+	EP_SupportBoard = {
+		Design = v(6.9, 8.06, 2.09),
+		Meshes = {
+			Wood = {
+				Id = "rbxassetid://108071343449392",
+				Offset = v(0, 0, 0),
+				Size = v(6.9, 8.06, 2.092),
+				Material = Enum.Material.Wood,
+				Color = Color3.fromRGB(120, 82, 52),
+			},
+			Planks = {
+				Id = "rbxassetid://116655398009300",
+				Offset = v(0, 0.27, 0.05),
+				Size = v(4.86, 3.45, 0.16),
+				Material = Enum.Material.WoodPlanks,
+				Color = Color3.fromRGB(84, 56, 36),
+			},
+			Iron = {
+				Id = "rbxassetid://77561140592102",
+				Offset = v(0, -0.83, -0.015),
+				Size = v(6.02, 6.4, 0.59),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(50, 50, 55),
+			},
+		},
+	},
 	EP_Cliff = mesh("rbxassetid://73624780658541", "rbxassetid://123147321610898", v(6, 6.63, 6)),
 }
 
