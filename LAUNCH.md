@@ -30,6 +30,14 @@ Status: **PLAN** (decided Oct 12, 2026, 26th session). Nothing here is built yet
 
 **Title logo:** "GLITCHED TOGETHER" wordmark with a glitch split, needed for the thumbnails, the loading screens and the trailer.
 
+## 1b. Opening splash (user, Oct 12: "launching the game animation, same as the rdr2... my company")
+
+Plays in the **lobby place** on the first join of a session; any key / click / tap skips; ~5–6 s total.
+1. **Studio logo (~2.5 s):** the studio name builds itself from small pixels on black, holds, then a quick magenta glitch flicker (ties the studio to the game's theme). Soft sound, no harsh sting (user rejected stings).
+2. **Title (~3 s):** the GLITCHED TOGETHER wordmark splits open along a glitch tear (Kai orange one side, Miko teal the other), then fades into the lobby.
+- Studio name: **TBD (user)**. Needs a studio logo (Blender / wordmark) alongside the title logo.
+- Between worlds the painted loading cards are used instead (CLAUDE.md plan).
+
 ## 2. Maturity & compliance questionnaire (draft answers, check in Creator Hub)
 
 - Violence: fantasy / cartoon only (sword, fireballs, shield bash against skeletons, slimes and bosses), no blood, no gore, no realistic weapons. Characters "go down" and respawn by button mashing.
@@ -74,7 +82,7 @@ Both players get every badge (award to `DuoService.Players()`). Badge ids go in 
 ## 5. Order of work
 
 1. Mobile + console passes (they change how the game plays; test with real devices).
-2. Title logo, then Blender paintings (loading screens, see CLAUDE.md), reused for thumbnails and the icon.
+2. Studio logo + title logo (opening splash), then Blender paintings (loading screens, see CLAUDE.md), reused for thumbnails and the icon.
 3. Badges code + icons.
 4. Publish both places, fill `Places.luau`, `Products.luau`, `Badges.luau`; fill the questionnaire; set the experience page.
 5. Live tests: lobby → adventure teleport, saved runs per partner, badges, tip jar purchase, favorite prompt, BACK TO LOBBY.
