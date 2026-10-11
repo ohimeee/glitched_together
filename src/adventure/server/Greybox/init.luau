@@ -3662,7 +3662,7 @@ local function buildEpilogue(world: Model)
 	do
 		local a = (i - 1) / 6 * math.pi * 2 + math.pi / 6
 		local size = piece[1] :: Vector3
-		local at = hill + Vector3.new(math.sin(a), 0, math.cos(a)) * 16 + Vector3.new(0, size.Y / 2, 0)
+		local at = hill + Vector3.new(math.sin(a), 0, math.cos(a)) * 11 + Vector3.new(0, size.Y / 2, 0) -- tight round SAVE: at 16 one hid the support board (user)
 		block(world, size, CFrame.lookAt(at, hill + Vector3.new(0, size.Y / 2, 0)), {
 			name = "FinishedPiece",
 			color = GOLD,
@@ -3704,9 +3704,9 @@ local function buildEpilogue(world: Model)
 		end
 	end
 
-	-- two village notice boards in front of the way home (user, Oct 12: "favorite and support board should be
-	-- seperate", "make the position noticable and make it a bit bigger"): x1.6 size, either side of the approach,
-	-- turned toward the top of the path, clear of the portal arch that rises round the exit after YES (~30 wide, z 193+).
+	-- two village notice boards on the hilltop (user, Oct 12: "favorite and support board should be
+	-- seperate", "make the position noticable and make it a bit bigger"): x1.6 size, on the hilltop flanks beside the
+	-- gold ring (raycast-picked: further back the gold pieces hid them), turned toward the top of the path.
 	-- Their prompts are handled on the client (CreditsController): SUPPORT opens the tip-jar panel, FAVORITE Roblox's
 	-- favorite prompt. Nothing in game is given for either (Roblox rules: no rewards for favorites, likes or tips).
 	local BOARD = 1.6
@@ -3715,15 +3715,15 @@ local function buildEpilogue(world: Model)
 			{
 				"FavoriteBoard",
 				-19.5,
-				-29,
+				-45,
 				"ENJOYED OUR GAME?\n★ Favorite it\nand leave a Like!",
 				"FavoritePrompt",
 				"Favorite",
 			},
-			{ "SupportBoard", 19.5, 29, "SUPPORT US\nHelp us make\nour next game", "SupportPrompt", "Support" },
+			{ "SupportBoard", 19.5, 45, "SUPPORT US\nHelp us make\nour next game", "SupportPrompt", "Support" },
 		}
 	do
-		local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * BOARD, b[2], hill.Y, 176, b[3])
+		local board = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * BOARD, b[2], hill.Y, 156, b[3])
 		board.CanCollide = true
 		board:SetAttribute("Board", b[1])
 		local note = sign(
