@@ -173,6 +173,19 @@ Net.event("ContinueYes").OnServerEvent:Connect(function()
 		part:SetAttribute("AfterYes", nil)
 		if CollectionService:HasTag(part, "WorldExit") then
 			unlockExit(part)
+			-- (user, Oct 12: "press e to teleport"): each player can also go home on their own from the portal
+			local prompt = Instance.new("ProximityPrompt")
+			prompt.Name = "LobbyPrompt"
+			prompt.ActionText = "Teleport"
+			prompt.ObjectText = "Back to Lobby"
+			prompt.KeyboardKeyCode = Enum.KeyCode.E
+			prompt.HoldDuration = 0.5
+			prompt.RequiresLineOfSight = false
+			prompt.MaxActivationDistance = 14
+			prompt.Parent = part
+			prompt.Triggered:Connect(function(p: Player)
+				WorldService.ToLobby({ p })
+			end)
 		else
 			part.Transparency = 0
 			for _, gui in part:GetChildren() do

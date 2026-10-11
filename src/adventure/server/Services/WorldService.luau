@@ -8,6 +8,7 @@ local TeleportService = game:GetService("TeleportService")
 local Kits = require(ReplicatedStorage.Shared.Config.Kits)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Places = require(ReplicatedStorage.Shared.Config.Places)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local DuoService = require(script.Parent.DuoService)
@@ -157,6 +158,26 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 	end
 end
 
+-- The game is finished: mark the save complete and send these players home to the lobby (the Epilogue's exit, both
+-- inside it, or one player pressing its [E] TELEPORT). Studio / no Lobby id: only a warning and a hint line.
+function WorldService.ToLobby(players: { Player })
+	SaveService.Set({ complete = true })
+	SaveService.Flush()
+	if Places.Lobby == 0 or RunService:IsStudio() then
+		warn("[WorldService] Would return to Lobby (skipped: Studio or no Lobby id).")
+		for _, p in players do
+			Net.event("Hint"):FireClient(p, "Back to the lobby: works once the game is published.")
+		end
+		return
+	end
+	local ok, err = pcall(function()
+		TeleportService:TeleportAsync(Places.Lobby, players)
+	end)
+	if not ok then
+		warn("[WorldService] Lobby teleport failed:", err)
+	end
+end
+
 -- Both players reached the exit: unlock and load the next world.
 function WorldService.Advance()
 	if advancing then
@@ -167,18 +188,7 @@ function WorldService.Advance()
 	local nextWorld = Worlds.Order[index + 1]
 	if not nextWorld then
 		-- past the last world (the Epilogue's BACK TO LOBBY exit): the duo goes home together
-		SaveService.Set({ complete = true })
-		SaveService.Flush()
-		if Places.Lobby == 0 or RunService:IsStudio() then
-			warn("[WorldService] Duo at the last exit; would return to Lobby (skipped: Studio or no Lobby id).")
-		else
-			local ok, err = pcall(function()
-				TeleportService:TeleportAsync(Places.Lobby, DuoService.Players())
-			end)
-			if not ok then
-				warn("[WorldService] Lobby teleport failed:", err)
-			end
-		end
+		WorldService.ToLobby(DuoService.Players())
 		task.wait(3) -- don't fire again every 0.25 s while they still stand inside
 		advancing = false
 		return
