@@ -3,7 +3,9 @@
 -- turned by Yaw so the model faces the enemy's -Z (generations come out facing different ways).
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local MeshAssets = require(ReplicatedStorage.Shared.Util.MeshAssets)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local CombatFx = require(script.Parent.Parent.CombatFx)
@@ -1059,6 +1061,7 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 	for _, gate in world:GetDescendants() do
 		if gate:IsA("BasePart") and gate.Name:match("^Gate_") and gate.Material == Enum.Material.Neon then
 			apply(gate, "BarsSkin")
+			gate:SetAttribute("Portcullis", true) -- InteractableService: clank, grind down, dust, winch + chains
 		end
 	end
 	-- rows of grey-box bars (IronBars models): one bars mesh over the whole row
@@ -1081,6 +1084,19 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 						bar.Transparency = 1
 					end
 				end
+				-- Kai's way through (2P playtest Oct 11: a gate with the same bars was taken for these): a faint
+				-- Kai-orange rim and a "[SHIFT] BLINK" chip for Kai up close (KeyPromptController)
+				local rim = Instance.new("Highlight")
+				rim.FillColor = Palette.Glow.Kai
+				rim.FillTransparency = 0.88
+				rim.OutlineColor = Palette.Glow.Kai
+				rim.OutlineTransparency = 0.35
+				rim.DepthMode = Enum.HighlightDepthMode.Occluded
+				rim.Parent = holder
+				holder:SetAttribute("PromptKey", "Dash")
+				holder:SetAttribute("PromptText", "BLINK")
+				holder:SetAttribute("PromptRole", "Kai")
+				CollectionService:AddTag(holder, "KeyPrompt")
 			else
 				holder:Destroy()
 			end
@@ -1100,14 +1116,51 @@ local function Extras(world: Instance, apply: (BasePart, string) -> boolean)
 		end
 		local teal = crystal:GetAttribute("Needs") == "Reflected"
 		apply(crystal, if teal then "CrystalTeal" else "CrystalOrange")
+		local color = if teal then Palette.Miko else Palette.Kai
+		local glowColor = if teal then Palette.Glow.Miko else Palette.Glow.Kai
 		local light = Instance.new("PointLight")
-		light.Color = if teal then Palette.Miko else Palette.Kai
+		light.Color = color
 		light.Range = 14
 		light.Brightness = 3
 		light.Enabled = false
 		light.Parent = crystal
+		-- lit (2P playtest Oct 11: "make a light-up animation so players know it lit"): a flash and a burst of stars
+		-- and a ring in the crystal's color, a twinkling chime, then a slow glow pulse for as long as it stays lit
+		local glow = Instance.new("Highlight")
+		glow.FillColor = glowColor
+		glow.OutlineColor = glowColor
+		glow.DepthMode = Enum.HighlightDepthMode.Occluded
+		glow.Enabled = false
+		glow.Parent = crystal
+		local pulse: Tween? = nil
 		crystal:GetAttributeChangedSignal("Active"):Connect(function()
-			light.Enabled = crystal:GetAttribute("Active") == true
+			local on = crystal:GetAttribute("Active") == true
+			light.Enabled = on
+			glow.Enabled = on
+			if pulse then
+				pulse:Cancel()
+				pulse = nil
+			end
+			if not on then
+				return
+			end
+			local top = crystal.Position + Vector3.new(0, crystal.Size.Y * 0.3, 0)
+			CombatFx.Burst(top, {
+				{ "Stars", 18, 1.4, glowColor },
+				{ "Ring", 1, 9, color },
+			}, color, 22)
+			Audio.play("CrystalLit", crystal)
+			Audio.play("CrystalChime", crystal)
+			light.Brightness = 9
+			TweenService:Create(light, TweenInfo.new(0.6, Enum.EasingStyle.Quad), { Brightness = 3 }):Play()
+			glow.FillTransparency = 0.1
+			glow.OutlineTransparency = 0
+			pulse = TweenService:Create(
+				glow,
+				TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+				{ FillTransparency = 0.75, OutlineTransparency = 0.5 }
+			)
+			pulse:Play()
 		end)
 	end
 end

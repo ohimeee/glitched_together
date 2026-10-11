@@ -203,6 +203,9 @@ return {
 
 	-- World 2 (castle)
 	Castle = { Tether = 60, ShieldArc = 120, ShieldSpeedMult = 0.6, TauntRadius = 20, ReflectMult = 1.5 },
+	KeyPromptRange = 14, -- studs: kit key chips ("[SHIFT] BLINK") show this close (KeyPromptController)
+	-- castle portcullis gates opening/closing (InteractableService): a clank + shudder, then a slow grind
+	Portcullis = { Shudder = 0.25, ShudderLift = 0.35, Move = 1.2 },
 	-- breakable castle props (Services/Breakables): wooden/cloth room dressing bursts into shards when hit
 	Breakables = {
 		Squash = 0.06, -- s the prop squashes on the hit before it bursts

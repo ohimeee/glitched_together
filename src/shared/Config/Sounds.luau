@@ -84,6 +84,10 @@ local Sfx: { [string]: Def } = {
 	},
 	SackBreak = { Ids = { pse(9113827650), pse(9113835765) }, Volume = 0.5, Pitch = 0.85, PitchVar = 0.08 }, -- cloth rip
 	BookcaseBreak = { Id = pse(9113549604), Volume = 0.55, PitchVar = 0.05 }, -- books scatter on the floor
+	CrystalLit = { Ids = { pse(9120296573), pse(9120296584) }, Volume = 0.55, PitchVar = 0.04 }, -- bright twinkling shimmer
+	CrystalChime = { Id = pse(9114619050), Volume = 0.4, Pitch = 1.3 }, -- glass tink under the shimmer
+	PortcullisOpen = { Id = pse(9126234868), Volume = 0.5, Pitch = 1.1 }, -- hand-cranked winch ratchet
+	PortcullisRattle = { Ids = { pse(9113763589), pse(9113763639) }, Volume = 0.45 }, -- chain rattle as it starts
 
 	-- Enemies
 	EnemyHit = { Ids = { pse(9117972730), pse(9117972870), pse(9117973315) }, Volume = 0.45, PitchVar = 0.08 },

@@ -14,6 +14,7 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local DuoService = require(script.Parent.DuoService)
+local CombatFx = require(script.Parent.CombatFx)
 
 local InteractableService = {}
 
@@ -97,8 +98,16 @@ local function setGateOpen(gate: Instance, open: boolean)
 	end
 	gate:SetAttribute("Open", open)
 	local parts = partsOf(gate)
+	-- castle portcullis (ArtService marks it): a clank and a shudder, then it grinds down into the floor with the
+	-- winch and chains, dust puffing at its foot (2P playtest Oct 11: "door animation + sound")
+	local portcullis = gate:GetAttribute("Portcullis") == true
 	if parts[1] then
-		Audio.play("GateMove", parts[1])
+		if portcullis then
+			Audio.play("PortcullisRattle", parts[1])
+			Audio.play("PortcullisOpen", parts[1])
+		else
+			Audio.play("GateMove", parts[1])
+		end
 	end
 	for _, part in parts do
 		if part:GetAttribute("ClosedCFrame") == nil then
@@ -115,9 +124,25 @@ local function setGateOpen(gate: Instance, open: boolean)
 		local info = if openTime
 			then TweenInfo.new(openTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 			else TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-		TweenService:Create(part, info, {
-			CFrame = target,
-		}):Play()
+		if portcullis then
+			local P = Tuning.Portcullis
+			info = TweenInfo.new(P.Move, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+			local shudder = TweenService:Create(
+				part,
+				TweenInfo.new(P.Shudder / 4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 1, true),
+				{ CFrame = part.CFrame * CFrame.new(0, P.ShudderLift, 0) }
+			)
+			shudder:Play()
+			local foot = (closed * CFrame.new(0, -part.Size.Y / 2, 0)).Position
+			CombatFx.Burst(foot, { { "Smoke", 10, 2.2, Color3.fromRGB(150, 136, 124) } })
+			task.delay(P.Shudder, function()
+				TweenService:Create(part, info, { CFrame = target }):Play()
+			end)
+		else
+			TweenService:Create(part, info, {
+				CFrame = target,
+			}):Play()
+		end
 		-- `HideClosed`: a bridge waiting far below is invisible until it rises, so it never reads as a platform down
 		-- there (Memory Lane); it fades out again as it sinks
 		if gate:GetAttribute("HideClosed") then

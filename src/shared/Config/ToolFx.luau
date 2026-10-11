@@ -16,7 +16,7 @@ export type HeldItem = {
 	GlowWhile: string?, -- a player attribute: while it's set the item's rim glows the owner's color (Miko's shield)
 	GlowGrip: CFrame?, -- where it moves while GlowWhile is set (Miko's shield, raised square in front of her)
 	Trail: { Vector3 }?, -- two points in the item's space (blade base, tip): a swoosh follows the blade while...
-	TrailWhile: string?, -- ...this player attribute is set (Miko's sword: `Swinging`, set by the server per swing)
+	TrailWhile: string?, -- ...this player attribute is set (Miko's sword: `SwordSwing`, set by the server per swing)
 }
 
 local Held: { [string]: { HeldItem } } = {
@@ -68,7 +68,7 @@ local Held: { [string]: { HeldItem } } = {
 			Hand = "RightHand",
 			Grip = CFrame.new(0, -0.68, -1.32) * CFrame.Angles(rad(-110), 0, 0),
 			Trail = { v(0, -0.5, 0), v(0, 1.9, 0) }, -- just above the crossguard to the tip
-			TrailWhile = "Swinging",
+			TrailWhile = "SwordSwing",
 		},
 		{
 			Id = "rbxassetid://90349811404835",

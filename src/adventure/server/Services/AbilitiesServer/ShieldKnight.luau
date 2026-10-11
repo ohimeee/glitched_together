@@ -41,10 +41,10 @@ local function sword(p: Player, root: BasePart, aim: Vector3)
 	local cf = CFrame.lookAt(root.Position, root.Position + dir) * CFrame.new(0, 0, -reach / 2 - 0.5)
 	CombatService.MeleeBox(cf, Vector3.new(C.SwordCombo.Width, 5, reach), T.Sword.Damage[c.step], p, c.step)
 	-- the blade's swoosh trail (ArtService, ToolFx TrailWhile) for this swing
-	p:SetAttribute("Swinging", true)
+	p:SetAttribute("SwordSwing", true)
 	task.delay(C.SwordCombo.Swing * 0.85, function()
 		if c.last == now then
-			p:SetAttribute("Swinging", nil)
+			p:SetAttribute("SwordSwing", nil)
 		end
 	end)
 end
