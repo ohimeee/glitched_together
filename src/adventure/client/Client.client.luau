@@ -11,6 +11,7 @@ local order = {
 	"CameraController",
 	"KitController",
 	"HUDController",
+	"ReviveController",
 	"PartnerController",
 	"PingController",
 	"PeekController",

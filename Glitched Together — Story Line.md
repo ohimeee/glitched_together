@@ -95,7 +95,7 @@ Both players always have the same base moves; only the world abilities differ.
 
 **Co-op systems**
 
-- **Revive:** when a player dies, they turn into a small ghost. The partner holds Interact near them for 2 seconds to revive. If both die, restart at the last checkpoint.
+- **Respawn:** when a player dies, they turn into a small ghost and come back after a few seconds; mashing a button brings them back faster (It Takes Two). If both die, restart at the last checkpoint.
 - **Checkpoints:** shared. Reaching one saves progress for both players.
 - **Two-player gates:** doors and elevators only open when both players stand on their plates.
 - **Partner marker:** an outline shows your partner through walls so you never lose each other.
@@ -115,7 +115,7 @@ A 5 to 10 minute tutorial that teaches the base moves and makes clear the two re
 6. **First two-player gate:** a door that needs both on plates. Neither moves first. Pip: "This is going to be a long game."
 7. **Cutscene:** The Glitch swallows the title screen behind them. They escape through the "New Game" door into World 1.
 
-**Gameplay taught:** jump, double jump, dash, ground pound, interact, revive (a scripted fall where the partner must revive), two-player plates, checkpoints.
+**Gameplay taught:** jump, double jump, dash, ground pound, interact, respawn (mash to come back faster), two-player plates, checkpoints.
 
 **Tone goal:** funny on the surface, obviously tense underneath.
 

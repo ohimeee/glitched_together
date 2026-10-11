@@ -685,8 +685,7 @@ Put every `CodeLayer`-tagged part in the `CodeLayer` group. Put each character's
 Don't let Roblox's normal death happen; run our own state so we can do Downed and revive.
 
 - `HealthService` keeps `Hearts` (or `HP` in the castle) as player attributes. Hazards call `HealthService.Damage(player, amount)`; nothing sets `Humanoid.Health` to 0.
-- At 0 → set `Downed = true`: character becomes a ghost (transparent, slow, tools blocked through `BlockedBy`). Start the auto-respawn timer (5 s, 8 s in boss fights); in boss fights each Jump press from the Downed player shortens it.
-- **Revive:** partner holds Interact within 6 studs for 1.5 s (use a `ProximityPrompt` on the ghost with `HoldDuration = 1.5`, only enabled for the partner).
+- At 0 → set `Downed = true`: character becomes a ghost (transparent, slow, tools blocked through `BlockedBy`). Start the auto-respawn timer (5 s, 8 s in boss fights; attributes `RespawnAt` / `RespawnTotal`); each mash press (`RespawnMash` remote, `MashCount` attribute) shortens it, in every world. No partner revive (It Takes Two). Client: `ReviveController` draws the radial meter (own: mid-screen; partner: BillboardGui over the ghost).
 - **Both Downed:** fade out, move both to the last checkpoint, restore health.
 - **Kill zones:** touching a `KillZone` (checked on the server) moves that player back to their **last safe ground position** after 1.5 s. The server records a safe position every 0.5 s while `Humanoid.FloorMaterial ~= Enum.Material.Air` and the player isn't on a moving object.
 - **Checkpoints:** when either player touches a `Checkpoint` with a higher `Order` than the current one, it becomes the duo's checkpoint and `SaveService` saves.

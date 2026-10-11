@@ -4,6 +4,7 @@
 -- TopDown (castle, centered between both players, zooms out as they separate). Peek and cutscenes override it.
 -- Camera zones: a part tagged `CameraZone` (attributes Mode, e.g. "SideOn", and Axis = the side the camera sits on)
 -- switches the mode while your character is inside it, then hands back to the world's mode.
+-- Shake: big hits (ultimates) rattle the view on top of any mode; the server sends CameraShake(pos, strength, time).
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,6 +12,7 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Input = require(script.Parent.Parent.Input)
 local MovementController = require(script.Parent.MovementController)
 
@@ -35,6 +37,9 @@ camParams.RespectCanCollide = true
 local mode = "Follow"
 local override: (() -> CFrame?)? = nil
 local bound = false
+-- shake: the offset applied last frame is taken off before the modes run (they lerp from camera.CFrame)
+local shakeUntil, shakeTime, shakeStrength = 0, 1, 0
+local shakeApplied = CFrame.identity
 
 local function rootOf(p: Player?): BasePart?
 	local c = p and p.Character
@@ -128,7 +133,7 @@ local function wantsLock(m: string): boolean
 		and UserInputService.MouseEnabled
 end
 
-local function step(dt: number)
+local function modeStep(dt: number)
 	if override then
 		local target = override()
 		if target then
@@ -203,6 +208,30 @@ local function step(dt: number)
 	end
 end
 
+local function step(dt: number)
+	camera.CFrame *= shakeApplied:Inverse()
+	modeStep(dt)
+	local left = shakeUntil - os.clock()
+	if left > 0 then
+		local k = shakeStrength * (left / shakeTime) ^ 2 -- strong at once, settles quickly
+		local t = os.clock() * C.Shake.Rate
+		shakeApplied = CFrame.new((math.noise(t, 0.3) * 2) * k, (math.noise(t, 7.1) * 2) * k, 0)
+			* CFrame.Angles(0, 0, math.rad(math.noise(t, 13.7) * C.Shake.Roll * k))
+		camera.CFrame *= shakeApplied
+	else
+		shakeApplied = CFrame.identity
+	end
+end
+
+-- Rattle the view: `strength` studs of jolt for `time` s (a stronger shake overrides a weaker one still running).
+function CameraController.Shake(strength: number, time: number)
+	local left = shakeUntil - os.clock()
+	local current = if left > 0 then shakeStrength * (left / shakeTime) ^ 2 else 0
+	if strength >= current then
+		shakeStrength, shakeTime, shakeUntil = strength, time, os.clock() + time
+	end
+end
+
 function applyMode()
 	mode = (player:GetAttribute("CameraMode") or "Follow") :: string
 	if mode == "Follow" then
@@ -245,6 +274,15 @@ function CameraController.Init()
 	end)
 	player:GetAttributeChangedSignal("CameraMode"):Connect(applyMode)
 	applyMode()
+	-- a shake at a point fades with distance: full inside `near` studs, gone at `far`
+	Net.event("CameraShake").OnClientEvent:Connect(function(pos: Vector3, strength: number, time: number)
+		local root = rootOf(player)
+		local d = if root then (root.Position - pos).Magnitude else 0
+		local fall = 1 - math.clamp((d - C.Shake.Near) / (C.Shake.Far - C.Shake.Near), 0, 1)
+		if fall > 0 then
+			CameraController.Shake(strength * fall, time)
+		end
+	end)
 	if not bound then
 		bound = true
 		RunService:BindToRenderStep("GlitchedCamera", Enum.RenderPriority.Camera.Value + 1, step)

@@ -1,12 +1,14 @@
--- Hearts / HP, Downed ghosts, partner revive, kill zones and safe-ground respawn (implementation.md §9).
+-- Hearts / HP, Downed ghosts, mash respawn, kill zones and safe-ground respawn (implementation.md §9).
 -- Roblox's normal death never happens: nothing sets Humanoid.Health to 0.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local DuoService = require(script.Parent.DuoService)
 local CheckpointService = require(script.Parent.CheckpointService)
 
@@ -20,6 +22,7 @@ type State = {
 	safe: CFrame?,
 	history: { { t: number, cf: CFrame } }, -- recent safe spots, newest last
 	downAt: number,
+	lastMash: number,
 }
 
 local states: { [Player]: State } = {}
@@ -36,7 +39,16 @@ local mashEvent = Net.event("RespawnMash")
 local function state(p: Player): State
 	local s = states[p]
 	if not s then
-		s = { lastHit = 0, invulnUntil = 0, respawnLeft = 0, falling = false, safe = nil, history = {}, downAt = 0 }
+		s = {
+			lastHit = 0,
+			invulnUntil = 0,
+			respawnLeft = 0,
+			falling = false,
+			safe = nil,
+			history = {},
+			downAt = 0,
+			lastMash = 0,
+		}
 		states[p] = s
 	end
 	return s
@@ -83,28 +95,30 @@ local function setGhost(p: Player, ghost: boolean)
 	if humanoid then
 		humanoid.WalkSpeed = if ghost then Tuning.GhostSpeed else Tuning.WalkSpeed
 	end
+end
 
+-- The pop when a ghost comes back: a ring of sparks in the player's own color.
+local function revivePop(p: Player)
 	local root = rootOf(p)
-	local prompt = root and root:FindFirstChild("RevivePrompt") :: ProximityPrompt?
-	if ghost and root and not prompt then
-		local newPrompt = Instance.new("ProximityPrompt")
-		newPrompt.Name = "RevivePrompt"
-		newPrompt.ActionText = "Revive"
-		newPrompt.ObjectText = p.DisplayName
-		newPrompt.HoldDuration = Tuning.ReviveHold
-		newPrompt.MaxActivationDistance = Tuning.ReviveRange
-		newPrompt.RequiresLineOfSight = false
-		newPrompt.KeyboardKeyCode = Enum.KeyCode.E
-		newPrompt.GamepadKeyCode = Enum.KeyCode.ButtonX
-		newPrompt.Parent = root -- the Downed player's own client hides it (HUDController)
-		newPrompt.Triggered:Connect(function(by: Player)
-			if by ~= p and DuoService.PartnerOf(by) == p and not by:GetAttribute("Downed") then
-				HealthService.Revive(p, true)
-			end
-		end)
-	elseif not ghost and prompt then
-		prompt:Destroy()
+	if not root then
+		return
 	end
+	local info = (Roles :: any)[p:GetAttribute("Role") or ""]
+	local color = if info then info.Color else Color3.new(1, 1, 1)
+	local sparks = Instance.new("ParticleEmitter")
+	sparks.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	sparks.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
+	sparks.LightEmission = 0.8
+	sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.9), NumberSequenceKeypoint.new(1, 0) })
+	sparks.Transparency = NumberSequence.new(0, 1)
+	sparks.Lifetime = NumberRange.new(0.4, 0.7)
+	sparks.Speed = NumberRange.new(14, 22)
+	sparks.SpreadAngle = Vector2.new(180, 180)
+	sparks.Drag = 6
+	sparks.Enabled = false
+	sparks.Parent = root
+	sparks:Emit(Tuning.ReviveMeter.PopSparks)
+	Debris:AddItem(sparks, 1)
 end
 
 local function place(p: Player, cf: CFrame)
@@ -135,33 +149,33 @@ function HealthService.Restore(p: Player, amount: number)
 	p:SetAttribute("HealthKind", if useHP then "HP" else "Hearts")
 end
 
-function HealthService.Revive(p: Player, onTheSpot: boolean)
+-- Back from Downed (the respawn timer ran out): on your own path, where you stood a moment before you went down.
+function HealthService.Revive(p: Player)
 	if not p:GetAttribute("Downed") then
 		return
 	end
 	p:SetAttribute("Downed", nil)
 	p:SetAttribute("RespawnAt", nil)
+	p:SetAttribute("RespawnTotal", nil)
 	setGhost(p, false)
 	HealthService.Restore(p, if useHP then Tuning.ReviveHP else 1)
-	Audio.play("Revive", rootOf(p))
 	state(p).invulnUntil = os.clock() + Tuning.HitInvuln * 2
-	if not onTheSpot then
-		-- Auto-respawn on your own path, where you stood a moment before you went down (split sections keep
-		-- each player's progress; playtest Oct 1: respawning next to the partner skipped Kai's trial), else at
-		-- the checkpoint.
-		local s = state(p)
-		local before = s.downAt - Tuning.RespawnBackTime
-		local back: CFrame? = nil
-		for i = #s.history, 1, -1 do
-			if s.history[i].t <= before then
-				back = s.history[i].cf
-				break
-			end
+	-- Split sections keep each player's progress (playtest Oct 1: respawning next to the partner skipped Kai's
+	-- trial); no safe spot yet = the checkpoint.
+	local s = state(p)
+	local before = s.downAt - Tuning.RespawnBackTime
+	local back: CFrame? = nil
+	for i = #s.history, 1, -1 do
+		if s.history[i].t <= before then
+			back = s.history[i].cf
+			break
 		end
-		back = back or (s.history[1] and s.history[1].cf)
-		place(p, back or CheckpointService.SpawnCFrame(p))
-		state(p).invulnUntil = os.clock() + Tuning.SpawnInvuln
 	end
+	back = back or (s.history[1] and s.history[1].cf)
+	place(p, back or CheckpointService.SpawnCFrame(p))
+	s.invulnUntil = os.clock() + Tuning.SpawnInvuln
+	Audio.play("Revive", rootOf(p))
+	revivePop(p)
 end
 
 local function bothDown()
@@ -174,6 +188,7 @@ local function bothDown()
 	for _, p in DuoService.Players() do
 		p:SetAttribute("Downed", nil)
 		p:SetAttribute("RespawnAt", nil)
+		p:SetAttribute("RespawnTotal", nil)
 		setGhost(p, false)
 		HealthService.Restore(p, maxHealth(p))
 		states[p] = nil -- the old safe spots belong to the world that's about to be rebuilt
@@ -210,6 +225,7 @@ function HealthService.Down(p: Player)
 
 	local s = state(p)
 	s.respawnLeft = if workspace:GetAttribute("BossFight") then Tuning.DownedRespawnBoss else Tuning.DownedRespawn
+	p:SetAttribute("RespawnTotal", s.respawnLeft)
 	task.spawn(function()
 		while p.Parent and p:GetAttribute("Downed") and s.respawnLeft > 0 do
 			p:SetAttribute("RespawnAt", workspace:GetServerTimeNow() + s.respawnLeft)
@@ -217,7 +233,7 @@ function HealthService.Down(p: Player)
 			s.respawnLeft -= dt
 		end
 		if p.Parent and p:GetAttribute("Downed") and not gameOverRunning then
-			HealthService.Revive(p, false)
+			HealthService.Revive(p)
 		end
 	end)
 end
@@ -395,6 +411,7 @@ function HealthService.Init()
 			HealthService.Restore(p, maxHealth(p))
 			p:SetAttribute("Downed", nil)
 			p:SetAttribute("RespawnAt", nil)
+			p:SetAttribute("RespawnTotal", nil)
 		end)
 	end
 	for _, p in Players:GetPlayers() do
@@ -418,11 +435,16 @@ function HealthService.Init()
 		end
 	end)
 
-	-- Boss fights: each Jump press while Downed takes 0.15 s off the timer.
+	-- It Takes Two respawn, every world: each mash press while Downed takes MashStep off the timer
+	-- (capped per press so an autoclicker can't skip it). MashCount lets the partner's meter pulse with it.
 	mashEvent.OnServerEvent:Connect(function(p: Player)
 		local s = states[p]
-		if s and p:GetAttribute("Downed") and workspace:GetAttribute("BossFight") then
+		local now = os.clock()
+		if s and p:GetAttribute("Downed") and now - s.lastMash >= Tuning.ReviveMeter.MashMinGap then
+			s.lastMash = now
 			s.respawnLeft -= Tuning.MashStep
+			p:SetAttribute("RespawnAt", workspace:GetServerTimeNow() + math.max(0, s.respawnLeft))
+			p:SetAttribute("MashCount", ((p:GetAttribute("MashCount") or 0) :: number) + 1)
 		end
 	end)
 

@@ -18,7 +18,6 @@ local MoveAnim = require(script.Parent.MoveAnimController)
 
 local player = Players.LocalPlayer
 local groundPoundEvent = Net.event("GroundPound")
-local mashEvent = Net.event("RespawnMash")
 
 local MovementController = {}
 
@@ -458,10 +457,7 @@ local function onCharacter(character: Model)
 			return
 		end
 		if player:GetAttribute("Downed") then
-			if workspace:GetAttribute("BossFight") then
-				mashEvent:FireServer()
-			end
-			return
+			return -- mashing to respawn: ReviveController
 		end
 		if player:GetAttribute("NoJump") then
 			return

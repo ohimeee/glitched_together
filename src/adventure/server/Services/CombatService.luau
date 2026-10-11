@@ -37,6 +37,7 @@ local CombatFx = require(script.Parent.CombatFx)
 local MoverService = require(script.Parent.MoverService)
 local Breakables = require(script.Parent.Breakables)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Net = require(ReplicatedStorage.Shared.Net)
 
 local C = Tuning.Combat
 local ENEMIES = Tuning.Enemies :: any
@@ -1001,48 +1002,121 @@ function CombatService.Radial(pos: Vector3, radius: number, damage: number, owne
 	return hits
 end
 
+local shakeEvent = Net.event("CameraShake")
+
+-- Every client near `pos` rattles its camera (CameraController fades it with distance).
+local function shake(pos: Vector3, strength: number, time: number)
+	shakeEvent:FireAllClients(pos, strength, time)
+end
+
+-- Burning rock chunks thrown out of an impact (loose physics bits in the Debris group: they never block players).
+local function chunks(pos: Vector3, count: number, speed: number)
+	for i = 1, count do
+		local a = (i / count + math.random() * 0.1) * math.pi * 2
+		local chunk = Instance.new("Part")
+		chunk.Name = "FxChunk"
+		chunk.Size = Vector3.new(1, 0.8, 1.1) * (0.7 + math.random() * 0.7)
+		chunk.Material = Enum.Material.Basalt
+		chunk.Color = Color3.fromRGB(58, 48, 46)
+		chunk.CanQuery = false
+		chunk.CanTouch = false
+		chunk.CastShadow = false
+		chunk.CollisionGroup = "Debris"
+		chunk.CFrame = CFrame.new(pos + Vector3.new(math.cos(a), 1.5, math.sin(a)))
+			* CFrame.Angles(math.random() * 6, math.random() * 6, 0)
+		chunk.Parent = fx
+		chunk.AssemblyLinearVelocity =
+			Vector3.new(math.cos(a) * speed, speed * (0.9 + math.random() * 0.6), math.sin(a) * speed)
+		chunk.AssemblyAngularVelocity =
+			Vector3.new(math.random() * 10 - 5, math.random() * 10 - 5, math.random() * 10 - 5)
+		CombatFx.Emit(chunk, "Embers", 0.6, 14, FIRE)
+		TweenService:Create(chunk, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 1.4), {
+			Transparency = 1,
+		}):Play()
+		task.delay(2.1, chunk.Destroy, chunk)
+	end
+end
+
+-- Kai's ultimate: a burning boulder from high up. The target ring tightens while it falls, the camera rumbles, and the
+-- impact throws fire, chunks and a scorch across the blast.
 function CombatService.Meteor(pos: Vector3, owner: Player?)
 	local T = Tuning.FireMage.Meteor
 	local floorPos = pos + Vector3.new(0, 0.1, 0) -- pos is on the floor (FireMage aims at root height - 2.5)
-	local marker = CombatFx.AreaMarker(floorPos, T.Radius, FIRE) -- Kai's own attack area: orange, not danger red
+	local marker = CombatFx.AreaMarker(floorPos, T.Radius * 1.6, FIRE) -- Kai's own attack area: orange, not danger red
 	marker.Parent = fx
+	TweenService:Create(marker, TweenInfo.new(T.Cast * 0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(T.Radius * 2, 0.1, T.Radius * 2),
+	}):Play()
 	local rock = effect({
 		Name = "MeteorRock",
 		Shape = Enum.PartType.Ball,
-		Size = Vector3.one * 3,
-		CFrame = CFrame.new(pos + Vector3.new(6, 40, -6)),
-		Color = FIRE,
-		Transparency = 0.2,
+		Size = Vector3.one * T.RockSize,
+		CFrame = CFrame.new(pos + Vector3.new(10, T.Height, -10)),
+		Material = Enum.Material.Basalt,
+		Color = Color3.fromRGB(70, 44, 36),
 	})
-	CombatFx.Fire(rock, 3)
-	CombatFx.Emit(rock, "Smoke", 2.5, 25, Color3.fromRGB(90, 80, 100))
+	CombatFx.Fire(rock, T.RockSize * 0.75)
+	CombatFx.Emit(rock, "Smoke", T.RockSize * 0.7, 30, Color3.fromRGB(90, 80, 100))
 	Audio.play("MeteorFall", rock)
+	shake(pos, T.RumbleShake, T.Cast)
 	TweenService:Create(rock, TweenInfo.new(T.Cast, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		CFrame = CFrame.new(pos + Vector3.new(0, 1.5, 0)),
+		CFrame = CFrame.new(pos + Vector3.new(0, T.RockSize * 0.4, 0)) * CFrame.Angles(2.5, 0, 1.5),
 	}):Play()
 	task.delay(T.Cast, function()
 		marker:Destroy()
 		rock:Destroy()
 		Audio.play("MeteorImpact", pos)
+		Audio.play("PoundImpact", pos)
+		shake(pos, T.ImpactShake, T.ImpactShakeTime)
 		CombatFx.Burst(pos + Vector3.new(0, 1.5, 0), {
-			{ "Flame", 30, 4 },
-			{ "Stars", 30, 2.5, CombatFx.Gold },
-			{ "Smoke", 10, 4, Color3.new(1, 1, 1) },
-		}, FIRE, T.Radius * 3)
-		CombatFx.Burst(floorPos, { { "Ring", 1, T.Radius * 2.4, FIRE } })
+			{ "FireBurst", 6, T.RockSize * 0.6 },
+			{ "Flame", 40, 5 },
+			{ "Stars", 40, 3, CombatFx.Gold },
+			{ "Embers", 50, 2.5, FIRE },
+			{ "Smoke", 16, 5, Color3.new(1, 1, 1) },
+		}, FIRE, T.Radius * 4)
+		CombatFx.Burst(floorPos, { { "Ring", 1, T.Radius * 2.4, FIRE }, { "Ring", 1, T.Radius * 1.4, CombatFx.Gold } })
+		CombatFx.Scorch(pos, T.Radius * 0.8)
+		chunks(pos, T.Chunks, 22)
 		CombatService.Radial(pos, T.Radius, T.Damage, owner)
 	end)
 end
 
+-- Miko's ultimate: the Rally clip lifts her sword (stars gather on her) and drives it into the floor at Windup; then
+-- a shockwave ring rolls out to Radius, kicking up dust, rattling the camera.
 function CombatService.Rally(pos: Vector3, owner: Player?)
 	local T = Tuning.ShieldKnight.Rally
-	CombatFx.Burst(pos - Vector3.new(0, 2.4, 0), {
-		{ "Ring", 1, T.Radius * 2.4, Palette.Miko },
-		{ "Stars", 24, 2, Color3.new(1, 1, 1) },
-	}, Palette.Miko, T.Radius * 3)
+	CombatFx.Burst(pos + Vector3.new(0, 3, 0), { { "Stars", 16, 1.4, Palette.Miko } }, Palette.Miko, 12)
 	Audio.play("Rally", pos)
-	CombatService.Radial(pos, T.Radius, T.Damage, owner)
-	CombatService.Stun(pos, T.Radius, T.Stun)
+	task.delay(T.Windup, function()
+		local root = rootOf(owner)
+		local at = if root then root.Position else pos -- she may have moved during the windup
+		local floorAt = at - Vector3.new(0, 2.4, 0)
+		Audio.play("PoundImpact", at)
+		shake(at, T.Shake, T.ShakeTime)
+		for i, spec in { { 0.6, T.WaveTime }, { 0.25, T.WaveTime * 1.4 } } do
+			local wave = effect({
+				Name = "RallyWave",
+				Shape = Enum.PartType.Cylinder,
+				Size = Vector3.new(spec[1], 2, 2),
+				CFrame = CFrame.new(floorAt + Vector3.new(0, 0.3 * i, 0)) * CFrame.Angles(0, 0, math.pi / 2),
+				Color = Palette.Miko,
+				Transparency = 0.15,
+			})
+			TweenService:Create(wave, TweenInfo.new(spec[2], Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = Vector3.new(spec[1] * 0.4, T.Radius * 2, T.Radius * 2),
+				Transparency = 1,
+			}):Play()
+			task.delay(spec[2], wave.Destroy, wave)
+		end
+		CombatFx.Burst(floorAt, {
+			{ "Ring", 1, T.Radius * 2.4, Palette.Miko },
+			{ "Stars", 36, 2.2, Color3.new(1, 1, 1) },
+			{ "Smoke", 14, 3.5, Color3.fromRGB(200, 195, 185) },
+		}, Palette.Miko, T.Radius * 3)
+		CombatService.Radial(at, T.Radius, T.Damage, owner)
+		CombatService.Stun(at, T.Radius, T.Stun)
+	end)
 end
 
 -- Sword arc: a box in front of the attacker (`swing` = combo step, picks the slash look). Returns how many enemies

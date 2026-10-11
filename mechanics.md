@@ -81,7 +81,7 @@ ITT teaches sprint, ground pound, double jump, dash, wall cling and wall jump in
 
 ## 3. Health, death, respawn, revive
 
-ITT respawns a dead player quickly, and in boss fights the dead player can mash a button to come back faster. We keep that and add a partner revive.
+ITT respawns a dead player quickly and the dead player mashes a button to come back faster. We do exactly that (user, Oct 11: "exactly It Takes Two, just spam revive"); there is no partner revive.
 
 | Rule | Value |
 | --- | --- |
@@ -90,8 +90,7 @@ ITT respawns a dead player quickly, and in boss fights the dead player can mash 
 | Fall into a kill zone | Instant respawn at the last safe ground position after 1.5 s |
 | Reaching 0 health | Become **Downed** (small ghost, can move slowly, can't use tools) |
 | Auto-respawn from Downed | After 5 s (8 s in boss fights) on your own path: where you stood 1.5 s before going down (else the checkpoint). Not next to your partner: in split sections that skipped your part (playtest Oct 1) |
-| Mash to respawn (boss fights) | Each press of Jump removes 0.15 s from the timer |
-| Partner revive | Partner holds E near your ghost for 1.5 s → you revive on the spot with 1 heart / 30 HP |
+| Mash to respawn (every world) | Each press (SPACE / A / click / tap) removes 0.15 s from the timer; presses < 0.06 s apart don't count. A radial meter mid-screen fills with the key pulsing; the partner sees the same meter over your ghost. Back with 1 heart / 30 HP and a spark pop |
 | Both Downed at once | Short "GAME OVER?" glitch screen → both restart from the last checkpoint |
 | Checkpoints | Shared; touching one saves both players; spaced every 60–90 s of play |
 
@@ -246,10 +245,10 @@ ITT bosses are cooperation-first with multiple phases; some alternate which play
 | Phase | Boss does | Players do |
 | --- | --- | --- |
 | 1 | Static breath beam aimed at one player | Miko blocks the beam with the shield while Kai burns 4 glowing scales on its sides |
-| 2 | Flies, summons skeletons and archers, lands every 20 s | Miko charges minions into Flame Walls; Kai Meteors the dragon when it lands |
+| 2 | Flies, summons skeletons and archers, lands every 14 s | Miko charges minions into Flame Walls; Kai Meteors the dragon when it lands |
 | 3 | Splits the arena with a static wall with one small gap | Miko stands at the gap with shield raised; Kai fires into the shield so reflections pass through the gap and hit the dragon's heart |
 
-As built (Oct 10, 2026, `Bosses/HollowDragon.luau`, numbers in `Tuning.HollowDragon`): the dragon hovers over a hole the Glitch ate in the back of the throne hall (floor ends at z 1600). (1) breath windup line 1.4 s → beam 2.6 s tracking at 28°/s, 5 dmg / 0.35 s; a raised shield facing the mouth cuts it for everyone behind; the 4 scales (orbs on its legs, fireball height) open only while it breathes, 3 fireballs each. (2) flies a loop, summons Skeleton/StaticArcher (max 6, each fall +0.2 of Kai's Meteor), lands every 20 s (ring 2.2 s, 25 dmg, grounded 7 s); 2 Meteors. (3) wall at z 1575, 8-wide gap moving every 10 s, bombs every 3.5 s; it sinks 9 so the heart is at reflect height; plain fire is swallowed, 4 reflected hits. On defeat the floor knits a bridge over the hole to the hidden room (Memory 2).
+As built (Oct 10, 2026, `Bosses/HollowDragon.luau`, numbers in `Tuning.HollowDragon`): the dragon hovers over a hole the Glitch ate in the back of the throne hall (floor ends at z 1600). (1) breath windup line 1.4 s → beam 2.6 s tracking at 28°/s, 14 dmg / 0.35 s (a full breath kills Kai); a raised shield facing the mouth cuts it for everyone behind; the 4 scales (orbs on its legs, fireball height) open only while it breathes, 3 fireballs each. (2) flies a loop, summons Skeleton/StaticArcher (max 8, one every 4.5 s, each fall +0.125 of Kai's Meteor), flies an 11 s lap, lands every 14 s (ring 1.6 s, 55 dmg, grounded 7 s); 2 Meteors. (3) wall at z 1575, 8-wide gap moving every 6 s (wall 30 dmg), bombs every 2.2 s (warn 1.1 s, 35 dmg); it sinks 9 so the heart is at reflect height; plain fire is swallowed, 7 reflected hits. Retuned after the 2P playtest (Oct 11: "make it entertaining, not a speedrun"): every attack can kill. On defeat the floor knits a bridge over the hole to the hidden room (Memory 2).
 
 ### The Unfinished (final boss, World 3)
 Each phase swaps **everyone's tools and camera** to a previous world's kit, like the genre shift at the end of ITT's Moon Baboon fight.
@@ -277,7 +276,7 @@ No new tool appears in the final boss. Everything is something the players alrea
 | Ping marker | World + edge arrow | 4 s life, shows who pinged |
 | Partner Peek | Full screen while Tab is held | Your camera shows your partner's view, then snaps back |
 | Pip hint | Top-center speech bubble | Auto at 20 s and 45 s stuck |
-| Revive prompt | Over a Downed partner | Ring fills over 1.5 s |
+| Respawn meter | Mid-screen while Downed; over a Downed partner's ghost | Radial ring fills with the timer, faster as they mash |
 | XP bar / level-up picker | Bottom-center (castle only) | Game pauses input for both until each picks |
 
 ---

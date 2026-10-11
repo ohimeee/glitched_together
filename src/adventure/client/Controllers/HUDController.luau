@@ -1,4 +1,4 @@
--- HUD (mechanics.md §6): hearts/HP, tool card, crosshair, Pip hint bubble, Downed / GAME OVER? /
+-- HUD (mechanics.md §6): hearts/HP, tool card, crosshair, Pip hint bubble, GAME OVER? /
 -- partner-wait overlays, and on-screen buttons for mobile. Every panel is a themed sticker (UiTheme via UiSkin):
 -- it re-skins per world (FredokaOne menu → Arcade pixel → Fantasy storybook → Code grey), art-direction.md §11.
 local Players = game:GetService("Players")
@@ -318,20 +318,8 @@ local function buildHint()
 	end)
 end
 
--- Overlays: Downed, GAME OVER?, falling fade, partner waiting ---------------------------------
+-- Overlays: GAME OVER?, falling fade, partner waiting (the Downed respawn meter: ReviveController) -------------
 local function buildOverlays()
-	local downed = text({
-		Name = "Downed",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.7),
-		Size = UDim2.fromOffset(620, 64),
-		TextScaled = true,
-		Visible = false,
-		ZIndex = 9,
-	}, gui, "Title")
-	UiSkin.Panel(downed)
-	new("UIPadding", { PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12) }, downed)
-
 	local fade = new("Frame", {
 		Name = "Fade",
 		Size = UDim2.fromScale(1, 1),
@@ -367,16 +355,6 @@ local function buildOverlays()
 
 	RunService.RenderStepped:Connect(function()
 		local now = workspace:GetServerTimeNow()
-		if player:GetAttribute("Downed") then
-			downed.Visible = true
-			local at = player:GetAttribute("RespawnAt") :: number?
-			local left = if at then math.max(0, at - now) else 0
-			local mash = if workspace:GetAttribute("BossFight") then "  MASH JUMP!" else ""
-			downed.Text = `DOWNED · partner revives (E) · {string.format("%.1f", left)}s{mash}`
-		else
-			downed.Visible = false
-		end
-
 		local waitUntil = player:GetAttribute("PartnerWaitUntil") :: number?
 		if waitUntil then
 			waiting.Visible = true
@@ -404,22 +382,6 @@ local function buildOverlays()
 		task.wait(0.9)
 		gameOver.Visible = false
 	end)
-end
-
--- Your own revive prompt is only for your partner.
-local function hideOwnRevivePrompt()
-	local function watch(character: Model)
-		local root = character:WaitForChild("HumanoidRootPart")
-		root.ChildAdded:Connect(function(child)
-			if child:IsA("ProximityPrompt") and child.Name == "RevivePrompt" then
-				child.Enabled = false
-			end
-		end)
-	end
-	if player.Character then
-		task.spawn(watch, player.Character)
-	end
-	player.CharacterAdded:Connect(watch)
 end
 
 -- Mobile buttons ---------------------------------------------------------------------------
@@ -751,7 +713,6 @@ function HUDController.Init()
 	buildTools()
 	buildHint()
 	buildOverlays()
-	hideOwnRevivePrompt()
 	buildTouch()
 	buildCastle()
 	buildBoss()

@@ -55,6 +55,7 @@ return {
 
 	-- Follow camera (CameraController): mouse-look, cursor locked, crosshair = screen center
 	Camera = {
+		Shake = { Rate = 18, Roll = 1.2, Near = 25, Far = 110 }, -- noise Hz, degrees of roll per stud, falloff studs
 		MouseSensitivity = 0.0035, -- radians per pixel
 		StickSpeed = 3.2, -- radians per second at full stick
 		TouchSensitivity = 0.006,
@@ -111,11 +112,18 @@ return {
 	LeverSwingTime = 0.35,
 	SwitchGhost = 0.78, -- transparency of the switch-block set that isn't solid (still readable: where you'll land next)
 	RespawnBackTime = 1.5, -- auto-respawn where you stood this many seconds before going down (off the hazard)
-	DownedRespawn = 5,
+	DownedRespawn = 5, -- s until a Downed player respawns on their own (It Takes Two: mashing speeds it up)
 	DownedRespawnBoss = 8,
-	MashStep = 0.15,
-	ReviveHold = 1.5,
-	ReviveRange = 6,
+	MashStep = 0.15, -- s off the respawn timer per mash press (SPACE / A / click / tap), every world
+	ReviveMeter = {
+		MashMinGap = 0.06, -- s: presses closer than this don't count (autoclickers)
+		Segments = 24, -- radial meter pieces (ReviveController)
+		ScreenSize = 170, -- px: your own meter mid-screen
+		OverheadSize = 3.2, -- studs: the meter over a ghost, for the partner
+		PulseScale = 1.25, -- the key chip / overhead meter bump per mash
+		PopScale = 1.6, -- the meter bursts outward when you're back
+		PopSparks = 40,
+	},
 	GhostSpeed = 8,
 	CastleHP = { Kai = 100, Miko = 140 },
 	ReviveHP = 30,
@@ -234,7 +242,19 @@ return {
 		FlameWall = { Tick = 4, TickEvery = 0.5, Cooldown = 8, Length = 12, Life = 5 },
 		Ignite = { Cooldown = 1, Range = 30, Spread = 0.6, BurnTime = 1.3 }, -- Burnable wood: flames spread, then it falls
 		Blink = { Distance = 10, Cooldown = 3 },
-		Meteor = { Damage = 40, Charge = 300, Radius = 12, Cast = 1.2 },
+		Meteor = {
+			Damage = 40,
+			Charge = 300,
+			Radius = 12,
+			Cast = 1.2, -- s from cast to impact (the CastMeteor clip slams its palms down at 1.18)
+			-- look (user, 2P playtest Oct 11: "better animation and impact"): a big burning boulder from high up
+			RockSize = 6,
+			Height = 70, -- studs above the target it starts falling from
+			Chunks = 10, -- burning rock chunks thrown out on impact
+			RumbleShake = 0.25, -- studs of camera shake while it falls...
+			ImpactShake = 1.6, -- ...and on impact
+			ImpactShakeTime = 0.7,
+		},
 	},
 	-- castle Torch Run: braziers burn out, spike traps show only in their firelight
 	TorchRun = { BurnTime = 6, Reveal = 12, TrapDamage = 30 },
@@ -251,7 +271,16 @@ return {
 	ShieldKnight = {
 		Sword = { Damage = { 8, 8, 14 } },
 		Charge = { Damage = 12, Cooldown = 6, Distance = 16 },
-		Rally = { Damage = 15, Charge = 250, Radius = 14, Stun = 2 },
+		Rally = {
+			Damage = 15,
+			Charge = 250,
+			Radius = 14,
+			Stun = 2,
+			Windup = 0.5, -- s: the Rally clip raises the sword, then drives it down at 0.52; the wave goes out then
+			WaveTime = 0.45, -- s the shockwave ring takes to reach Radius
+			Shake = 1.1,
+			ShakeTime = 0.5,
+		},
 	},
 	XpLevels = { 100, 250 },
 	Combat = {
@@ -351,7 +380,7 @@ return {
 		LoopX = 22, -- flight path: a wide oval strafe over the hole, facing the hall (12 x 12 over the players spun it)
 		LoopZ = 7,
 		LoopCenterZ = 1598, -- the hole starts at z 1600 (further back ran off the top of the screen)
-		LapTime = 16, -- s per lap
+		LapTime = 11, -- s per lap (16 before the 2P playtest, Oct 11: "make it entertaining, not a speedrun")
 		FlyTurn = 0.35, -- rad it turns toward where it's going (never shows its back)
 		Sink = 9, -- phase 3: how far it sinks so the heart is at reflect height
 		Focus = Vector3.new(0, 0, 1612), -- ...and drawn toward the dragon by this much (TopDownFocus / Weight)
@@ -364,30 +393,30 @@ return {
 		BreathTurn = 28, -- deg/s the beam follows its target
 		BreathLength = 95,
 		BreathWidth = 5,
-		BreathDamage = 5, -- per tick (~35 for a whole breath standing still; solo test: 6 / 0.3 s killed in two)
+		BreathDamage = 14, -- per tick: a whole breath standing still (~7 ticks) kills Kai (100 HP); was 5 (2P playtest Oct 11: every attack must be able to kill)
 		BreathTick = 0.35,
 		ScaleHits = 3, -- fireballs per scale (only while open)
 		-- phase 2: flies, summons minions, lands every LandEvery s; Kai Meteors it on the ground
-		LandEvery = 20,
-		LandWarn = 2.2, -- s the landing ring shows
+		LandEvery = 14, -- was 20
+		LandWarn = 1.6, -- s the landing ring shows (was 2.2)
 		LandRadius = 12,
-		LandDamage = 25,
+		LandDamage = 55, -- was 25
 		Grounded = 7, -- s it stays down
 		MeteorHits = 2,
-		SummonEvery = 6,
-		MaxMinions = 6,
-		MinionCharge = 0.2, -- Kai's ultimate charge per minion that falls in phase 2 (5 = one Meteor)
+		SummonEvery = 4.5, -- was 6
+		MaxMinions = 8, -- was 6
+		MinionCharge = 0.125, -- Kai's ultimate charge per minion that falls in phase 2 (8 = one Meteor; was 0.2)
 		FlyHeight = 5, -- its claws this high; it's 58 tall already (higher filled the top-down camera)
 		FlyGhost = 0.2, -- skin transparency while airborne (0.55 hid its thin tail: the tip looked like a loose shard; it flies over the hole now, not the players)
 		-- phase 3: a static wall with one gap; only Miko's reflected light reaches the heart
-		HeartHits = 4,
+		HeartHits = 7, -- reflected shots to break the heart (was 4: the heart went too fast)
 		GapWidth = 8,
-		GapMove = 10, -- s between gap moves
-		WallDamage = 10,
-		BombEvery = 3.5, -- static bombs lobbed over the wall
-		BombWarn = 1.5,
+		GapMove = 6, -- s between gap moves (was 10)
+		WallDamage = 30, -- was 10
+		BombEvery = 2.2, -- static bombs lobbed over the wall (was 3.5)
+		BombWarn = 1.1, -- was 1.5
 		BombRadius = 6,
-		BombDamage = 15,
+		BombDamage = 35, -- was 15
 	},
 	-- The Unfinished (final boss, World 3; mechanics.md §5, blender_assets/briefs/Unfinished.md). The Core counts
 	-- hearts, so every hit is 1 heart.
