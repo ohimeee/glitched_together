@@ -204,6 +204,9 @@ return {
 	-- World 2 (castle)
 	Castle = { Tether = 60, ShieldArc = 120, ShieldSpeedMult = 0.6, TauntRadius = 20, ReflectMult = 1.5 },
 	KeyPromptRange = 14, -- studs: kit key chips ("[SHIFT] BLINK") show this close (KeyPromptController)
+	KeyPromptSize = Vector2.new(4.6, 1.2), -- studs: kit key chips
+	OverheadBar = Vector2.new(3.6, 0.5), -- studs: the HP bar over each player in the castle (HUDController)
+	RoleTag = Vector2.new(3, 0.8), -- studs: the partner's "KAI" / "MIKO" tag (PartnerController)
 	-- castle portcullis gates opening/closing (InteractableService): a clank + shudder, then a slow grind
 	Portcullis = { Shudder = 0.25, ShudderLift = 0.35, Move = 1.2 },
 	-- breakable castle props (Services/Breakables): wooden/cloth room dressing bursts into shards when hit

@@ -40,7 +40,7 @@ type Chip = { gui: BillboardGui, key: TextLabel, label: TextLabel, scale: UIScal
 local function make(): Chip
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "KeyPrompt"
-	gui.Size = UDim2.fromOffset(150, 40)
+	gui.Size = UDim2.fromScale(Tuning.KeyPromptSize.X, Tuning.KeyPromptSize.Y) -- studs (user: "too big" in pixels)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, 3.4, 0)
 	gui.AlwaysOnTop = true
 	gui.LightInfluence = 0
@@ -62,8 +62,8 @@ local function make(): Chip
 	scale.Parent = chip
 	local key = Instance.new("TextLabel")
 	key.AnchorPoint = Vector2.new(0, 0.5)
-	key.Position = UDim2.new(0, 5, 0.5, 0)
-	key.Size = UDim2.fromOffset(58, 30)
+	key.Position = UDim2.fromScale(0.04, 0.5)
+	key.Size = UDim2.fromScale(0.38, 0.76)
 	key.BackgroundColor3 = Palette.Neutral
 	key.TextColor3 = INK
 	key.Font = Enum.Font.GothamBlack
@@ -78,8 +78,8 @@ local function make(): Chip
 	pad.Parent = key
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0, 0.5)
-	label.Position = UDim2.new(0, 68, 0.5, 0)
-	label.Size = UDim2.new(1, -76, 0, 22)
+	label.Position = UDim2.fromScale(0.46, 0.5)
+	label.Size = UDim2.fromScale(0.5, 0.56)
 	label.BackgroundTransparency = 1
 	label.TextColor3 = Color3.fromRGB(236, 236, 228)
 	label.Font = Enum.Font.GothamBold

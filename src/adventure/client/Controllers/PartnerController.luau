@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -45,7 +46,8 @@ local function decorate(p: Player, character: Model)
 	if head and isPartner then
 		local tag = Instance.new("BillboardGui")
 		tag.Name = "RoleTag"
-		tag.Size = UDim2.fromOffset(140, 36)
+		-- studs, so it keeps its size next to the character, plus a few pixels so it still reads from far away
+		tag.Size = UDim2.new(Tuning.RoleTag.X, 30, Tuning.RoleTag.Y, 8)
 		tag.StudsOffset = Vector3.new(0, 2.6, 0)
 		tag.AlwaysOnTop = true
 		tag.LightInfluence = 0

@@ -633,7 +633,9 @@ local function buildOverheadBars()
 	local function barFor(p: Player)
 		local bill = new("BillboardGui", {
 			Name = "HPOver",
-			Size = UDim2.fromOffset(74, 11),
+			-- sized in studs, not pixels: it keeps its size next to the character in any window (2P playtest Oct 11:
+			-- the pixel bars looked huge in small windows, piling up when both rode the cart)
+			Size = UDim2.fromScale(Tuning.OverheadBar.X, Tuning.OverheadBar.Y),
 			StudsOffsetWorldSpace = Vector3.new(0, 2.6, 0),
 			AlwaysOnTop = true,
 			LightInfluence = 0,
