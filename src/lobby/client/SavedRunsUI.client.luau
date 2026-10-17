@@ -32,7 +32,6 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.DisplayOrder = 5
 gui.Parent = player:WaitForChild("PlayerGui")
 local fitScale = UiFit.attach(gui) -- the button stack lines up with LobbyUI's (same scale)
-local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 -- gamepad: menus put the selection on their first button (console pass)
 local function padSelect(): boolean
@@ -194,12 +193,8 @@ listPad.PaddingBottom = UDim.new(0, 10)
 listPad.Parent = list
 
 local openButton =
-	button(gui, "SAVED RUNS", Color3.fromRGB(70, 90, 200), UDim2.new(1, -16, 1, -74), UDim2.fromOffset(210, 52), 2)
-openButton.AnchorPoint = Vector2.new(1, 1)
-if TOUCH then -- LobbyUI's stack moves to the top right on phones (the jump button's corner)
-	openButton.AnchorPoint = Vector2.new(1, 0)
-	openButton.Position = UDim2.new(1, -16, 0, 60 + 58)
-end
+	button(gui, "SAVED RUNS", Color3.fromRGB(70, 90, 200), UDim2.new(1, -16, 0, 60 + 58), UDim2.fromOffset(210, 52), 2)
+openButton.AnchorPoint = Vector2.new(1, 0) -- LobbyUI's stack, top right (user, Oct 18)
 
 local runs: { any } = {}
 local firstAction: GuiObject? = nil

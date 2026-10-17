@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SocialService = game:GetService("SocialService")
-local UserInputService = game:GetService("UserInputService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
@@ -18,13 +17,9 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.Parent = player:WaitForChild("PlayerGui")
 UiFit.attach(gui)
 
--- phones: Roblox's jump button owns the bottom right, so the stack moves to the top right (under the top bar)
-local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+-- the stack sits top right on every device (user, Oct 18), under Roblox's top bar
 local function stackAt(index: number): (UDim2, Vector2)
-	if TOUCH then
-		return UDim2.new(1, -16, 0, 60 + index * 58), Vector2.new(1, 0)
-	end
-	return UDim2.new(1, -16, 1, -16 - index * 58), Vector2.new(1, 1)
+	return UDim2.new(1, -16, 0, 60 + index * 58), Vector2.new(1, 0)
 end
 
 -- sticker buttons in the main HUD style (UiTheme default: FredokaOne, art-direction.md §11)
