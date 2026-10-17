@@ -65,38 +65,58 @@ local function pull(p: Player, target: Instance, root: BasePart)
 	end
 	-- Predictable pulls (playtest Oct 1: "the box is random"): the object comes straight at Miko along the line
 	-- between them, stops PullDistance in front of her (short of any wall), and lands flat on the floor, upright,
-	-- with no drop or tumble.
+	-- with no drop or tumble. Pulling it up onto a ledge (user, Oct 17: "so hard to put it above") lifts it first: the
+	-- wall check runs at the height it ends at, so the ledge it climbs over doesn't stop it.
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { part, p.Character :: Instance }
 	params.RespectCanCollide = true
+	params.IgnoreWater = true
 	local flatTo = (part.Position - root.Position) * Vector3.new(1, 0, 1)
 	local dir = if flatTo.Magnitude > 0.1 then flatTo.Unit else root.CFrame.LookVector * Vector3.new(1, 0, 1)
 	local half = part.Size.Y / 2
+	local start = part.Position
+	-- rest on the floor under a spot
+	local function restY(at: Vector3): number
+		local floor = workspace:Raycast(at + Vector3.new(0, 4, 0), Vector3.new(0, -30, 0), params)
+		return if floor then floor.Position.Y + half else at.Y
+	end
 	local dest = root.Position + dir * T.PullDistance
-	-- don't pass through walls on the way in (checked level, at the object's height, so a shelf under it doesn't count)
-	local path = (dest - part.Position) * Vector3.new(1, 0, 1)
-	local wall = if path.Magnitude > 0.1 then workspace:Raycast(part.Position, path, params) else nil
+	local lift = math.max(start.Y, restY(dest)) + 0.1
+	-- don't pass through walls on the way in (checked level at the carry height, so a shelf or ledge under it doesn't count)
+	local path = (dest - start) * Vector3.new(1, 0, 1)
+	local wall = if path.Magnitude > 0.1
+		then workspace:Raycast(Vector3.new(start.X, lift, start.Z), path, params)
+		else nil
 	if wall then
 		local keep = math.max(0, wall.Distance - math.max(part.Size.X, part.Size.Z) / 2)
-		dest = part.Position + path.Unit * keep
+		dest = start + path.Unit * keep
 	end
-	-- rest on the floor under the destination
-	local floor = workspace:Raycast(dest + Vector3.new(0, 4, 0), Vector3.new(0, -30, 0), params)
-	local y = if floor then floor.Position.Y + half else dest.Y
+	-- nothing to land on (a gap between it and Miko): it stays put rather than drop into the void
+	if not workspace:Raycast(Vector3.new(dest.X, lift + 4, dest.Z), Vector3.new(0, -30, 0), params) then
+		return
+	end
+	local y = restY(Vector3.new(dest.X, lift, dest.Z))
 	local yaw = math.atan2(-dir.X, -dir.Z)
 	local goal = CFrame.new(dest.X, y, dest.Z) * CFrame.Angles(0, yaw, 0)
+	-- two legs: up then in (onto a ledge), or in then down (off one), so it never cuts through an edge
+	local legs = { goal }
+	if math.abs(y - start.Y) > 0.5 then
+		local mid = if y > start.Y then Vector3.new(start.X, y, start.Z) else Vector3.new(dest.X, start.Y, dest.Z)
+		legs = { CFrame.new(mid) * goal.Rotation, goal }
+	end
 
 	local wasAnchored = part.Anchored
 	part.Anchored = true
 	part.CustomPhysicalProperties = PhysicalProperties.new(part.CurrentPhysicalProperties.Density, 1, 0, 100, 100)
 	toolResult:FireAllClients("PullStart", p, target)
-	local tween =
-		TweenService:Create(part, TweenInfo.new(T.PullTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			CFrame = goal,
-		})
-	tween:Play()
-	tween.Completed:Wait()
+	for i, cf in legs do
+		local style = if i == #legs then Enum.EasingStyle.Quad else Enum.EasingStyle.Sine
+		local info = TweenInfo.new(T.PullTime * (if #legs > 1 then 0.6 else 1), style, Enum.EasingDirection.Out)
+		local tween = TweenService:Create(part, info, { CFrame = cf })
+		tween:Play()
+		tween.Completed:Wait()
+	end
 	part.AssemblyLinearVelocity = Vector3.zero
 	part.AssemblyAngularVelocity = Vector3.zero
 	part.Anchored = wasAnchored

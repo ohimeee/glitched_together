@@ -695,15 +695,17 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(40, 6, 10), -40, 0, 160, "KaiReturn")
 	gate(P, "S1", Vector3.new(2, 20, 10), CFrame.new(-24, 10, 160))
 
-	-- Miko's trial (east): a 60-stud grapple chasm, a crate to climb an 18-stud cliff, a lever for a bridge.
+	-- Miko's trial (east): a 60-stud grapple chasm, a crate to climb a 21-stud cliff, a lever for a bridge.
 	grass(Vector3.new(30, 6, 12), 45, 0, 0, "MikoPath")
 	grass(Vector3.new(30, 6, 30), 75, 0, 0, "MikoStart")
 	ring(75, 20, 32)
 	ring(75, 20, 58)
 	grass(Vector3.new(30, 6, 30), 75, 0, 90, "MikoMid")
-	grass(Vector3.new(30, 24, 30), 75, 18, 120, "Cliff") -- the cliff: 18 up, only with the crate as a step
+	-- the cliff: 21 up, only with the crate as a step. User (Oct 17) cleared 18 with double jump + dash + ledge assist
+	-- (~18), so it is 21 and this crate is 6 tall (crate + double jump + ledge assist ~22.5).
+	grass(Vector3.new(30, 27, 30), 75, 21, 120, "Cliff")
 	platform(P, Vector3.new(6, 2, 6), 100, -6, 90, { color = DIRT, name = "CrateIsland" })
-	block(P, Vector3.new(4, 4, 4), CFrame.new(100, -4, 90), {
+	block(P, Vector3.new(6, 6, 6), CFrame.new(100, -3, 90), {
 		name = "Crate",
 		color = WOOD,
 		material = Enum.Material.WoodPlanks,
