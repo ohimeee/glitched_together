@@ -5,6 +5,9 @@
 -- "TOOL 1"), IGNITE for Kai in the castle, ROTATE for the copier, ULT once the castle ultimate is full.
 -- PING / PEEK sit small at the top right, SKIP shows during cutscenes; downed = tap anywhere (ReviveController).
 -- Buttons bind to the same Input actions as keys, so holds (block, auto-fire, crouch) work the same.
+-- Look (user Oct 17: "search for references for other games in roblox for their mobile buttons ui"; DevForum "The
+-- Correct Way to Design Mobile Buttons", Arsenal, BedWars): Roblox-style dark translucent circles with a white icon
+-- and a small caption, built off the jump button's two size presets; the main tool button is bigger (BedWars' sword).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -23,23 +26,66 @@ local TouchController = {}
 local INK = Color3.fromRGB(24, 26, 40)
 local TOOL_CONTEXTS = { "W1Tools", "CastleTools", "W3Tools" }
 
--- per kit: { Tool1 label, Tool2 label, Dash label }
-local KIT_LABELS: { [string]: { string } } = {
-	PauseBeam = { "FREEZE", "RELEASE" },
-	GrappleLine = { "GRAPPLE", "PULL" },
-	FireMage = { "FIRE", "WALL", "BLINK" },
-	ShieldKnight = { "SWORD", "BLOCK", "CHARGE" },
-	CopyPaste = { "COPY", "PASTE" },
-	LayerShift = { "SHIFT", "PULL" },
+-- icon sheet: 8 x 8 cells of 128 px, white icons (tools/ui/touch_icons.js -> textures/ui/touch_icons.png)
+local ICON_SHEET = "rbxassetid://124834076029614"
+local ICON_CELL = 128
+local ICON: { [string]: number } = {
+	Dash = 0,
+	Blink = 1,
+	Charge = 2,
+	Pound = 3,
+	Grab = 4,
+	Freeze = 5,
+	Release = 6,
+	Grapple = 7,
+	Pull = 8,
+	Fire = 9,
+	Wall = 10,
+	Sword = 11,
+	Block = 12,
+	Copy = 13,
+	Paste = 14,
+	Shift = 15,
+	PullOut = 16,
+	Ignite = 17,
+	Rotate = 18,
+	Meteor = 19,
+	Rally = 20,
+	Ping = 21,
+	Peek = 22,
+	Skip = 23,
 }
 
-type Button =
-	{ button: TextButton, label: TextLabel, badge: TextLabel?, ring: number?, angle: number?, small: boolean? }
+-- per kit: { Tool1, Tool2, Dash? } as { caption, icon }
+local KIT_LABELS: { [string]: { { string } } } = {
+	PauseBeam = { { "FREEZE", "Freeze" }, { "RELEASE", "Release" } },
+	GrappleLine = { { "GRAPPLE", "Grapple" }, { "PULL", "Pull" } },
+	FireMage = { { "FIRE", "Fire" }, { "WALL", "Wall" }, { "BLINK", "Blink" } },
+	ShieldKnight = { { "SWORD", "Sword" }, { "BLOCK", "Block" }, { "CHARGE", "Charge" } },
+	CopyPaste = { { "COPY", "Copy" }, { "PASTE", "Paste" } },
+	LayerShift = { { "SHIFT", "Shift" }, { "PULL", "PullOut" } },
+}
+
+type Button = {
+	button: TextButton,
+	label: TextLabel,
+	icon: ImageLabel,
+	badge: TextLabel?,
+	ring: number?,
+	angle: number?,
+	small: boolean?,
+	big: boolean?,
+}
 
 local gui: ScreenGui
 local buttons: { [string]: Button } = {}
 
-local function make(name: string, text: string, small: boolean?): Button
+local function setIcon(entry: Button, key: string)
+	local index = ICON[key] or 0
+	entry.icon.ImageRectOffset = Vector2.new(index % 8, index // 8) * ICON_CELL
+end
+
+local function make(name: string, text: string, iconKey: string, small: boolean?): Button
 	local b = Instance.new("TextButton")
 	b.Name = name
 	b.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -57,10 +103,18 @@ local function make(name: string, text: string, small: boolean?): Button
 	rim.Transparency = 0.2
 	rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	rim.Parent = b
+	local icon = Instance.new("ImageLabel")
+	icon.AnchorPoint = Vector2.new(0.5, 0.5)
+	icon.Position = UDim2.fromScale(0.5, 0.42)
+	icon.Size = UDim2.fromScale(0.52, 0.52)
+	icon.BackgroundTransparency = 1
+	icon.Image = ICON_SHEET
+	icon.ImageRectSize = Vector2.new(ICON_CELL, ICON_CELL)
+	icon.Parent = b
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
-	label.Position = UDim2.fromScale(0.5, 0.5)
-	label.Size = UDim2.fromScale(0.78, 0.36)
+	label.Position = UDim2.fromScale(0.5, 0.78)
+	label.Size = UDim2.fromScale(0.7, 0.17)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBlack
 	label.TextScaled = true
@@ -81,7 +135,8 @@ local function make(name: string, text: string, small: boolean?): Button
 			b.BackgroundTransparency = 0.35
 		end
 	end)
-	local entry: Button = { button = b, label = label, small = small }
+	local entry: Button = { button = b, label = label, icon = icon, small = small }
+	setIcon(entry, iconKey)
 	buttons[name] = entry
 	return entry
 end
@@ -89,8 +144,8 @@ end
 local function badge(entry: Button, text: string)
 	local t = Instance.new("TextLabel")
 	t.AnchorPoint = Vector2.new(0.5, 0.5)
-	t.Position = UDim2.fromScale(0.85, 0.15)
-	t.Size = UDim2.fromScale(0.32, 0.32)
+	t.Position = UDim2.fromScale(0.86, 0.14)
+	t.Size = UDim2.fromScale(0.28, 0.28)
 	t.BackgroundColor3 = Palette.Neutral
 	t.TextColor3 = INK
 	t.Font = Enum.Font.GothamBlack
@@ -128,11 +183,11 @@ local function layout()
 	local radius = { jumpSize / 2 + gap + size / 2 }
 	radius[2] = radius[1] + size + gap
 	for _, entry in buttons do
-		local px = if entry.small then small else size
+		local px = if entry.small then small elseif entry.big then size * Tuning.Touch.BigScale else size
 		entry.button.Size = UDim2.fromOffset(px, px)
 		if entry.ring and entry.angle then
 			local a = math.rad(entry.angle)
-			local r = radius[entry.ring]
+			local r = radius[entry.ring] + (px - size) / 2 -- a bigger button steps outward, clear of the inner ring
 			local p = center + Vector2.new(math.cos(a) * r, -math.sin(a) * r)
 			entry.button.Position = UDim2.fromOffset(p.X, p.Y)
 		end
@@ -166,15 +221,18 @@ local function refresh()
 	local ultReady = ((player:GetAttribute("Ultimate") or 0) :: number) >= 1
 
 	buttons.Dash.button.Visible = play
-	buttons.Dash.label.Text = if labels and labels[3] then labels[3] else "DASH"
-	Glyphs.SetTouch("Dash", if labels and labels[3] then labels[3] else nil)
+	local dash = labels and labels[3]
+	buttons.Dash.label.Text = if dash then dash[1] else "DASH"
+	setIcon(buttons.Dash, if dash then dash[2] else "Dash")
+	Glyphs.SetTouch("Dash", if dash then dash[1] else nil)
 	buttons.Pound.button.Visible = play and not topDown
 	buttons.Grab.button.Visible = play and not topDown
 	buttons.Tool1.button.Visible = play and labels ~= nil
 	buttons.Tool2.button.Visible = play and labels ~= nil
 	if labels then
-		buttons.Tool1.label.Text = labels[1]
-		buttons.Tool2.label.Text = labels[2]
+		buttons.Tool1.label.Text, buttons.Tool2.label.Text = labels[1][1], labels[2][1]
+		setIcon(buttons.Tool1, labels[1][2])
+		setIcon(buttons.Tool2, labels[2][2])
 	end
 	local tint = roleColor()
 	for _, name in { "Tool1", "Tool2", "Ultimate" } do
@@ -184,6 +242,7 @@ local function refresh()
 	buttons.Rotate.button.Visible = play and kit == "CopyPaste"
 	buttons.Ultimate.button.Visible = play and castle and ultReady
 	buttons.Ultimate.label.Text = if kit == "FireMage" then "METEOR" else "RALLY"
+	setIcon(buttons.Ultimate, if kit == "FireMage" then "Meteor" else "Rally")
 	buttons.Ping.button.Visible = play
 	buttons.Peek.button.Visible = play
 	buttons.Skip.button.Visible = touch and cutscene and not downed
@@ -197,21 +256,22 @@ function TouchController.Init()
 	gui.DisplayOrder = 5
 	gui.Parent = player:WaitForChild("PlayerGui")
 
-	place(make("Dash", "DASH"), 1, 180)
-	place(make("Pound", "POUND"), 1, 135)
-	place(make("Grab", "GRAB"), 1, 90)
-	local tool1 = make("Tool1", "TOOL 1")
+	place(make("Dash", "DASH", "Dash"), 1, 180)
+	place(make("Pound", "POUND", "Pound"), 1, 135)
+	place(make("Grab", "GRAB", "Grab"), 1, 90)
+	local tool1 = make("Tool1", "TOOL 1", "Freeze")
+	tool1.big = true -- the main action, like BedWars' sword
 	badge(tool1, "1")
 	place(tool1, 2, 185)
-	local tool2 = make("Tool2", "TOOL 2")
+	local tool2 = make("Tool2", "TOOL 2", "Release")
 	badge(tool2, "2")
 	place(tool2, 2, 152)
-	place(make("Ignite", "IGNITE"), 2, 120)
-	place(make("Rotate", "ROTATE"), 2, 120)
-	place(make("Ultimate", "ULT"), 2, 92)
-	make("Ping", "PING", true)
-	make("Peek", "PEEK", true)
-	make("Skip", "SKIP", true)
+	place(make("Ignite", "IGNITE", "Ignite"), 2, 120)
+	place(make("Rotate", "ROTATE", "Rotate"), 2, 120)
+	place(make("Ultimate", "ULT", "Meteor"), 2, 92)
+	make("Ping", "PING", "Ping", true)
+	make("Peek", "PEEK", "Peek", true)
+	make("Skip", "SKIP", "Skip", true)
 
 	Input.bindButton("BaseContext", "Dash", buttons.Dash.button)
 	Input.bindButton("BaseContext", "GroundPound", buttons.Pound.button)

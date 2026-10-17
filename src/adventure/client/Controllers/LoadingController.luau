@@ -290,7 +290,8 @@ end
 
 -- The server's list of every content id in the loaded world (WorldService `WorldAssets`).
 local assetsWorld = ""
-local assetIds: { string } = {}
+local assetIds: { meshes: { string }, sounds: { string }, images: { string } } =
+	{ meshes = {}, sounds = {}, images = {} }
 
 -- Download the whole world's assets while still covered (user Oct 17: "make all of the assets loaded"): every id on
 -- the server's list, plus the streamed-in parts around you as instances (their meshes are ready the moment they show).
@@ -306,7 +307,19 @@ local function preloadAround()
 	end
 	local list: { any } = {}
 	if assetsWorld == loading then
-		table.move(assetIds, 1, #assetIds, 1, list)
+		-- meshes and sounds preload through throwaway instances (a bare id string is fetched as an image)
+		for _, id in assetIds.meshes do
+			local mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = Enum.MeshType.FileMesh
+			mesh.MeshId = id
+			table.insert(list, mesh)
+		end
+		for _, id in assetIds.sounds do
+			local sound = Instance.new("Sound")
+			sound.SoundId = id
+			table.insert(list, sound)
+		end
+		table.move(assetIds.images, 1, #assetIds.images, #list + 1, list)
 	end
 	if root and world then
 		local radius = Tuning.WorldLoad.ClientRadius
@@ -382,7 +395,7 @@ end
 
 function LoadingController.Init()
 	local assets = Net.event("WorldAssets")
-	assets.OnClientEvent:Connect(function(worldName: string, ids: { string })
+	assets.OnClientEvent:Connect(function(worldName: string, ids: any)
 		assetsWorld, assetIds = worldName, ids
 	end)
 	assets:FireServer() -- joined after a load: ask for the current list

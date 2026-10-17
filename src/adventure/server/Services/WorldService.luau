@@ -91,12 +91,16 @@ local ASSET_PROPS: { [string]: { string } } = {
 	ImageButton = { "Image" },
 	Sky = { "SkyboxBk", "SkyboxDn", "SkyboxFt", "SkyboxLf", "SkyboxRt", "SkyboxUp", "SunTextureId", "MoonTextureId" },
 }
-local worldAssets: { string } = {}
+-- preloading needs the asset's kind: a bare id string loads as an image (meshes and sounds fail that way)
+local MESH_PROPS = { MeshId = true }
+local SOUND_PROPS = { SoundId = true }
+export type AssetList = { meshes: { string }, sounds: { string }, images: { string } }
+local worldAssets: AssetList = { meshes = {}, sounds = {}, images = {} }
 local worldAssetsName = ""
 
-local function collectAssets(roots: { Instance }): { string }
+local function collectAssets(roots: { Instance }): AssetList
 	local seen: { [string]: boolean } = {}
-	local list: { string } = {}
+	local list: AssetList = { meshes = {}, sounds = {}, images = {} }
 	for _, root in roots do
 		for _, d in root:GetDescendants() do
 			local props = ASSET_PROPS[d.ClassName]
@@ -107,7 +111,11 @@ local function collectAssets(roots: { Instance }): { string }
 					end)
 					if ok and type(id) == "string" and id ~= "" and not seen[id] then
 						seen[id] = true
-						table.insert(list, id)
+						local bucket = if MESH_PROPS[prop]
+							then list.meshes
+							elseif SOUND_PROPS[prop] then list.sounds
+							else list.images
+						table.insert(bucket, id)
 					end
 				end
 			end
@@ -185,8 +193,11 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 	-- some art builds in its own task after `Dressed` (Dragon Hall, fuse, traps): list once the world stops growing
 	-- (only new content ids count: dropper blocks and shards re-use ids and would never settle)
 	local known: { [string]: boolean } = {}
-	for _, id in collectAssets({ model }) do
-		known[id] = true
+	local before = collectAssets({ model })
+	for _, bucket in { before.meshes, before.sounds, before.images } do
+		for _, id in bucket do
+			known[id] = true
+		end
 	end
 	local lastAdded = os.clock()
 	local growing = model.DescendantAdded:Connect(function(d)

@@ -50,6 +50,7 @@ return {
 	Touch = {
 		Button = 64, -- action buttons round the jump button
 		Small = 50, -- PING / PEEK / SKIP
+		BigScale = 1.3, -- the main tool button (TOOL 1) against the others
 		AimRange = 60, -- studs: castle auto-aim picks the nearest enemy within this, in front of you
 		AimCone = 75, -- degrees either side of your facing/move direction it looks
 	},
