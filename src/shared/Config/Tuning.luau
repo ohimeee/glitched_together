@@ -59,7 +59,7 @@ return {
 		AimCone = 75, -- degrees either side of your facing/move direction it looks
 		Edge = 6, -- px every touch button keeps from the screen edge
 		UltDragPx = 110, -- px of finger drag on the ULT button for full Meteor reach
-		UltReach = 45, -- studs from Kai at full drag (server cap: Combat.MeteorAim)
+		UltReach = 45, -- studs from Kai at full Meteor drag (server cap: Combat.MeteorAim); Miko: ShieldKnight.Rally.LeapReach
 		UltDeadZone = 14, -- px: less than this is a tap (auto-aim)
 		TopDownZoom = 0.75, -- × the castle camera's distance on touch (phones: the duo read too small)
 	},
@@ -334,6 +334,11 @@ return {
 			WaveTime = 0.45, -- s the shockwave ring takes to reach Radius
 			Shake = 1.1,
 			ShakeTime = 0.5,
+			-- touch: drag the ULT button to leap there first (user: "same like Kai where you can drag"); the leap
+			-- lands inside Windup, so the server's wave (at her position after Windup) goes out where she lands
+			LeapReach = 20, -- studs at full drag
+			LeapHeight = 7, -- arc peak
+			LeapTime = 0.42, -- s in the air (< Windup)
 		},
 	},
 	XpLevels = { 100, 250 },

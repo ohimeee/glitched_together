@@ -229,7 +229,8 @@ local function layout()
 end
 
 -- ULT (castle): Meteor drags to aim (Brawl Stars-style; the icon follows the finger, the floor ring shows the
--- blast), let go to cast; a tap casts at the auto-aim point. Rally is round Miko: it casts on press.
+-- blast), let go to cast. Meteor lands on the ring (a tap = auto-aim); Miko leaps to the ring and Rallies there
+-- (a tap = in place).
 local function bindUltDrag(entry: Button)
 	local held: InputObject? = nil
 	local start = Vector2.zero
@@ -246,13 +247,14 @@ local function bindUltDrag(entry: Button)
 		if input.UserInputType ~= Enum.UserInputType.Touch or held then
 			return
 		end
-		if player:GetAttribute("Kit") ~= "FireMage" then
-			TopDownAim.ReleaseUlt()
-			return
-		end
 		held = input
 		start = Vector2.new(input.Position.X, input.Position.Y)
-		TopDownAim.Drag(Vector2.zero)
+		if player:GetAttribute("Kit") == "ShieldKnight" then
+			local rally = Tuning.ShieldKnight.Rally
+			TopDownAim.Drag(Vector2.zero, rally.LeapReach, rally.Radius)
+		else
+			TopDownAim.Drag(Vector2.zero, Tuning.Touch.UltReach, Tuning.FireMage.Meteor.Radius)
+		end
 	end)
 	UserInputService.TouchMoved:Connect(function(input)
 		if input ~= held then

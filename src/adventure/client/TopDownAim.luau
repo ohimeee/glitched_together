@@ -27,6 +27,7 @@ local current: Vector3? = nil
 local stick = Vector2.zero
 -- touch ultimate drag (Brawl Stars-style): the finger's offset from where it pressed the ULT button, screen px
 local drag: Vector2? = nil
+local dragReach, dragRadius = 0, 0 -- studs at full drag, the ring's radius (per kit)
 local ultCast = Instance.new("BindableEvent")
 -- fired with the aim point when a touch ULT button is let go (the kit casts there)
 TopDownAim.UltCast = ultCast.Event
@@ -78,13 +79,13 @@ local function autoAim(root: BasePart): Vector3
 	return root.Position + ahead * 20
 end
 
--- the drag offset as a floor point: screen up = away from the camera, full drag = Tuning.Touch.UltReach studs
+-- the drag offset as a floor point: screen up = away from the camera, full drag = the kit's reach
 local function dragPoint(root: BasePart, offset: Vector2): Vector3
 	local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z).Unit
 	local right = Vector3.new(camera.CFrame.RightVector.X, 0, camera.CFrame.RightVector.Z).Unit
 	local amount = math.min(1, offset.Magnitude / Tuning.Touch.UltDragPx)
 	local dir = (right * offset.X - look * offset.Y).Unit
-	return root.Position + dir * amount * Tuning.Touch.UltReach
+	return root.Position + dir * amount * dragReach
 end
 
 local function compute(root: BasePart): Vector3
@@ -134,18 +135,22 @@ function TopDownAim.direction(): Vector3
 	return if v.Magnitude > 0.1 then v.Unit else Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z).Unit
 end
 
--- Touch ULT drag: the offset in screen px from the press (nil = not dragging). Only the Fire Mage aims its ultimate.
-function TopDownAim.Drag(offset: Vector2?)
+-- Touch ULT drag: the offset in screen px from the press (nil = not dragging), the kit's reach in studs at full
+-- drag and its blast radius (the floor ring)
+function TopDownAim.Drag(offset: Vector2?, reach: number?, radius: number?)
 	drag = offset
+	dragReach = reach or dragReach
+	dragRadius = radius or dragRadius
 end
 
--- A touch ULT button was let go: cast at the dragged point (a tap = auto-aim) and stop dragging
+-- A touch ULT button was let go: fires UltCast(point, aimed); aimed = false for a tap (point = auto-aim)
 function TopDownAim.ReleaseUlt()
 	local root = rootOf()
+	local aimed = drag ~= nil and drag.Magnitude >= Tuning.Touch.UltDeadZone
 	local point = if root then compute(root) else nil
 	drag = nil
 	if point then
-		ultCast:Fire(point)
+		ultCast:Fire(point, aimed)
 	end
 end
 
@@ -187,7 +192,7 @@ function TopDownAim.Start(color: Color3)
 		-- phones auto-aim, so the floor dot only looked like a stray marker (user): mouse/stick aim keeps it.
 		-- While a ULT button is dragged it grows to the blast's size and shows where it lands
 		local aiming = drag ~= nil
-		local width = if aiming then Tuning.FireMage.Meteor.Radius * 2 else 2.4
+		local width = if aiming then dragRadius * 2 else 2.4
 		reticle.Size = Vector3.new(0.15, width, width)
 		reticle.Transparency = if aiming then 0.55 elseif Glyphs.device() == "Touch" then 1 else 0.35
 		if player:GetAttribute("Downed") or player:GetAttribute("Picking") then

@@ -3,6 +3,7 @@
 --   Tool1 + Tool2  Rally when Ultimate is full
 --   Dash           Shield Charge: rush along the aim, then the server resolves hits along the path
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
@@ -60,6 +61,61 @@ local function charge(last: { t: number })
 	end)
 end
 
+-- Rally leap (touch drag): an arc to `point`, cut short before a wall and stepped back onto floor over a gap. It
+-- lands inside the Rally windup, so the server's wave goes out where she lands.
+local function leap(point: Vector3)
+	local root = rootOf()
+	local character = player.Character
+	local hum = character and character:FindFirstChildOfClass("Humanoid")
+	if not (root and character and hum) then
+		return
+	end
+	local R = T.Rally
+	local from = root.Position
+	local flat = Vector3.new(point.X - from.X, 0, point.Z - from.Z)
+	if flat.Magnitude < 1 then
+		return
+	end
+	local dir = flat.Unit
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local dist = math.min(flat.Magnitude, R.LeapReach)
+	local wall = workspace:Raycast(from, dir * dist, params)
+	if wall then
+		dist = math.max(0, wall.Distance - 2)
+	end
+	local target: Vector3? = nil
+	while dist > 1 do
+		local at = from + dir * dist
+		local floor = workspace:Raycast(at + Vector3.new(0, 4, 0), Vector3.new(0, -14, 0), params)
+		if floor then
+			target = Vector3.new(at.X, floor.Position.Y + hum.HipHeight + root.Size.Y / 2, at.Z)
+			break
+		end
+		dist -= 2
+	end
+	if not target then
+		return
+	end
+	local land = target :: Vector3
+	local t0 = os.clock()
+	local conn: RBXScriptConnection
+	conn = RunService.RenderStepped:Connect(function()
+		local a = math.min(1, (os.clock() - t0) / R.LeapTime)
+		local pos = from:Lerp(land, a) + Vector3.new(0, math.sin(a * math.pi) * R.LeapHeight, 0)
+		if root.Parent then
+			root.CFrame = CFrame.lookAt(pos, pos + dir)
+			root.AssemblyLinearVelocity = Vector3.zero
+		end
+		if a >= 1 or busy() then
+			conn:Disconnect()
+		end
+	end)
+	trove:Add(conn)
+end
+
 function ShieldKnight:Start()
 	TopDownAim.Start(Palette.Miko)
 	local sword = Input.action("CastleTools", "Tool1")
@@ -102,10 +158,10 @@ function ShieldKnight:Start()
 		MoveAnim.Set("Block", false)
 		toolUse:FireServer(2, nil, false)
 	end))
-	-- touch ULT button (TouchController → TopDownAim.ReleaseUlt): Rally is round Miko, so the point is unused
-	trove:Add(TopDownAim.UltCast:Connect(function()
-		if not busy() then
-			rally(true)
+	-- touch ULT button (TouchController → TopDownAim.ReleaseUlt): dragged = leap to the ring, the wave goes out there
+	trove:Add(TopDownAim.UltCast:Connect(function(point: Vector3, aimed: boolean)
+		if not busy() and rally(true) and aimed then
+			leap(point)
 		end
 	end))
 	trove:Add(Input.action("BaseContext", "Dash").Pressed:Connect(function()
