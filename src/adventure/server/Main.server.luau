@@ -29,6 +29,7 @@ for _, name in
 		"Credits",
 		"ContinueYes",
 		"SupportThanks",
+		"AdminDiag",
 	}
 do
 	Net.event(name)

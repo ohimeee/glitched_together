@@ -1,12 +1,13 @@
 -- Admin chat commands for testing the published game (a phone has no command bar). They only set the same workspace
 -- Debug* attributes the Studio command bar uses (Main / BossService listen for them); clients can't set workspace
 -- attributes, so only these commands and Studio can drive them. Allowed: Config/Admins + the experience owner.
---   /world <name> [checkpoint]   /cp <checkpoint>   /kai   /miko   /swap (= /role [Kai|Miko])   /phase <n>   /ult
+--   /world <name> [checkpoint]   /cp <checkpoint>   /kai   /miko   /swap (= /role [Kai|Miko])   /phase <n>   /ult   /diag
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local Admins = require(ReplicatedStorage.Shared.Config.Admins)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
+local Net = require(ReplicatedStorage.Shared.Net)
 
 local AdminCommands = {}
 
@@ -48,7 +49,7 @@ local function jump(world: string, checkpoint: number)
 	workspace:SetAttribute("DebugWorld", world)
 end
 
-local handlers: { [string]: (args: { string }) -> () } = {
+local handlers: { [string]: (args: { string }, player: Player) -> () } = {
 	world = function(args)
 		local world = args[1] and worldName(args[1])
 		if not world then
@@ -85,6 +86,10 @@ local handlers: { [string]: (args: { string }) -> () } = {
 			workspace:SetAttribute("DebugBossPhase", n)
 		end
 	end,
+	-- the caller's client reports its touch icon / image load status in chat (phone-only bugs, no Studio there)
+	diag = function(_, player)
+		Net.event("AdminDiag"):FireClient(player)
+	end,
 	ult = function()
 		for _, p in Players:GetPlayers() do
 			p:SetAttribute("Ultimate", 1)
@@ -106,7 +111,7 @@ local function onChat(player: Player, message: string)
 	local handler = args[1] and handlers[args[1]:lower()]
 	if handler then
 		table.remove(args, 1)
-		handler(args)
+		handler(args, player)
 	end
 end
 

@@ -17,6 +17,7 @@ local GuiService = game:GetService("GuiService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Input = require(script.Parent.Parent.Input)
 local TopDownAim = require(script.Parent.Parent.TopDownAim)
 
@@ -393,6 +394,32 @@ function TouchController.Init()
 		end
 	end)
 	refresh()
+
+	-- /diag (admin): report how the touch icons loaded on this device, in chat + the console (phones have no Studio)
+	Net.event("AdminDiag").OnClientEvent:Connect(function()
+		local ContentProvider = game:GetService("ContentProvider")
+		local StarterGui = game:GetService("StarterGui")
+		local lines = {
+			`[diag] device {Glyphs.device()} quality {UserSettings().GameSettings.SavedQualityLevel.Name} queue {ContentProvider.RequestQueueSize}`,
+		}
+		for name, entry in buttons do
+			local icon = entry.icon
+			local id = (icon.Image:match("%d+$") or icon.Image):sub(-5)
+			local fetch = ContentProvider:GetAssetFetchStatus(icon.Image).Name
+			local px = math.floor(icon.AbsoluteSize.X)
+			table.insert(lines, `[diag] {name} vis {entry.button.Visible} loaded {icon.IsLoaded} {fetch} {px}px ..{id}`)
+		end
+		for _, text in lines do
+			print(text)
+			local channels = game:GetService("TextChatService"):FindFirstChild("TextChannels")
+			local general = channels and channels:FindFirstChild("RBXGeneral") :: TextChannel?
+			if general then
+				general:DisplaySystemMessage(text)
+			else
+				pcall(StarterGui.SetCore, StarterGui, "ChatMakeSystemMessage", { Text = text })
+			end
+		end
+	end)
 end
 
 return TouchController
