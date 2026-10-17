@@ -71,9 +71,18 @@ function ShieldKnight.Use(p: Player, useIndex: number, _target: Instance?, aim: 
 		end
 		local dir = flatDir(from, root.Position, root.CFrame.LookVector)
 		CombatService.ChargeLine(from, dir, math.max(travelled.Magnitude, 4) + 2, T.Charge.Damage, p)
-	elseif useIndex == 4 then
+	elseif useIndex == 4 or useIndex == 5 then
+		-- 5 = Rally leap (touch drag): aim = where she lands; the wave goes out there, not where the server last
+		-- saw her mid-air (replication lags the 0.42 s leap)
+		local land: Vector3? = nil
+		if useIndex == 5 and typeof(aim) == "Vector3" then
+			local flat = Vector3.new(aim.X - root.Position.X, 0, aim.Z - root.Position.Z)
+			if flat.Magnitude <= T.Rally.LeapReach + 6 and math.abs(aim.Y - root.Position.Y) < 20 then
+				land = aim
+			end
+		end
 		if CombatService.SpendUltimate(p) then
-			CombatService.Rally(root.Position, p)
+			CombatService.Rally(root.Position, p, land)
 			if p:GetAttribute("Up_SecondWind") then
 				local hp = (p:GetAttribute("Health") or 0) :: number
 				HealthService.Restore(p, hp + C.SecondWind.RallyHeal)

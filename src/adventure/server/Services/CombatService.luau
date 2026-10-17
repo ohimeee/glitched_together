@@ -1206,13 +1206,14 @@ end
 
 -- Miko's ultimate: the Rally clip lifts her sword (stars gather on her) and drives it into the floor at Windup; then
 -- a shockwave ring rolls out to Radius, kicking up dust, rattling the camera.
-function CombatService.Rally(pos: Vector3, owner: Player?)
+function CombatService.Rally(pos: Vector3, owner: Player?, land: Vector3?)
 	local T = Tuning.ShieldKnight.Rally
 	CombatFx.Burst(pos + Vector3.new(0, 3, 0), { { "Stars", 16, 1.4, Palette.Miko } }, Palette.Miko, 12)
 	Audio.play("Rally", pos)
 	task.delay(T.Windup, function()
 		local root = rootOf(owner)
-		local at = if root then root.Position else pos -- she may have moved during the windup
+		-- she may have moved during the windup; a Rally leap names its landing spot
+		local at = land or if root then root.Position else pos
 		local floorAt = at - Vector3.new(0, 2.4, 0)
 		Audio.play("PoundImpact", at)
 		shake(at, T.Shake, T.ShakeTime)

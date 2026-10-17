@@ -61,20 +61,19 @@ local function charge(last: { t: number })
 	end)
 end
 
--- Rally leap (touch drag): an arc to `point`, cut short before a wall and stepped back onto floor over a gap. It
--- lands inside the Rally windup, so the server's wave goes out where she lands.
-local function leap(point: Vector3)
+-- Rally leap (touch drag): where she lands for `point`: cut short before a wall, stepped back onto floor over a gap
+local function leapTarget(point: Vector3): Vector3?
 	local root = rootOf()
 	local character = player.Character
 	local hum = character and character:FindFirstChildOfClass("Humanoid")
 	if not (root and character and hum) then
-		return
+		return nil
 	end
 	local R = T.Rally
 	local from = root.Position
 	local flat = Vector3.new(point.X - from.X, 0, point.Z - from.Z)
 	if flat.Magnitude < 1 then
-		return
+		return nil
 	end
 	local dir = flat.Unit
 	local params = RaycastParams.new()
@@ -96,10 +95,19 @@ local function leap(point: Vector3)
 		end
 		dist -= 2
 	end
-	if not target then
+	return target
+end
+
+-- the arc itself; it lands inside the Rally windup (the server sends the wave out at `land`)
+local function leap(land: Vector3)
+	local root = rootOf()
+	if not root then
 		return
 	end
-	local land = target :: Vector3
+	local R = T.Rally
+	local from = root.Position
+	local flat = Vector3.new(land.X - from.X, 0, land.Z - from.Z)
+	local dir = if flat.Magnitude > 0.1 then flat.Unit else Vector3.zAxis
 	local t0 = os.clock()
 	local conn: RBXScriptConnection
 	conn = RunService.RenderStepped:Connect(function()
@@ -123,11 +131,15 @@ function ShieldKnight:Start()
 	local lastCharge = { t = -math.huge }
 	local step, lastSwing = 0, -math.huge -- the sword combo's animation follows the server's 3-hit chain
 
-	local function rally(force: boolean?, clip: string?): boolean
+	local function rally(force: boolean?, land: Vector3?): boolean
 		if (force or sword:IsDown() and block:IsDown()) and ultimateReady() then
 			MoveAnim.Set("Block", false)
-			MoveAnim.Play(clip or "Rally")
-			toolUse:FireServer(4, nil, TopDownAim.point())
+			MoveAnim.Play(if land then "RallyLeap" else "Rally")
+			if land then
+				toolUse:FireServer(5, nil, land)
+			else
+				toolUse:FireServer(4, nil, TopDownAim.point())
+			end
 			return true
 		end
 		return false
@@ -160,8 +172,12 @@ function ShieldKnight:Start()
 	end))
 	-- touch ULT button (TouchController → TopDownAim.ReleaseUlt): dragged = leap to the ring, the wave goes out there
 	trove:Add(TopDownAim.UltCast:Connect(function(point: Vector3, aimed: boolean)
-		if not busy() and rally(true, if aimed then "RallyLeap" else nil) and aimed then
-			leap(point)
+		if busy() then
+			return
+		end
+		local land = if aimed then leapTarget(point) else nil
+		if rally(true, land) and land then
+			leap(land)
 		end
 	end))
 	trove:Add(Input.action("BaseContext", "Dash").Pressed:Connect(function()
