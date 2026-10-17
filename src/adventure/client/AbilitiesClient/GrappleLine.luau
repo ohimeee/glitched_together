@@ -1,5 +1,8 @@
--- Miko's Grapple Line, client half: Tool1 swings from Grapple Rings or anything Kai froze (swing runs
--- locally through MovementController, Jump releases with a 1.3x boost); Tool2 pulls Pullable objects.
+-- Miko's Grapple Line, client half: Tool1 (or the Swing key: F / RB / GRAB) swings from Grapple Rings or anything Kai
+-- froze (swing runs locally through MovementController, Jump releases with a 1.3x boost); Tool2 pulls Pullable objects.
+-- The swing takes the anchor under the crosshair, else the nearest one within NearRange (user, Oct 17: you can grab a
+-- ring you're near without looking at it, on every device).
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -20,10 +23,31 @@ local T = Tuning.GrappleLine
 local GrappleLine = {}
 local trove = Trove.new()
 
+local function canAnchor(inst: Instance): boolean
+	return Tags.has(inst, "GrappleRing") or inst:GetAttribute("Frozen") == true
+end
+
 local function swingTarget(): Instance?
-	return Aim.best({ "GrappleRing", "Freezable" }, T.Range, T.AimCone, function(inst)
-		return Tags.has(inst, "GrappleRing") or inst:GetAttribute("Frozen") == true
-	end)
+	local aimed = Aim.best({ "GrappleRing", "Freezable" }, T.Range, T.AimCone, canAnchor)
+	if aimed then
+		return aimed
+	end
+	local root = Aim.root()
+	if not root then
+		return nil
+	end
+	local best, bestDist = nil, T.NearRange
+	for _, tag in { "GrappleRing", "Freezable" } do
+		for _, inst in CollectionService:GetTagged(tag) do
+			if inst:IsDescendantOf(workspace) and canAnchor(inst) then
+				local d = Tags.distance(inst, root.Position)
+				if d < bestDist then
+					best, bestDist = inst, d
+				end
+			end
+		end
+	end
+	return best
 end
 
 function GrappleLine:Start()
@@ -41,7 +65,7 @@ function GrappleLine:Start()
 		swingLook.Enabled = target ~= nil
 	end))
 
-	trove:Add(Input.action("W1Tools", "Tool1").Pressed:Connect(function()
+	local function grab()
 		if MovementController.IsSwinging() then
 			MovementController.StopSwing()
 			return
@@ -66,7 +90,10 @@ function GrappleLine:Start()
 			MoveAnim.Aim()
 			toolUse:FireServer(1, anchor)
 		end
-	end))
+	end
+	trove:Add(Input.action("W1Tools", "Tool1").Pressed:Connect(grab))
+	-- the Swing key grabs too when no rail or swing point is in reach (MovementController takes those first)
+	MovementController.SetSwingFallback(grab)
 
 	trove:Add(Input.action("W1Tools", "Tool2").Pressed:Connect(function()
 		local pullTarget = Aim.best({ "Pullable" }, T.PullRange, T.AimCone)
@@ -85,6 +112,7 @@ function GrappleLine:Start()
 end
 
 function GrappleLine:Stop()
+	MovementController.SetSwingFallback(nil)
 	MovementController.StopSwing()
 	trove:Clean()
 end

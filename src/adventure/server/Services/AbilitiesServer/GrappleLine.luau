@@ -32,6 +32,18 @@ local function massOf(inst: Instance): number
 	return math.huge
 end
 
+-- Crates are heavy (user, Oct 17: players must not push them with their bodies): max density, high friction, and
+-- the server owns their physics, so no client shoves one locally. Only Miko's pull moves them.
+local function heavy(part: BasePart)
+	if part.Anchored or not part:IsDescendantOf(workspace) then
+		return
+	end
+	part.CustomPhysicalProperties = PhysicalProperties.new(T.CrateDensity, 1, 0, 100, 100)
+	if part:CanSetNetworkOwnership() then
+		part:SetNetworkOwner(nil)
+	end
+end
+
 local function pull(p: Player, target: Instance, root: BasePart)
 	-- Levers: a pull throws them over; pulling again throws them back (the rope flicks out and back).
 	local lever = Tags.find(target, "LeverPull")
@@ -88,6 +100,7 @@ local function pull(p: Player, target: Instance, root: BasePart)
 	part.AssemblyLinearVelocity = Vector3.zero
 	part.AssemblyAngularVelocity = Vector3.zero
 	part.Anchored = wasAnchored
+	heavy(part) -- unanchoring hands ownership back to auto
 	toolResult:FireAllClients("Pulled", p, target)
 end
 
@@ -137,6 +150,14 @@ function GrappleLine.SwingTarget(p: Player): Instance?
 end
 
 function GrappleLine.Init()
+	Tags.each("Pullable", function(inst)
+		if inst:IsA("BasePart") and inst.Name == "Crate" then
+			heavy(inst)
+			inst.AncestryChanged:Connect(function()
+				heavy(inst)
+			end)
+		end
+	end)
 	-- a kit change (zone, world, boss phase) ends the swing: no stale anchor or rope carries into the next kit
 	local function watch(p: Player)
 		p:GetAttributeChangedSignal("Kit"):Connect(function()

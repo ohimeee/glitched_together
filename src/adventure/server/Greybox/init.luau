@@ -662,7 +662,7 @@ local function buildPixelPlains(world: Model)
 	spawnAt(P, 0, 0, -8)
 	checkpoint(P, nextOrder(), 0, 0, -6, W, {
 		"Split up! Kai takes the left trial, Miko the right. Each of you ends on a plate.",
-		"Kai: freeze a rising pillar ({Tool1}) and hop on. Miko: grapple the teal rings ({Tool1}).",
+		"Kai: freeze a rising pillar ({Tool1}) and hop on. Miko: grapple the teal rings ({Tool1} or {Swing}).",
 	})
 	sign(P, "▲ KAI TRIAL", CFrame.new(-20, 6, 16), Vector3.new(14, 3, 0.4)) -- no arrows: signs read from both sides
 	sign(P, "MIKO TRIAL ●", CFrame.new(20, 6, 16), Vector3.new(14, 3, 0.4))

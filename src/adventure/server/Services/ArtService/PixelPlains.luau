@@ -261,8 +261,8 @@ local Skins: { [string]: MeshAssets.Skin } = {
 				Id = "rbxassetid://93456286978753",
 				Offset = v(0, 0, 0),
 				Size = v(3.9, 4, 3.9),
-				Material = Enum.Material.Wood,
-				Color = Color3.fromHex("#7A5230"),
+				Material = Enum.Material.Metal, -- steel frame: reads as heavy (user, Oct 17)
+				Color = Color3.fromHex("#5E646B"),
 			},
 			PP_Prop_Crate_Handle = {
 				Id = "rbxassetid://139921594652396",

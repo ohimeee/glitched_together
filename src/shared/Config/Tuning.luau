@@ -246,11 +246,13 @@ return {
 		Range = 45,
 		Boost = 1.3,
 		AimCone = 8,
+		NearRange = 30, -- not aimed at any anchor: the nearest one this close is grabbed
 		PullRange = 35,
 		PullTime = 0.4,
 		PullDistance = 6,
 		PullCooldown = 1,
 		MaxMass = 50,
+		CrateDensity = 100, -- crates: max density, so a walking body can't shove them (only Miko's pull moves them)
 	},
 
 	-- World 2 (castle)

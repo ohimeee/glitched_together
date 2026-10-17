@@ -47,6 +47,9 @@ local current: {
 }? =
 	nil
 
+-- A tool's own grab for the Swing key (Miko's Grapple Line), tried when there is no rail or swing point to take.
+local swingFallback: (() -> ())? = nil
+
 local function flat(v: Vector3): Vector3
 	return Vector3.new(v.X, 0, v.Z)
 end
@@ -643,6 +646,8 @@ local function onCharacter(character: Model)
 			startSwing(function()
 				return if point.Parent then Tags.position(point) else nil
 			end, Tuning.SwingBoost, nil, true)
+		elseif swingFallback then
+			swingFallback()
 		end
 	end))
 
@@ -869,6 +874,11 @@ function MovementController.StopSwing()
 	if current then
 		current.stopSwing(false)
 	end
+end
+
+-- For tools: what the Swing key (F / RB / GRAB) does when no rail or swing point is in reach. nil clears it.
+function MovementController.SetSwingFallback(fn: (() -> ())?)
+	swingFallback = fn
 end
 
 function MovementController.IsSwinging(): boolean

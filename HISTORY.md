@@ -2,6 +2,12 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 32nd session (Oct 17, 2026): heavy crates, grapple on F + grab-by-nearness
+
+- **Heavy crates (user: players shouldn't push the box with their bodies):** server `AbilitiesServer/GrappleLine` `heavy()` gives every unanchored `Pullable` named `Crate` density `Tuning.GrappleLine.CrateDensity` (100, max) + friction 1 and server network ownership (re-applied after each pull and on reparent). The Pixel Plains crate skin's edge mesh (`PP_Prop_Crate_Edge`) is now steel `Metal #5E646B` so it reads heavy. Verified in Play: all 4 PP crates density 100, owner = server, edge Metal. The walk-into-it shove test couldn't run (character frozen after the debug jump): user to feel-test.
+- **Miko's grapple swing on F / RB / GRAB too (user):** `MovementController.SetSwingFallback(fn)`: the Swing key first takes rails and swing points, otherwise runs the grapple's grab (also releases a grapple swing). Tool1 (LMB/RT) unchanged. Pip hint: "({Tool1} or {Swing})".
+- **Grab without looking (user, all devices):** `swingTarget()` takes the aimed ring / frozen object, else the nearest one within `Tuning.GrappleLine.NearRange` (30); the teal highlight shows which. No line-of-sight check yet.
+
 ## 31st session (Oct 17, 2026): mobile castle pass in the phone emulator
 
 - **Studio helpers:** `command.md` (command bar lines: world/checkpoint jumps, boss phase, device, ultimate fill, clear; run them in the **Server** tab: a Client-tab line only changes your own screen). New `DebugRole` ("Kai"/"Miko" solo, any change swaps a duo; `WorldService.RefreshKits`). Debug world jump matches names ignoring case and warns on unknown names (a "PixelPLains" typo had loaded an empty world).
