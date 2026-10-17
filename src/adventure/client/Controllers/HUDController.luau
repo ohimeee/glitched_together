@@ -15,6 +15,7 @@ local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Input = require(script.Parent.Parent.Input)
 local Aim = require(script.Parent.Parent.Aim)
+local CardReveal = require(script.Parent.Parent.CardReveal)
 
 local player = Players.LocalPlayer
 
@@ -509,18 +510,21 @@ local function buildXpAndUltimate()
 	refresh()
 end
 
+-- big glyphs for the reveal cards' art windows
+local UPGRADE_ICON: { [string]: string } = {
+	BiggerFireball = "🔥",
+	FasterCast = "⚡",
+	DoubleFlameWall = "🧱",
+	EmberTrail = "✨",
+	WiderBlock = "🛡️",
+	LongerCharge = "💨",
+	ReflectBoost = "🔁",
+	SecondWind = "💖",
+}
+
+-- Level-up picker: TikTok-style card reveal (CardReveal; memory card-reveal-ui): two sealed cards drop in and flip
+-- open, the player picks one. The world is paused server side while anyone picks (XpService).
 local function buildPicker()
-	local picker = new("Frame", {
-		Name = "LevelUp",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(580, 270),
-		Visible = false,
-		ZIndex = 30,
-	}, gui)
-	UiSkin.Panel(picker)
-	local title =
-		text({ Size = UDim2.new(1, 0, 0, 64), TextSize = 42, ZIndex = 31 }, picker, "Title", Palette.Castle.Gold)
 	local waiting = text({
 		Name = "PickWaiting",
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -531,60 +535,47 @@ local function buildPicker()
 		Visible = false,
 		ZIndex = 30,
 	}, gui, "Float")
-	local buttons: { TextButton } = {}
-	for i = 1, 2 do
-		local b = new("TextButton", {
-			AnchorPoint = Vector2.new(0.5, 0),
-			Position = UDim2.new(if i == 1 then 0.27 else 0.73, 0, 0, 78),
-			Size = UDim2.fromOffset(240, 160),
-			TextWrapped = true,
-			TextSize = 24,
-			AutoButtonColor = true,
-			ZIndex = 33,
-		}, picker)
-		UiSkin.Panel(b, { Fill = Palette.Castle.Royal })
-		UiSkin.Text(b, "Title")
-		buttons[i] = b
-		-- a little lift on hover, like picking up a card
-		b.MouseEnter:Connect(function()
-			Audio.play("Hover")
-			TweenService:Create(b, TweenInfo.new(0.15), { Rotation = if i == 1 then -2 else 2 }):Play()
-		end)
-		b.MouseLeave:Connect(function()
-			TweenService:Create(b, TweenInfo.new(0.15), { Rotation = 0 }):Play()
-		end)
-	end
-
+	local close: (() -> ())? = nil
 	local function refreshWaiting()
-		waiting.Visible = player:GetAttribute("Picking") == true and not picker.Visible
+		waiting.Visible = player:GetAttribute("Picking") == true and close == nil
 	end
 	local pickEvent = Net.event("LevelPick")
 	Net.event("LevelUp").OnClientEvent:Connect(function(level: number, options: { string })
-		title.Text = `LEVEL {level}!  PICK ONE`
-		for i, b in buttons do
-			local name = options[i]
-			local info = UPGRADE_TEXT[name] or { name, "" }
-			b.Text = info[1] .. "\n\n" .. info[2]
-			b:SetAttribute("Choice", name)
+		if close then
+			close()
 		end
-		picker.Visible = true
+		local cards = {}
+		for _, name in options do
+			local info = UPGRADE_TEXT[name] or { name, "" }
+			table.insert(cards, {
+				id = name,
+				name = info[1],
+				desc = info[2],
+				icon = UPGRADE_ICON[name] or "★",
+				ribbon = `LV {level}`,
+				stars = level,
+			})
+		end
 		Audio.play("LevelUp")
+		close = CardReveal.Show(gui, {
+			title = `LEVEL {level}!  PICK ONE`,
+			accent = roleColor(player),
+			back = Palette.Castle.NightPurple,
+			gold = Palette.Castle.Gold,
+			cards = cards,
+			zIndex = 40,
+			onPick = function(id)
+				close = nil
+				pickEvent:FireServer(id)
+				refreshWaiting()
+			end,
+		})
 		refreshWaiting()
 	end)
-	for _, b in buttons do
-		b.Activated:Connect(function()
-			local choice = b:GetAttribute("Choice")
-			if picker.Visible and choice then
-				Audio.play("Select")
-				picker.Visible = false
-				pickEvent:FireServer(choice)
-				refreshWaiting()
-			end
-		end)
-	end
 	player:GetAttributeChangedSignal("Picking"):Connect(function()
-		if not player:GetAttribute("Picking") then
-			picker.Visible = false
+		if not player:GetAttribute("Picking") and close then
+			close() -- auto-picked by the server (30 s)
+			close = nil
 		end
 		refreshWaiting()
 	end)
