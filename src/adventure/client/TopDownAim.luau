@@ -28,6 +28,7 @@ local stick = Vector2.zero
 -- touch ultimate drag (Brawl Stars-style): the finger's offset from where it pressed the ULT button, screen px
 local drag: Vector2? = nil
 local dragReach, dragRadius = 0, 0 -- studs at full drag, the ring's radius (per kit)
+local dragLine = false -- the marker is a line across the aim (FlameWall) instead of a ring; dragRadius = half its length
 local ultCast = Instance.new("BindableEvent")
 -- fired with the aim point when a touch ULT button is let go (the kit casts there)
 TopDownAim.UltCast = ultCast.Event
@@ -138,12 +139,15 @@ function TopDownAim.direction(): Vector3
 	return if v.Magnitude > 0.1 then v.Unit else Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z).Unit
 end
 
--- Touch ULT drag: the offset in screen px from the press (nil = not dragging), the kit's reach in studs at full
--- drag and its blast radius (the floor ring)
-function TopDownAim.Drag(offset: Vector2?, reach: number?, radius: number?)
+-- Touch drag: the offset in screen px from the press (nil = not dragging), the kit's reach in studs at full drag
+-- and its blast radius (the floor ring); `line` = show a line across the aim, `radius` long each side (FlameWall)
+function TopDownAim.Drag(offset: Vector2?, reach: number?, radius: number?, line: boolean?)
 	drag = offset
 	dragReach = reach or dragReach
 	dragRadius = radius or dragRadius
+	if reach then
+		dragLine = line == true
+	end
 end
 
 local function release(): (Vector3?, boolean)
@@ -189,6 +193,12 @@ function TopDownAim.Start(color: Color3)
 	reticle.CanTouch = false
 	reticle.CastShadow = false
 	reticle.Parent = workspace
+	-- FlameWall drag: a bar where the wall will stand, across the aim like the wall itself
+	local bar = trove:Add(reticle:Clone())
+	bar.Name = "AimWall"
+	bar.Shape = Enum.PartType.Block
+	bar.Transparency = 1
+	bar.Parent = workspace
 
 	trove:Add(UserInputService.InputChanged:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.Thumbstick2 then
@@ -210,7 +220,24 @@ function TopDownAim.Start(color: Color3)
 		local aiming = drag ~= nil
 		local width = if aiming then dragRadius * 2 else 2.4
 		reticle.Size = Vector3.new(0.15, width, width)
-		reticle.Transparency = if aiming then 0.55 elseif Glyphs.device() == "Touch" then 1 else 0.35
+		reticle.Transparency = if aiming and not dragLine
+			then 0.55
+			elseif Glyphs.device() == "Touch" or aiming then 1
+			else 0.35
+		bar.Transparency = if aiming and dragLine then 0.45 else 1
+		if aiming and dragLine then
+			-- the server puts the wall's centre 6..40 studs out along the aim, its length across it
+			local flat = Vector3.new(point.X - root.Position.X, 0, point.Z - root.Position.Z)
+			local dir = if flat.Magnitude > 0.1
+				then flat.Unit
+				else Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z).Unit
+			local centre = root.Position + dir * math.clamp(flat.Magnitude, 6, 40)
+			bar.Size = Vector3.new(dragRadius * 2, 0.15, 1.2)
+			bar.CFrame = CFrame.lookAt(
+				Vector3.new(centre.X, root.Position.Y - 2.9, centre.Z),
+				Vector3.new(centre.X, root.Position.Y - 2.9, centre.Z) + dir
+			)
+		end
 		if player:GetAttribute("Downed") or player:GetAttribute("Picking") then
 			hum.AutoRotate = true
 			return

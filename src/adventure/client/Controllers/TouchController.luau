@@ -251,7 +251,7 @@ end
 -- (a tap = in place).
 -- Drag-to-aim on a touch button (Brawl Stars): `aim()` gives (reach, ring radius) for the current kit, or nil when
 -- this button doesn't drag right now; `done(cast)` runs on let go (cast = false when the button hid mid-drag).
-local function bindDrag(entry: Button, aim: () -> (number?, number?), done: (cast: boolean) -> ())
+local function bindDrag(entry: Button, aim: () -> (number?, number?, boolean?), done: (cast: boolean) -> ())
 	local held: InputObject? = nil
 	local start = Vector2.zero
 	local function finish(cast: boolean)
@@ -263,13 +263,13 @@ local function bindDrag(entry: Button, aim: () -> (number?, number?), done: (cas
 		if input.UserInputType ~= Enum.UserInputType.Touch or held then
 			return
 		end
-		local reach, radius = aim()
+		local reach, radius, line = aim()
 		if not reach then
 			return
 		end
 		held = input
 		start = Vector2.new(input.Position.X, input.Position.Y)
-		TopDownAim.Drag(Vector2.zero, reach, radius)
+		TopDownAim.Drag(Vector2.zero, reach, radius, line)
 	end)
 	UserInputService.TouchMoved:Connect(function(input)
 		if input ~= held then
@@ -302,9 +302,9 @@ local function bindUltDrag(entry: Button)
 	bindDrag(entry, function()
 		if player:GetAttribute("Kit") == "ShieldKnight" then
 			local rally = Tuning.ShieldKnight.Rally
-			return rally.LeapReach, rally.Radius
+			return rally.LeapReach, rally.Radius, false
 		end
-		return Tuning.Touch.UltReach, Tuning.FireMage.Meteor.Radius
+		return Tuning.Touch.UltReach, Tuning.FireMage.Meteor.Radius, false
 	end, function(cast)
 		if cast then
 			TopDownAim.ReleaseUlt()
@@ -317,17 +317,17 @@ end
 local function bindToolDrags()
 	bindDrag(buttons.Tool1, function()
 		if fireMage() then
-			return Tuning.Touch.FireReach, 1.5
+			return Tuning.Touch.FireReach, 1.5, false
 		end
-		return nil, nil
+		return nil, nil, nil
 	end, function()
 		TopDownAim.Drag(nil) -- the fire loop stops with the button's release
 	end)
 	bindDrag(buttons.Tool2, function()
 		if fireMage() then
-			return Tuning.Touch.WallReach, Tuning.FireMage.FlameWall.Length / 2
+			return Tuning.Touch.WallReach, Tuning.FireMage.FlameWall.Length / 2, true -- a line, like the wall
 		end
-		return nil, nil
+		return nil, nil, nil
 	end, function(cast)
 		if cast then
 			TopDownAim.ReleaseTool("Wall")
