@@ -159,6 +159,15 @@ local function badge(entry: Button, text: string)
 	entry.badge = t
 end
 
+-- shows the word under the icon (user asked for it on IGNITE: a fire icon alone reads as FIRE)
+local function caption(entry: Button)
+	entry.icon.Position = UDim2.fromScale(0.5, 0.4)
+	entry.icon.Size = UDim2.fromScale(0.46, 0.46)
+	entry.label.Position = UDim2.fromScale(0.5, 0.76)
+	entry.label.Size = UDim2.fromScale(0.72, 0.2)
+	entry.label.Visible = true
+end
+
 -- Roblox's jump button: centre + size in screen pixels (its layout rule when it isn't built yet)
 local function jumpRect(): (Vector2, number)
 	local touchGui = player.PlayerGui:FindFirstChild("TouchGui")
@@ -260,7 +269,9 @@ function TouchController.Init()
 	local tool2 = make("Tool2", "TOOL 2", "Release")
 	badge(tool2, "2")
 	place(tool2, 2, 152)
-	place(make("Ignite", "IGNITE", "Ignite"), 2, 120)
+	local ignite = make("Ignite", "IGNITE", "Ignite")
+	caption(ignite)
+	place(ignite, 2, 120)
 	place(make("Rotate", "ROTATE", "Rotate"), 2, 120)
 	place(make("Ultimate", "ULT", "Meteor"), 2, 92)
 	make("Ping", "PING", "Ping", true)
