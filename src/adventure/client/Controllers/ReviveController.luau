@@ -140,7 +140,7 @@ local function buildOwn(gui: ScreenGui)
 
 	local mashEvent = Net.event("RespawnMash")
 	local function onMash()
-		if not player:GetAttribute("Downed") then
+		if not player:GetAttribute("Downed") or workspace:GetAttribute("GameOver") then
 			return
 		end
 		mashEvent:FireServer()
@@ -164,6 +164,12 @@ local function buildOwn(gui: ScreenGui)
 
 	local wasDowned = false
 	RunService.RenderStepped:Connect(function(dt)
+		-- game over (both down): no meter, the GAME OVER screen restarts you (user, Oct 17)
+		if workspace:GetAttribute("GameOver") then
+			root.Visible = false
+			wasDowned = false
+			return
+		end
 		local downed = player:GetAttribute("Downed") == true
 		if downed then
 			if not wasDowned then
@@ -231,7 +237,7 @@ local function buildOverhead(gui: ScreenGui)
 	RunService.RenderStepped:Connect(function(dt)
 		for p, entry in bills do
 			local head = p.Character and p.Character:FindFirstChild("Head")
-			local downed = p:GetAttribute("Downed") == true and head ~= nil
+			local downed = p:GetAttribute("Downed") == true and head ~= nil and not workspace:GetAttribute("GameOver")
 			if downed and not entry.bill.Enabled then
 				entry.ring.shown = 0
 			end

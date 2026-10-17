@@ -191,6 +191,7 @@ local function bothDown()
 		return
 	end
 	gameOverRunning = true
+	workspace:SetAttribute("GameOver", true) -- clients hide the mash meter: nobody respawns by mashing now (user)
 	gameOverEvent:FireAllClients()
 	task.wait(1.6)
 	for _, p in DuoService.Players() do
@@ -201,6 +202,7 @@ local function bothDown()
 		HealthService.Restore(p, maxHealth(p))
 		states[p] = nil -- the old safe spots belong to the world that's about to be rebuilt
 	end
+	workspace:SetAttribute("GameOver", nil)
 	if HealthService.OnRestart then
 		HealthService.OnRestart() -- rebuilds the world and spawns both at the checkpoint
 	else
