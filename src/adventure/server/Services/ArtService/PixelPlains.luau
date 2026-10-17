@@ -1004,8 +1004,9 @@ local Decor: { { any } } = {
 	{ "Bush", CFrame.new(11, 3, 96) * CFrame.Angles(0, math.rad(200), 0), 1.4, "WindmillHill" },
 	{ "Flowers", CFrame.new(-12, 1.8, 180) * CFrame.Angles(0, math.rad(80), 0), 1.2, "WindmillHill" },
 	{ "Tree", CFrame.new(12, 5.6, 186) * CFrame.Angles(0, math.rad(300), 0), 0.7, "WindmillHill" },
-	{ "Cloud", CFrame.new(-45, 36, 150), 2, "WindmillHill" },
-	{ "Cloud", CFrame.new(50, 44, 60) * CFrame.Angles(0, math.rad(20), 0), 1.8, "WindmillHill" },
+	-- both clouds sit ≥ 170 studs from the Reveal_WindmillHill cameras (they used to cross the shots up close)
+	{ "Cloud", CFrame.new(80, 50, 170), 2, "WindmillHill" },
+	{ "Cloud", CFrame.new(-80, 50, 30) * CFrame.Angles(0, math.rad(20), 0), 1.8, "WindmillHill" },
 	-- Cloud Tower
 	{ "Cloud", CFrame.new(-40, 60, 60), 2.2, "CloudTower" },
 	{ "Cloud", CFrame.new(45, 80, 150) * CFrame.Angles(0, math.rad(-15), 0), 2.4, "CloudTower" },

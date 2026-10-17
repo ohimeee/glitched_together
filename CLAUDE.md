@@ -79,7 +79,7 @@
 5. **Epilogue look (re-skinned Oct 11, realistic):** user to see it in play (walk, lantern light, meteors: only data-checked, bgshot froze the client view). Optional: post-credits Pip in an unfinished zone.
 6. **BACK TO LOBBY exit (built Oct 11):** the lobby teleport itself is untested (needs 2 players + published place ids; Studio only warns). The credits cursor fix (`FreeCursor`, `wantsLock`, YES `Modal`) still needs one fresh run through the real credits.
 7. Hollow Dragon leftovers: scale orbs read as embers at its claws (wing-tip clipping fixed Oct 17: `RearZoom`, user to judge in the next fight).
-8. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); a decor cloud crosses the WindmillHill reveal shot; corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
+8. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
 9. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
 
 ## History (moved Oct 8, 2026)
