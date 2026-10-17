@@ -113,6 +113,32 @@ function EffectsController.Init()
 			end
 		end
 	end)
+	-- floor signs written for the flipped boss camera (tag FlipSign, e.g. THE HOLLOW THRONE) turn their text 180°
+	-- while the camera looks from the usual side, so they read upright before and after the fight too
+	local function flipSign(sign: Instance)
+		local turn = if workspace:GetAttribute("TopDownFlip") then 0 else 180
+		for _, d in sign:GetDescendants() do
+			if d:IsA("TextLabel") then
+				local base = d:GetAttribute("BaseRotation")
+				if base == nil then
+					base = d.Rotation
+					d:SetAttribute("BaseRotation", base)
+				end
+				d.Rotation = base + turn
+			end
+		end
+	end
+	Tags.each("FlipSign", function(sign)
+		flipSign(sign)
+		sign.DescendantAdded:Connect(function()
+			flipSign(sign)
+		end)
+	end)
+	workspace:GetAttributeChangedSignal("TopDownFlip"):Connect(function()
+		for _, sign in Tags.list("FlipSign") do
+			flipSign(sign)
+		end
+	end)
 	outline("GrappleRing", Palette.Miko)
 	outline("Pullable", Palette.Miko)
 	outline("Copyable", Palette.Kai)

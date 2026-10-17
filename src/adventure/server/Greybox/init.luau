@@ -3395,14 +3395,16 @@ local function buildStarfallCastle(world: Model)
 		"Miko: raise your shield in the dragon's breath. It stops the beam for anyone behind you.",
 		"Kai: its scales only open while it breathes. Burn them!",
 	})
-	-- read from the door side (the fight's camera looks from there: HollowDragon sets TopDownFlip)
-	sign(
+	-- read from the door side (the fight's camera looks from there: HollowDragon sets TopDownFlip); outside the fight
+	-- the client turns its text round (FlipSign, EffectsController)
+	local throneSign = sign(
 		world,
 		"THE HOLLOW THRONE",
 		CFrame.new(0, 0.35, 1546 + D) * CFrame.Angles(0, math.pi, 0) * CFrame.Angles(math.rad(-90), 0, 0),
 		Vector3.new(16, 4, 0.4),
 		P.Royal
 	)
+	throneSign:AddTag("FlipSign")
 	local trigger = block(world, Vector3.new(94, 30, 68), CFrame.new(0, 15, 1565 + D), {
 		name = "BossTrigger",
 		transparency = 1,

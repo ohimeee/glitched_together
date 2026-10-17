@@ -1,5 +1,6 @@
 -- Miko, World 1 (mechanics.md §4): Swing on Grapple Rings or anything Kai froze; Pull light objects to her.
 -- The swing itself runs on Miko's client for feel; the server only validates and can cut the line.
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -136,6 +137,22 @@ function GrappleLine.SwingTarget(p: Player): Instance?
 end
 
 function GrappleLine.Init()
+	-- a kit change (zone, world, boss phase) ends the swing: no stale anchor or rope carries into the next kit
+	local function watch(p: Player)
+		p:GetAttributeChangedSignal("Kit"):Connect(function()
+			if swinging[p] then
+				swinging[p] = nil
+				toolResult:FireAllClients("GrappleEnd", p)
+			end
+		end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _, p in Players:GetPlayers() do
+		watch(p)
+	end
+	Players.PlayerRemoving:Connect(function(p)
+		swinging[p] = nil
+	end)
 	-- If Kai's freeze runs out mid-swing, the line snaps.
 	MoverService.Resumed:Connect(function(inst: Instance)
 		for p, anchor in swinging do
