@@ -59,6 +59,13 @@ local ICON: { [string]: string } = {
 	Skip = "rbxassetid://73280159524845",
 }
 
+-- which button shows which tool use's cooldown (AbilityService sets player "Cooldown<use>" = server-time end)
+local COOLDOWN_USE: { [string]: { [string]: number } } = {
+	FireMage = { Tool2 = 2, Ignite = 3, Dash = 5 },
+	ShieldKnight = { Dash = 3 },
+	GrappleLine = { Tool2 = 2 },
+}
+
 -- per kit: { Tool1, Tool2, Dash? } as { caption, icon }
 local KIT_LABELS: { [string]: { { string } } } = {
 	PauseBeam = { { "FREEZE", "Freeze" }, { "RELEASE", "Release" } },
@@ -80,6 +87,7 @@ type Button = {
 	small: boolean?,
 	big: boolean?,
 	captioned: boolean?, -- the word shows under the icon (caption)
+	shade: Frame?, -- cooldown cover + seconds left
 }
 
 local gui: ScreenGui
@@ -157,7 +165,27 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 			b.BackgroundTransparency = Tuning.Touch.Fill
 		end
 	end)
-	local entry: Button = { button = b, label = label, icon = icon, small = small }
+	local shade = Instance.new("Frame")
+	shade.Name = "Cooldown"
+	shade.Size = UDim2.fromScale(1, 1)
+	shade.BackgroundColor3 = INK
+	shade.BackgroundTransparency = 0.25
+	shade.ZIndex = 3
+	shade.Visible = false
+	shade.Parent = b
+	Instance.new("UICorner", shade).CornerRadius = UDim.new(0.5, 0)
+	local seconds = Instance.new("TextLabel")
+	seconds.Name = "Seconds"
+	seconds.AnchorPoint = Vector2.new(0.5, 0.5)
+	seconds.Position = UDim2.fromScale(0.5, 0.5)
+	seconds.Size = UDim2.fromScale(0.6, 0.42)
+	seconds.BackgroundTransparency = 1
+	seconds.Font = Enum.Font.GothamBlack
+	seconds.TextScaled = true
+	seconds.TextColor3 = Color3.new(1, 1, 1)
+	seconds.ZIndex = 4
+	seconds.Parent = shade
+	local entry: Button = { button = b, label = label, icon = icon, small = small, shade = shade }
 	setIcon(entry, iconKey)
 	buttons[name] = entry
 	return entry
@@ -455,6 +483,25 @@ function TouchController.Init()
 		end
 	end)
 	refresh()
+
+	-- cooldowns: a dark cover with the seconds left on the kit's buttons that have a wait (WALL 8 s, BLINK...)
+	RunService.RenderStepped:Connect(function()
+		local kit = player:GetAttribute("Kit") :: string?
+		local uses = kit and COOLDOWN_USE[kit]
+		local now = workspace:GetServerTimeNow()
+		for name, entry in buttons do
+			local use = uses and uses[name]
+			local ends = use and player:GetAttribute(`Cooldown{use}`) :: number?
+			local left = if ends then ends - now else 0
+			local shade = entry.shade :: Frame
+			shade.Visible = left > 0.05
+			if left > 0.05 then
+				(shade:FindFirstChild("Seconds") :: TextLabel).Text = if left >= 1
+					then tostring(math.ceil(left))
+					else string.format("%.1f", left)
+			end
+		end
+	end)
 
 	-- /diag (admin): report how the touch icons loaded on this device, in chat + the console (phones have no Studio)
 	Net.event("AdminDiag").OnClientEvent:Connect(function()

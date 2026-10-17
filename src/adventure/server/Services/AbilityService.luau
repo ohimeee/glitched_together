@@ -64,6 +64,9 @@ function AbilityService.Init()
 				return
 			end
 			uses[useIndex] = now
+			if cooldown >= 1 then -- touch buttons draw the wait (TouchController): server-time end of the cooldown
+				p:SetAttribute(`Cooldown{useIndex}`, workspace:GetServerTimeNow() + cooldown)
+			end
 		end
 		tool.Use(p, useIndex, target, aim)
 	end)
