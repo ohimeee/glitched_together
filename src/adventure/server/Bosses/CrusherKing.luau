@@ -540,7 +540,9 @@ function Boss.Intro(world: Instance, shots: { any }): () -> ()
 			end
 		end
 	end
-	local SLAM = closeUp + 0.9
+	-- measured Oct 17 (camera + fist probe): at +0.9 the fists hit 0.3 s before the pull-back framed them; at +1.5
+	-- they're held up in view for ~0.2 s, then drop and land on screen
+	local SLAM = closeUp + 1.5
 	local t, slammed = 0, false
 	local blend = 1 -- 1 = alive, eased to 0 by stop()
 	local function pose()
