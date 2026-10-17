@@ -21,7 +21,11 @@ local function hook(character: Model)
 		end
 		local hit = workspace:Raycast(root.Position, Vector3.new(0, -6, 0), params)
 		if hit and CollectionService:HasTag(hit.Instance, "Bouncy") then
-			local up = if UserInputService:IsKeyDown(Enum.KeyCode.Space) then BOUNCE_JUMP else BOUNCE
+			-- jump held: Space, gamepad A, or the touch jump button (the control script holds Humanoid.Jump)
+			local held = UserInputService:IsKeyDown(Enum.KeyCode.Space)
+				or UserInputService:IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonA)
+				or humanoid.Jump
+			local up = if held then BOUNCE_JUMP else BOUNCE
 			local vel = root.AssemblyLinearVelocity
 			root.AssemblyLinearVelocity = Vector3.new(vel.X, up, vel.Z)
 		end

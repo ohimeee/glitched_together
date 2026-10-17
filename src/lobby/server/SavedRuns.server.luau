@@ -49,18 +49,15 @@ local function sample(p: Player): { RunIndex.Entry }
 		list,
 		{ partner = 2, name = "Jo", role = "Kai", world = "GlitchedCore", checkpoint = 6, t = now - 86400 }
 	)
-	table.insert(
-		list,
-		{
-			partner = 3,
-			name = "Ria",
-			role = "Kai",
-			world = "Epilogue",
-			checkpoint = 0,
-			complete = true,
-			t = now - 86400 * 9,
-		}
-	)
+	table.insert(list, {
+		partner = 3,
+		name = "Ria",
+		role = "Kai",
+		world = "Epilogue",
+		checkpoint = 0,
+		complete = true,
+		t = now - 86400 * 9,
+	})
 	return list
 end
 

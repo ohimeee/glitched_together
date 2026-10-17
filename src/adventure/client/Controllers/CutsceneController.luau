@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local Net = require(ReplicatedStorage.Shared.Net)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Input = require(script.Parent.Parent.Input)
 local CameraController = require(script.Parent.CameraController)
@@ -90,9 +91,10 @@ function CutsceneController.Init()
 
 	local function refreshSkip()
 		local votes = workspace:GetAttribute("SkipVotes") or 0
-		skipHint.Text = `SPACE skip {votes}/2`
+		skipHint.Text = `{Glyphs.key("Skip")} skip {votes}/2` -- SPACE / A / SKIP (TouchController's button)
 	end
 	workspace:GetAttributeChangedSignal("SkipVotes"):Connect(refreshSkip)
+	Glyphs.Changed:Connect(refreshSkip)
 
 	Input.action("MenuContext", "Skip").Pressed:Connect(function()
 		if playingId then

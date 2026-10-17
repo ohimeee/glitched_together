@@ -1,11 +1,10 @@
 -- HUD (mechanics.md §6): hearts/HP, tool card, crosshair, Pip hint bubble, GAME OVER? /
--- partner-wait overlays, and on-screen buttons for mobile. Every panel is a themed sticker (UiTheme via UiSkin):
+-- partner-wait overlays (on-screen touch buttons: TouchController). Every panel is a themed sticker (UiTheme via UiSkin):
 -- it re-skins per world (FredokaOne menu → Arcade pixel → Fantasy storybook → Code grey), art-direction.md §11.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
@@ -13,9 +12,10 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
-local Input = require(script.Parent.Parent.Input)
 local Aim = require(script.Parent.Parent.Aim)
 local CardReveal = require(script.Parent.Parent.CardReveal)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
 
 local player = Players.LocalPlayer
 
@@ -26,13 +26,14 @@ local HEART_FONT = Enum.Font.FredokaOne
 local HEART_FULL = Color3.fromRGB(255, 95, 162) -- Pip pink: health, not a gameplay color
 local HINT_CPS = 45 -- Pip's typewriter speed, characters per second
 
+-- {Action} tokens name the key of the device you play on (Util/Glyphs: LMB / RT / TOOL 1 ...)
 local TOOL_TEXT: { [string]: { any } } = {
-	PauseBeam = { "PAUSE BEAM", { "LMB", "Freeze" }, { "RMB", "Release" } },
-	GrappleLine = { "GRAPPLE LINE", { "LMB", "Swing" }, { "RMB", "Pull" } },
-	FireMage = { "FIRE MAGE", { "LMB", "Fireball   E Ignite" }, { "RMB", "Flame Wall   Shift Blink" } },
-	ShieldKnight = { "SHIELD KNIGHT", { "LMB", "Sword" }, { "RMB", "Block   Shift Charge" } },
-	CopyPaste = { "COPY / PASTE", { "LMB", "Copy" }, { "RMB", "Paste   R Rotate" } },
-	LayerShift = { "LAYER SHIFT", { "LMB", "Shift" }, { "RMB", "Pull Out" } },
+	PauseBeam = { "PAUSE BEAM", { "Tool1", "Freeze" }, { "Tool2", "Release" } },
+	GrappleLine = { "GRAPPLE LINE", { "Tool1", "Swing" }, { "Tool2", "Pull" } },
+	FireMage = { "FIRE MAGE", { "Tool1", "Fireball   {Ignite} Ignite" }, { "Tool2", "Flame Wall   {Dash} Blink" } },
+	ShieldKnight = { "SHIELD KNIGHT", { "Tool1", "Sword" }, { "Tool2", "Block   {Dash} Charge" } },
+	CopyPaste = { "COPY / PASTE", { "Tool1", "Copy" }, { "Tool2", "Paste   {Rotate} Rotate" } },
+	LayerShift = { "LAYER SHIFT", { "Tool1", "Shift" }, { "Tool2", "Pull Out" } },
 }
 
 local gui: ScreenGui
@@ -220,26 +221,27 @@ local function buildTools()
 	local function refresh()
 		local kit = player:GetAttribute("Kit")
 		local info = kit and TOOL_TEXT[kit]
-		card.Visible = info ~= nil
+		card.Visible = info ~= nil and Glyphs.device() ~= "Touch" -- touch: the buttons name the tools (TouchController)
 		crosshair.Visible = info ~= nil and player:GetAttribute("CameraMode") ~= "TopDown"
 		if info then
 			title.Text = info[1]
 			UiSkin.SetTextColor(title, roleColor(player)) -- your tool, your color (§6, §11)
-			key1.Text, use1.Text = info[2][1], info[2][2]
-			key2.Text, use2.Text = info[3][1], info[3][2]
+			key1.Text, use1.Text = Glyphs.key(info[2][1]), Glyphs.format(info[2][2])
+			key2.Text, use2.Text = Glyphs.key(info[3][1]), Glyphs.format(info[3][2])
 		end
 	end
 	-- the crosshair sits in the middle while the camera has the cursor locked, else it rides the cursor / touch
 	-- (and stands in for the mouse icon, which CameraController hides while a tool is out)
 	RunService.RenderStepped:Connect(function()
 		if crosshair.Visible then
-			local point = Aim.screenPoint()
+			local point = Aim.screenPoint() / UiFit.scale(gui) -- screen pixels, the HUD is UiFit-scaled
 			crosshair.Position = UDim2.fromOffset(point.X, point.Y)
 		end
 	end)
 	player:GetAttributeChangedSignal("Kit"):Connect(refresh)
 	player:GetAttributeChangedSignal("CameraMode"):Connect(refresh)
 	player:GetAttributeChangedSignal("Role"):Connect(refresh)
+	Glyphs.Changed:Connect(refresh)
 	refresh()
 end
 
@@ -300,7 +302,7 @@ local function buildHint()
 		end
 		local stamp = os.clock()
 		shownAt = stamp
-		label.Text = line
+		label.Text = Glyphs.format(line) -- {Jump}, {Tool1}... in the key of your device
 		label.MaxVisibleGraphemes = 0
 		bubble.Visible = true
 		Audio.play("PipChirp")
@@ -395,43 +397,6 @@ local function buildOverlays()
 	end)
 end
 
--- Mobile buttons ---------------------------------------------------------------------------
-local function buildTouch()
-	if not UserInputService.TouchEnabled then
-		return
-	end
-	local layout = {
-		{ "BaseContext", "Dash", "DASH", UDim2.new(1, -250, 1, -110) },
-		{ "BaseContext", "GroundPound", "POUND", UDim2.new(1, -250, 1, -190) },
-		{ "BaseContext", "Swing", "GRAB", UDim2.new(1, -330, 1, -150) },
-		{ "BaseContext", "Ping", "PING", UDim2.new(1, -90, 0, 120) },
-		{ "BaseContext", "Peek", "PEEK", UDim2.new(1, -90, 0, 190) },
-		{ "W1Tools", "Tool1", "TOOL 1", UDim2.new(1, -170, 1, -260) },
-		{ "W1Tools", "Tool2", "TOOL 2", UDim2.new(1, -90, 1, -260) },
-	}
-	for _, b in layout do
-		local button = new("TextButton", {
-			Name = b[2],
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = b[4],
-			Size = UDim2.fromOffset(70, 70),
-			TextScaled = true,
-			Text = b[3],
-			AutoButtonColor = true,
-			ZIndex = 3,
-		}, gui)
-		UiSkin.Panel(button)
-		UiSkin.Text(button, "Title")
-		new("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, button)
-		Input.bindButton(b[1], b[2], button)
-		-- Tool buttons serve every world's tool context.
-		if b[1] == "W1Tools" then
-			Input.bindButton("CastleTools", b[2], button)
-			Input.bindButton("W3Tools", b[2], button)
-		end
-	end
-end
-
 -- Castle: XP bar, ultimate meter, level-up picker, HP bars over heads (mechanics.md §6) ---------------------
 local UPGRADE_TEXT: { [string]: { string } } = {
 	BiggerFireball = { "BIGGER FIREBALL", "Fireballs are 50% bigger and hit 25% harder" },
@@ -501,6 +466,10 @@ local function buildXpAndUltimate()
 		if not show then
 			return
 		end
+		-- touch: the right corner belongs to the buttons, so the meter sits over the XP bar
+		local touch = Glyphs.device() == "Touch"
+		ultBack.AnchorPoint = if touch then Vector2.new(0.5, 1) else Vector2.new(1, 1)
+		ultBack.Position = if touch then UDim2.new(0.5, 0, 1, -66) else UDim2.new(1, -20, 1, -150)
 		local xp = (player:GetAttribute("XP") or 0) :: number
 		local level = (player:GetAttribute("Level") or 1) :: number
 		local levels = Tuning.XpLevels
@@ -512,11 +481,12 @@ local function buildXpAndUltimate()
 		ultFill.Size = UDim2.fromScale(math.clamp(ult, 0, 1), 1)
 		ultFill.BackgroundColor3 = roleColor(player)
 		local name = if player:GetAttribute("Kit") == "FireMage" then "METEOR" else "RALLY"
-		ultLabel.Text = if ult >= 1 then `{name} READY!  LMB + RMB` else name
+		ultLabel.Text = if ult >= 1 then Glyphs.format(`{name} READY!  \{Ultimate}`) else name
 	end
 	for _, attr in { "Kit", "XP", "Level", "Ultimate", "Role" } do
 		player:GetAttributeChangedSignal(attr):Connect(refresh)
 	end
+	Glyphs.Changed:Connect(refresh)
 	refresh()
 end
 
@@ -710,11 +680,11 @@ function HUDController.Init()
 		{ Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Global },
 		player:WaitForChild("PlayerGui")
 	)
+	UiFit.attach(gui) -- smaller on phones, bigger on a TV
 	buildHealth()
 	buildTools()
 	buildHint()
 	buildOverlays()
-	buildTouch()
 	buildCastle()
 	buildBoss()
 end

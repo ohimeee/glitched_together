@@ -39,10 +39,31 @@ return {
 	LedgeAssistReach = 2.5, -- studs a near-miss ledge pulls you up
 	MobileAutoSprintAfter = 1.5,
 	-- World loading (WorldService.Load + client LoadingController)
+	-- Screen scaling for pixel-built HUDs (Util/UiFit): factor = min(view / Design), clamped
+	UiFit = {
+		Design = Vector2.new(1280, 720), -- px the HUD was laid out at
+		Min = 0.55, -- smallest phone scale (below this text stops reading)
+		TvBoost = 1, -- extra factor on a TV (10-foot UI; the view/Design ratio already grows it there)
+		Max = 1.6,
+	},
+	-- Touch controls (HUDController.buildTouch): button sizes in px before UiFit
+	Touch = {
+		Button = 64, -- action buttons round the jump button
+		Small = 50, -- PING / PEEK / SKIP
+		AimRange = 60, -- studs: castle auto-aim picks the nearest enemy within this, in front of you
+		AimCone = 75, -- degrees either side of your facing/move direction it looks
+	},
+	-- Low-end devices (client PerfController): phones/tablets or the graphics slider at or under LowQualityLevel
+	Perf = {
+		LowParticles = 0.45, -- × every particle emitter's rate
+		LowQualityLevel = 3, -- SavedQualityLevel 1..10 (Automatic counts as not low)
+	},
 	WorldLoad = {
-		Timeout = 25, -- s the server waits for a world's art before spawning the duo anyway
-		ClientRadius = 220, -- studs around you whose meshes/textures the client downloads behind the screen
-		ClientTimeout = 8, -- s the client waits for those downloads at most
+		Timeout = 60, -- s the server waits for a world's art before spawning the duo anyway (safety net only)
+		Settle = 1, -- s with nothing new added to the world before its asset list is taken (late-built art)
+		SettleMax = 10, -- s that settling waits at most
+		ClientRadius = 220, -- studs around you whose streamed-in parts preload as instances (on top of the full id list)
+		ClientTimeout = 60, -- s the client waits for the whole world's downloads at most (safety net only)
 		MinShow = 0.6, -- s the screen stays up at least (no flash on instant reloads)
 	},
 	-- Move animations (Config/MoveAnims.luau, MoveAnimController)

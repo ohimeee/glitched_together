@@ -112,8 +112,8 @@ function FireMage:Start()
 
 	local hand = 1 -- auto-fire throws with alternating hands
 	local lastWall, lastIgnite = -math.huge, -math.huge -- the cast animation only plays when the server will cast
-	local function meteor(): boolean
-		if fire:IsDown() and wall:IsDown() and ultimateReady() then
+	local function meteor(force: boolean?): boolean
+		if (force or fire:IsDown() and wall:IsDown()) and ultimateReady() then
 			MoveAnim.Play("CastMeteor")
 			toolUse:FireServer(4, nil, TopDownAim.point())
 			return true
@@ -158,6 +158,11 @@ function FireMage:Start()
 				MoveAnim.Play("CastIgnite")
 			end
 			toolUse:FireServer(3, target, TopDownAim.point())
+		end
+	end))
+	trove:Add(Input.action("CastleTools", "Ultimate").Pressed:Connect(function()
+		if not busy() then
+			meteor(true)
 		end
 	end))
 	trove:Add(Input.action("BaseContext", "Dash").Pressed:Connect(function()

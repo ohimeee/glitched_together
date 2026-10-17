@@ -1,12 +1,19 @@
 -- Top-down aiming for the castle kits (implementation.md §8 "Aiming"): the mouse ray (or the right stick's
 -- direction) hits a flat plane at the character's height; the character turns to face that point and a small
 -- reticle marks it. Tools read TopDownAim.point() and send it to the server as `aim`.
+-- Touch, and a gamepad with the right stick at rest (mobile + console pass): auto-aim at the nearest enemy in front
+-- (Tuning.Touch.AimRange / AimCone around where you walk or face), else straight ahead.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local CollectionService = game:GetService("CollectionService")
+
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local player = Players.LocalPlayer
@@ -29,7 +36,48 @@ local function humanoid(): Humanoid?
 	return c and c:FindFirstChildOfClass("Humanoid")
 end
 
+-- where you walk (or face, standing still), flat
+local function heading(root: BasePart): Vector3
+	local hum = humanoid()
+	local move = if hum then hum.MoveDirection else Vector3.zero
+	local v = if move.Magnitude > 0.1 then move else root.CFrame.LookVector
+	v = Vector3.new(v.X, 0, v.Z)
+	return if v.Magnitude > 0.01 then v.Unit else Vector3.zAxis
+end
+
+local function autoAim(root: BasePart): Vector3
+	local ahead = heading(root)
+	local cosCone = math.cos(math.rad(Tuning.Touch.AimCone))
+	local best, bestDist = nil, Tuning.Touch.AimRange
+	for _, enemy in CollectionService:GetTagged("Enemy") do
+		if
+			enemy:IsDescendantOf(workspace)
+			and not enemy:GetAttribute("Dormant")
+			and (enemy:GetAttribute("HP") or 1) > 0
+		then
+			local pos = Tags.position(enemy)
+			local flat = Vector3.new(pos.X - root.Position.X, 0, pos.Z - root.Position.Z)
+			local dist = flat.Magnitude
+			if
+				dist < bestDist
+				and math.abs(pos.Y - root.Position.Y) < 30
+				and (dist < 4 or flat.Unit:Dot(ahead) > cosCone)
+			then
+				best, bestDist = pos, dist
+			end
+		end
+	end
+	if best then
+		return Vector3.new(best.X, root.Position.Y, best.Z)
+	end
+	return root.Position + ahead * 20
+end
+
 local function compute(root: BasePart): Vector3
+	local device = Glyphs.device()
+	if device == "Touch" or (device == "Gamepad" and stick.Magnitude <= 0.3) then
+		return autoAim(root)
+	end
 	if stick.Magnitude > 0.3 then
 		-- right stick: camera-relative direction on the floor
 		local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z).Unit

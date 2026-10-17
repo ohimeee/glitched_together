@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SocialService = game:GetService("SocialService")
 local GuiService = game:GetService("GuiService")
+local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
@@ -14,6 +15,8 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
+local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 
 local player = Players.LocalPlayer
 
@@ -28,6 +31,13 @@ gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.DisplayOrder = 5
 gui.Parent = player:WaitForChild("PlayerGui")
+local fitScale = UiFit.attach(gui) -- the button stack lines up with LobbyUI's (same scale)
+local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+
+-- gamepad: menus put the selection on their first button (console pass)
+local function padSelect(): boolean
+	return Glyphs.device() == "Gamepad" or GuiService:IsTenFootInterface()
+end
 
 local function label(
 	parent: Instance,
@@ -81,9 +91,11 @@ local function scaleToScreen(frame: GuiObject, width: number)
 	scale.Parent = frame
 	local function fit()
 		local view = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
-		scale.Scale = math.clamp(math.min(view.X / (width + 40), view.Y / 640), 0.5, 1)
+		-- the panel's own fit, on top of the whole gui's UiFit (so the two don't shrink it twice)
+		scale.Scale = math.clamp(math.min(view.X / (width + 40), view.Y / 640), 0.5, 1) / math.max(fitScale.Scale, 0.01)
 	end
 	fit()
+	fitScale:GetPropertyChangedSignal("Scale"):Connect(fit)
 	if workspace.CurrentCamera then
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
 	end
@@ -184,6 +196,10 @@ listPad.Parent = list
 local openButton =
 	button(gui, "SAVED RUNS", Color3.fromRGB(70, 90, 200), UDim2.new(1, -16, 1, -74), UDim2.fromOffset(210, 52), 2)
 openButton.AnchorPoint = Vector2.new(1, 1)
+if TOUCH then -- LobbyUI's stack moves to the top right on phones (the jump button's corner)
+	openButton.AnchorPoint = Vector2.new(1, 0)
+	openButton.Position = UDim2.new(1, -16, 0, 60 + 58)
+end
 
 local runs: { any } = {}
 local firstAction: GuiObject? = nil
@@ -283,7 +299,8 @@ local function render()
 		end
 	end
 	firstAction = nil
-	openButton.Text = if #runs > 0 then `SAVED RUNS ({#runs})` else "SAVED RUNS"
+	local key = if padSelect() then "  [Y]" else "" -- the gamepad shortcut
+	openButton.Text = (if #runs > 0 then `SAVED RUNS ({#runs})` else "SAVED RUNS") .. key
 	if #runs == 0 then
 		local empty = label(
 			list,
@@ -307,7 +324,7 @@ local function setMenu(open: boolean)
 		menu.Position = UDim2.new(0.5, 0, 0.5, 20)
 		TweenService:Create(menu, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Position = UDim2.fromScale(0.5, 0.5) })
 			:Play()
-		if GuiService:IsTenFootInterface() or (GuiService.SelectedObject ~= nil) then
+		if padSelect() or GuiService.SelectedObject ~= nil then
 			GuiService.SelectedObject = firstAction or close
 		end
 	elseif GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(menu) then
@@ -320,11 +337,20 @@ end)
 close.Activated:Connect(function()
 	setMenu(false)
 end)
+-- gamepad: Y opens / closes the menu (no cursor to reach the button), B closes it
+UserInputService.InputBegan:Connect(function(input, processed)
+	if input.KeyCode == Enum.KeyCode.ButtonY and not processed then
+		setMenu(not menu.Visible)
+	elseif input.KeyCode == Enum.KeyCode.ButtonB and menu.Visible then
+		setMenu(false)
+	end
+end)
 
 Net.event("SavedRuns").OnClientEvent:Connect(function(list: { any })
 	runs = list
 	render()
 end)
+Glyphs.Changed:Connect(render)
 render()
 
 -- ── The invite card ("Ana wants to continue") ───────────────────────────────────────────────────────────────────
@@ -371,7 +397,7 @@ Net.event("RunInviteOffer").OnClientEvent
 		offer.Size = UDim2.fromOffset(380, 170)
 		TweenService:Create(offer, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Size = UDim2.fromOffset(420, 190) })
 			:Play()
-		if GuiService.SelectedObject ~= nil then
+		if padSelect() or GuiService.SelectedObject ~= nil then
 			GuiService.SelectedObject = yes
 		end
 		task.delay(30, function()
@@ -404,9 +430,16 @@ end)
 
 local function syncChip()
 	local save = player:GetAttribute("SeatSave") :: string?
+	local was = chip.Visible
 	chip.Visible = save ~= nil
 	if not save then
+		if GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(chip) then
+			GuiService.SelectedObject = nil
+		end
 		return
+	end
+	if not was and padSelect() and GuiService.SelectedObject == nil then
+		GuiService.SelectedObject = keep -- seated with a gamepad: A = CONTINUE, right = NEW GAME
 	end
 	local votes = (player:GetAttribute("SeatVotes") or 0) :: number
 	local mine = player:GetAttribute("SeatMyVote") == true

@@ -75,6 +75,47 @@ end
 
 local loadToken = 0
 
+-- Every content id the loaded world uses (user Oct 17: "at the loading screen make all of the assets loaded"). Clients
+-- get the list (`WorldAssets`) and download all of it behind the loading screen, not only what streamed in near them.
+local ASSET_PROPS: { [string]: { string } } = {
+	MeshPart = { "MeshId", "TextureID" },
+	SpecialMesh = { "MeshId", "TextureId" },
+	Decal = { "Texture" },
+	Texture = { "Texture" },
+	SurfaceAppearance = { "ColorMap", "NormalMap", "RoughnessMap", "MetalnessMap" },
+	ParticleEmitter = { "Texture" },
+	Beam = { "Texture" },
+	Trail = { "Texture" },
+	Sound = { "SoundId" },
+	ImageLabel = { "Image" },
+	ImageButton = { "Image" },
+	Sky = { "SkyboxBk", "SkyboxDn", "SkyboxFt", "SkyboxLf", "SkyboxRt", "SkyboxUp", "SunTextureId", "MoonTextureId" },
+}
+local worldAssets: { string } = {}
+local worldAssetsName = ""
+
+local function collectAssets(roots: { Instance }): { string }
+	local seen: { [string]: boolean } = {}
+	local list: { string } = {}
+	for _, root in roots do
+		for _, d in root:GetDescendants() do
+			local props = ASSET_PROPS[d.ClassName]
+			if props then
+				for _, prop in props do
+					local ok, id = pcall(function()
+						return (d :: any)[prop]
+					end)
+					if ok and type(id) == "string" and id ~= "" and not seen[id] then
+						seen[id] = true
+						table.insert(list, id)
+					end
+				end
+			end
+		end
+	end
+	return list
+end
+
 local function freeze(on: boolean)
 	for _, p in DuoService.Players() do
 		local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -140,6 +181,46 @@ function WorldService.Load(worldName: string, checkpoint: number?, restart: bool
 	if token ~= loadToken then
 		return -- a newer Load took over (Studio world jumps)
 	end
+
+	-- some art builds in its own task after `Dressed` (Dragon Hall, fuse, traps): list once the world stops growing
+	-- (only new content ids count: dropper blocks and shards re-use ids and would never settle)
+	local known: { [string]: boolean } = {}
+	for _, id in collectAssets({ model }) do
+		known[id] = true
+	end
+	local lastAdded = os.clock()
+	local growing = model.DescendantAdded:Connect(function(d)
+		local props = ASSET_PROPS[d.ClassName]
+		if not props then
+			return
+		end
+		task.defer(function() -- ids are often set right after parenting
+			for _, prop in props do
+				local ok, id = pcall(function()
+					return (d :: any)[prop]
+				end)
+				if ok and type(id) == "string" and id ~= "" and not known[id] then
+					known[id] = true
+					lastAdded = os.clock()
+				end
+			end
+		end)
+	end)
+	local settleStart = os.clock()
+	while
+		os.clock() - lastAdded < Tuning.WorldLoad.Settle
+		and os.clock() - settleStart < Tuning.WorldLoad.SettleMax
+		and token == loadToken
+	do
+		task.wait(0.1)
+	end
+	growing:Disconnect()
+	if token ~= loadToken then
+		return
+	end
+	worldAssets = collectAssets({ model, game:GetService("Lighting") })
+	worldAssetsName = worldName
+	Net.event("WorldAssets"):FireAllClients(worldName, worldAssets)
 
 	table.clear(zoneOf)
 	forced = nil
@@ -284,6 +365,13 @@ function WorldService.Init()
 	CheckpointService.Reached:Connect(function(order: number)
 		SaveService.Set({ world = WorldService.Current, checkpoint = order })
 		task.spawn(SaveService.Flush)
+	end)
+
+	-- a client that joined after the load asks for the asset list
+	Net.event("WorldAssets").OnServerEvent:Connect(function(p: Player)
+		if worldAssetsName ~= "" then
+			Net.event("WorldAssets"):FireClient(p, worldAssetsName, worldAssets)
+		end
 	end)
 
 	task.spawn(watchExits)

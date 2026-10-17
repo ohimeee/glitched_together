@@ -16,12 +16,14 @@ local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 local LoadingCards = require(ReplicatedStorage.Shared.Config.LoadingCards)
+local Net = require(ReplicatedStorage.Shared.Net)
 
 local player = Players.LocalPlayer
 
 local LoadingController = {}
 
 local TIP_TIME = 5 -- s each tip stays
+local SERVER_SHARE = 0.6 -- the progress line: server build + dress, then this client's downloads
 local ASPECT = 1824 / 1024 -- the painting's shape (two 912×1024 halves)
 
 local gui: ScreenGui
@@ -283,31 +285,46 @@ local function show()
 	session += 1
 	shownAt = os.clock()
 	build(workspace:GetAttribute("LoadingWorld") :: string?)
-	setProgress(((workspace:GetAttribute("LoadProgress") or 0) :: number) * 0.85)
+	setProgress(((workspace:GetAttribute("LoadProgress") or 0) :: number) * SERVER_SHARE)
 end
 
--- Download what's around you (streamed in near the spawn) while still covered.
+-- The server's list of every content id in the loaded world (WorldService `WorldAssets`).
+local assetsWorld = ""
+local assetIds: { string } = {}
+
+-- Download the whole world's assets while still covered (user Oct 17: "make all of the assets loaded"): every id on
+-- the server's list, plus the streamed-in parts around you as instances (their meshes are ready the moment they show).
 local function preloadAround()
 	task.wait(0.4) -- let streaming deliver the spawn area
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	local world = workspace:FindFirstChild("World")
-	if not (root and world) then
-		return
+	local loading = workspace:GetAttribute("World")
+	local waitList = os.clock()
+	while assetsWorld ~= loading and os.clock() - waitList < 3 do
+		task.wait(0.1) -- the list rides a remote sent just before WorldLoading turns off
 	end
-	local list: { Instance } = {}
-	local radius = Tuning.WorldLoad.ClientRadius
-	for _, d in world:GetDescendants() do
-		if d:IsA("MeshPart") then
-			if (d.Position - root.Position).Magnitude < radius then
-				table.insert(list, d)
-			end
-		elseif d:IsA("Decal") or d:IsA("Texture") or d:IsA("SurfaceAppearance") then
-			local part = d.Parent
-			if part and part:IsA("BasePart") and (part.Position - root.Position).Magnitude < radius then
-				table.insert(list, d)
+	local list: { any } = {}
+	if assetsWorld == loading then
+		table.move(assetIds, 1, #assetIds, 1, list)
+	end
+	if root and world then
+		local radius = Tuning.WorldLoad.ClientRadius
+		for _, d in world:GetDescendants() do
+			if d:IsA("MeshPart") then
+				if (d.Position - root.Position).Magnitude < radius then
+					table.insert(list, d)
+				end
+			elseif d:IsA("Decal") or d:IsA("Texture") or d:IsA("SurfaceAppearance") then
+				local part = d.Parent
+				if part and part:IsA("BasePart") and (part.Position - root.Position).Magnitude < radius then
+					table.insert(list, d)
+				end
 			end
 		end
+	end
+	if #list == 0 then
+		return
 	end
 	local done, total = 0, #list
 	local finished = false
@@ -315,7 +332,9 @@ local function preloadAround()
 		pcall(function()
 			ContentProvider:PreloadAsync(list, function()
 				done += 1
-				setProgress(0.85 + 0.15 * done / math.max(total, 1))
+				if done % 10 == 0 or done == total then
+					setProgress(SERVER_SHARE + (1 - SERVER_SHARE) * done / math.max(total, 1))
+				end
 			end)
 		end)
 		finished = true
@@ -362,6 +381,11 @@ local function hide()
 end
 
 function LoadingController.Init()
+	local assets = Net.event("WorldAssets")
+	assets.OnClientEvent:Connect(function(worldName: string, ids: { string })
+		assetsWorld, assetIds = worldName, ids
+	end)
+	assets:FireServer() -- joined after a load: ask for the current list
 	show() -- the first load: covered from the start
 	if workspace:GetAttribute("WorldLoading") == false then
 		task.spawn(hide) -- joined after it had loaded
@@ -375,7 +399,7 @@ function LoadingController.Init()
 	end)
 	workspace:GetAttributeChangedSignal("LoadProgress"):Connect(function()
 		if workspace:GetAttribute("WorldLoading") == true then
-			setProgress(((workspace:GetAttribute("LoadProgress") or 0) :: number) * 0.85)
+			setProgress(((workspace:GetAttribute("LoadProgress") or 0) :: number) * SERVER_SHARE)
 		end
 	end)
 	workspace:GetAttributeChangedSignal("LoadingWorld"):Connect(function()

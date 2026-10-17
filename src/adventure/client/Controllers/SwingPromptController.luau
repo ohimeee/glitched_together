@@ -1,14 +1,14 @@
 -- Context prompts on swing points (user, Oct 4: "how the hell players know they will rope that"; memory teach-controls):
 -- a small "[F] SWING" chip floats over every SwingPoint within `Tuning.SwingPromptRange`, faded until the point is in
--- grab range (`Tuning.SwingRange`), then bright with a pop. The key follows the last input: F on keyboard, RB on a
--- gamepad, "TAP SWING" on touch. Local and purely visual; MovementController does the grab.
+-- grab range (`Tuning.SwingRange`), then bright with a pop. The key follows your device (Util/Glyphs): F on keyboard, RB on a
+-- gamepad, GRAB (the touch button) on touch. Local and purely visual; MovementController does the grab.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local SwingPromptController = {}
@@ -21,13 +21,7 @@ type Prompt = { gui: BillboardGui, chip: Frame, key: TextLabel, label: TextLabel
 local prompts: { [Instance]: Prompt } = {}
 
 local function keyText(): string
-	local last = UserInputService:GetLastInputType()
-	if last.Name:find("Gamepad") then
-		return "RB"
-	elseif last == Enum.UserInputType.Touch then
-		return "TAP"
-	end
-	return "F"
+	return Glyphs.key("Swing") -- F / RB / GRAB (the touch button)
 end
 
 local function make(point: Instance): Prompt

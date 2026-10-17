@@ -12,6 +12,8 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
@@ -96,13 +98,7 @@ local function pulse(scale: UIScale)
 end
 
 local function mashKey(): string
-	local last = UserInputService:GetLastInputType()
-	if last == Enum.UserInputType.Touch then
-		return "TAP"
-	elseif string.find(last.Name, "Gamepad") then
-		return "A"
-	end
-	return "SPACE"
+	return Glyphs.key("Mash") -- SPACE / A / TAP
 end
 
 -- Your own meter, mid-screen --------------------------------------------------------------------------------
@@ -255,6 +251,7 @@ function ReviveController.Init()
 		IgnoreGuiInset = true,
 		ZIndexBehavior = Enum.ZIndexBehavior.Global,
 	}, player:WaitForChild("PlayerGui"))
+	UiFit.attach(gui) -- the meter shrinks on phones, grows on a TV
 	buildOwn(gui)
 	buildOverhead(gui)
 end

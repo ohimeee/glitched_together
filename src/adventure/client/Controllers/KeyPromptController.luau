@@ -7,32 +7,20 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 
 local KeyPromptController = {}
 
 local player = Players.LocalPlayer
 local INK = Color3.fromRGB(24, 26, 40)
 
--- the key each action shows, per input: keyboard, gamepad, touch
-local KEYS: { [string]: { string } } = {
-	Dash = { "SHIFT", "B", "TAP" },
-	Ignite = { "E", "X", "TAP" },
-}
-
+-- the key each action shows follows your device (Util/Glyphs: SHIFT / B / DASH...)
 local function keyText(action: string): string
-	local keys = KEYS[action] or { action, action, action }
-	local last = UserInputService:GetLastInputType()
-	if last.Name:find("Gamepad") then
-		return keys[2]
-	elseif last == Enum.UserInputType.Touch then
-		return keys[3]
-	end
-	return keys[1]
+	return Glyphs.key(action)
 end
 
 type Chip = { gui: BillboardGui, key: TextLabel, label: TextLabel, scale: UIScale }
@@ -119,6 +107,26 @@ function KeyPromptController.Focus(adornee: Instance?, action: string?, text: st
 end
 
 function KeyPromptController.Init()
+	-- world signs with {Action} tokens (Greybox `sign`): rewritten in the key of your device
+	local signs: { [Instance]: boolean } = {}
+	local function render(label: Instance)
+		local template = label:GetAttribute("GlyphTemplate")
+		if type(template) == "string" and label:IsA("TextLabel") then
+			label.Text = Glyphs.format(template)
+		end
+	end
+	Tags.each("GlyphText", function(label)
+		signs[label] = true
+		render(label)
+	end, function(label)
+		signs[label] = nil
+	end)
+	Glyphs.Changed:Connect(function()
+		for label in signs do
+			render(label)
+		end
+	end)
+
 	focus = make()
 	Tags.each("KeyPrompt", function(inst)
 		if not tagged[inst] then

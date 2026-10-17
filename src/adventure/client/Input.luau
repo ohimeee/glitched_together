@@ -50,7 +50,10 @@ local SPECS: { ContextSpec } = {
 		actions = {
 			{ name = "Tool1", keys = { K.MouseLeftButton, K.ButtonR2 } },
 			{ name = "Tool2", keys = { K.MouseRightButton, K.ButtonL2 } },
-			{ name = "Ignite", keys = { K.E, K.ButtonX } },
+			-- Y, not X: X is every ProximityPrompt's gamepad key (both fired at a lever near a brazier)
+			{ name = "Ignite", keys = { K.E, K.ButtonY } },
+			-- touch only (the ULT button): keyboard / gamepad hold both tool buttons instead
+			{ name = "Ultimate", keys = {} },
 		},
 	},
 	{

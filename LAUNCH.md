@@ -50,7 +50,7 @@ Plays in the **lobby place** on the first join of a session; any key / click / t
 
 ## 3. Devices (user pick: PC + mobile + console)
 
-Existing: gamepad bindings for every action (`client/Input.luau`), touch camera sensitivity, mobile auto-sprint. Never tested on a phone or a console.
+**Built Oct 17 (30th session, HISTORY.md):** touch rings (`TouchController`), per-device key names (`Util/Glyphs`), UI scaling (`Util/UiFit`), castle auto-aim, gamepad menu selection, low-end particles (`PerfController`). Checked in Studio with `DebugDevice` only: still to test on a real phone, tablet and console. The lists below were the plan.
 
 **Mobile pass (to plan in detail):**
 - On-screen buttons: jump, dash, ground pound, swing/grapple, Tool1/Tool2, ignite/rotate where a world uses them, mash-to-respawn.

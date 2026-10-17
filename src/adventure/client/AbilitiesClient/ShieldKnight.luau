@@ -67,8 +67,8 @@ function ShieldKnight:Start()
 	local lastCharge = { t = -math.huge }
 	local step, lastSwing = 0, -math.huge -- the sword combo's animation follows the server's 3-hit chain
 
-	local function rally(): boolean
-		if sword:IsDown() and block:IsDown() and ultimateReady() then
+	local function rally(force: boolean?): boolean
+		if (force or sword:IsDown() and block:IsDown()) and ultimateReady() then
 			MoveAnim.Set("Block", false)
 			MoveAnim.Play("Rally")
 			toolUse:FireServer(4, nil, TopDownAim.point())
@@ -101,6 +101,11 @@ function ShieldKnight:Start()
 	trove:Add(block.Released:Connect(function()
 		MoveAnim.Set("Block", false)
 		toolUse:FireServer(2, nil, false)
+	end))
+	trove:Add(Input.action("CastleTools", "Ultimate").Pressed:Connect(function()
+		if not busy() then
+			rally(true)
+		end
 	end))
 	trove:Add(Input.action("BaseContext", "Dash").Pressed:Connect(function()
 		charge(lastCharge)

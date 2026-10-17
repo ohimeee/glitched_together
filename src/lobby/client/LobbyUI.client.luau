@@ -2,10 +2,12 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SocialService = game:GetService("SocialService")
+local UserInputService = game:GetService("UserInputService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
+local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
 
 local player = Players.LocalPlayer
 
@@ -14,12 +16,21 @@ gui.Name = "LobbyUI"
 gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.Parent = player:WaitForChild("PlayerGui")
+UiFit.attach(gui)
+
+-- phones: Roblox's jump button owns the bottom right, so the stack moves to the top right (under the top bar)
+local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local function stackAt(index: number): (UDim2, Vector2)
+	if TOUCH then
+		return UDim2.new(1, -16, 0, 60 + index * 58), Vector2.new(1, 0)
+	end
+	return UDim2.new(1, -16, 1, -16 - index * 58), Vector2.new(1, 1)
+end
 
 -- sticker buttons in the main HUD style (UiTheme default: FredokaOne, art-direction.md §11)
-local function button(text: string, color: Color3, position: UDim2): TextButton
+local function button(text: string, color: Color3, index: number): TextButton
 	local b = Instance.new("TextButton")
-	b.AnchorPoint = Vector2.new(1, 1)
-	b.Position = position
+	b.Position, b.AnchorPoint = stackAt(index)
 	b.Size = UDim2.fromOffset(210, 52)
 	b.Text = text
 	b.TextScaled = true
@@ -41,7 +52,7 @@ local function button(text: string, color: Color3, position: UDim2): TextButton
 	return b
 end
 
-local invite = button("INVITE A FRIEND", Palette.Prologue.Pink, UDim2.new(1, -16, 1, -16))
+local invite = button("INVITE A FRIEND", Palette.Prologue.Pink, 0)
 invite.Activated:Connect(function()
 	local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, player)
 	if ok and canInvite then
@@ -50,7 +61,7 @@ invite.Activated:Connect(function()
 end)
 
 Net.event("RejoinOffer").OnClientEvent:Connect(function()
-	local rejoin = button("REJOIN PARTNER", Color3.fromRGB(40, 170, 90), UDim2.new(1, -16, 1, -132))
+	local rejoin = button("REJOIN PARTNER", Color3.fromRGB(40, 170, 90), 2)
 	rejoin.Activated:Connect(function()
 		rejoin.Text = "JOINING..."
 		Net.event("RejoinAccept"):FireServer()

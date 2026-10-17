@@ -2,7 +2,7 @@
 -- real-world ending cutscene: a night-blue screen, the credits (Config/Credits) scroll up, then the title card
 -- "CONTINUE?" with one answer, YES. YES fades the screen away, leaves the duo free under the stars and tells the
 -- server to open the BACK TO LOBBY exit on the hilltop ledge (Main).
--- Space / click / tap skips straight to the title card. Under it sits a small, optional tip jar (Config/Products.Support,
+-- Space / A / click / tap skips straight to the title card; on a gamepad YES is selected (A presses it). Under it sits a small, optional tip jar (Config/Products.Support,
 -- server SupportService): "Enjoyed it? Support our next game", three Robux buttons, thank-you on purchase.
 local AvatarEditorService = game:GetService("AvatarEditorService")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -11,18 +11,35 @@ local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Credits = require(ReplicatedStorage.Shared.Config.Credits)
 local Places = require(ReplicatedStorage.Shared.Config.Places)
 local Products = require(ReplicatedStorage.Shared.Config.Products)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
 
 local CreditsController = {}
 
 local player = Players.LocalPlayer
 local SCROLL_SPEED = 60 -- pixels per second
 local THEME = UiTheme.For("Epilogue")
+
+-- gamepad: put the selection on `button` (console pass: every menu reachable without a cursor)
+local function selectFor(button: GuiObject)
+	if Glyphs.device() == "Gamepad" or GuiService:IsTenFootInterface() then
+		GuiService.SelectedObject = button
+	end
+end
+
+local function clearSelection(root: Instance)
+	local selected = GuiService.SelectedObject
+	if selected and selected:IsDescendantOf(root) then
+		GuiService.SelectedObject = nil
+	end
+end
 
 local function label(parent: Instance, text: string, size: number, font: Enum.Font, color: Color3): TextLabel
 	local t = Instance.new("TextLabel")
@@ -164,9 +181,11 @@ local function roll()
 	gui.IgnoreGuiInset = true
 	gui.DisplayOrder = 20 -- over the cutscene bars and the HUD
 	gui.Parent = player:WaitForChild("PlayerGui")
+	UiFit.attach(gui)
 	player:SetAttribute("FreeCursor", true) -- CameraController unlocks the mouse so YES can be clicked
 	gui.Destroying:Connect(function()
 		player:SetAttribute("FreeCursor", nil)
+		clearSelection(gui)
 	end)
 
 	local back = Instance.new("Frame")
@@ -249,6 +268,15 @@ local function roll()
 			end
 			TweenService:Create(q, TweenInfo.new(1), { TextTransparency = 0 }):Play()
 			TweenService:Create(yes, TweenInfo.new(1), { TextTransparency = 0, BackgroundTransparency = 0 }):Play()
+			selectFor(yes) -- A presses YES; down reaches the tip jar
+			local follow = Glyphs.Changed:Connect(function()
+				if yes.Parent and GuiService.SelectedObject == nil then
+					selectFor(yes) -- picked up a controller at the title card
+				end
+			end)
+			yes.Destroying:Connect(function()
+				follow:Disconnect()
+			end)
 			-- YES blinks like an old title screen cursor until it's pressed
 			task.spawn(function()
 				while yes.Parent do
@@ -276,7 +304,12 @@ local function roll()
 		if processed then
 			return
 		end
-		if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+		if
+			input.KeyCode == Enum.KeyCode.Space
+			or input.KeyCode == Enum.KeyCode.ButtonA
+			or input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
 			finish()
 		end
 	end)
@@ -308,9 +341,17 @@ local function openBoard()
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 15
 	gui.Parent = player.PlayerGui
+	UiFit.attach(gui)
 	player:SetAttribute("FreeCursor", true)
+	local back = UserInputService.InputBegan:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.ButtonB then
+			gui:Destroy() -- gamepad: B closes it
+		end
+	end)
 	gui.Destroying:Connect(function()
 		player:SetAttribute("FreeCursor", nil)
+		clearSelection(gui)
+		back:Disconnect()
 	end)
 	local panel = supportPanel(gui, true)
 	local close = Instance.new("TextButton")
@@ -327,6 +368,11 @@ local function openBoard()
 	close.Activated:Connect(function()
 		gui:Destroy()
 	end)
+	local first = panel:FindFirstChildWhichIsA("Frame") -- the button row
+	local firstButton = first and first:FindFirstChildWhichIsA("TextButton")
+	if firstButton then
+		selectFor(firstButton)
+	end
 	-- walking away closes it
 	task.spawn(function()
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?

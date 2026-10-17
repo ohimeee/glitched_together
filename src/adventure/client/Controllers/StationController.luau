@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -22,9 +23,14 @@ local function ownPrompt(station: Instance)
 	local function refresh()
 		local owner = station:GetAttribute("Owner")
 		prompt.Enabled = owner == nil or owner == player:GetAttribute("Role")
+		local template = prompt:GetAttribute("GlyphTemplate")
+		if type(template) == "string" then
+			prompt.ObjectText = Glyphs.format(template) -- W / S, L STICK or STICK
+		end
 	end
 	refresh()
 	player:GetAttributeChangedSignal("Role"):Connect(refresh)
+	Glyphs.Changed:Connect(refresh)
 end
 
 function StationController.Init()

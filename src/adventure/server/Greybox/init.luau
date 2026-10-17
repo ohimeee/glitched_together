@@ -8,6 +8,7 @@ local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 
 local Greybox = {}
 
@@ -120,7 +121,11 @@ local function sign(parent: Instance, text: string, cf: CFrame, size: Vector3?, 
 		label.TextColor3 = signTheme.SignInk
 		label.TextStrokeColor3 = Color3.new(0, 0, 0)
 		label.TextStrokeTransparency = 0.75
-		label.Text = text
+		label.Text = Glyphs.format(text)
+		if text:find("{", 1, true) then -- {Action} tokens: each client shows its own device's key (KeyPromptController)
+			label:SetAttribute("GlyphTemplate", text)
+			CollectionService:AddTag(label, "GlyphText")
+		end
 		if (signTheme :: any).SignStroke then -- a thick painted outline (Pixel Plains: cream paint, dark brown edge)
 			label.TextStrokeTransparency = 1
 			local stroke = Instance.new("UIStroke")
@@ -241,15 +246,10 @@ local function buildPrologue(world: Model)
 	-- A: start (a giant title card)
 	platform(world, Vector3.new(44, 4, 44), 0, 0, 0, { color = NAVY, name = "Start" })
 	spawnAt(world, 0, 0, -8)
-	checkpoint(
-		world,
-		1,
-		0,
-		0,
-		0,
-		W,
-		{ "Space to jump, Space again in the air to double jump!", "Shift dashes. Ctrl in the air is a ground pound." }
-	)
+	checkpoint(world, 1, 0, 0, 0, W, {
+		"{Jump} to jump, {Jump} again in the air to double jump!",
+		"{Dash} dashes. {GroundPound} in the air is a ground pound.",
+	})
 	sign(world, "STARFALL KINGDOM\n▶ CONTINUE?", CFrame.new(0, 14, 20), Vector3.new(30, 10, 1), NAVY).Name =
 		"TitleCard"
 	platform(
@@ -260,7 +260,7 @@ local function buildPrologue(world: Model)
 		-12,
 		{ name = "CrackedDemo", color = rgb(150, 110, 80), tags = { "CrackedFloor" } }
 	)
-	sign(world, "POUND ME (Ctrl in air)", CFrame.new(14, 5, -16), Vector3.new(10, 2.5, 0.4))
+	sign(world, "POUND ME ({GroundPound} in air)", CFrame.new(14, 5, -16), Vector3.new(10, 2.5, 0.4))
 
 	-- Giant menu buttons: stepping stones
 	for i, top in { 3, 7, 11 } do
@@ -319,7 +319,7 @@ local function buildPrologue(world: Model)
 		31,
 		118,
 		W,
-		{ "F near the yellow ring to swing. Jump to let go.", "Swing, then jump at the far end of the arc." }
+		{ "{Swing} near the yellow ring to swing. {Jump} to let go.", "Swing, then jump at the far end of the arc." }
 	)
 
 	-- Swing point over a pit → D
@@ -348,7 +348,7 @@ local function buildPrologue(world: Model)
 		}
 	)
 	rail.CFrame = CFrame.lookAt((railStart + railEnd) / 2, railEnd)
-	sign(world, "F to grind", CFrame.new(6, 54, 168), Vector3.new(8, 2.5, 0.4))
+	sign(world, "{Swing} to grind", CFrame.new(6, 54, 168), Vector3.new(8, 2.5, 0.4))
 
 	platform(world, Vector3.new(30, 4, 34), 0, 18, 253, { color = NAVY, name = "Credits" })
 	checkpoint(world, 4, 0, 18, 244, W, {
@@ -662,7 +662,7 @@ local function buildPixelPlains(world: Model)
 	spawnAt(P, 0, 0, -8)
 	checkpoint(P, nextOrder(), 0, 0, -6, W, {
 		"Split up! Kai takes the left trial, Miko the right. Each of you ends on a plate.",
-		"Kai: freeze a rising pillar (left click) and hop on. Miko: grapple the teal rings (left click).",
+		"Kai: freeze a rising pillar ({Tool1}) and hop on. Miko: grapple the teal rings ({Tool1}).",
 	})
 	sign(P, "▲ KAI TRIAL", CFrame.new(-20, 6, 16), Vector3.new(14, 3, 0.4)) -- no arrows: signs read from both sides
 	sign(P, "MIKO TRIAL ●", CFrame.new(20, 6, 16), Vector3.new(14, 3, 0.4))
@@ -734,7 +734,7 @@ local function buildPixelPlains(world: Model)
 	section("WindmillHill", Vector3.zero, Vector3.new(0, 0, 215))
 	grass(Vector3.new(14, 6, 30), 0, 0, 15, "MillPath")
 	checkpoint(P, nextOrder(), 0, 0, 10, W, {
-		"Kai: freeze a falling block in mid-air (left click). Miko: grapple it and swing across!",
+		"Kai: freeze a falling block in mid-air ({Tool1}). Miko: grapple it and swing across!",
 		"Miko: pull the teal lever on the far side to raise Kai's bridge.",
 	})
 	-- over the path's entrance (walked under, behind you when you aim): at the chasm edge it hid the falling block
@@ -779,7 +779,7 @@ local function buildPixelPlains(world: Model)
 	section("SpringYard", Vector3.zero, Vector3.new(0, 26, 200))
 	grass(Vector3.new(14, 6, 20), 0, 0, 10, "YardPath")
 	checkpoint(P, nextOrder(), 0, 0, 8, W, {
-		"Kai: freeze the spring while it's squashed. Miko: stand on it. Kai: release (right click)!",
+		"Kai: freeze the spring while it's squashed. Miko: stand on it. Kai: release ({Tool2})!",
 		"The spring launches whoever stands on it when Kai lets it go. Then Miko pulls the lever up top.",
 	})
 	sign(P, "SPRING YARD", CFrame.new(0, 9, 19), Vector3.new(16, 3, 0.4))
@@ -795,7 +795,7 @@ local function buildPixelPlains(world: Model)
 	lift("SP1", Vector3.new(8, 1, 8), 16, 0.5, 54, 25.5, "Lift") -- Kai's ride once Miko pulls the lever
 	pullLever("SP1", -14, 31, 72)
 	checkpoint(P, nextOrder(), 0, 26, 86, W, {
-		"Miko: hold E at the teal crank and press W to send the ferry. Kai: freeze the crusher as you go!",
+		"Miko: hold {Interact} at the teal crank and push {Throttle} to send the ferry. Kai: freeze the crusher as you go!",
 		"Kai, call out when to stop. Then Kai cranks Miko over from the orange crank.",
 	})
 
@@ -933,7 +933,7 @@ local function buildPixelPlains(world: Model)
 	)
 	grass(Vector3.new(30, 4, 30), 0, 42, 205, "TowerTop")
 	checkpoint(P, nextOrder(), 0, 42, 196, W, {
-		"Pull the big lever together (hold E, both at once).",
+		"Pull the big lever together (hold {Interact}, both at once).",
 		"Both of you hold the lever at the same time.",
 	})
 	local heavy = block(P, Vector3.new(1, 5, 1), CFrame.new(-8, 44.5, 212), {
@@ -1305,7 +1305,7 @@ local function buildPixelPlains(world: Model)
 	section("CoinBonk", Vector3.zero, Vector3.new(0, 52, 147))
 	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "BonkPath")
 	checkpoint(P, nextOrder(), 0, 0, 6, W, {
-		"Miko: pull the ? block (right click). Kai: freeze the step that pops out at the right height!",
+		"Miko: pull the ? block ({Tool2}). Kai: freeze the step that pops out at the right height!",
 		"Freeze it low enough to jump on, high enough to reach the ledge.",
 	})
 	sign(P, "COIN BONK STAIRS", CFrame.new(0, 9, 17), Vector3.new(18, 3, 0.4)) -- over the base, so its posts stand on it
@@ -2006,7 +2006,7 @@ local function buildGlitchedCore(world: Model)
 	spawnAt(P, 0, 0, -8)
 	checkpoint(P, nextOrder(), 0, 0, -6, W, {
 		"Split up! Kai takes the left trial, Miko the right. Each of you ends on a plate.",
-		"Kai: copy the orange block (left click), paste it ahead (hold right click). Miko: shift (left click) and walk the teal stones.",
+		"Kai: copy the orange block ({Tool1}), paste it ahead (hold {Tool2}). Miko: shift ({Tool1}) and walk the teal stones.",
 	})
 	sign(P, "3-1 MISSING TEXTURES", CFrame.new(0, 9, 14), Vector3.new(20, 3, 0.4))
 	sign(P, "▲ KAI", CFrame.new(-20, 6, 16), Vector3.new(10, 3, 0.4))
@@ -2146,7 +2146,7 @@ local function buildGlitchedCore(world: Model)
 	section("WireMaze", Vector3.zero, Vector3.new(0, 0, 330))
 	floor(Vector3.new(30, 4, 30), 0, 0, 15, "MazeStart") -- z 0..30
 	checkpoint(P, nextOrder(), 0, 0, 12, W, {
-		"Miko: shift, find the hidden plank and pull it out (right click) so Kai can cross.",
+		"Miko: shift, find the hidden plank and pull it out ({Tool2}) so Kai can cross.",
 		"Kai: copy the plank while it's out, then paste it over the next gap. Neither of you crosses that one alone.",
 	})
 	sign(P, "3-2 THE WIRE MAZE", CFrame.new(0, 9, 4), Vector3.new(20, 3, 0.4))
@@ -2471,7 +2471,7 @@ local function buildGlitchedCore(world: Model)
 	section("UnloadedChunk", Vector3.zero, Vector3.new(0, 0, 176))
 	floor(Vector3.new(30, 4, 22), 0, 0, 11, "Balcony") -- z 0..22
 	checkpoint(P, nextOrder(), 0, 0, 6, W, {
-		"Kai: hold E at the terminal and steer the scanner (W / S). Floor only loads where it shines. Miko: run it!",
+		"Kai: hold {Interact} at the terminal and steer the scanner ({Throttle}). Floor only loads where it shines. Miko: run it!",
 		"Miko: shift to see the real path (teal) and tell Kai where to point. Some tiles lead nowhere.",
 	})
 	sign(P, "UNLOADED CHUNK", CFrame.new(0, 10, 2), Vector3.new(16, 3, 0.4))
@@ -2678,8 +2678,8 @@ local function buildStarfallCastle(world: Model)
 	-- A: Gatehouse (start). Two skeletons to learn on.
 	spawnAt(world, 0, 0, -12)
 	checkpoint(world, 1, 0, 0, -6, W, {
-		"Kai: hold left click to throw fireballs. Miko: left click swings your sword.",
-		"Miko: hold right click to raise your shield. Enemies go for a raised shield.",
+		"Kai: hold {Tool1} to throw fireballs. Miko: {Tool1} swings your sword.",
+		"Miko: hold {Tool2} to raise your shield. Enemies go for a raised shield.",
 	})
 	flatSign("STARFALL CASTLE", 0, 4, 22)
 	wall(-20, -20, 20, -20)
@@ -2704,7 +2704,7 @@ local function buildStarfallCastle(world: Model)
 		})
 	end
 	checkpoint(world, 2, 0, 0, 24, W, {
-		"Kai: press E near a brazier or the wooden door.",
+		"Kai: press {Ignite} near a brazier or the wooden door.",
 		"Burn the wooden door with Kai's Ignite (E).",
 	})
 	block(world, Vector3.new(12, WALL_H, 1), CFrame.new(0, WALL_H / 2, 37), {
@@ -2760,11 +2760,11 @@ local function buildStarfallCastle(world: Model)
 		attrs = { Group = "C1" },
 		name = "PlateA",
 	})
-	flatSign("SHIFT = BLINK", 15, 86, 10)
+	flatSign("{Dash} = BLINK", 15, 86, 10)
 
 	-- E: Hall. The Static Mage and friends; gate C1 needs plate A (alcove) + plate B (here) held together.
 	checkpoint(world, 3, -15, 0, 104, W, {
-		"Kai: Shift blinks through the iron bars. Stand on the plate behind them.",
+		"Kai: {Dash} blinks through the iron bars. Stand on the plate behind them.",
 		"Both plates at once: one behind the bars, one in front of the gate.",
 	})
 	wall(-25, 90, -25, 150)
@@ -2863,7 +2863,7 @@ local function buildStarfallCastle(world: Model)
 	})
 	waypoints(roller, { rollerA, rollerB })
 	checkpoint(world, 5, 0, 0, 230, W, {
-		"Miko: raise your shield and face the roller to stop it. Kai: blink through it (Shift) and stand on the plate.",
+		"Miko: raise your shield and face the roller to stop it. Kai: blink through it ({Dash}) and stand on the plate.",
 		"Kai's plate opens Miko's side passage. Miko: keep blocking until Kai is on it!",
 	})
 	torch(-6, 250)
@@ -2927,7 +2927,7 @@ local function buildStarfallCastle(world: Model)
 	end
 	ironBars(12, 25, 346) -- Kai's gallery, x 12..25
 	ironBars(12, 25, 404)
-	flatSign("SHIFT = BLINK", 18, 343, 10)
+	flatSign("{Dash} = BLINK", 18, 343, 10)
 	-- the floor: 5 columns x 14 rows of 4-stud tiles; every tile off the path is a trap
 	local path = { 0, 0, 1, 1, 0, 0, 1, 3, 4, 4, 3, 3, 4, 4 } -- the safe column per row
 	local braziers = { [1] = true, [4] = true, [7] = true, [10] = true, [13] = true } -- rows with a brazier (col 2)

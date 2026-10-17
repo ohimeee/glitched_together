@@ -8,6 +8,7 @@ local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -49,6 +50,10 @@ end)
 function Aim.screenPoint(): Vector2
 	local size = camera.ViewportSize
 	if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
+		return size / 2
+	end
+	-- gamepad: the screen center (no cursor; the camera follows the right stick)
+	if Glyphs.device() == "Gamepad" then
 		return size / 2
 	end
 	if usingTouch then

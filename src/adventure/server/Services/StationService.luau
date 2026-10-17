@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
@@ -63,7 +64,10 @@ local function register(part: Instance)
 	prompt.ActionText = (part:GetAttribute("Action") or "Crank") :: string
 	local owner = part:GetAttribute("Owner")
 	local label = (part:GetAttribute("Label") or "crank") :: string
-	prompt.ObjectText = if owner then `{owner}'s {label}: W / S` else `{label}: W / S`
+	-- {Throttle} = W / S, L STICK or STICK: StationController shows the key of each player's device
+	local template = if owner then `{owner}'s {label}: \{Throttle}` else `{label}: \{Throttle}`
+	prompt:SetAttribute("GlyphTemplate", template)
+	prompt.ObjectText = Glyphs.format(template)
 	prompt.HoldDuration = 0
 	prompt.RequiresLineOfSight = false
 	prompt.MaxActivationDistance = T.Reach

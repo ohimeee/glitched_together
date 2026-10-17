@@ -13,6 +13,7 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Input = require(script.Parent.Parent.Input)
 local MoveAnim = require(script.Parent.MoveAnimController)
 
@@ -690,11 +691,14 @@ local function onCharacter(character: Model)
 		local now = os.clock()
 		local moving = humanoid.MoveDirection.Magnitude > 0.1
 
-		-- Mobile auto-sprint after 1.5 s of movement; sprint cancels when you stop.
+		-- Touch + gamepad auto-sprint after 1.5 s of movement (console pass: L3 still toggles it); stopping cancels it.
 		if moving then
 			stillSince = nil
 			movingSince = movingSince or now
-			if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+			if
+				(UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
+				or Glyphs.device() == "Gamepad"
+			then
 				if now - (movingSince :: number) >= Tuning.MobileAutoSprintAfter then
 					sprinting = true
 				end

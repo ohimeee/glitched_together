@@ -5,12 +5,14 @@ Input.Init()
 local Controllers = script.Parent.Controllers
 local order = {
 	"LoadingController", -- first: covers the screen before anything else draws
+	"PerfController", -- low-end devices: thinner particles from the start
 	"MoveAnimController",
 	"MovementController",
 	"StationController",
 	"CameraController",
 	"KitController",
 	"HUDController",
+	"TouchController",
 	"ReviveController",
 	"PartnerController",
 	"PingController",
