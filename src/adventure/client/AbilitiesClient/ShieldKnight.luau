@@ -123,10 +123,10 @@ function ShieldKnight:Start()
 	local lastCharge = { t = -math.huge }
 	local step, lastSwing = 0, -math.huge -- the sword combo's animation follows the server's 3-hit chain
 
-	local function rally(force: boolean?): boolean
+	local function rally(force: boolean?, clip: string?): boolean
 		if (force or sword:IsDown() and block:IsDown()) and ultimateReady() then
 			MoveAnim.Set("Block", false)
-			MoveAnim.Play("Rally")
+			MoveAnim.Play(clip or "Rally")
 			toolUse:FireServer(4, nil, TopDownAim.point())
 			return true
 		end
@@ -160,7 +160,7 @@ function ShieldKnight:Start()
 	end))
 	-- touch ULT button (TouchController → TopDownAim.ReleaseUlt): dragged = leap to the ring, the wave goes out there
 	trove:Add(TopDownAim.UltCast:Connect(function(point: Vector3, aimed: boolean)
-		if not busy() and rally(true) and aimed then
+		if not busy() and rally(true, if aimed then "RallyLeap" else nil) and aimed then
 			leap(point)
 		end
 	end))
