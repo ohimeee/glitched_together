@@ -387,6 +387,8 @@ return {
 		Hover = 0.18, -- wingbeat while it hovers over the hole (Flap in full flight)
 		WingAngle = 28, -- deg per unit of lift / beat
 		Rear = 0.12, -- rad it tips back before a breath (the whole body, about its claws)
+		ScaleGlowRange = 10, -- an open scale's warm light (user: "make them glow more")
+		ScaleGlowBrightness = 3,
 		RearZoom = 1.12, -- × Zoom while it rears + breathes: the lifted wing tips stay on screen
 		Lunge = 0.07, -- ...and forward into it
 		LoopX = 22, -- flight path: a wide oval strafe over the hole, facing the hall (12 x 12 over the players spun it)

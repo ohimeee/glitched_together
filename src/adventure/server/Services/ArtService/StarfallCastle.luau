@@ -90,6 +90,27 @@ end
 Skins.DragonBody = dragonSkin("rbxassetid://71916294101608", v(53.06, 58.64, 47.35))
 Skins.DragonWingL = dragonSkin("rbxassetid://94453499653283", v(38.94, 43.38, 32.08))
 Skins.DragonWingR = dragonSkin("rbxassetid://104293202190588", v(36.9, 36.81, 41.4))
+-- Kai's weak-point scales on its legs (tools/dragon_scales/kit.py): plum plates round a core; HollowDragon's
+-- setScales / burnScale colour the Core (glows Kai orange through the gaps while open)
+Skins.DragonScale = {
+	Design = v(2.912, 2.706, 2.912),
+	Meshes = {
+		Plates = {
+			Id = "rbxassetid://111732762084141",
+			Offset = v(0, 0, 0),
+			Size = v(2.912, 2.706, 2.912),
+			Material = Enum.Material.Slate,
+			Color = Color3.fromRGB(70, 46, 96),
+		},
+		Core = {
+			Id = "rbxassetid://111992152743832",
+			Offset = v(0, -0.067, 0),
+			Size = v(2.1, 2.415, 2.1) * 1.18, -- a bit fatter than the design: it bulges out between the plates
+			Material = Enum.Material.Neon,
+			Color = Color3.fromRGB(120, 70, 40),
+		},
+	},
+}
 
 -- 2-2 Dark Library + Golem Hall props (Oct 1, obstacles.md 2.3): generated to the same storybook-realistic finish.
 -- Offsets put each model's foot on the floor (the grey-box parts float a little).

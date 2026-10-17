@@ -3517,11 +3517,11 @@ local function buildStarfallCastle(world: Model)
 	for i, at in
 		{ Vector3.new(-4.5, 3.5, -4), Vector3.new(4.5, 3.5, -4), Vector3.new(-4.5, 3.5, 3), Vector3.new(4.5, 3.5, 3) }
 	do
-		-- glowing ember-scales grown out of its legs (round: they read as part of it, not as blocks)
+		-- armoured scale knots grown out of its legs (skin DragonScale: plum plates round a core that glows while open)
 		local scale = part("Scale" .. i, Vector3.new(3, 3, 3), at, Palette.Kai, {
 			material = Enum.Material.Neon,
 			tags = { "BossHurt" },
-			attrs = { Kind = "Scale" },
+			attrs = { Kind = "Scale", Skin = "DragonScale", Weld = true },
 		})
 		scale.Shape = Enum.PartType.Ball
 	end

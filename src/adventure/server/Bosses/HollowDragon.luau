@@ -153,12 +153,53 @@ local function mouth(self: any): Vector3
 	return self.head.Position -- the Head part sits on its snout
 end
 
+-- a scale's look: its DragonScale skin's Core (glowing through the plates) or, before the skin loads, the holder itself
+local function paintScale(s: any, color: Color3, material: Enum.Material)
+	local core = s.part:FindFirstChild("Core")
+	local target = if core and core:IsA("BasePart") then core else s.part
+	target.Color = color
+	target.Material = material
+	-- open = it glows (user: "make them glow more"): a warm light + the plates lit orange round their edges
+	local open = material == Enum.Material.Neon
+	local light = s.part:FindFirstChild("ScaleGlow") :: PointLight?
+	if not light then
+		local newLight = Instance.new("PointLight")
+		newLight.Name = "ScaleGlow"
+		newLight.Color = Palette.Kai
+		newLight.Range = T.ScaleGlowRange
+		newLight.Brightness = T.ScaleGlowBrightness
+		newLight.Shadows = false
+		newLight.Parent = s.part
+		light = newLight
+	end
+	(light :: PointLight).Enabled = open
+	local plates = s.part:FindFirstChild("Plates")
+	if plates then
+		local rim = plates:FindFirstChild("ScaleRim") :: Highlight?
+		if not rim then
+			local newRim = Instance.new("Highlight")
+			newRim.Name = "ScaleRim"
+			newRim.FillColor = Palette.Kai
+			newRim.FillTransparency = 0.35
+			newRim.OutlineColor = Palette.Kai
+			newRim.OutlineTransparency = 0
+			newRim.DepthMode = Enum.HighlightDepthMode.Occluded
+			newRim.Parent = plates
+			rim = newRim
+		end
+		(rim :: Highlight).Enabled = open
+	end
+end
+
 local function setScales(self: any, open: boolean)
 	self.open = open
 	for _, s in self.scales do
 		if not s.burnt then
-			s.part.Color = if open then Palette.Kai else CLOSED
-			s.part.Material = if open then Enum.Material.Neon else Enum.Material.SmoothPlastic
+			paintScale(
+				s,
+				if open then Palette.Kai else CLOSED,
+				if open then Enum.Material.Neon else Enum.Material.SmoothPlastic
+			)
 		end
 	end
 end
@@ -166,8 +207,7 @@ end
 local function burnScale(s: any)
 	s.burnt = true
 	CollectionService:RemoveTag(s.part, "BossHurt")
-	s.part.Color = BURNT
-	s.part.Material = Enum.Material.Slate
+	paintScale(s, BURNT, Enum.Material.Slate)
 end
 
 local function setFlying(self: any, flying: boolean)
