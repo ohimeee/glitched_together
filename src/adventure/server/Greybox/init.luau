@@ -1219,7 +1219,8 @@ local function buildPixelPlains(world: Model)
 	-- 22 apart (12-stud gaps between the 10-deep heads): room for the crate plus one pull between two hits
 	-- (playtest Oct 1: 4-stud gaps were too tight)
 	for i, z in { 155, 177, 199, 221 } do
-		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.33 })
+		-- slam and hold: a short window up top (no dashing past), and a crate under a moving one is smashed
+		crusher(0, z, 0, { Period = 2, Offset = (i - 1) * 0.5, Ease = "Slam" })
 	end
 	block(P, Vector3.new(4, 4, 4), CFrame.new(0, 2, 142), {
 		name = "Crate",

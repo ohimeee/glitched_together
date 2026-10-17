@@ -754,6 +754,29 @@ function ContraptionService.Init()
 		homes[inst :: BasePart] = nil
 	end)
 
+	-- A slamming crusher (Coin Press) smashes a crate caught in the space it lands in: the crate cracks and is back at
+	-- its start, so it only gets through under a crusher Kai froze (user, Oct 17: it was skippable).
+	local smashOverlap = OverlapParams.new()
+	MoverService.Slammed:Connect(function(crusher: Instance, landIn: number, landing: CFrame)
+		local head = if crusher:IsA("BasePart") then crusher else nil
+		if not head then
+			return
+		end
+		task.delay(landIn * 0.7, function()
+			smashOverlap.FilterType = Enum.RaycastFilterType.Exclude
+			smashOverlap.FilterDescendantsInstances = { head }
+			for _, part in workspace:GetPartBoundsInBox(landing, head.Size * 0.9, smashOverlap) do
+				local home = homes[part]
+				if home and CollectionService:HasTag(part, "Pullable") and not part.Anchored then
+					Audio.play("PoundDebris", part.Position, 1.3)
+					part.AssemblyLinearVelocity = Vector3.zero
+					part.AssemblyAngularVelocity = Vector3.zero
+					part.CFrame = home
+				end
+			end
+		end)
+	end)
+
 	Tags.each("GlitchWall", function(inst)
 		if inst:IsA("BasePart") then
 			-- the Glitch is heard before it's seen (art-direction.md §7): a crackle, then a buzzing hum while it runs

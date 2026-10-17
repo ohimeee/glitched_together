@@ -183,7 +183,8 @@ return {
 	SlackRange = 5, -- extra studs allowed in server range checks for lag
 
 	-- World 1
-	PauseBeam = { Range = 60, Duration = 4, AimCone = 6 },
+	-- Refreeze: s before the same object can be frozen again after its freeze ends (no spam-holding it)
+	PauseBeam = { Range = 60, Duration = 3.5, AimCone = 6, Refreeze = 1.5 }, -- Duration: user, Oct 17 (was 4)
 	-- Tool effects (ToolFxController): wind-up → effect → impact, all short so they never hide the play space
 	ToolFx = {
 		BeamTime = 0.35, -- the Pause Beam stays visible this long after a freeze

@@ -22,6 +22,7 @@ type Mover = {
 	period: number,
 	loop: boolean,
 	sine: boolean,
+	slam: boolean,
 	spin: number,
 	pausedUntil: number,
 	driven: boolean,
@@ -38,6 +39,23 @@ local physics: { [BasePart]: Physics } = {}
 
 local resumed = Instance.new("BindableEvent")
 MoverService.Resumed = resumed.Event -- (inst)
+local slammed = Instance.new("BindableEvent")
+MoverService.Slammed = slammed.Event -- (inst, seconds until it lands, landing CFrame): a Slam mover starts its drop
+
+-- Ease "Slam" (2-point movers, Coin Press crushers; user Oct 17: dashing past them was easy): a fast drop, a long
+-- hold down, a rise and only a short wait up top. Fractions of the period, in that order.
+local SLAM = { drop = 0.08, hold = 0.62, rise = 0.18 }
+local function slamAlpha(phase: number): number
+	if phase < SLAM.drop then
+		return (phase / SLAM.drop) ^ 2 -- accelerating into the floor
+	elseif phase < SLAM.drop + SLAM.hold then
+		return 1
+	elseif phase < SLAM.drop + SLAM.hold + SLAM.rise then
+		local r = (phase - SLAM.drop - SLAM.hold) / SLAM.rise
+		return 1 - (1 - math.cos(r * math.pi)) / 2
+	end
+	return 0
+end
 
 local function rootOf(inst: Instance): BasePart?
 	if inst:IsA("BasePart") then
@@ -56,6 +74,8 @@ local function pose(m: Mover): CFrame
 	local base: CFrame
 	if n == 1 then
 		base = m.points[1]
+	elseif m.slam and n == 2 then
+		base = m.points[1]:Lerp(m.points[2], slamAlpha((m.t / m.period) % 1))
 	else
 		local phase = (m.t / m.period) % 1
 		local legs = if m.loop then n else n - 1
@@ -138,6 +158,7 @@ local function register(inst: Instance)
 		period = (inst:GetAttribute("Period") or 4) :: number,
 		loop = inst:GetAttribute("Mode") == "Loop",
 		sine = inst:GetAttribute("Ease") ~= "Linear",
+		slam = inst:GetAttribute("Ease") == "Slam",
 		spin = (inst:GetAttribute("Spin") or 0) :: number,
 		pausedUntil = 0,
 		driven = inst:GetAttribute("Driven") == true,
@@ -288,7 +309,11 @@ function MoverService.Init()
 				local rate = if m.drive ~= 0 then m.drive else -m.returnRate
 				m.t = math.clamp(m.t + rate * dt, 0, m.period / 2)
 			else
+				local before = (m.t / m.period) % 1
 				m.t += dt
+				if m.slam and (m.t / m.period) % 1 < before then -- wrapped round: a new drop starts now
+					slammed:Fire(inst, SLAM.drop * m.period, m.points[2])
+				end
 			end
 			local cf = pose(m)
 			m.alignPos.Position = cf.Position

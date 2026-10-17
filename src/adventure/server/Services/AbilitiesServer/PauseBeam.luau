@@ -1,4 +1,4 @@
--- Kai, World 1 (mechanics.md §4): Freeze a Freezable object for 4 s (one at a time), Release it early.
+-- Kai, World 1 (mechanics.md §4): Freeze a Freezable object for 3.5 s (Tuning.PauseBeam.Duration, one at a time), Release it early.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -13,6 +13,9 @@ local launchEvent = Net.event("Launch")
 
 local PauseBeam = { BlockedBy = { "Downed", "InCutscene" }, Cooldowns = { [1] = 0.25, [2] = 0.25 } }
 local frozenBy: { [Player]: Instance } = {}
+-- No spam-freezing one object forever (user, Oct 17): a freeze that's on doesn't get topped up, and once it ends that
+-- object can't be frozen again for Tuning.PauseBeam.Refreeze s. Switching to another object stays instant.
+local endedAt: { [Instance]: number } = {}
 
 -- Release as a launcher (obstacles.md Part 3, It Takes Two's "partner launcher"): a Freezable with a LaunchVelocity
 -- attribute (world studs/s) flings his partner when she stands on it or swings from it and Kai releases it early. A
@@ -78,6 +81,13 @@ function PauseBeam.Use(player: Player, useIndex: number, target: Instance?)
 		return
 	end
 
+	if MoverService.IsFrozen(freezable) then
+		return -- already held: no topping up
+	end
+	if os.clock() - (endedAt[freezable] or -math.huge) < Tuning.PauseBeam.Refreeze then
+		toolResult:FireClient(player, "FreezeDenied", player, freezable)
+		return
+	end
 	local old = frozenBy[player]
 	if old and old ~= freezable then
 		MoverService.Resume(old)
@@ -85,6 +95,13 @@ function PauseBeam.Use(player: Player, useIndex: number, target: Instance?)
 	frozenBy[player] = freezable
 	MoverService.Pause(freezable, Tuning.PauseBeam.Duration)
 	toolResult:FireAllClients("Froze", player, freezable)
+end
+
+function PauseBeam.Init()
+	-- a freeze ends (ran out, released, or Kai switched targets): start that object's refreeze wait
+	MoverService.Resumed:Connect(function(inst: Instance)
+		endedAt[inst] = os.clock()
+	end)
 end
 
 return PauseBeam

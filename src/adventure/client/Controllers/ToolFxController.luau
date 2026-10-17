@@ -387,6 +387,8 @@ local function sounds(kind: string, p: Player, target: Instance?)
 		Audio.play("Freeze", part)
 	elseif kind == "Released" then
 		Audio.play("Unfreeze", part)
+	elseif kind == "FreezeDenied" then
+		Audio.play("PullOut", hand) -- malfunction beeps: that object can't be frozen again yet (Tuning.PauseBeam.Refreeze)
 	elseif kind == "PullStart" then
 		Audio.play("Pull", part) -- only the pulley: the rope whip read as leaves on a pull (user, Oct 17)
 	elseif kind == "GrappleStart" then
