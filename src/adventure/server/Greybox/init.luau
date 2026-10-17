@@ -1199,8 +1199,8 @@ local function buildPixelPlains(world: Model)
 	for _, x in { -13, 13 } do
 		dirtWall(Vector3.new(2, 22, 120), x, 22, 75)
 	end
-	for i = 0, 11 do
-		blob(0, 0, 24 + i * 9.5, 18, { speed = Tuning.GauntletBlobSpeed, phase = i * 1.3, solid = true })
+	for i = 0, 9 do
+		blob(0, 0, 24 + i * 12, 18, { speed = Tuning.GauntletBlobSpeed, phase = i * 1.3, solid = true })
 	end
 	grass(Vector3.new(14, 4, 100), 0, 0, 185, "PressLane") -- z 135..235
 	for _, x in { -8, 8 } do

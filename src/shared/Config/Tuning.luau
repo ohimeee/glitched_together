@@ -136,7 +136,7 @@ return {
 	GrindCatchRange = 3.5, -- falling onto a rail catches it within this (root to rail top; the grind pose sits ~3 up)
 	VentForce = 90,
 	DuoPoundWindow = 0.5,
-	GauntletBlobSpeed = 30, -- Coin Press blob gauntlet: top speed 15 studs/s, a lap of an 18-stud patrol ~3.8 s
+	GauntletBlobSpeed = 45, -- Coin Press blob gauntlet: top speed 22.5 studs/s, a lap of an 18-stud patrol ~2.5 s
 	HeavyLeverHold = 1,
 	HeavyLeverWindow = 1,
 
