@@ -83,6 +83,8 @@ local function build(worldName: string?)
 	gui = Instance.new("ScreenGui")
 	gui.Name = "Loading"
 	gui.IgnoreGuiInset = true
+	-- full-bleed: IgnoreGuiInset only drops the top bar; phones also inset round the notch (black edges showed)
+	gui.ScreenInsets = Enum.ScreenInsets.None
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 1000
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling

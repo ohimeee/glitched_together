@@ -95,6 +95,7 @@ local function shiftWipe()
 		local g = Instance.new("ScreenGui")
 		g.Name = "ShiftWipe"
 		g.IgnoreGuiInset = true
+		g.ScreenInsets = Enum.ScreenInsets.None -- full-bleed wipe, notch included
 		g.ResetOnSpawn = false
 		g.DisplayOrder = 5
 		local lines = Instance.new("ImageLabel")

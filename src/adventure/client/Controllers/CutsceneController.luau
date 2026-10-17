@@ -37,6 +37,8 @@ function CutsceneController.Init()
 	gui.Name = "Cutscene"
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
+	-- full-bleed: IgnoreGuiInset only drops the top bar; phones also inset round the notch (black edges showed)
+	gui.ScreenInsets = Enum.ScreenInsets.None
 	gui.DisplayOrder = 10
 	gui.Enabled = false
 	gui.Parent = player:WaitForChild("PlayerGui")
@@ -91,10 +93,26 @@ function CutsceneController.Init()
 
 	local function refreshSkip()
 		local votes = workspace:GetAttribute("SkipVotes") or 0
-		skipHint.Text = `{Glyphs.key("Skip")} skip {votes}/2` -- SPACE / A / SKIP (TouchController's button)
+		skipHint.Text = if Glyphs.device() == "Touch"
+			then `TAP to skip {votes}/2`
+			else `{Glyphs.key("Skip")} skip {votes}/2` -- SPACE / A
 	end
 	workspace:GetAttributeChangedSignal("SkipVotes"):Connect(refreshSkip)
 	Glyphs.Changed:Connect(refreshSkip)
+
+	-- phones: a tap anywhere votes to skip (behind the bars and text, so it never blocks the SKIP button)
+	local tapCatcher = Instance.new("TextButton")
+	tapCatcher.Name = "TapToSkip"
+	tapCatcher.Size = UDim2.fromScale(1, 1)
+	tapCatcher.BackgroundTransparency = 1
+	tapCatcher.Text = ""
+	tapCatcher.ZIndex = 0
+	tapCatcher.Parent = gui
+	tapCatcher.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch and playingId then
+			Net.event("SkipVote"):FireServer()
+		end
+	end)
 
 	Input.action("MenuContext", "Skip").Pressed:Connect(function()
 		if playingId then
