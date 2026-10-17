@@ -5,8 +5,8 @@ export type Block = { Title: string, Lines: { string } }
 local Credits: { Block } = {
 	{ Title = "STARFALL KINGDOM", Lines = { "a game by Kai & Miko", "(finally finished)" } },
 	{ Title = "GLITCHED TOGETHER", Lines = { "a co-op adventure for two" } },
-	{ Title = "Made by", Lines = { "buldak0555" } },
-	{ Title = "Built with", Lines = { "Roblox Studio, Rojo, Blender", "and Claude (Anthropic)" } },
+	{ Title = "Made by", Lines = { "Night Owl Studios", "buldak0555" } },
+	{ Title = "Built with", Lines = { "Roblox Studio, Rojo, Blender" } },
 	{
 		Title = "Boss models",
 		Lines = {
@@ -17,7 +17,6 @@ local Credits: { Block } = {
 	},
 	{ Title = "Textures", Lines = { "Poly Haven (CC0)", "ambientCG (CC0)" } },
 	{ Title = "Music", Lines = { "APM Music (licensed for Roblox experiences)" } },
-	{ Title = "Inspired by", Lines = { "the two-player co-op of It Takes Two", "(no assets used)" } },
 	{ Title = "Thank you for playing", Lines = { "together." } },
 }
 

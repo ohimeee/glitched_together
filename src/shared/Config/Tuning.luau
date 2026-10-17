@@ -289,6 +289,7 @@ return {
 	Supporters = {
 		WallMax = 23, -- photos on a wall (3 podium + 2 rows of 10) / names in the credits, highest total first
 		Refresh = 120, -- s between data store reads
+		StudioPreview = true, -- Studio with no tips yet: fill the walls + credits with placeholder supporters
 		Tag = Vector2.new(3.4, 0.6), -- studs
 		TagHeight = 3.7, -- studs over the head (the partner's KAI / MIKO tag sits at 2.6)
 		AuraRate = 6, -- sparkles / s

@@ -2,10 +2,9 @@
 -- real-world ending cutscene: a night-blue screen, the credits (Config/Credits) scroll up, then the title card
 -- "CONTINUE?" with one answer, YES. YES fades the screen away, leaves the duo free under the stars and tells the
 -- server to open the BACK TO LOBBY exit on the hilltop ledge (Main).
--- Space / A / click / tap skips straight to the title card; on a gamepad YES is selected (A presses it). Under it sits a small, optional tip jar (Config/Products.Support,
--- server SupportService): "Enjoyed it? Support our next game", three Robux buttons, thank-you on purchase.
+-- Space / A / click / tap skips straight to the title card; on a gamepad YES is selected (A presses it). Under it sits
+-- the small, optional tip jar (Util/TipPanel; the SUPPORT board opens the same panel as a pop-up).
 local AvatarEditorService = game:GetService("AvatarEditorService")
-local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,10 +16,10 @@ local HttpService = game:GetService("HttpService")
 local Net = require(ReplicatedStorage.Shared.Net)
 local Credits = require(ReplicatedStorage.Shared.Config.Credits)
 local Places = require(ReplicatedStorage.Shared.Config.Places)
-local Products = require(ReplicatedStorage.Shared.Config.Products)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
+local TipPanel = require(ReplicatedStorage.Shared.Util.TipPanel)
 
 local CreditsController = {}
 
@@ -66,133 +65,6 @@ local function promptFavorite(): boolean
 		AvatarEditorService:PromptSetFavorite(id, Enum.AvatarItemType.Asset, true)
 	end)
 	return true
-end
-
--- the tip jar under the credits' title card and behind the Epilogue SUPPORT board: thanks-in-advance and one button
--- per Products.Support entry, plus a favorite button under the credits only. `centred` = the board's pop-up
--- (mid-screen, support only: the favorite has its own board; user, Oct 12) instead of the strip under the title card.
-local function supportPanel(parent: Instance, centred: boolean?): Frame
-	local panel = Instance.new("Frame")
-	panel.AnchorPoint = Vector2.new(0.5, if centred then 0.5 else 1)
-	panel.Position = if centred then UDim2.fromScale(0.5, 0.5) else UDim2.new(0.5, 0, 1, -36)
-	panel.Size = UDim2.fromOffset(560, 150)
-	panel.BackgroundColor3 = THEME.Panel
-	panel.BackgroundTransparency = 1
-	panel.Parent = parent
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, THEME.Corner)
-	corner.Parent = panel
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = THEME.Stroke
-	stroke.Thickness = 2
-	stroke.Transparency = 1
-	stroke.Parent = panel
-	local head = label(
-		panel,
-		if centred then "Support our next game" else "Enjoyed Glitched Together?",
-		26,
-		THEME.TitleFont,
-		THEME.Accent
-	)
-	head.Position = UDim2.fromOffset(0, 10)
-	local sub = label(
-		panel,
-		if centred
-			then "Every tip helps us build more worlds. Thank you!"
-			else "Favorite it, leave a Like, or support our next game.",
-		18,
-		THEME.Font,
-		THEME.SubInk
-	)
-	sub.Position = UDim2.fromOffset(0, 44)
-	local row = Instance.new("Frame")
-	row.AnchorPoint = Vector2.new(0.5, 1)
-	row.Position = UDim2.new(0.5, 0, 1, -14)
-	row.Size = UDim2.fromOffset(540, 44)
-	row.BackgroundTransparency = 1
-	row.Parent = panel
-	local list = Instance.new("UIListLayout")
-	list.FillDirection = Enum.FillDirection.Horizontal
-	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	list.Padding = UDim.new(0, 12)
-	list.Parent = row
-	local fades: { GuiObject } = { head, sub }
-	local function button(text: string, width: number, color: Color3, onPress: () -> ())
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.fromOffset(width, 44)
-		b.BackgroundColor3 = color
-		b.Font = THEME.TitleFont
-		b.TextSize = 24
-		b.TextColor3 = THEME.Shadow
-		b.Text = text
-		b.AutoButtonColor = true
-		b.Parent = row
-		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, THEME.Corner)
-		c.Parent = b
-		table.insert(fades, b)
-		b.Activated:Connect(onPress)
-	end
-	if not centred then
-		button("★ FAVORITE", 160, THEME.Ink, function()
-			if not promptFavorite() then
-				sub.Text = "(Favorites work once the game is published.)"
-			end
-		end)
-	end
-	for _, product in Products.Support do
-		button(`{product.Robux} R$`, 108, THEME.Accent, function()
-			if product.Id == 0 then
-				sub.Text = "(Not set up yet: the product ids go in Config/Products.)"
-				return
-			end
-			MarketplaceService:PromptProductPurchase(player, product.Id)
-		end)
-	end
-	for _, g in fades do
-		local goal: { [string]: number } = { TextTransparency = 0 }
-		if g:IsA("TextButton") then
-			goal.BackgroundTransparency = 0
-		end
-		for k in goal do
-			(g :: any)[k] = 1
-		end
-		TweenService:Create(g, TweenInfo.new(1), goal :: any):Play()
-	end
-	TweenService:Create(panel, TweenInfo.new(1), { BackgroundTransparency = THEME.PanelTransparency + 0.25 }):Play()
-	TweenService:Create(stroke, TweenInfo.new(1), { Transparency = 0.6 }):Play()
-	local hideButton: TextButton? = nil
-	local thanks = Net.event("SupportThanks").OnClientEvent:Connect(function()
-		head.Text = "THANK YOU!"
-		sub.Text = "Your photo is going up on the Supporter Wall."
-		-- the wall + credits show the supporter's name: their choice to take it down (and put it back)
-		if not hideButton then
-			local hidden = false
-			local b = Instance.new("TextButton")
-			b.AnchorPoint = Vector2.new(1, 0)
-			b.Position = UDim2.new(1, -10, 0, 8)
-			b.Size = UDim2.fromOffset(170, 26)
-			b.BackgroundTransparency = 1
-			b.Font = THEME.Font
-			b.TextSize = 16
-			b.TextColor3 = THEME.SubInk
-			b.Text = "hide my name"
-			b.Parent = panel
-			b.Activated:Connect(function()
-				hidden = not hidden
-				Net.event("SupporterHide"):FireServer(hidden)
-				b.Text = if hidden then "show my name" else "hide my name"
-				sub.Text = if hidden
-					then "Your name stays off the wall."
-					else "Your photo is going up on the Supporter Wall."
-			end)
-			hideButton = b
-		end
-	end)
-	panel.Destroying:Connect(function()
-		thanks:Disconnect()
-	end)
-	return panel
 end
 
 local function roll()
@@ -338,7 +210,7 @@ local function roll()
 		corner.Parent = yes
 		task.delay(0.8, function()
 			if back.Parent then
-				supportPanel(back)
+				TipPanel.Panel(back, { onFavorite = promptFavorite })
 			end
 			TweenService:Create(q, TweenInfo.new(1), { TextTransparency = 0 }):Play()
 			TweenService:Create(yes, TweenInfo.new(1), { TextTransparency = 0, BackgroundTransparency = 0 }):Play()
@@ -405,66 +277,11 @@ local function roll()
 	end)
 end
 
--- the Epilogue notice board's pop-up: the same panel mid-screen, with a close button (the cursor is free while open)
-local function openBoard()
-	if player.PlayerGui:FindFirstChild("SupportBoard") then
-		return
-	end
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "SupportBoard"
-	gui.ResetOnSpawn = false
-	gui.DisplayOrder = 15
-	gui.Parent = player.PlayerGui
-	UiFit.attach(gui)
-	player:SetAttribute("FreeCursor", true)
-	local back = UserInputService.InputBegan:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.ButtonB then
-			gui:Destroy() -- gamepad: B closes it
-		end
-	end)
-	gui.Destroying:Connect(function()
-		player:SetAttribute("FreeCursor", nil)
-		clearSelection(gui)
-		back:Disconnect()
-	end)
-	local panel = supportPanel(gui, true)
-	local close = Instance.new("TextButton")
-	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, -8, 0, 8)
-	close.Size = UDim2.fromOffset(32, 32)
-	close.BackgroundTransparency = 1
-	close.Font = THEME.TitleFont
-	close.TextSize = 24
-	close.TextColor3 = THEME.SubInk
-	close.Text = "✕"
-	close.Modal = true -- frees the cursor even in first person
-	close.Parent = panel
-	close.Activated:Connect(function()
-		gui:Destroy()
-	end)
-	local first = panel:FindFirstChildWhichIsA("Frame") -- the button row
-	local firstButton = first and first:FindFirstChildWhichIsA("TextButton")
-	if firstButton then
-		selectFor(firstButton)
-	end
-	-- walking away closes it
-	task.spawn(function()
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-		local from = root and root.Position
-		while gui.Parent and root and from do
-			task.wait(0.3)
-			if (root.Position - from).Magnitude > 14 then
-				gui:Destroy()
-			end
-		end
-	end)
-end
-
 function CreditsController.Init()
 	Net.event("Credits").OnClientEvent:Connect(roll)
 	ProximityPromptService.PromptTriggered:Connect(function(prompt: ProximityPrompt)
 		if prompt.Name == "SupportPrompt" then
-			openBoard()
+			TipPanel.Open()
 		elseif prompt.Name == "FavoritePrompt" and not promptFavorite() then
 			warn("[Favorite] the favorite prompt works once the game is published (Places.Lobby)") -- Studio
 		end

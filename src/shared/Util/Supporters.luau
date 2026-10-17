@@ -116,6 +116,17 @@ function Supporters.Refresh()
 			end
 		end
 	end
+	if STUDIO and #fresh == 0 and T.StudioPreview then
+		-- placeholder supporters so the walls can be judged in Studio (the owner's headshot on every card)
+		local owner = if game.CreatorType == Enum.CreatorType.User and game.CreatorId ~= 0
+			then game.CreatorId
+			else 11657510634
+		local amounts =
+			{ 1000, 500, 250, 200, 150, 100, 100, 100, 50, 50, 50, 50, 50, 50, 20, 20, 20, 10, 10, 10, 10, 10, 10 }
+		for i = 1, T.WallMax do
+			table.insert(fresh, { UserId = owner, Name = `Placeholder{i}`, Total = amounts[i] or 10 })
+		end
+	end
 	list = fresh
 	publish()
 end

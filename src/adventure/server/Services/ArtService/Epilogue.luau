@@ -85,6 +85,56 @@ local Skins: { [string]: MeshAssets.Skin } = {
 			},
 		},
 	},
+	-- the Supporter Wall (user, Oct 18: "special and nice art"): arched "hall of stars" board, gold crest star, lantern
+	-- arms (tools/supporter_wall/kit.py; polaroid SurfaceGui + lamp: Greybox). Model assets 102207265763714 (Wood),
+	-- 112430696210923 (Planks), 113432206604034 (Gold), 127906740907518 (Iron), 77619533681327 (Glow), 80104120927731 (Paint)
+	EP_SupporterWall = {
+		Design = v(17.83, 23.85, 3.05),
+		Meshes = {
+			Wood = {
+				Id = "",
+				Offset = v(0, -1.4, 0.875),
+				Size = v(17.6, 21.05, 1.2),
+				Material = Enum.Material.Wood,
+				Color = Color3.fromRGB(120, 82, 52),
+			},
+			Planks = {
+				Id = "",
+				Offset = v(0, -0.425, 0.995),
+				Size = v(15.15, 16.6, 0.16),
+				Material = Enum.Material.WoodPlanks,
+				Color = Color3.fromRGB(70, 46, 32),
+			},
+			Gold = {
+				Id = "",
+				Offset = v(0, 1.72, 0.649),
+				Size = v(17.827, 20.41, 0.812),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(232, 182, 76),
+			},
+			Iron = {
+				Id = "",
+				Offset = v(0, -5.675, 0),
+				Size = v(17.7, 12.5, 3.05),
+				Material = Enum.Material.Metal,
+				Color = Color3.fromRGB(50, 50, 55),
+			},
+			Glow = {
+				Id = "",
+				Offset = v(0, -1.525, -1.075),
+				Size = v(17.1, 1.15, 0.7),
+				Material = Enum.Material.Neon,
+				Color = Color3.fromRGB(255, 196, 130),
+			},
+			Paint = {
+				Id = "",
+				Offset = v(0.089, 3.624, 0.885),
+				Size = v(11.454, 4.702, 0.081),
+				Material = Enum.Material.SmoothPlastic,
+				Color = Color3.fromRGB(240, 228, 200),
+			},
+		},
+	},
 	EP_TrophyTower = trophy(
 		"135463924812876",
 		v(3.7, 0.55, 3.7),

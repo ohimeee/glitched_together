@@ -3864,30 +3864,31 @@ local function buildEpilogue(world: Model)
 		prompt.Parent = board
 	end
 
-	-- the Supporter Wall (user, Oct 18): a third, bigger notice board past the SUPPORT one, the polaroid podium of
-	-- everyone who tipped (Util/Supporters; same list as the lobby cork board and the credits' special thanks)
-	local WALL = 2.4
-	local wallBoard = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * WALL, 31, hill.Y, 146, 60)
+	-- the Supporter Wall (user, Oct 18: "special and nice art"): an arched "hall of stars" board past the SUPPORT one
+	-- (ArtService EP_SupporterWall), the polaroid podium of everyone who tipped on its plank board (Util/Supporters;
+	-- same list as the lobby corkboard and the credits' special thanks), two lantern glows on its iron arms
+	local WALL = 0.85
+	local wallBoard = prop("EP_SupporterWall", Vector3.new(17.83, 23.85, 3.05) * WALL, 31, hill.Y, 146, 60)
 	wallBoard.CanCollide = true
+	-- the plank board's face, from the kit: centre 7.7 up, just in front of the planks (front = -Z)
 	local face = block(
 		world,
-		Vector3.new(4.6, 3.2, 0.05) * WALL,
-		wallBoard.CFrame * CFrame.new(0, 0.27 * WALL, -0.13 * WALL),
+		Vector3.new(14.6, 8.4, 0.02) * WALL,
+		wallBoard.CFrame * CFrame.new(Vector3.new(0, 7.7 - 11.925, 0.8) * WALL),
 		{ name = "SupporterWallFace", transparency = 1, collide = false }
 	)
 	face.CanQuery = false
-	Supporters.Wall(face, Enum.NormalId.Front, { PixelsPerStud = 60 })
-	local wallLamp = Instance.new("Attachment")
-	wallLamp.Position = Vector3.new(0, 3.2, -1.2) * WALL
-	wallLamp.Orientation = Vector3.new(-120, 0, 0)
-	wallLamp.Parent = wallBoard
-	local wallSpot = Instance.new("SpotLight")
-	wallSpot.Color = rgb(255, 196, 130)
-	wallSpot.Brightness = 1.6
-	wallSpot.Range = 16
-	wallSpot.Angle = 70
-	wallSpot.Face = Enum.NormalId.Front
-	wallSpot.Parent = wallLamp
+	Supporters.Wall(face, Enum.NormalId.Front, { PixelsPerStud = 70 })
+	for _, sx in { -1, 1 } do
+		local glow = Instance.new("Attachment")
+		glow.Position = Vector3.new(sx * 8.2, 10.4 - 11.925, -1.95 + 0.875) * WALL
+		glow.Parent = wallBoard
+		local light = Instance.new("PointLight")
+		light.Color = rgb(255, 196, 130)
+		light.Brightness = 1.2
+		light.Range = 12
+		light.Parent = glow
+	end
 
 	-- the three worlds, whole, under the stars, are the Blender panorama (Worlds.luau Epilogue Look.Skybox)
 end
