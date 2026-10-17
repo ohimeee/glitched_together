@@ -241,7 +241,8 @@ local plateOverlap = OverlapParams.new()
 plateOverlap.FilterType = Enum.RaycastFilterType.Exclude
 
 -- `PastedOnly` plates (Glitched Core sockets) only count Kai's pastes, not players or crates.
--- `PlayersOnly` plates ignore crates and pastes (a door you have to hold yourself). A plate still in the Code Layer
+-- `PlayersOnly` plates ignore crates and pastes (a door you have to hold yourself). `HeavyOnly` plates (steel rim,
+-- Pixel Plains crate puzzles) only feel a crate or a paste: a player standing on one isn't heavy enough (user, Oct 17). A plate still in the Code Layer
 -- isn't there for anyone until Miko pulls it out.
 local function platePressed(plate: BasePart): boolean
 	if Tags.has(plate, "CodeLayer") and not plate:GetAttribute("PulledOut") then
@@ -251,10 +252,15 @@ local function platePressed(plate: BasePart): boolean
 	local cf = plate.CFrame * CFrame.new(0, plate.Size.Y / 2 + 1.5, 0)
 	local pastedOnly = plate:GetAttribute("PastedOnly") == true
 	local playersOnly = plate:GetAttribute("PlayersOnly") == true
+	local heavyOnly = plate:GetAttribute("HeavyOnly") == true
 	for _, part in workspace:GetPartBoundsInBox(cf, Vector3.new(plate.Size.X, 3, plate.Size.Z), plateOverlap) do
 		local model = part:FindFirstAncestorOfClass("Model")
 		if pastedOnly then
 			if Tags.find(part, "Pasted") then
+				return true
+			end
+		elseif heavyOnly then
+			if Tags.find(part, "Pullable") or Tags.find(part, "Pasted") then
 				return true
 			end
 		elseif model and Players:GetPlayerFromCharacter(model) then

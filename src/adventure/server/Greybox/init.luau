@@ -537,11 +537,12 @@ local function buildPixelPlains(world: Model)
 			attrs = { Group = group, Mass = 1 },
 		})
 	end
-	local function plate(group: string, x: number, top: number, z: number, name: string?)
+	-- heavy: only a crate (or a paste) presses it, never a player (the crate puzzles: user, Oct 17)
+	local function plate(group: string, x: number, top: number, z: number, name: string?, heavy: boolean?)
 		platform(P, Vector3.new(6, 0.6, 6), x, top + 0.6, z, {
 			color = NEUTRAL,
 			tags = { "PressurePlate" },
-			attrs = { Group = group },
+			attrs = { Group = group, HeavyOnly = heavy or nil },
 			name = name or "Plate",
 		})
 	end
@@ -974,7 +975,7 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	plate("SW1", -8, 0, 114)
+	plate("SW1", -8, 0, 114, nil, true)
 	lift("SW1", Vector3.new(8, 1, 56), -10, -20, 78, 20, "Bridge") -- Kai's drawbridge, up while the crate holds it
 	checkpoint(P, nextOrder(), 0, 0, 122, W, {
 		"Kai: freeze the cannon when it points at the island. Miko: climb on. Kai: release!",
@@ -1146,7 +1147,7 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	plate("F3", -10, 62, 640)
+	plate("F3", -10, 62, 640, nil, true)
 	gate(P, "F3", Vector3.new(8, 12, 1), CFrame.new(0, 68, 655.5), false, 0)
 
 	-- twist: crushers over a backward belt, and Kai only has one freeze
@@ -1210,7 +1211,7 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	plate("D1", 0, 0, 170)
+	plate("D1", 0, 0, 170, nil, true)
 	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 176))
 	grass(Vector3.new(30, 4, 30), 0, 0, 192, "CoinVault") -- z 177..207
 	checkpoint(P, nextOrder(), 0, 0, 188, W)

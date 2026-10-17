@@ -1273,7 +1273,29 @@ local function dressPieces(world: Instance, apply: (BasePart, string) -> boolean
 			part:SetAttribute("ArtHidden", true)
 		elseif CollectionService:HasTag(part, "PressurePlate") and apply(part, "ButtonPad") then
 			-- the plate's state used to show on the grey-box part (green neon while held): an inlay carries it now
-			StateInlay(part)
+			if part:GetAttribute("HeavyOnly") then
+				-- crate-only plate: the crate's steel (its frame, Crate skin) on a riveted rim, so it reads "crate here"
+				local steel = Color3.fromHex("#5E646B")
+				StateInlay(part, steel)
+				local half = part.Size / 2
+				for i = 0, 3 do
+					local bar = Instance.new("Part")
+					bar.Name = "HeavyRim"
+					bar.Size = Vector3.new(part.Size.X + 0.6, 0.5, 0.4)
+					bar.CFrame = part.CFrame
+						* CFrame.Angles(0, i * math.pi / 2, 0)
+						* CFrame.new(0, half.Y + 0.05, half.Z + 0.1)
+					bar.Anchored = true
+					bar.CanCollide = false
+					bar.CanQuery = false
+					bar.CanTouch = false
+					bar.Material = Enum.Material.DiamondPlate
+					bar.Color = steel
+					bar.Parent = part
+				end
+			else
+				StateInlay(part)
+			end
 		elseif CollectionService:HasTag(part, "Checkpoint") then
 			-- a yellow star flag on a chrome pole at the pad's edge; the pad itself goes faint
 			-- a faint yellow square still read as an obby checkpoint pad (13th session QA): the pad goes invisible and
