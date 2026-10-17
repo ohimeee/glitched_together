@@ -1106,6 +1106,20 @@ local function buildPixelPlains(world: Model)
 		color = METAL,
 		material = Enum.Material.Metal,
 	})
+	-- the factory front and back: wall from the roof up to the wall tops (user, Oct 17: the roof read as a loose plank
+	-- halfway up the walls, and a double jump from the doorway reached its top to walk over both belts)
+	for _, z in { 437, 497 } do
+		local bottom, top = 62 + 7.5, 84 + 11
+		block(
+			P,
+			Vector3.new(2, top - bottom, 18),
+			CFrame.new(0, (bottom + top) / 2, z) * CFrame.Angles(0, math.rad(90), 0),
+			{
+				color = DIRT,
+				name = "DoorWall",
+			}
+		)
+	end
 	grass(Vector3.new(30, 4, 24), 0, 62, 509, "BeltEnd")
 	blob(0, 62, 512, 16)
 	checkpoint(P, nextOrder(), 0, 62, 503, W, {
