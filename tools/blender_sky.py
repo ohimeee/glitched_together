@@ -64,3 +64,44 @@ def add_haze(material, color, start=600, end=12000, strength=0.8):
     nt.links.new(src, mix.inputs[1])
     nt.links.new(em.outputs["Emission"], mix.inputs[2])
     nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+
+
+def moon_material(mat, tint=(1.0, 0.95, 0.86), strength=1.0):
+    """A moon that reads as a moon, not a flat disc (Oct 17): Generated-coord maria + craters + fine noise, warm tint,
+    limb darkening (Layer Weight Facing is 1 at grazing). Keep strength ~1: higher blows out to a white disc."""
+    mat.use_nodes = True
+    nt = mat.node_tree
+    nt.nodes.clear()
+    N = nt.nodes.new
+    L = nt.links.new
+    out, emit, coord = N("ShaderNodeOutputMaterial"), N("ShaderNodeEmission"), N("ShaderNodeTexCoord")
+    maria = N("ShaderNodeTexNoise"); maria.inputs["Scale"].default_value = 1.6; maria.inputs["Detail"].default_value = 4
+    maria.inputs["Roughness"].default_value = 0.55
+    mr = N("ShaderNodeValToRGB")
+    mr.color_ramp.elements[0].position = 0.42; mr.color_ramp.elements[0].color = (0.22, 0.22, 0.27, 1)
+    mr.color_ramp.elements[1].position = 0.6; mr.color_ramp.elements[1].color = (1, 1, 1, 1)
+    vor = N("ShaderNodeTexVoronoi"); vor.inputs["Scale"].default_value = 7
+    vr = N("ShaderNodeValToRGB")
+    vr.color_ramp.elements[0].position = 0.05; vr.color_ramp.elements[0].color = (0.55, 0.55, 0.6, 1)
+    vr.color_ramp.elements[1].position = 0.22; vr.color_ramp.elements[1].color = (1, 1, 1, 1)
+    fine = N("ShaderNodeTexNoise"); fine.inputs["Scale"].default_value = 22; fine.inputs["Detail"].default_value = 6
+    fr = N("ShaderNodeMapRange"); fr.inputs["To Min"].default_value = 0.85; fr.inputs["To Max"].default_value = 1.05
+    def mul(a, b):
+        m = N("ShaderNodeMix"); m.data_type = "RGBA"; m.blend_type = "MULTIPLY"; m.inputs[0].default_value = 1
+        L(a, m.inputs[6])
+        if isinstance(b, tuple):
+            m.inputs[7].default_value = (*b, 1)
+        else:
+            L(b, m.inputs[7])
+        return m.outputs[2]
+    for tex in (maria, vor, fine):
+        L(coord.outputs["Generated"], tex.inputs["Vector"])
+    L(maria.outputs["Fac"], mr.inputs["Fac"]); L(vor.outputs["Distance"], vr.inputs["Fac"]); L(fine.outputs["Fac"], fr.inputs["Value"])
+    L(mul(mul(mul(mr.outputs["Color"], vr.outputs["Color"]), fr.outputs["Result"]), tint), emit.inputs["Color"])
+    lw = N("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.5
+    inv = N("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.inputs[0].default_value = 1
+    limb = N("ShaderNodeMath"); limb.operation = "POWER"; limb.inputs[1].default_value = 0.6
+    k = N("ShaderNodeMath"); k.operation = "MULTIPLY"; k.inputs[1].default_value = strength
+    L(lw.outputs["Facing"], inv.inputs[1]); L(inv.outputs[0], limb.inputs[0]); L(limb.outputs[0], k.inputs[0])
+    L(k.outputs[0], emit.inputs["Strength"]); L(emit.outputs[0], out.inputs["Surface"])
+    return mat

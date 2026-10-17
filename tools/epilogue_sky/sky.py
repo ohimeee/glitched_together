@@ -141,19 +141,8 @@ moon.location = MOON_DIR * 16000
 for p in moon.data.polygons:
     p.use_smooth = True
 mm = bpy.data.materials.get("E_Moon") or bpy.data.materials.new("E_Moon")
-mm.use_nodes = True
-mnt = mm.node_tree
-mnt.nodes.clear()
-mo = mnt.nodes.new("ShaderNodeOutputMaterial")
-me_ = mnt.nodes.new("ShaderNodeEmission")
-mn = mnt.nodes.new("ShaderNodeTexNoise"); mn.inputs["Scale"].default_value = 2.2; mn.inputs["Detail"].default_value = 6
-mr_ = mnt.nodes.new("ShaderNodeValToRGB")
-mr_.color_ramp.elements[0].position = 0.42; mr_.color_ramp.elements[0].color = (*lin("C9CFE0"), 1)
-mr_.color_ramp.elements[1].position = 0.6; mr_.color_ramp.elements[1].color = (*lin("FFF6E6"), 1)
-mnt.links.new(mn.outputs["Fac"], mr_.inputs["Fac"])
-mnt.links.new(mr_.outputs["Color"], me_.inputs["Color"])
-me_.inputs["Strength"].default_value = 6.0
-mnt.links.new(me_.outputs["Emission"], mo.inputs["Surface"])
+exec(open(r"C:\Users\User\OneDrive\Desktop\Coding\glitched_together\tools\blender_sky.py").read())
+moon_material(mm, tint=(1.0, 0.97, 0.92), strength=1.1)  # maria + craters + limb darkening (was a flat white disc)
 moon.data.materials.append(mm)
 moon.visible_shadow = False
 moon.visible_glossy = True

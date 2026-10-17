@@ -52,10 +52,10 @@
 ## Current status (27th session, Oct 17, 2026)
 
 - **Built:** Lobby (doll-sized bedroom, capsules), Prologue (stage set), World 1 Pixel Plains (28 checkpoints incl. Glitch Chase + **Crusher King boss** + throne hall, voxel art pass), World 2 Starfall Castle (combat M3, set pieces incl. Siege Cart + Ember Fuse) + boss **Hollow Dragon** (Sketchfab Celestial Dragon), World 3 Glitched Core (13 checkpoints incl. Memory Lane) + **final boss The Unfinished** (Meteor Golem skins, 4 phases, `server/Bosses/Unfinished.luau`) + **Epilogue** (night walk, Pip goodbye, real-world ending, credits + CONTINUE? YES). Art passes, Blender skyboxes, UI themes, sound first pass everywhere. Overall ~86% (missing: 2P runs of World 1/3, feel tests, Epilogue gold-piece art, publishing).
-- **27th session:** Epilogue gold trophies (6 Blender meshes, Open Cloud), throne floor sign turns with the camera, Hollow Dragon scale knots, card-reveal level-up picker (`client/CardReveal.luau`), real moon in the castle sky, grapple swing ends on kit change, new store thumbnail from the user's cover art (`marketing/`).
+- **27th session:** Epilogue gold trophies (6 Blender meshes, Open Cloud), throne floor sign turns with the camera, Hollow Dragon scale knots, card-reveal level-up picker (`client/CardReveal.luau`), real moons in the castle + Epilogue skies, grapple swing ends on kit change, new store thumbnail from the user's cover art (`marketing/`).
 - **26th session:** The Unfinished intro motion, Powder Hall +36 with swivelling crossbows + visible arrows + dimmer spark, end-credits tip jar, Epilogue Favorite/Support boards, [E] Teleport on the Epilogue portal (details in HISTORY.md).
 - **25th session:** It Takes Two mash respawn (every world), Hollow Dragon retune, bigger ultimates + camera shake, **Hollow Dragon hall "Shattered Cathedral"** (Blender kit, Open Cloud upload), **drone-flight boss intros** with boss music + live Dragon/King, 3 s respawn immunity in boss fights (details in HISTORY.md). Git clean, all pushed.
-- **Studio state at handoff:** Edit mode, Rojo plugin connected. Blender open with the `DragonHall` scene (kit in `tools/dragon_hall/kit.py`). `DebugWorld` attrs cleared.
+- **Studio state at handoff (Oct 17):** Edit mode, Rojo plugin connected (34872), `DebugWorld` cleared. Blender open with `EpilogueSky.blend` (saved).
 - **2P testing tool:** user starts Test → Clients and Servers (2 players); I find the server window with `list_roblox_studios` + `get_studio_state` (focused = Server), teleport with `PivotTo`, emulate Miko's block by setting `Blocking` on the server + playing `MoveAnims.Ids.Block` on her client. Ask before moving their characters.
 
 ## Next steps (in order)
@@ -79,6 +79,7 @@
 5. **Epilogue look (re-skinned Oct 11, realistic):** user to see it in play (walk, lantern light, meteors: only data-checked, bgshot froze the client view). Optional: post-credits Pip in an unfinished zone.
 6. **BACK TO LOBBY exit (built Oct 11):** the lobby teleport itself is untested (needs 2 players + published place ids; Studio only warns). The credits cursor fix (`FreeCursor`, `wantsLock`, YES `Modal`) still needs one fresh run through the real credits.
 7. Hollow Dragon (Oct 17, user to judge in the next fight): new scale knots (`DragonScale`, glow while open) and `RearZoom` against wing-tip clipping.
+7b. **Epilogue moon a bit dim** against its halo (Oct 17): raise `moon_material` strength ~1.6 in `tools/epilogue_sky/sky.py` or soften the world halo, re-render only `EP_Sky2_Lf`, upload, swap the id.
 8. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
 9. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
 
