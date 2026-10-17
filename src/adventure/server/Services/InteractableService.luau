@@ -304,7 +304,13 @@ local function onGroundPound(p: Player, pos: Vector3)
 		return
 	end
 	local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not root or (root.Position - pos).Magnitude > 12 then
+	-- the server's copy of the character trails a 110 studs/s pound fall, so it can still be well up in the air when
+	-- the landing arrives (a flat 12-stud check threw away high pounds: user, Oct 17 "the item doesn't activate")
+	if not root then
+		return
+	end
+	local offset = root.Position - pos
+	if Vector3.new(offset.X, 0, offset.Z).Magnitude > 12 or offset.Y < -6 or offset.Y > 60 then
 		return
 	end
 	pounded:Fire(p, pos)
