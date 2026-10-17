@@ -250,6 +250,7 @@ return {
 		PullRange = 35,
 		PullTime = 0.4,
 		PullDistance = 6,
+		PlateSnap = 5, -- a pull landing this close to a crate-only plate settles on its middle
 		PullCooldown = 1,
 		MaxMass = 50,
 		CrateDensity = 100, -- crates: max density, so a walking body can't shove them (only Miko's pull moves them)

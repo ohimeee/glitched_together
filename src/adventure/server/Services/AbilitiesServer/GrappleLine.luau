@@ -1,5 +1,6 @@
 -- Miko, World 1 (mechanics.md §4): Swing on Grapple Rings or anything Kai froze; Pull light objects to her.
 -- The swing itself runs on Miko's client for feel; the server only validates and can cut the line.
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -91,6 +92,17 @@ local function pull(p: Player, target: Instance, root: BasePart)
 	if wall then
 		local keep = math.max(0, wall.Distance - math.max(part.Size.X, part.Size.Z) / 2)
 		dest = start + path.Unit * keep
+	end
+	-- landing near a crate-only plate: settle on its middle, square (user, Oct 17: it leaned on the plate's edge)
+	for _, plate in CollectionService:GetTagged("PressurePlate") do
+		if plate:IsA("BasePart") and plate:GetAttribute("HeavyOnly") and plate:IsDescendantOf(workspace) then
+			local flat = (plate.Position - dest) * Vector3.new(1, 0, 1)
+			local mine = (plate.Position - root.Position) * Vector3.new(1, 0, 1)
+			if flat.Magnitude <= T.PlateSnap and mine.Magnitude > plate.Size.X / 2 + 2 then
+				dest = Vector3.new(plate.Position.X, dest.Y, plate.Position.Z)
+				break
+			end
+		end
 	end
 	-- nothing to land on (a gap between it and Miko): it stays put rather than drop into the void
 	if not workspace:Raycast(Vector3.new(dest.X, lift + 4, dest.Z), Vector3.new(0, -30, 0), params) then

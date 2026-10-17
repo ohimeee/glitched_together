@@ -260,7 +260,10 @@ local function platePressed(plate: BasePart): boolean
 				return true
 			end
 		elseif heavyOnly then
-			if Tags.find(part, "Pullable") or Tags.find(part, "Pasted") then
+			-- the crate has to sit on it: its middle over the plate, not a corner leaning on the edge
+			local heavy = Tags.find(part, "Pullable") or Tags.find(part, "Pasted")
+			local at = if heavy then plate.CFrame:PointToObjectSpace(Tags.position(heavy)) else nil
+			if at and math.abs(at.X) <= plate.Size.X / 2 + 0.5 and math.abs(at.Z) <= plate.Size.Z / 2 + 0.5 then
 				return true
 			end
 		elseif model and Players:GetPlayerFromCharacter(model) then
