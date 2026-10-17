@@ -1121,7 +1121,9 @@ local function buildPixelPlains(world: Model)
 		)
 	end
 	grass(Vector3.new(30, 4, 24), 0, 62, 509, "BeltEnd")
-	blob(0, 62, 512, 16)
+	-- paces the pit edge across the foot of Kai's bridge, where he waits for Miko's lever (user, Oct 17: a blob on an
+	-- open landing was useless): freeze it or pound-stun it
+	blob(0, 62, 517, 24)
 	checkpoint(P, nextOrder(), 0, 62, 503, W, {
 		"Kai: freeze a falling block over the pit. Miko: grapple it and swing across!",
 		"Miko: pull the teal lever on the far side to raise the bridge for Kai.",
@@ -1176,7 +1178,8 @@ local function buildPixelPlains(world: Model)
 	})
 
 	grass(Vector3.new(30, 4, 30), 0, 62, 731, "FactoryExit")
-	blob(0, 62, 728, 14)
+	-- paces across both S3 plates: holding them means freezing it or pound-stunning it first
+	blob(0, 62, 738, 22)
 	plate("S3", -9, 62, 738)
 	plate("S3", 9, 62, 738)
 	gate(P, "S3", Vector3.new(30, 20, 2), CFrame.new(0, 72, 746))
