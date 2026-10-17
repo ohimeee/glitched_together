@@ -132,6 +132,11 @@ local function makeProp(w: Wagon, prop: Prop, floorY: number): (BasePart?, CFram
 		light.Range = 10
 		light.Brightness = 0.8 -- small warm pools (memory subtle-lighting)
 		light.Parent = holder
+		-- painted fire over the coals, like the castle's torches
+		local top = Instance.new("Attachment")
+		top.Position = Vector3.new(0, size.Y * 0.45, 0)
+		top.Parent = holder
+		CombatFx.Emit(top, "Flame", 0.6 * prop[2], 12)
 	end
 	return holder, cf
 end
@@ -156,7 +161,7 @@ local function dressWagon(set: Set, w: Wagon, lookName: string, instant: boolean
 	w.props = {}
 	w.gold = false
 	if not instant then
-		CombatFx.Emit(w.deck, "Stars", 12, 8, Palette.Glitch)
+		CombatFx.Burst(w.deck.Position, { { "Stars", 12, 1.5, Palette.Glitch } })
 	end
 	task.delay(half, function()
 		if set.look ~= lookName or not w.deck.Parent then
@@ -231,7 +236,7 @@ local function gild(w: Wagon)
 			end
 		end
 	end
-	CombatFx.Emit(w.deck, "Stars", 14, 6, GOLD)
+	CombatFx.Burst(w.deck.Position + Vector3.new(0, 3, 0), { { "Stars", 14, 1.5, GOLD } }, GOLD, 10)
 end
 
 -- A slot was filled at `pos`: the nearest wagon still unfinished turns to gold.
