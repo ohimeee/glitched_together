@@ -18,6 +18,8 @@ export type Clip = { priority: string, loop: boolean?, keys: { Key } }
 
 -- Uploaded animation ids (rbxassetid://...) per clip. Empty = Studio-only temporary ids.
 local Ids: { [string]: string } = {
+	AimPistol = "rbxassetid://112065968991230",
+	AimTwo = "rbxassetid://91046429894884",
 	Block = "rbxassetid://134365471269463",
 	CastFireL = "rbxassetid://83759915052742",
 	CastFireR = "rbxassetid://137987086705806",
@@ -29,6 +31,8 @@ local Ids: { [string]: string } = {
 	Dash = "rbxassetid://85879401281012",
 	DoubleJump = "rbxassetid://140426401648051",
 	Grind = "rbxassetid://87687361770427",
+	HoldPistol = "rbxassetid://124897023219803",
+	HoldTwo = "rbxassetid://139089354551996",
 	Land = "rbxassetid://70900451462165",
 	LedgeAssist = "rbxassetid://138888968403569",
 	LongJump = "rbxassetid://92043900512876",
@@ -371,7 +375,74 @@ local chargePose = { -- the Shield Charge rush (shield on its normal grip): crou
 	LeftFoot = { 20, 0, 0 },
 }
 
+-- Carry tools (ToolFx `Carry`, barrel along the forearm): low-ready at the hip, elbow bent so the barrel points
+-- ahead (It Takes Two refs: tools ride at the hip, raised to aim). Only the arm joints: legs, torso and the other
+-- arm keep the walk/run/idle animation underneath.
+local carryOne = {
+	RightUpperArm = { 26, 0, 8 },
+	RightLowerArm = { 64, 0, 0 },
+	RightHand = { -4, 0, 0 },
+}
+local aimOne = {
+	RightUpperArm = { 86, 0, 4 },
+	RightLowerArm = { 4, 0, 0 },
+	RightHand = { 0, 0, 0 },
+}
+-- big tools (longest side >= Tuning.HeldSway.TwoHandSize): the left hand comes across under it
+local carryTwo = merge(carryOne, {
+	RightUpperArm = { 22, 0, 4 },
+	LeftUpperArm = { 34, 0, 14 },
+	LeftLowerArm = { 84, 0, 0 },
+})
+local aimTwo = merge(aimOne, {
+	LeftUpperArm = { 80, 0, 26 },
+	LeftLowerArm = { 22, 0, 0 },
+})
+local function breathe(pose: { [string]: Pose }): { [string]: Pose }
+	local out = table.clone(pose)
+	local u = pose.RightUpperArm
+	out.RightUpperArm = { u[1] + 3, u[2], u[3] }
+	return out
+end
+local function kick(pose: { [string]: Pose }): { [string]: Pose }
+	local out = table.clone(pose)
+	local u, l = pose.RightUpperArm, pose.RightLowerArm
+	out.RightUpperArm = { u[1] + 9, u[2], u[3] }
+	out.RightLowerArm = { l[1] + 12, l[2], l[3] }
+	return out
+end
+local function holdClip(carry: { [string]: Pose }): Clip
+	return {
+		priority = "Action",
+		loop = true,
+		keys = {
+			{ t = 0, pose = carry },
+			{ t = 0.8, pose = breathe(carry) },
+			{ t = 1.6, pose = carry },
+		},
+	}
+end
+-- raised to the aim with a small recoil kick, held a moment, back down to the carry
+local function aimClip(carry: { [string]: Pose }, aim: { [string]: Pose }): Clip
+	return {
+		priority = "Action2",
+		keys = {
+			{ t = 0, pose = carry },
+			{ t = 0.07, pose = aim },
+			{ t = 0.12, pose = kick(aim) },
+			{ t = 0.24, pose = aim },
+			{ t = 0.45, pose = aim },
+			{ t = 0.65, pose = carry },
+		},
+	}
+end
+
 local Clips: { [string]: Clip } = {
+	-- carry tools: held / used (MoveAnimController.Carry, HoldX while nothing bigger plays, AimX on use)
+	HoldPistol = holdClip(carryOne),
+	HoldTwo = holdClip(carryTwo),
+	AimPistol = aimClip(carryOne, aimOne),
+	AimTwo = aimClip(carryTwo, aimTwo),
 	-- the 3-hit sword combo (Tuning.Combat.SwordCombo): forehand, backhand, overhead chop
 	Slash1 = slash({
 		UpperTorso = { 0, -28, 0 },

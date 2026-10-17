@@ -52,6 +52,16 @@ return {
 		VentFlipGap = 1, -- s out of an updraft before entering one flips you again
 		VentFloatHold = 0.35, -- s the updraft float pose holds after you bob out of the stream's top
 	},
+	-- Carry tools (ToolFx Carry): the item rides a spring in the hand instead of being glued to it (HeldSwayController)
+	HeldSway = {
+		TwoHandSize = 2.2, -- studs: an item whose longest side reaches this is carried and aimed with both hands
+		Stiffness = 140, -- spring pull back to the grip (1/s²)
+		Damping = 13, -- 1/s (under-damped: one small overshoot)
+		Push = 0.15, -- how hard the hand's acceleration throws the item (× studs/s²; walking ≈ 4° average, 10° peaks)
+		Max = 0.35, -- studs of lag at most
+		Tilt = 0.9, -- radians of tilt per stud of lag
+		Shift = 0.3, -- studs of slide per stud of lag
+	},
 
 	-- Follow camera (CameraController): mouse-look, cursor locked, crosshair = screen center
 	Camera = {
@@ -472,6 +482,13 @@ return {
 		CalmRing = 3, -- RingEvery grows by this per filled slot
 		SlotRadius = 6, -- a paste of the right piece this close fills the slot
 		SaveRise = 2.5,
+		-- stage set: wagons on truss arms round the rim carry the props of the world whose rules are on
+		SetRadius = 66, -- wagon centres from the stage centre (the Code Layer pieces float at 55)
+		SetWagon = 14, -- wagon width/depth
+		SetDrop = 6, -- wagon tops this far under the stage floor
+		SetAngles = { 45, 80, 115, 145 }, -- degrees from the golem (+Z), mirrored left and right
+		SetSwap = 0.7, -- s, props sink into the wagon / rise out of it
+		SetStagger = 0.07, -- s between wagons
 	},
 	BossHitFlash = 0.25,
 

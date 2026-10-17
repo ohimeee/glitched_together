@@ -8,6 +8,7 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
 local Aim = require(script.Parent.Parent.Aim)
+local MoveAnim = require(script.Parent.Parent.Controllers.MoveAnimController)
 
 local toolUse = Net.event("ToolUse")
 local T = Tuning.PauseBeam
@@ -32,10 +33,12 @@ function PauseBeam:Start()
 
 	trove:Add(Input.action("W1Tools", "Tool1").Pressed:Connect(function()
 		if target then
+			MoveAnim.Aim()
 			toolUse:FireServer(1, target)
 		end
 	end))
 	trove:Add(Input.action("W1Tools", "Tool2").Pressed:Connect(function()
+		MoveAnim.Aim()
 		toolUse:FireServer(2)
 	end))
 end

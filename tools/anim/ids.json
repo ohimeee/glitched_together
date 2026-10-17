@@ -1,4 +1,12 @@
 {
+ "AimPistol": {
+  "hash": "9c0c4617e35b8b3d30814888de60f54341e3362e",
+  "id": "112065968991230"
+ },
+ "AimTwo": {
+  "hash": "55a5acab46bcb7c3ed22fa869f01ea9d1c0f3a5e",
+  "id": "91046429894884"
+ },
  "Block": {
   "hash": "efd0fd3af1ecdfda06c7419ececd92c9dddda4a3",
   "id": "134365471269463"
@@ -42,6 +50,14 @@
  "Grind": {
   "hash": "c12a00ba6b58795f138ff6d6000601333f02913e",
   "id": "87687361770427"
+ },
+ "HoldPistol": {
+  "hash": "8ccd3060789201a760a2f8eb959df9c4d3484faf",
+  "id": "124897023219803"
+ },
+ "HoldTwo": {
+  "hash": "81e07ed51674a9590cf183ac23770b2f1308cc0f",
+  "id": "139089354551996"
  },
  "Land": {
   "hash": "b5bbb1e08aa604bbd81170437c9f77aa58196688",

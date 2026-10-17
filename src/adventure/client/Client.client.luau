@@ -29,6 +29,7 @@ local order = {
 	"SwingPromptController",
 	"KeyPromptController",
 	"ToolFxController",
+	"HeldSwayController",
 	"AudioController",
 	"AmbientController",
 	"MeteorController",

@@ -17,6 +17,16 @@ local MoveAnimController = {}
 local studioIds: { [string]: string } = {} -- temporary ids, made once per session
 local tracks: { [string]: AnimationTrack } = {}
 local oneShot: AnimationTrack? = nil
+local carryKind: string? = nil -- "Pistol" | "Two" while the character holds a Carry tool (ToolFx `Carry`)
+
+-- the carry clips themselves; any other Action+ clip playing (cling, swing, grind, flips...) takes the arms instead
+local CARRY = { HoldPistol = true, HoldTwo = true, AimPistol = true, AimTwo = true }
+local BIG = {
+	[Enum.AnimationPriority.Action] = true,
+	[Enum.AnimationPriority.Action2] = true,
+	[Enum.AnimationPriority.Action3] = true,
+	[Enum.AnimationPriority.Action4] = true,
+}
 
 local function idFor(name: string): string?
 	local id = MoveAnims.Ids[name]
@@ -98,6 +108,39 @@ function MoveAnimController.Set(name: string, on: boolean, speed: number?)
 	end
 end
 
+-- The local player used their Carry tool: raise it to the aim (plays over everything, cuts no other clip).
+function MoveAnimController.Aim()
+	local track = carryKind and tracks["Aim" .. carryKind]
+	if track then
+		track:Play(0.03)
+	end
+end
+
+-- Every frame: the carry pose while a Carry tool is in hand and no bigger move owns the arms.
+local function updateCarry()
+	local character = player.Character
+	local kind: string? = nil
+	for _, d in if character then character:GetChildren() else {} do
+		if d:IsA("BasePart") and d:GetAttribute("Carry") then
+			local long = math.max(d.Size.X, d.Size.Y, d.Size.Z)
+			kind = if long >= Tuning.HeldSway.TwoHandSize then "Two" else "Pistol"
+			break
+		end
+	end
+	carryKind = kind
+	local busy = false
+	if kind then
+		for name, track in tracks do
+			if track.IsPlaying and not CARRY[name] and BIG[track.Priority] then
+				busy = true
+				break
+			end
+		end
+	end
+	MoveAnimController.Set("HoldPistol", kind == "Pistol" and not busy)
+	MoveAnimController.Set("HoldTwo", kind == "Two" and not busy)
+end
+
 function MoveAnimController.StopAll()
 	for _, track in tracks do
 		if track.IsPlaying then
@@ -112,6 +155,7 @@ function MoveAnimController.Init()
 		task.spawn(onCharacter, player.Character)
 	end
 	player.CharacterAdded:Connect(onCharacter)
+	RunService.RenderStepped:Connect(updateCarry)
 end
 
 return MoveAnimController

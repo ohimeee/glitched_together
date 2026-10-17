@@ -649,6 +649,9 @@ local function giveHeld(p: Player)
 		local handle = template:Clone()
 		handle.Name = if item.Muzzle then "HeldTool" else "HeldItem"
 		handle:SetAttribute("Held", true)
+		if item.Carry then
+			handle:SetAttribute("Carry", true) -- carry pose (MoveAnimController) + spring sway (HeldSwayController)
+		end
 		handle.Anchored = false
 		handle.Massless = true
 		handle.CanCollide = false

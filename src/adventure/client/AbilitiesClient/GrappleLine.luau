@@ -10,6 +10,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
 local Aim = require(script.Parent.Parent.Aim)
+local MoveAnim = require(script.Parent.Parent.Controllers.MoveAnimController)
 local MovementController = require(script.Parent.Parent.Controllers.MovementController)
 
 local toolUse = Net.event("ToolUse")
@@ -62,6 +63,7 @@ function GrappleLine:Start()
 			end
 		)
 		if started then
+			MoveAnim.Aim()
 			toolUse:FireServer(1, anchor)
 		end
 	end))
@@ -69,6 +71,7 @@ function GrappleLine:Start()
 	trove:Add(Input.action("W1Tools", "Tool2").Pressed:Connect(function()
 		local pullTarget = Aim.best({ "Pullable" }, T.PullRange, T.AimCone)
 		if pullTarget then
+			MoveAnim.Aim()
 			toolUse:FireServer(2, pullTarget)
 		end
 	end))

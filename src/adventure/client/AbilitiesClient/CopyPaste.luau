@@ -12,6 +12,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
 local Aim = require(script.Parent.Parent.Aim)
+local MoveAnim = require(script.Parent.Parent.Controllers.MoveAnimController)
 
 local player = Players.LocalPlayer
 local toolUse = Net.event("ToolUse")
@@ -97,6 +98,7 @@ function CopyPaste:Start()
 		end)
 		if target then
 			copiedSize = sizeOf(target)
+			MoveAnim.Aim()
 			toolUse:FireServer(1, target)
 		end
 	end))
@@ -114,6 +116,7 @@ function CopyPaste:Start()
 		local cf = pasteCFrame()
 		if cf then
 			lastCf = cf
+			MoveAnim.Aim()
 			toolUse:FireServer(2, nil, cf)
 		end
 	end))

@@ -11,6 +11,8 @@ export type HeldItem = {
 	Size: Vector3, -- studs (generated proportions, scaled to read at game size)
 	Hand: string, -- the character part it's welded to: "RightHand" | "LeftHand" | "Head"
 	Grip: CFrame, -- the item's CFrame relative to that part (arm hanging / head: -Z = forward)
+	Carry: boolean?, -- a gun-like tool: carried low-ready, raised on use, sways in the hand (one hand, or both when big:
+	-- MoveAnimController picks HoldPistol or HoldTwo by the longest side vs Tuning.HeldSway.TwoHandSize)
 	Muzzle: Vector3?, -- where beams / ropes / spells leave the item, in the item's space
 	ShiftedGrip: CFrame?, -- where it moves while the player is Shifted (Layer Shift goggles over the eyes)
 	GlowWhile: string?, -- a player attribute: while it's set the item's rim glows the owner's color (Miko's shield)
@@ -27,7 +29,8 @@ local Held: { [string]: { HeldItem } } = {
 			TextureId = "rbxassetid://102012553599365",
 			Size = v(0.808, 1.3, 1.569),
 			Hand = "RightHand",
-			Grip = CFrame.new(0, 0.25, -0.3) * CFrame.Angles(0, math.pi, 0),
+			Grip = CFrame.Angles(rad(-90), 0, 0) * CFrame.new(0, 0.25, -0.3) * CFrame.Angles(0, math.pi, 0), -- barrel along the forearm
+			Carry = true,
 			Muzzle = v(0, 0.2, 0.8),
 		},
 	},
@@ -38,7 +41,8 @@ local Held: { [string]: { HeldItem } } = {
 			TextureId = "rbxassetid://139643934864736",
 			Size = v(0.663, 1.3, 1.371),
 			Hand = "RightHand",
-			Grip = CFrame.new(0, 0.25, -0.25) * CFrame.Angles(0, math.pi, 0),
+			Grip = CFrame.Angles(rad(-90), 0, 0) * CFrame.new(0, 0.25, -0.25) * CFrame.Angles(0, math.pi, 0), -- barrel along the forearm
+			Carry = true,
 			Muzzle = v(0, 0.25, 0.7),
 		},
 	},
@@ -87,7 +91,8 @@ local Held: { [string]: { HeldItem } } = {
 			TextureId = "rbxassetid://89724513764682",
 			Size = v(0.819, 1.2, 0.813),
 			Hand = "RightHand",
-			Grip = CFrame.new(0, 0.3, -0.3) * CFrame.Angles(0, math.pi, 0),
+			Grip = CFrame.Angles(rad(-90), 0, 0) * CFrame.new(0, 0.3, -0.3) * CFrame.Angles(0, math.pi, 0), -- barrel along the forearm
+			Carry = true,
 			Muzzle = v(0, -0.1, 0.42),
 		},
 	},
