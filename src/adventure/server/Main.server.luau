@@ -229,6 +229,19 @@ if game:GetService("RunService"):IsStudio() then
 	local function debugJump()
 		local target = workspace:GetAttribute("DebugWorld")
 		if type(target) == "string" then
+			-- a typo ("PixelPLains") used to load an empty world: match the name ignoring case, else warn
+			local Worlds = require(game:GetService("ReplicatedStorage").Shared.Config.Worlds)
+			local found: string? = nil
+			for _, name in Worlds.Order do
+				if name:lower() == target:lower() then
+					found = name
+				end
+			end
+			if not found then
+				warn(`[Debug] no world "{target}": use one of {table.concat(Worlds.Order, ", ")}`)
+				return
+			end
+			target = found
 			local cp = workspace:GetAttribute("DebugCheckpoint")
 			WorldService.Load(target, if type(cp) == "number" then cp else 0)
 		end
