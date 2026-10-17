@@ -31,6 +31,9 @@ local dragReach, dragRadius = 0, 0 -- studs at full drag, the ring's radius (per
 local ultCast = Instance.new("BindableEvent")
 -- fired with the aim point when a touch ULT button is let go (the kit casts there)
 TopDownAim.UltCast = ultCast.Event
+local toolCast = Instance.new("BindableEvent")
+-- fired with (kind, point, aimed) when a dragged touch tool button is let go (FireMage: "Wall")
+TopDownAim.ToolCast = toolCast.Event
 
 local function rootOf(): BasePart?
 	local c = player.Character
@@ -143,14 +146,27 @@ function TopDownAim.Drag(offset: Vector2?, reach: number?, radius: number?)
 	dragRadius = radius or dragRadius
 end
 
--- A touch ULT button was let go: fires UltCast(point, aimed); aimed = false for a tap (point = auto-aim)
-function TopDownAim.ReleaseUlt()
+local function release(): (Vector3?, boolean)
 	local root = rootOf()
 	local aimed = drag ~= nil and drag.Magnitude >= Tuning.Touch.UltDeadZone
 	local point = if root then compute(root) else nil
 	drag = nil
+	return point, aimed
+end
+
+-- A touch ULT button was let go: fires UltCast(point, aimed); aimed = false for a tap (point = auto-aim)
+function TopDownAim.ReleaseUlt()
+	local point, aimed = release()
 	if point then
 		ultCast:Fire(point, aimed)
+	end
+end
+
+-- A dragged touch tool button was let go: fires ToolCast(kind, point, aimed)
+function TopDownAim.ReleaseTool(kind: string)
+	local point, aimed = release()
+	if point then
+		toolCast:Fire(kind, point, aimed)
 	end
 end
 

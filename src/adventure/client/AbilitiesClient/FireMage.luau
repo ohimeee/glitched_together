@@ -12,6 +12,7 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Input = require(script.Parent.Parent.Input)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local TopDownAim = require(script.Parent.Parent.TopDownAim)
 local MoveAnim = require(script.Parent.Parent.Controllers.MoveAnimController)
 
@@ -140,15 +141,24 @@ function FireMage:Start()
 			end
 		end)
 	end))
-	trove:Add(wall.Pressed:Connect(function()
-		if busy() or meteor() then
-			return
-		end
+	local function castWall(at: Vector3)
 		if os.clock() - lastWall >= T.FlameWall.Cooldown then
 			lastWall = os.clock()
 			MoveAnim.Play("CastWall")
 		end
-		toolUse:FireServer(2, nil, TopDownAim.point())
+		toolUse:FireServer(2, nil, at)
+	end
+	trove:Add(wall.Pressed:Connect(function()
+		-- touch: the WALL button drags to aim and casts on let go (TopDownAim.ToolCast below)
+		if busy() or meteor() or Glyphs.device() == "Touch" then
+			return
+		end
+		castWall(TopDownAim.point())
+	end))
+	trove:Add(TopDownAim.ToolCast:Connect(function(kind: string, point: Vector3)
+		if kind == "Wall" and not busy() then
+			castWall(point)
+		end
 	end))
 	trove:Add(Input.action("CastleTools", "Ignite").Pressed:Connect(function()
 		if not busy() then

@@ -61,6 +61,8 @@ return {
 		UltDragPx = 110, -- px of finger drag on the ULT button for full Meteor reach
 		UltReach = 45, -- studs from Kai at full Meteor drag (server cap: Combat.MeteorAim); Miko: ShieldKnight.Rally.LeapReach
 		UltDeadZone = 14, -- px: less than this is a tap (auto-aim)
+		FireReach = 40, -- studs: dragging FIRE steers the auto-fire toward a point this far at full drag
+		WallReach = 30, -- studs: drag WALL, let go to place it there (server caps the wall at 40)
 		TopDownZoom = 0.75, -- × the castle camera's distance on touch (phones: the duo read too small)
 	},
 	-- Low-end devices (client PerfController): phones/tablets or the graphics slider at or under LowQualityLevel

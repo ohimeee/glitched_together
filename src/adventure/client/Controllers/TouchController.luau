@@ -249,30 +249,27 @@ end
 -- ULT (castle): Meteor drags to aim (Brawl Stars-style; the icon follows the finger, the floor ring shows the
 -- blast), let go to cast. Meteor lands on the ring (a tap = auto-aim); Miko leaps to the ring and Rallies there
 -- (a tap = in place).
-local function bindUltDrag(entry: Button)
+-- Drag-to-aim on a touch button (Brawl Stars): `aim()` gives (reach, ring radius) for the current kit, or nil when
+-- this button doesn't drag right now; `done(cast)` runs on let go (cast = false when the button hid mid-drag).
+local function bindDrag(entry: Button, aim: () -> (number?, number?), done: (cast: boolean) -> ())
 	local held: InputObject? = nil
 	local start = Vector2.zero
 	local function finish(cast: boolean)
 		held = nil
 		entry.icon.Position = UDim2.fromScale(0.5, 0.5)
-		if cast then
-			TopDownAim.ReleaseUlt()
-		else
-			TopDownAim.Drag(nil)
-		end
+		done(cast)
 	end
 	entry.button.InputBegan:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.Touch or held then
 			return
 		end
+		local reach, radius = aim()
+		if not reach then
+			return
+		end
 		held = input
 		start = Vector2.new(input.Position.X, input.Position.Y)
-		if player:GetAttribute("Kit") == "ShieldKnight" then
-			local rally = Tuning.ShieldKnight.Rally
-			TopDownAim.Drag(Vector2.zero, rally.LeapReach, rally.Radius)
-		else
-			TopDownAim.Drag(Vector2.zero, Tuning.Touch.UltReach, Tuning.FireMage.Meteor.Radius)
-		end
+		TopDownAim.Drag(Vector2.zero, reach, radius)
 	end)
 	UserInputService.TouchMoved:Connect(function(input)
 		if input ~= held then
@@ -292,6 +289,50 @@ local function bindUltDrag(entry: Button)
 	entry.button:GetPropertyChangedSignal("Visible"):Connect(function()
 		if held and not entry.button.Visible then
 			finish(false) -- downed / cutscene mid-drag
+		end
+	end)
+end
+
+-- Kai's castle tools drag too: FIRE steers the auto-fire while held, WALL is placed where you let go
+local function fireMage(): boolean
+	return player:GetAttribute("Kit") == "FireMage" and player:GetAttribute("CameraMode") == "TopDown"
+end
+
+local function bindUltDrag(entry: Button)
+	bindDrag(entry, function()
+		if player:GetAttribute("Kit") == "ShieldKnight" then
+			local rally = Tuning.ShieldKnight.Rally
+			return rally.LeapReach, rally.Radius
+		end
+		return Tuning.Touch.UltReach, Tuning.FireMage.Meteor.Radius
+	end, function(cast)
+		if cast then
+			TopDownAim.ReleaseUlt()
+		else
+			TopDownAim.Drag(nil)
+		end
+	end)
+end
+
+local function bindToolDrags()
+	bindDrag(buttons.Tool1, function()
+		if fireMage() then
+			return Tuning.Touch.FireReach, 1.5
+		end
+		return nil, nil
+	end, function()
+		TopDownAim.Drag(nil) -- the fire loop stops with the button's release
+	end)
+	bindDrag(buttons.Tool2, function()
+		if fireMage() then
+			return Tuning.Touch.WallReach, Tuning.FireMage.FlameWall.Length / 2
+		end
+		return nil, nil
+	end, function(cast)
+		if cast then
+			TopDownAim.ReleaseTool("Wall")
+		else
+			TopDownAim.Drag(nil)
 		end
 	end)
 end
@@ -382,6 +423,7 @@ function TouchController.Init()
 	end
 	Input.bindButton("CastleTools", "Ignite", buttons.Ignite.button)
 	bindUltDrag(buttons.Ultimate)
+	bindToolDrags()
 	Input.bindButton("W3Tools", "Rotate", buttons.Rotate.button)
 	Input.bindButton("MenuContext", "Skip", buttons.Skip.button)
 
