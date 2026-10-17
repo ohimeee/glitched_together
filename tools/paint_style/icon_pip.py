@@ -31,9 +31,9 @@ for _ in range(26):
 # Pip, big, centred a little high
 pip = Image.open(M + r"\icon_pip_raw.png").convert("RGBA")
 pip = pip.crop(pip.getbbox())
-pw = int(S * 0.74)
+pw = int(S * 0.9)
 pip = pip.resize((pw, int(pip.height * pw / pip.width)), Image.LANCZOS)
-px, py = (S - pw) // 2 - int(S * 0.02), -int(S * 0.02)
+px, py = (S - pw) // 2 - int(S * 0.03), int(S * 0.04)
 # glow behind him
 glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
 gl = Image.new("RGBA", pip.size, (255, 230, 255, 0))
@@ -68,17 +68,7 @@ pip.putalpha(Image.fromarray(np.minimum(np.asarray(pip.getchannel("A")), np.asar
 canvas.alpha_composite(pip, (px, py))
 canvas.alpha_composite(peel, (px, py))
 
-# logo along the bottom
-logo = Image.open(M + r"\logo_final.png").convert("RGBA")
-lw = int(S * 0.82)
-logo = logo.resize((lw, int(logo.height * lw / logo.width)), Image.LANCZOS)
-lp = ((S - lw) // 2, S - logo.height - 14)
-sh = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-s = Image.new("RGBA", logo.size, (8, 10, 30, 0))
-s.putalpha(logo.getchannel("A").point(lambda v: v * 0.7))
-sh.alpha_composite(s, (lp[0] + 6, lp[1] + 10))
-canvas = Image.alpha_composite(canvas, sh.filter(ImageFilter.GaussianBlur(10)))
-canvas.alpha_composite(logo, lp)
+# no text on the icon (user, Oct 18): the game name shows under it anyway
 canvas.convert("RGB").save(M + r"\icon_pip_1024.png")
 canvas.convert("RGB").resize((512, 512), Image.LANCZOS).save(M + r"\icon_pip_512.png")
 print("saved icon_pip_512.png / icon_pip_1024.png")
