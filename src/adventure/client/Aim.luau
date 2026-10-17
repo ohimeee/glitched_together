@@ -1,9 +1,9 @@
 -- Soft lock-on aiming for tools: the best tagged target inside a cone around the crosshair. The crosshair is the
--- screen center while the mouse-look camera has the cursor locked; otherwise (side-on scenes, Alt held, touch)
--- it's wherever the cursor or the last touch is (playtest Oct 1: side-on bats couldn't be aimed at).
+-- screen center while the mouse-look camera has the cursor locked, on a gamepad and on touch (user: a tap moved the
+-- crosshair; phones turn the camera by dragging and lean on the lock-on cone); otherwise (side-on scenes, Alt held)
+-- it's wherever the cursor is (playtest Oct 1: side-on bats couldn't be aimed at).
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local GuiService = game:GetService("GuiService")
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -23,16 +23,10 @@ function Aim.root(): BasePart?
 	return c and c:FindFirstChild("HumanoidRootPart") :: BasePart?
 end
 
--- last touch on the 3D view (not on a button), in viewport pixels
-local lastTouch: Vector2? = nil
 local usingTouch = false
-UserInputService.InputBegan:Connect(function(input, processed)
+UserInputService.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.Touch then
 		usingTouch = true
-		if not processed then
-			local inset = GuiService:GetGuiInset()
-			lastTouch = Vector2.new(input.Position.X, input.Position.Y) + inset
-		end
 	elseif
 		input.UserInputType == Enum.UserInputType.MouseMovement
 		or input.UserInputType == Enum.UserInputType.MouseButton1
@@ -52,12 +46,9 @@ function Aim.screenPoint(): Vector2
 	if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter then
 		return size / 2
 	end
-	-- gamepad: the screen center (no cursor; the camera follows the right stick)
-	if Glyphs.device() == "Gamepad" then
+	-- gamepad and touch: the screen center (the camera follows the right stick / a drag)
+	if usingTouch or Glyphs.device() == "Gamepad" or Glyphs.device() == "Touch" then
 		return size / 2
-	end
-	if usingTouch then
-		return lastTouch or size / 2
 	end
 	return UserInputService:GetMouseLocation()
 end

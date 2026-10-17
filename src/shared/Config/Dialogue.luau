@@ -187,7 +187,7 @@ local Cutscenes: { [string]: { Line } } = {
 local GenericHints = {
 	{
 		"Two players, two halves of the puzzle. What can YOU see that they can't?",
-		"INSERT HINT HERE. ...Try pinging something with Q!",
+		"INSERT HINT HERE. ...Try pinging something with {Ping}!",
 	},
 	{ "Have you tried... talking? I hear it's great.", "Look for something only one of you can use." },
 }
