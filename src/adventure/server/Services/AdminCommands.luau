@@ -1,7 +1,7 @@
 -- Admin chat commands for testing the published game (a phone has no command bar). They only set the same workspace
 -- Debug* attributes the Studio command bar uses (Main / BossService listen for them); clients can't set workspace
 -- attributes, so only these commands and Studio can drive them. Allowed: Config/Admins + the experience owner.
---   /world <name> [checkpoint]   /cp <checkpoint>   /role [Kai|Miko]   /phase <n>   /ult
+--   /world <name> [checkpoint]   /cp <checkpoint>   /kai   /miko   /swap (= /role [Kai|Miko])   /phase <n>   /ult
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
@@ -68,6 +68,15 @@ local handlers: { [string]: (args: { string }) -> () } = {
 		-- solo: Kai / Miko; with two players any change swaps them (Main's DebugRole)
 		local want = args[1] and (args[1]:sub(1, 1):upper() .. args[1]:sub(2):lower())
 		workspace:SetAttribute("DebugRole", if want == "Kai" or want == "Miko" then want else tostring(os.clock()))
+	end,
+	kai = function()
+		workspace:SetAttribute("DebugRole", "Kai")
+	end,
+	miko = function()
+		workspace:SetAttribute("DebugRole", "Miko")
+	end,
+	swap = function()
+		workspace:SetAttribute("DebugRole", tostring(os.clock()))
 	end,
 	phase = function(args)
 		local n = tonumber(args[1])

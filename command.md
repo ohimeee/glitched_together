@@ -129,7 +129,7 @@ Type these in the game chat (works in the published game and in Studio). Only th
 |---|---|
 | `/world pp 28` | load a world at a checkpoint (names: `prologue`, `pp`, `castle`, `core`, `epi`, or the full name; checkpoint optional = start) |
 | `/cp 7` | reload the current world at checkpoint 7 |
-| `/role miko` | play solo as Miko (`kai` back); with 2 players `/role` swaps them |
+| `/miko` or `/kai` | change character (solo); `/swap` swaps Kai and Miko with 2 players (`/role miko` works too) |
 | `/phase 2` | jump the running boss fight to phase 2 (a number past the last phase = beaten) |
 | `/ult` | fill both ultimates |
 
