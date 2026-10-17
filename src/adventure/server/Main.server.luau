@@ -80,6 +80,7 @@ CombatService.Init()
 EncounterService.Init()
 BossService.Init()
 ArtService.Init()
+require(Services.AdminCommands).Init() -- /world, /cp, /role, /phase, /ult for admins (published-game tests)
 
 -- Hints reset on any progress.
 InteractableService.Progress:Connect(HintService.Progress)
@@ -224,9 +225,10 @@ if save.world == "Prologue" and save.checkpoint == 0 and not workspace:GetAttrib
 	task.delay(1, CutsceneService.Play, "Intro_Continue")
 end
 
--- Studio only: jump worlds from the command bar with workspace:SetAttribute("DebugWorld", "PixelPlains");
--- set workspace "DebugCheckpoint" (a number) first to start at that checkpoint.
-if game:GetService("RunService"):IsStudio() then
+-- Jump worlds with workspace:SetAttribute("DebugWorld", "PixelPlains") (Studio command bar, or the admin chat
+-- commands in a published game); set workspace "DebugCheckpoint" (a number) first to start at that checkpoint.
+-- Clients can't set workspace attributes, so this is safe outside Studio.
+do
 	local function debugJump()
 		local target = workspace:GetAttribute("DebugWorld")
 		if type(target) == "string" then

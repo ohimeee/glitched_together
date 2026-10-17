@@ -121,6 +121,20 @@ The Studio phone view is only a preview. To feel the real touch controls, publis
 - Castle: auto-aim on enemies, drag the METEOR / RALLY button to aim.
 - Frame rate: does it stutter anywhere?
 
+## 4b. Jump around on the phone (admin chat commands)
+
+Type these in the game chat (works in the published game and in Studio). Only the owner (buldak0555) and ids in `src/shared/Config/Admins.luau` can use them; for anyone else they are plain chat.
+
+| Command | Does |
+|---|---|
+| `/world pp 28` | load a world at a checkpoint (names: `prologue`, `pp`, `castle`, `core`, `epi`, or the full name; checkpoint optional = start) |
+| `/cp 7` | reload the current world at checkpoint 7 |
+| `/role miko` | play solo as Miko (`kai` back); with 2 players `/role` swaps them |
+| `/phase 2` | jump the running boss fight to phase 2 (a number past the last phase = beaten) |
+| `/ult` | fill both ultimates |
+
+A jump saves the duo at that world/checkpoint like a normal checkpoint does.
+
 ## 4. After changing code
 
 Rojo syncs code into Studio, but the phone runs the **published** version: publish again (**Alt+P**), then on the phone leave the game and join again.

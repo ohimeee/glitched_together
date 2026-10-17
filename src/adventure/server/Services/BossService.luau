@@ -133,9 +133,9 @@ function BossService.Init()
 	workspace:GetAttributeChangedSignal("World"):Connect(function()
 		workspace:SetAttribute("BossMusic", nil) -- a different world: its own music
 	end)
-	-- Studio only: workspace:SetAttribute("DebugBossPhase", n) jumps the running fight to phase n (solo tests of
-	-- phases that need both players); a number past the last phase finishes the fight.
-	if RunService:IsStudio() then
+	-- workspace:SetAttribute("DebugBossPhase", n) (Studio, or the admin /phase command) jumps the running fight to
+	-- phase n (solo tests of phases that need both players); a number past the last phase finishes the fight.
+	do
 		workspace:GetAttributeChangedSignal("DebugBossPhase"):Connect(function()
 			local n = workspace:GetAttribute("DebugBossPhase")
 			local r = running
