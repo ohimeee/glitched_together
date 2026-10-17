@@ -50,7 +50,7 @@ invite.Activated:Connect(function()
 end)
 
 Net.event("RejoinOffer").OnClientEvent:Connect(function()
-	local rejoin = button("REJOIN PARTNER", Color3.fromRGB(40, 170, 90), UDim2.new(1, -16, 1, -74))
+	local rejoin = button("REJOIN PARTNER", Color3.fromRGB(40, 170, 90), UDim2.new(1, -16, 1, -132))
 	rejoin.Activated:Connect(function()
 		rejoin.Text = "JOINING..."
 		Net.event("RejoinAccept"):FireServer()

@@ -3,35 +3,25 @@
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
 local TeleportService = game:GetService("TeleportService")
-local MemoryStoreService = game:GetService("MemoryStoreService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Places = require(ReplicatedStorage.Shared.Config.Places)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Net = require(ReplicatedStorage.Shared.Net)
+local RunIndex = require(ReplicatedStorage.Shared.Util.RunIndex)
 local LobbyBuilder = require(script.Parent.LobbyBuilder)
+local DuoTeleport = require(script.Parent.DuoTeleport)
 
 local LOCK_TIME = Tuning.LockTime
 local CHECK_INTERVAL = 0.2
-local DUO_TTL = 60 * 60 -- seconds the duo record lives in MemoryStore
 local MESSAGE_TIME = 2.5 -- how long TRY AGAIN / STUDIO notices stay on a screen
 
 LobbyBuilder.Build()
 Worlds.ApplyLook(Worlds.ByName.Lobby.Look)
 
--- MemoryStore throws in an unpublished place; keep going so the capsule lock-in can still be tested in Studio.
--- Every later use is inside a pcall, so missing maps only turn off teleport/rejoin.
-local duoMap: MemoryStoreHashMap, rejoinMap: MemoryStoreHashMap
-local storeOk, storeErr = pcall(function()
-	duoMap = MemoryStoreService:GetHashMap("Duos")
-	rejoinMap = MemoryStoreService:GetHashMap("Rejoin")
-end)
-if not storeOk then
-	warn(`[Capsules] MemoryStore unavailable ({storeErr}); duo teleport and rejoin are off`)
-end
 local rejoinOffer = Net.event("RejoinOffer")
 local rejoinAccept = Net.event("RejoinAccept")
 
@@ -44,6 +34,11 @@ type Pair = {
 	message: string?,
 	messageUntil: number,
 	status: TextLabel,
+	saveFor: string?, -- "<kaiId>_<mikoId>" the save line below was read for
+	saveLine: string?, -- "CONTINUE: PIXEL PLAINS" / "NEW GAME" (nil while reading)
+	saveShort: string?, -- "STARFALL CASTLE · CP 9" for the seated players' choice chip (nil = no save to continue)
+	swapped: boolean, -- they stand in the other capsules than in their saved run (allowed: same save, swapped powers)
+	votes: { [Player]: boolean }, -- NEW GAME votes: both must press it to replace their save
 }
 
 local allPairs: { Pair } = {}
@@ -124,9 +119,13 @@ local function refreshSeat(pair: Pair, seat: "kai" | "miko")
 		pair.seats[seat] = nil
 		seatedIn[current] = nil
 		setRole(current, nil)
+		pair.votes[current] = nil -- stepping out cancels their NEW GAME vote
+		for _, a in { "SeatSave", "SeatPartner", "SeatVotes", "SeatMyVote" } do
+			current:SetAttribute(a, nil)
+		end
 	end
 	for p in inside do
-		if not seatedIn[p] then -- first free player inside takes the seat
+		if not seatedIn[p] and not p:GetAttribute("Teleporting") then -- first free player inside takes the seat
 			pair.seats[seat] = p
 			seatedIn[p] = pair
 			setRole(p, if seat == "kai" then "Kai" else "Miko")
@@ -169,30 +168,101 @@ local function sendPair(pair: Pair)
 	setFrozen(kai, true)
 	setFrozen(miko, true)
 
-	if RunService:IsStudio() or Places.Adventure == 0 then
-		-- Teleports don't work in Studio (and need the place id): prove the lock-in works, then release.
-		print(`[Capsules] {kai.Name} (Kai) + {miko.Name} (Miko) locked in. Teleport skipped in Studio.`)
-		task.wait(1.5)
-		releasePair(pair, "LOCKED! (STUDIO)")
-		return
-	end
-
-	local ok, err = pcall(function()
-		local accessCode, privateServerId = TeleportService:ReserveServer(Places.Adventure)
-		duoMap:SetAsync(privateServerId, { kai = kai.UserId, miko = miko.UserId }, DUO_TTL)
-		rejoinMap:SetAsync(tostring(kai.UserId), { code = accessCode, server = privateServerId }, DUO_TTL)
-		rejoinMap:SetAsync(tostring(miko.UserId), { code = accessCode, server = privateServerId }, DUO_TTL)
-
-		local options = Instance.new("TeleportOptions")
-		options.ReservedServerAccessCode = accessCode
-		TeleportService:TeleportAsync(Places.Adventure, { kai, miko }, options)
-	end)
-
+	local ok, err = DuoTeleport.Send(kai, miko, pair.saveShort ~= nil and pair.votes[kai] and pair.votes[miko])
 	if not ok then
-		warn("Duo teleport failed:", err)
-		releasePair(pair, "TRY AGAIN")
+		if err == "STUDIO" then
+			-- Teleports don't work in Studio (and need the place id): prove the lock-in works, then release.
+			task.wait(1.5)
+			releasePair(pair, "LOCKED! (STUDIO)")
+		else
+			releasePair(pair, "TRY AGAIN")
+		end
 	end
 end
+
+-- Reads the pair's duo save once per new pair: the screen says whether they continue or start fresh.
+local function readSave(pair: Pair)
+	local kai, miko = pair.seats.kai, pair.seats.miko
+	if not (kai and miko) then
+		return
+	end
+	local id = `{kai.UserId}_{miko.UserId}`
+	if pair.saveFor == id then
+		return
+	end
+	pair.saveFor = id
+	pair.saveLine = nil
+	pair.saveShort = nil
+	pair.swapped = false
+	pair.votes = {}
+	task.spawn(function()
+		local save = RunIndex.DuoSave(kai.UserId, miko.UserId)
+		if RunService:IsStudio() and workspace:GetAttribute("DebugSavedRuns") then
+			save = { world = "StarfallCastle", checkpoint = 9 } -- Studio ids never save: a sample to test the chip
+		end
+		-- the roles they had: Kai's own run list says which side Kai stood on last time
+		local swapped = false
+		for _, e in RunIndex.Get(kai.UserId) do
+			if e.partner == miko.UserId then
+				swapped = e.role == "Miko"
+				break
+			end
+		end
+		if pair.saveFor ~= id then
+			return -- someone swapped meanwhile
+		end
+		local info = save and Worlds.ByName[save.world]
+		if save and save.complete then
+			pair.saveLine = "FINISHED ★ PLAY AGAIN"
+			pair.saveShort = "FINISHED ★"
+		elseif info and not (save.world == "Prologue" and (save.checkpoint or 0) == 0) then
+			pair.saveLine = `CONTINUE: {string.upper(info.Title)}`
+			pair.saveShort = `{string.upper(info.Title)} · CP {save.checkpoint or 0}`
+		else
+			pair.saveLine = "NEW GAME"
+		end
+		pair.swapped = pair.saveShort ~= nil and swapped
+	end)
+end
+
+local function voteCount(pair: Pair): number
+	local n = 0
+	for _, p in { pair.seats.kai, pair.seats.miko } do
+		if p and pair.votes[p] then
+			n += 1
+		end
+	end
+	return n
+end
+
+-- The seated players' screens show a CONTINUE / NEW GAME chip when their pair has a save (SavedRunsUI).
+local function syncSeats(pair: Pair)
+	local kai, miko = pair.seats.kai, pair.seats.miko
+	for _, side in { { kai, miko }, { miko, kai } } do
+		local me, other = side[1], side[2]
+		if me then
+			local show = other ~= nil and pair.saveShort ~= nil and not pair.sending
+			me:SetAttribute("SeatSave", if show then pair.saveShort else nil)
+			me:SetAttribute("SeatPartner", if show and other then other.DisplayName else nil)
+			me:SetAttribute("SeatVotes", if show then voteCount(pair) else nil)
+			me:SetAttribute("SeatMyVote", if show then pair.votes[me] == true else nil)
+		end
+	end
+end
+
+Net.event("CapsuleNewGame").OnServerEvent:Connect(function(p: Player, want: unknown)
+	local pair = seatedIn[p]
+	if not pair or pair.sending or not pair.saveShort or type(want) ~= "boolean" then
+		return
+	end
+	if pair.votes[p] == want then
+		return
+	end
+	pair.votes[p] = want
+	if pair.countdown then
+		pair.countdown = LOCK_TIME -- the choice changed: give the partner time to see it
+	end
+end)
 
 local function statusText(pair: Pair): string
 	if pair.message and os.clock() < pair.messageUntil then
@@ -200,7 +270,17 @@ local function statusText(pair: Pair): string
 	elseif pair.sending then
 		return "LOADING..."
 	elseif pair.seats.kai and pair.seats.miko then
-		return `LOCKING IN... {math.max(1, math.ceil(pair.countdown or LOCK_TIME))}`
+		local count = `LOCKING IN... {math.max(1, math.ceil(pair.countdown or LOCK_TIME))}`
+		local votes = voteCount(pair)
+		local line = pair.saveLine
+		if pair.saveShort and votes == 2 then
+			line = "NEW GAME (REPLACES SAVE)"
+		elseif pair.saveShort and votes == 1 then
+			line = "NEW GAME? 1/2"
+		elseif line and pair.swapped then
+			line ..= " · ROLES SWAPPED"
+		end
+		return if line then `{line}\n{count}` else count
 	elseif pair.seats.kai then
 		return "WAITING FOR MIKO"
 	elseif pair.seats.miko then
@@ -220,6 +300,8 @@ local function registerPair(model: Instance)
 		message = nil,
 		messageUntil = 0,
 		status = m.Screen.SurfaceGui.Status,
+		swapped = false,
+		votes = {},
 	})
 end
 
@@ -243,21 +325,14 @@ Players.PlayerAdded:Connect(function(p: Player)
 	end)
 
 	-- A player who dropped out of a duo run can jump back into their partner's server.
-	if Places.Adventure ~= 0 and not RunService:IsStudio() then
-		local ok, entry = pcall(function()
-			return rejoinMap:GetAsync(tostring(p.UserId))
-		end)
-		if ok and entry then
-			rejoinOffer:FireClient(p)
-		end
+	if DuoTeleport.RejoinEntry(p.UserId) then
+		rejoinOffer:FireClient(p)
 	end
 end)
 
 rejoinAccept.OnServerEvent:Connect(function(p: Player)
-	local ok, entry = pcall(function()
-		return rejoinMap:GetAsync(tostring(p.UserId))
-	end)
-	if not (ok and entry) then
+	local entry = DuoTeleport.RejoinEntry(p.UserId)
+	if not entry then
 		return
 	end
 	local options = Instance.new("TeleportOptions")
@@ -297,6 +372,7 @@ while true do
 			refreshSeat(pair, "miko")
 
 			if pair.seats.kai and pair.seats.miko then
+				readSave(pair)
 				local changed = pair.seats.kai ~= beforeKai or pair.seats.miko ~= beforeMiko
 				if changed or pair.countdown == nil then
 					pair.countdown = LOCK_TIME -- someone new stepped in: start (or restart) the 5 s
@@ -311,5 +387,6 @@ while true do
 			end
 		end
 		pair.status.Text = statusText(pair)
+		syncSeats(pair)
 	end
 end

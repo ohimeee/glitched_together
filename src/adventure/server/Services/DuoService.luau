@@ -12,7 +12,7 @@ local DuoService = {}
 DuoService.Kai = nil :: Player?
 DuoService.Miko = nil :: Player?
 
-local duo: { kai: number, miko: number }? = nil
+local duo: { kai: number, miko: number, fresh: boolean? }? = nil
 local changed = Instance.new("BindableEvent")
 DuoService.Changed = changed.Event -- fires (player, role) when someone takes a role
 
@@ -139,6 +139,11 @@ end
 
 function DuoService.RoleOf(p: Player): string?
 	return p:GetAttribute("Role") :: string?
+end
+
+-- True when both players chose NEW GAME in the lobby capsules: their old duo save is replaced.
+function DuoService.Fresh(): boolean
+	return duo ~= nil and duo.fresh == true
 end
 
 -- User ids for the save key: from the lobby record, or whoever is here (Studio).

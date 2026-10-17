@@ -214,7 +214,8 @@ end)
 
 -- Wait for the duo (in Studio, a solo tester starts after 3 s), then load their save.
 DuoService.WaitForDuo(if game.PrivateServerId == "" then 3 else 30)
-local save = SaveService.Load(DuoService.Ids())
+local kaiId, mikoId = DuoService.Ids()
+local save = SaveService.Load(kaiId, mikoId, DuoService.Fresh())
 WorldService.Load(save.world, save.checkpoint)
 
 -- (not on a Studio debug jump: it would talk over the target world, e.g. "the Glitch is eating everything" in the Epilogue)
