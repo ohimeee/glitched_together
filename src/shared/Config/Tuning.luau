@@ -285,6 +285,15 @@ return {
 	KeyPromptRange = 14, -- studs: kit key chips ("[SHIFT] BLINK") show this close (KeyPromptController)
 	KeyPromptSize = Vector2.new(4.6, 1.2), -- studs: kit key chips
 	OverheadBar = Vector2.new(3.6, 0.5), -- studs: the HP bar over each player in the castle (HUDController)
+	-- supporter recognition (Util/Supporters): wall size, how often the list re-reads, the tag over the head, the aura
+	Supporters = {
+		WallMax = 23, -- photos on a wall (3 podium + 2 rows of 10) / names in the credits, highest total first
+		Refresh = 120, -- s between data store reads
+		Tag = Vector2.new(3.4, 0.6), -- studs
+		TagHeight = 3.7, -- studs over the head (the partner's KAI / MIKO tag sits at 2.6)
+		AuraRate = 6, -- sparkles / s
+		AuraLight = 0.6, -- PointLight brightness (subtle-lighting)
+	},
 	RoleTag = Vector2.new(3, 0.8), -- studs: the partner's "KAI" / "MIKO" tag (PartnerController)
 	-- castle portcullis gates opening/closing (InteractableService): a clank + shudder, then a slow grind
 	Portcullis = { Shudder = 0.25, ShudderLift = 0.35, Move = 1.2 },

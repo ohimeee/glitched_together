@@ -8,4 +8,9 @@ return {
 		{ Id = 0, Robux = 50 }, -- TODO: product "Support: 50"
 		{ Id = 0, Robux = 100 }, -- TODO: product "Support: 100"
 	},
+	-- game passes (Creator Dashboard > Monetization > Passes), looks only (Config/Supporters)
+	Passes = {
+		Aura = { Id = 0, Robux = 99 }, -- TODO: pass "Glowing Aura"
+		Tag = { Id = 0, Robux = 49 }, -- TODO: pass "Name Tag Color"
+	},
 }

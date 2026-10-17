@@ -2,12 +2,14 @@
 -- Debug* attributes the Studio command bar uses (Main / BossService listen for them); clients can't set workspace
 -- attributes, so only these commands and Studio can drive them. Allowed: Config/Admins + the experience owner.
 --   /world <name> [checkpoint]   /cp <checkpoint>   /kai   /miko   /swap (= /role [Kai|Miko])   /phase <n>   /ult   /diag
+--   /supporter [aura|tag]   (no arg = a fake 10 R$ tip, Studio only; aura / tag = toggle a fake game pass)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local Admins = require(ReplicatedStorage.Shared.Config.Admins)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Supporters = require(ReplicatedStorage.Shared.Util.Supporters)
 
 local AdminCommands = {}
 
@@ -89,6 +91,9 @@ local handlers: { [string]: (args: { string }, player: Player) -> () } = {
 	-- the caller's client reports its touch icon / image load status in chat (phone-only bugs, no Studio there)
 	diag = function(_, player)
 		Net.event("AdminDiag"):FireClient(player)
+	end,
+	supporter = function(args, player)
+		Supporters.Fake(player, (args[1] or "tip"):lower())
 	end,
 	ult = function()
 		for _, p in Players:GetPlayers() do

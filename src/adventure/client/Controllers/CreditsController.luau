@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
+local HttpService = game:GetService("HttpService")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Credits = require(ReplicatedStorage.Shared.Config.Credits)
@@ -160,9 +161,33 @@ local function supportPanel(parent: Instance, centred: boolean?): Frame
 	end
 	TweenService:Create(panel, TweenInfo.new(1), { BackgroundTransparency = THEME.PanelTransparency + 0.25 }):Play()
 	TweenService:Create(stroke, TweenInfo.new(1), { Transparency = 0.6 }):Play()
+	local hideButton: TextButton? = nil
 	local thanks = Net.event("SupportThanks").OnClientEvent:Connect(function()
 		head.Text = "THANK YOU!"
-		sub.Text = "Your support goes into our next game."
+		sub.Text = "Your photo is going up on the Supporter Wall."
+		-- the wall + credits show the supporter's name: their choice to take it down (and put it back)
+		if not hideButton then
+			local hidden = false
+			local b = Instance.new("TextButton")
+			b.AnchorPoint = Vector2.new(1, 0)
+			b.Position = UDim2.new(1, -10, 0, 8)
+			b.Size = UDim2.fromOffset(170, 26)
+			b.BackgroundTransparency = 1
+			b.Font = THEME.Font
+			b.TextSize = 16
+			b.TextColor3 = THEME.SubInk
+			b.Text = "hide my name"
+			b.Parent = panel
+			b.Activated:Connect(function()
+				hidden = not hidden
+				Net.event("SupporterHide"):FireServer(hidden)
+				b.Text = if hidden then "show my name" else "hide my name"
+				sub.Text = if hidden
+					then "Your name stays off the wall."
+					else "Your photo is going up on the Supporter Wall."
+			end)
+			hideButton = b
+		end
 	end)
 	panel.Destroying:Connect(function()
 		thanks:Disconnect()
@@ -209,7 +234,56 @@ local function roll()
 	list.SortOrder = Enum.SortOrder.LayoutOrder
 	list.Parent = column
 	local order = 0
+	-- special thanks (user, Oct 18): every supporter's Roblox headshot + name, just before "Thank you for playing"
+	-- (server Util/Supporters publishes the list on workspace "Supporters")
+	local function supporters()
+		local ok, entries = pcall(HttpService.JSONDecode, HttpService, workspace:GetAttribute("Supporters") or "[]")
+		if not ok or type(entries) ~= "table" or #entries == 0 then
+			return
+		end
+		order += 1
+		label(column, "Special thanks to our supporters", 30, THEME.TitleFont, THEME.Accent).LayoutOrder = order
+		local grid = Instance.new("Frame")
+		grid.Size = UDim2.fromOffset(720, 0)
+		grid.AutomaticSize = Enum.AutomaticSize.Y
+		grid.BackgroundTransparency = 1
+		order += 1
+		grid.LayoutOrder = order
+		grid.Parent = column
+		local cells = Instance.new("UIGridLayout")
+		cells.CellSize = UDim2.fromOffset(130, 150)
+		cells.CellPadding = UDim2.fromOffset(14, 10)
+		cells.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		cells.SortOrder = Enum.SortOrder.LayoutOrder
+		cells.Parent = grid
+		for k, e in entries do
+			local cell = Instance.new("Frame")
+			cell.BackgroundTransparency = 1
+			cell.LayoutOrder = k
+			cell.Parent = grid
+			local pic = Instance.new("ImageLabel")
+			pic.AnchorPoint = Vector2.new(0.5, 0)
+			pic.Position = UDim2.fromScale(0.5, 0)
+			pic.Size = UDim2.fromOffset(100, 100)
+			pic.BackgroundColor3 = THEME.Ink
+			pic.BackgroundTransparency = 0.85
+			pic.Image = `rbxthumb://type=AvatarHeadShot&id={tonumber(e.u) or 0}&w=150&h=150`
+			pic.Parent = cell
+			local round = Instance.new("UICorner")
+			round.CornerRadius = UDim.new(0.5, 0)
+			round.Parent = pic
+			local name = label(cell, tostring(e.n), 20, THEME.Font, THEME.Ink)
+			name.Position = UDim2.fromOffset(0, 106)
+			name.Size = UDim2.new(1, 0, 0, 36)
+			name.TextScaled = true
+		end
+		order += 1
+		label(column, "", 40, THEME.Font, THEME.Ink).LayoutOrder = order -- a gap
+	end
 	for i, block in Credits do
+		if i == #Credits then
+			supporters()
+		end
 		order += 1
 		local title = label(column, block.Title, if i <= 2 then 46 else 30, THEME.TitleFont, THEME.Accent)
 		title.LayoutOrder = order

@@ -131,6 +131,7 @@ Type these in the game chat (works in the published game and in Studio). Only th
 | `/cp 7` | reload the current world at checkpoint 7 |
 | `/miko` or `/kai` | change character (solo); `/swap` swaps Kai and Miko with 2 players (`/role miko` works too) |
 | `/phase 2` | jump the running boss fight to phase 2 (a number past the last phase = beaten) |
+| `/supporter` | fake a 10 R$ tip (Studio only): SUPPORTER tag + your photo on the walls/credits; `/supporter aura` / `/supporter tag` toggle a fake game pass |
 | `/ult` | fill both ultimates |
 
 A jump saves the duo at that world/checkpoint like a normal checkpoint does.

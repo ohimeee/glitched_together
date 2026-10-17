@@ -9,6 +9,7 @@ local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local UiTheme = require(ReplicatedStorage.Shared.Config.UiTheme)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local Supporters = require(ReplicatedStorage.Shared.Util.Supporters)
 
 local Greybox = {}
 
@@ -3862,6 +3863,31 @@ local function buildEpilogue(world: Model)
 		prompt.MaxActivationDistance = 12
 		prompt.Parent = board
 	end
+
+	-- the Supporter Wall (user, Oct 18): a third, bigger notice board past the SUPPORT one, the polaroid podium of
+	-- everyone who tipped (Util/Supporters; same list as the lobby cork board and the credits' special thanks)
+	local WALL = 2.4
+	local wallBoard = prop("EP_SupportBoard", Vector3.new(6.9, 8.06, 2.09) * WALL, 31, hill.Y, 146, 60)
+	wallBoard.CanCollide = true
+	local face = block(
+		world,
+		Vector3.new(4.6, 3.2, 0.05) * WALL,
+		wallBoard.CFrame * CFrame.new(0, 0.27 * WALL, -0.13 * WALL),
+		{ name = "SupporterWallFace", transparency = 1, collide = false }
+	)
+	face.CanQuery = false
+	Supporters.Wall(face, Enum.NormalId.Front, { PixelsPerStud = 60 })
+	local wallLamp = Instance.new("Attachment")
+	wallLamp.Position = Vector3.new(0, 3.2, -1.2) * WALL
+	wallLamp.Orientation = Vector3.new(-120, 0, 0)
+	wallLamp.Parent = wallBoard
+	local wallSpot = Instance.new("SpotLight")
+	wallSpot.Color = rgb(255, 196, 130)
+	wallSpot.Brightness = 1.6
+	wallSpot.Range = 16
+	wallSpot.Angle = 70
+	wallSpot.Face = Enum.NormalId.Front
+	wallSpot.Parent = wallLamp
 
 	-- the three worlds, whole, under the stars, are the Blender panorama (Worlds.luau Epilogue Look.Skybox)
 end

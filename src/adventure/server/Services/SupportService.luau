@@ -1,6 +1,7 @@
 -- The end-credits tip jar (Config/Products.Support): the only developer products in the game. ProcessReceipt may be
--- set once per place, so every product goes through here. A support purchase grants nothing; the buyer's screen
--- says thank you ("SupportThanks"). Purchases are logged per player in their own data store key so a retried
+-- set once per place, so every product goes through here. A support purchase gives no gameplay advantage: the
+-- buyer's screen says thank you ("SupportThanks") and Util/Supporters adds the Robux to their total (Supporter
+-- Wall, credits, SUPPORTER tag; looks only). Purchases are logged per player in their own data store key so a retried
 -- receipt is never thanked twice.
 local DataStoreService = game:GetService("DataStoreService")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -9,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Net = require(ReplicatedStorage.Shared.Net)
 local Products = require(ReplicatedStorage.Shared.Config.Products)
+local Supporters = require(ReplicatedStorage.Shared.Util.Supporters)
 
 local SupportService = {}
 
@@ -44,6 +46,9 @@ local function processReceipt(info: { [string]: any }): Enum.ProductPurchaseDeci
 			return Enum.ProductPurchaseDecision.NotProcessedYet
 		end
 	end
+	if fresh then
+		Supporters.Record(info.PlayerId, info.CurrencySpent)
+	end
 	local p = Players:GetPlayerByUserId(info.PlayerId)
 	if p and fresh then
 		Net.event("SupportThanks"):FireClient(p, info.CurrencySpent)
@@ -53,6 +58,11 @@ end
 
 function SupportService.Init()
 	MarketplaceService.ProcessReceipt = processReceipt
+	Supporters.Init()
+	-- the thank-you panel's "hide my name" toggle
+	Net.event("SupporterHide").OnServerEvent:Connect(function(p, hidden)
+		Supporters.SetHidden(p, hidden == true)
+	end)
 end
 
 return SupportService

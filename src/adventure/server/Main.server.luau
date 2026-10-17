@@ -29,6 +29,7 @@ for _, name in
 		"Credits",
 		"ContinueYes",
 		"SupportThanks",
+		"SupporterHide",
 		"AdminDiag",
 	}
 do

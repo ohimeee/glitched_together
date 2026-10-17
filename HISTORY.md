@@ -2,6 +2,11 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 34th session (Oct 18, 2026): supporter wall + cosmetic passes
+
+- `/diag` also reports MeshId / TextureID / SurfaceAppearance fetch status near the player + memory (phone mesh colors).
+- User's monetization picks (from a phone screenshot of ideas): supporter wall (lobby + Epilogue), credits special thanks with headshots, glowing aura + name tag color passes. Wall design picked via ASCII previews after browsing Roblox refs (Top Donators boards, Mimic Hall of Fame): "Polaroid podium", Robux totals shown (user). Code: `shared/Util/Supporters`, `Config/Supporters`, `Products.Passes`, `Tuning.Supporters`, `lobby/server/SupporterBoard`, Greybox Epilogue, SupportService, CreditsController (special thanks + hide-my-name toggle), AdminCommands `/supporter`. Type-checked; not run in Studio yet.
+
 ## 33rd session (Oct 17-18, 2026): published game on a real phone
 
 - **Missing images on the phone:** not account/permissions/moderation (all 521 ids owned by buldak0555, Approved). `/diag` (admin chat command, `Services/AdminCommands` + TouchController) showed the Oct 17 uploads (touch icons, loading cards) as `Failure` on the phone while Studio/PC loaded them; overnight they turned `Success`. Icons are now one image each (no sprite sheet) and fall back to their word if a fetch fails.
