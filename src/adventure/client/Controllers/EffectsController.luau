@@ -151,26 +151,6 @@ function EffectsController.Init()
 			label.Text = if untilTime then `⏸ {string.format("%.1f", math.max(0, untilTime - now))}` else "⏸"
 		end
 	end)
-
-	-- The Glitch wall chases right behind you, so the trailing camera ends up at or behind it and the whole screen
-	-- went dim magenta (user, Oct 17, on the chase rails). Locally it fades out as the camera nears its front face.
-	RunService.RenderStepped:Connect(function()
-		local camera = workspace.CurrentCamera
-		for _, wall in Tags.list("GlitchWall") do
-			if wall:IsA("BasePart") then
-				local front = wall.CFrame * CFrame.new(0, 0, -wall.Size.Z / 2)
-				local ahead = -front:PointToObjectSpace(camera.CFrame.Position).Z -- studs in front of the face
-				local fade = math.clamp(1 - (ahead - 2) / 14, 0, 1) -- 0 from 16 studs out, 1 at 2 studs and behind
-				local modifier = fade * 0.9
-				wall.LocalTransparencyModifier = modifier
-				for _, d in wall:GetDescendants() do
-					if d:IsA("BasePart") then
-						d.LocalTransparencyModifier = modifier
-					end
-				end
-			end
-		end
-	end)
 end
 
 return EffectsController

@@ -1462,7 +1462,7 @@ local function buildPixelPlains(world: Model)
 	})
 	trigger.CanQuery = false
 	trigger.CanTouch = false
-	local wallStart = Vector3.new(0, 60, 722) -- 34 studs behind the start: ~1 s after the warm-up
+	local wallStart = Vector3.new(0, 60, 692) -- 64 studs behind the start: ~2 s after the warm-up (speed 30 since Oct 17)
 	local glitchWall = block(P, Vector3.new(80, 80, 4), CFrame.lookAt(wallStart, wallStart + Vector3.zAxis), {
 		name = "GlitchWall",
 		color = GLITCH,
@@ -1470,7 +1470,7 @@ local function buildPixelPlains(world: Model)
 		transparency = 0.35,
 		collide = false,
 		tags = { "GlitchWall" },
-		attrs = { Speed = 30, Distance = 457 }, -- 30 (user, Oct 17: "a bit faster"; was 27 for the curves and hops)
+		attrs = { Speed = 30, Distance = 487 }, -- 30 (user, Oct 17: "a bit faster"; was 27), still ends at z 1179
 	})
 	glitchWall.CanQuery = false
 	glitchWall.CanTouch = false
