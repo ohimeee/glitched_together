@@ -217,7 +217,8 @@ DuoService.WaitForDuo(if game.PrivateServerId == "" then 3 else 30)
 local save = SaveService.Load(DuoService.Ids())
 WorldService.Load(save.world, save.checkpoint)
 
-if save.world == "Prologue" and save.checkpoint == 0 then
+-- (not on a Studio debug jump: it would talk over the target world, e.g. "the Glitch is eating everything" in the Epilogue)
+if save.world == "Prologue" and save.checkpoint == 0 and not workspace:GetAttribute("DebugWorld") then
 	task.delay(1, CutsceneService.Play, "Intro_Continue")
 end
 
