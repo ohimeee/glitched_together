@@ -38,6 +38,22 @@ Useful ones:
 | Core: Paste Past the Door | `GlitchedCore` | 3 |
 | The Unfinished (final boss) | `GlitchedCore` | 13 |
 
+## Change character (Kai / Miko)
+
+Solo: play as Miko (or put `"Kai"` to go back). Kit, held items and HUD switch on the spot:
+
+```lua
+workspace:SetAttribute("DebugRole", "Miko")
+```
+
+With 2 players: any change swaps them (Kai becomes Miko and Miko becomes Kai):
+
+```lua
+workspace:SetAttribute("DebugRole", tostring(os.clock()))
+```
+
+Set it in Edit mode before Play to start as that character.
+
 ## Skip a boss phase (during a boss fight)
 
 ```lua
@@ -69,5 +85,5 @@ for _, p in game.Players:GetPlayers() do p:SetAttribute("Ultimate", 1) end
 Run this in **Edit mode** (not during Play) so the next Play starts normally:
 
 ```lua
-for _, a in { "DebugWorld", "DebugCheckpoint", "DebugBossPhase", "DebugDevice" } do workspace:SetAttribute(a, nil) end
+for _, a in { "DebugWorld", "DebugCheckpoint", "DebugBossPhase", "DebugDevice", "DebugRole" } do workspace:SetAttribute(a, nil) end
 ```

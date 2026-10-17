@@ -61,6 +61,13 @@ function WorldService.ForceKit(world: string?)
 	end
 end
 
+-- Re-hand everyone their kit (after a role change)
+function WorldService.RefreshKits()
+	for _, p in DuoService.Players() do
+		applyKit(p)
+	end
+end
+
 function WorldService.SpawnPlayer(p: Player)
 	local character = p.Character
 	if not character then

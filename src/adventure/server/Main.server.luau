@@ -235,4 +235,37 @@ if game:GetService("RunService"):IsStudio() then
 	end
 	workspace:GetAttributeChangedSignal("DebugWorld"):Connect(debugJump)
 	debugJump() -- set before the first world finished loading
+
+	-- workspace:SetAttribute("DebugRole", "Miko") plays solo as Miko (or "Kai"); with two players any change swaps them
+	local function setRoles(kai: Player?, miko: Player?)
+		DuoService.Kai, DuoService.Miko = kai, miko
+		if kai then
+			kai:SetAttribute("Role", "Kai")
+		end
+		if miko then
+			miko:SetAttribute("Role", "Miko")
+		end
+		WorldService.RefreshKits()
+	end
+	local function debugRole()
+		local want = workspace:GetAttribute("DebugRole")
+		local list = DuoService.Players()
+		if #list == 2 then
+			setRoles(DuoService.Miko, DuoService.Kai)
+		elseif #list == 1 and (want == "Kai" or want == "Miko") and list[1]:GetAttribute("Role") ~= want then
+			setRoles(if want == "Kai" then list[1] else nil, if want == "Miko" then list[1] else nil)
+		end
+	end
+	workspace:GetAttributeChangedSignal("DebugRole"):Connect(debugRole)
+	task.spawn(function() -- set before Play: wait for the first player's role
+		for _ = 1, 60 do
+			if #DuoService.Players() > 0 then
+				break
+			end
+			task.wait(0.5)
+		end
+		if #DuoService.Players() == 1 then
+			debugRole()
+		end
+	end)
 end
