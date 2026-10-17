@@ -2,7 +2,7 @@
 
 Paste these into the Studio **Command Bar** (View → Command Bar).
 
-- **During Play:** switch the top bar from **Client** to **Server** first (Test tab → "Current: Client" button), then paste.
+- **During Play:** switch to **Server** first, then paste. Test tab → click **"Current: Client"** so it reads **"Current: Server"** (the game view turns to a server view with a green border; click it again to go back and play). Lines pasted while it says Client do nothing: the server undoes them.
 - **Before Play (Edit mode):** paste the same lines, then press Play. The game starts there.
 
 These only work in Studio, never in the published game.
