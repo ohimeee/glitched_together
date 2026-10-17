@@ -953,13 +953,13 @@ local Decor: { { any } } = {
 	cloud(52, 96, 600, 15, 2),
 	cloud(-55, 92, 770, 0, 2.4),
 	cloud(45, 64, 950, -20, 2.6),
-	cloud(-40, 52, 1080, 10, 2.8),
+	cloud(-90, 70, 1080, 10, 2.8), -- was (-40, 52): the camera on chase rail E rode through it (screen fogged white)
 	coin(-12, 9, 6, 15, 1),
 	coin(-7.5, 9, 6, 15, 1),
 	coin(12, 10, 185, -20, 1.5),
 	coin(-16, 76, 505, 10, 1.5),
 	coin(16, 78, 700, -15, 1.5),
-	coin(0, 44, 1060, 0, 2.5),
+	coin(24, 52, 1060, 0, 2.5), -- was (0, 44): 15 studs off rail E, in the camera's path
 	{ "Flowers", CFrame.new(-24, 1.95, -14) * CFrame.Angles(0, math.rad(178), 0), 1.3, "StarterMeadow" },
 	{ "Flowers", CFrame.new(22, 1.8, -12) * CFrame.Angles(0, math.rad(142), 0), 1.2, "StarterMeadow" },
 	{ "Bush", CFrame.new(-26, 3.2, 8) * CFrame.Angles(0, math.rad(186), 0), 1.6, "StarterMeadow" },

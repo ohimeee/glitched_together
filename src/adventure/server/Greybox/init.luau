@@ -1470,7 +1470,7 @@ local function buildPixelPlains(world: Model)
 		transparency = 0.35,
 		collide = false,
 		tags = { "GlitchWall" },
-		attrs = { Speed = 27, Distance = 457 }, -- 27 (not 30): the curves and hops cost ground
+		attrs = { Speed = 30, Distance = 457 }, -- 30 (user, Oct 17: "a bit faster"; was 27 for the curves and hops)
 	})
 	glitchWall.CanQuery = false
 	glitchWall.CanTouch = false

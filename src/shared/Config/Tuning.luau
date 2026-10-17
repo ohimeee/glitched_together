@@ -215,6 +215,7 @@ return {
 		ChaseSpeed = 30, -- Glitch Chase wall; grinding is 40, so the duo stays ahead if they keep moving
 		ChaseRetryDelay = 2,
 		ChaseWarmup = 1.5, -- seconds between the duo stepping onto the start and the wall moving
+		ChaseTouch = 1.5, -- studs in front of the Glitch wall's face that already count as caught (a body's half-depth)
 		-- Blinkers (Glitched Core phantom steps): solid only on their frames of a shared 4-frame clock
 		FrameTime = 1.2,
 		FrameCount = 4,

@@ -523,12 +523,18 @@ end
 
 -- A failed run (someone caught by the wall or fallen off a rail): the whole duo goes back to the chase's start
 -- (the checkpoint before it) and the wall resets (playtest Oct 4: "if i die i should spawn in the rail start").
-local function failChase(c: Chase)
+-- `caught`: the player the wall touched goes down (user, Oct 17: "if it tags me I should die"), and mashes back at
+-- the start; everyone else just falls back there.
+local function failChase(c: Chase, caught: Player?)
 	c.wall:SetAttribute("Running", nil)
 	resetChase(c)
 	for _, p in Players:GetPlayers() do
 		HealthService.SetSafe(p, CheckpointService.SpawnCFrame(p))
-		HealthService.Fall(p) -- the usual fall: a beat, then put back (now at the start)
+		if p == caught then
+			HealthService.Down(p) -- no history after SetSafe: the respawn lands on the chase checkpoint
+		else
+			HealthService.Fall(p) -- the usual fall: a beat, then put back (now at the start)
+		end
 	end
 end
 
@@ -562,14 +568,14 @@ local function stepChase(c: Chase, dt: number)
 		c.travelled += move
 		wall.CFrame = c.start + c.start.LookVector * c.travelled
 	end
-	-- anyone behind the front face (and within its width/height) is caught
+	-- anyone the front face reaches (a body's depth in front of it, or behind it, within its width/height) is caught
 	local front = wall.CFrame * CFrame.new(0, 0, -wall.Size.Z / 2)
 	for _, p in Players:GetPlayers() do
 		local root = rootOf(p)
 		if root and not p:GetAttribute("Downed") and not p:GetAttribute("Falling") then
 			local lp = front:PointToObjectSpace(root.Position)
-			if lp.Z > 0 and math.abs(lp.X) <= wall.Size.X / 2 and math.abs(lp.Y) <= wall.Size.Y / 2 then
-				failChase(c)
+			if lp.Z > -T.ChaseTouch and math.abs(lp.X) <= wall.Size.X / 2 and math.abs(lp.Y) <= wall.Size.Y / 2 then
+				failChase(c, p)
 				return
 			end
 		end
