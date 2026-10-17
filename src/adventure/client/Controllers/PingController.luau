@@ -32,13 +32,13 @@ local function marker(from: Player, pos: Vector3)
 	anchor.Parent = workspace
 
 	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(90, 90)
+	gui.Size = UDim2.fromOffset(Tuning.PingIcon, Tuning.PingIcon) -- small, no name (user: too big)
 	gui.AlwaysOnTop = true
 	gui.LightInfluence = 0
-	gui.StudsOffset = Vector3.new(0, 2.5, 0)
+	gui.StudsOffset = Vector3.new(0, 1.5, 0)
 	gui.Parent = anchor
 	local icon = Instance.new("TextLabel")
-	icon.Size = UDim2.fromScale(1, 0.65)
+	icon.Size = UDim2.fromScale(1, 1)
 	icon.BackgroundTransparency = 1
 	icon.Font = Enum.Font.FredokaOne
 	icon.TextScaled = true
@@ -46,11 +46,6 @@ local function marker(from: Player, pos: Vector3)
 	icon.TextStrokeTransparency = 0.2
 	icon.Text = if info.Shape == "Triangle" then "▼" else "●"
 	icon.Parent = gui
-	local name = icon:Clone()
-	name.Size = UDim2.fromScale(1, 0.35)
-	name.Position = UDim2.fromScale(0, 0.65)
-	name.Text = info.Label
-	name.Parent = gui
 
 	local beam = Instance.new("Part")
 	beam.Anchored = true
@@ -60,8 +55,8 @@ local function marker(from: Player, pos: Vector3)
 	beam.Material = Enum.Material.Neon
 	beam.Color = info.Color
 	beam.Transparency = 0.4
-	beam.Size = Vector3.new(0.3, 12, 0.3)
-	beam.Position = pos + Vector3.new(0, 6, 0)
+	beam.Size = Vector3.new(0.2, 6, 0.2)
+	beam.Position = pos + Vector3.new(0, 3, 0)
 	beam.Parent = anchor
 
 	Debris:AddItem(anchor, Tuning.PingLife)

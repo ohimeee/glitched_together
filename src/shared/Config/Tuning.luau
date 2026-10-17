@@ -167,6 +167,7 @@ return {
 
 	-- Co-op systems
 	PingLife = 4,
+	PingIcon = 36, -- ping marker size, screen px
 	CamSyncRate = 10,
 	HintAfter = { 20, 45 },
 	PartnerWaitTime = 120,
