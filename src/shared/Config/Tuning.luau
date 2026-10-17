@@ -222,6 +222,15 @@ return {
 		CoinSize = Vector3.new(6, 2, 6),
 		CoinFallSpeed = 9, -- studs/s: a 9-stud band of useful heights = about a second to freeze in
 		CoinFall = 40, -- studs it sinks before it vanishes
+		-- what a bonk pops out (weights), and the knobs per item; PityAfter bad rolls in a row force a plain Step
+		Bonk = {
+			Weights = { Step = 50, Big = 15, Crumble = 15, Glitch = 20 },
+			PityAfter = 2,
+			BigScale = 1.6, -- the gold step is this much wider and deeper
+			BigFallScale = 0.7, -- and sinks slower
+			GlitchFallScale = 1.8, -- the Glitch blob drops faster
+			CrumbleDelay = 0.6, -- s from stepping on a cracked step to it falling apart
+		},
 		CartSpeed = 11, -- castle Siege Cart (studs/s): Ignite reaches 30, so ~2.5 s to burn the barricade ahead
 		CartStationPause = 2.5, -- s the cart rests at a midway station (crashes after it restart there)
 		CartStationHeal = 50, -- HP back for both at the station

@@ -1328,7 +1328,7 @@ local function buildPixelPlains(world: Model)
 	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "BonkPath")
 	checkpoint(P, nextOrder(), 0, 0, 6, W, {
 		"Miko: pull the ? block ({Tool2}). Kai: freeze the step that pops out at the right height!",
-		"Freeze it low enough to jump on, high enough to reach the ledge.",
+		"Gold steps are big, cracked ones crumble, magenta Glitches hurt: bonk again for another.",
 	})
 	sign(P, "COIN BONK STAIRS", CFrame.new(0, 9, 17), Vector3.new(18, 3, 0.4)) -- over the base, so its posts stand on it
 	grass(Vector3.new(30, 4, 30), 0, 0, 30, "BonkBase") -- z 15..45

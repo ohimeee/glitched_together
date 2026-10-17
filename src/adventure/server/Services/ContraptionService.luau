@@ -38,6 +38,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local HealthService = require(script.Parent.HealthService)
 local MoverService = require(script.Parent.MoverService)
 local CheckpointService = require(script.Parent.CheckpointService)
@@ -126,6 +127,8 @@ end
 -- Coin Bonk Stairs ----------------------------------------------------------------------------
 local lastCoin: { [BasePart]: BasePart } = {}
 local sinking: { [BasePart]: { left: number, speed: number } } = {}
+local badRolls: { [BasePart]: number } = {} -- sabotage rolls in a row per block (the pity counter)
+local rng = Random.new()
 
 function ContraptionService.Bonk(inst: Instance)
 	if not inst:IsA("BasePart") then
@@ -149,22 +152,90 @@ function ContraptionService.Bonk(inst: Instance)
 		old:Destroy()
 	end
 	local size = (bonk:GetAttribute("CoinSize") or T.CoinSize) :: Vector3
+	local fall = (bonk:GetAttribute("FallDistance") or T.CoinFall) :: number
+	local speed = (bonk:GetAttribute("FallSpeed") or T.CoinFallSpeed) :: number
+
+	-- What pops out (user, Oct 17: "different items, some sabotage some help"): a step, a big gold step (easier), a
+	-- cracked step that crumbles under you, or a Glitch blob that hurts. Two bad rolls in a row and the next is a step.
+	local kind = "Step"
+	if (badRolls[bonk] or 0) < T.Bonk.PityAfter then
+		local total = 0
+		for _, w in T.Bonk.Weights do
+			total += w
+		end
+		local roll = rng:NextNumber() * total
+		for _, name in { "Step", "Big", "Crumble", "Glitch" } do
+			roll -= T.Bonk.Weights[name]
+			if roll <= 0 then
+				kind = name
+				break
+			end
+		end
+	end
+	badRolls[bonk] = if kind == "Crumble" or kind == "Glitch" then (badRolls[bonk] or 0) + 1 else 0
+
 	local coin = Instance.new("Part")
-	coin.Name = "CoinStep"
-	coin.Size = size
-	coin.CFrame = (home :: CFrame) * CFrame.new(0, -(bonk.Size.Y + size.Y) / 2 - 0.3, 0)
+	coin.Name = if kind == "Step" then "CoinStep" else "Bonk" .. kind -- CoinStep wears its skin (ArtService by name)
 	coin.Anchored = true
-	coin.Color = Color3.fromRGB(150, 98, 52) -- a spent block's brown; Kai's orange highlight shows it's freezable
-	coin.Material = Enum.Material.SmoothPlastic
 	coin.TopSurface = Enum.SurfaceType.Smooth
 	coin.BottomSurface = Enum.SurfaceType.Smooth
-	CollectionService:AddTag(coin, "Freezable")
+	coin.Material = Enum.Material.SmoothPlastic
+	coin.Color = Color3.fromRGB(150, 98, 52) -- a spent block's brown; Kai's orange highlight shows it's freezable
+	if kind == "Big" then
+		size = Vector3.new(size.X * T.Bonk.BigScale, size.Y, size.Z * T.Bonk.BigScale)
+		speed *= T.Bonk.BigFallScale
+		coin.Color = Palette.PixelPlains.Gold
+		coin.Material = Enum.Material.Metal
+	elseif kind == "Crumble" then
+		coin.Color = Color3.fromRGB(176, 150, 112) -- pale, cracked sandstone: reads as weak
+		coin.Material = Enum.Material.Cobblestone
+	elseif kind == "Glitch" then
+		size = Vector3.one * 3
+		speed *= T.Bonk.GlitchFallScale
+		coin.Color = Palette.Glitch
+		coin.Material = Enum.Material.Neon
+		coin.CanCollide = false
+		coin:SetAttribute("Damage", 1)
+	end
+	coin.Size = size
+	coin.CFrame = (home :: CFrame) * CFrame.new(0, -(bonk.Size.Y + size.Y) / 2 - 0.3, 0)
+	if kind == "Glitch" then
+		CollectionService:AddTag(coin, "Hazard") -- touch = a heart (HealthService); can't be frozen into a step
+		Audio.play("GlitchCrackle", coin, 1.4)
+	else
+		CollectionService:AddTag(coin, "Freezable")
+	end
+	if kind == "Crumble" then
+		-- crumbles a beat after someone stands on it, frozen or not
+		local crumbling = false
+		coin.Touched:Connect(function(hit)
+			local character = hit:FindFirstAncestorOfClass("Model")
+			if crumbling or not (character and Players:GetPlayerFromCharacter(character)) then
+				return
+			end
+			crumbling = true
+			Audio.play("PoundDebris", coin, 1.6)
+			local home2 = coin.CFrame
+			for i = 1, 6 do
+				task.delay(i * T.Bonk.CrumbleDelay / 6, function()
+					if coin.Parent then
+						coin.CFrame = home2 * CFrame.new((i % 2 * 2 - 1) * 0.15, 0, 0)
+					end
+				end)
+			end
+			task.delay(T.Bonk.CrumbleDelay, function()
+				if coin.Parent then
+					sinking[coin] = nil
+					coin.CanCollide = false
+					TweenService:Create(coin, TweenInfo.new(0.25), { Transparency = 1 }):Play()
+					task.delay(0.3, coin.Destroy, coin)
+				end
+			end)
+		end)
+	end
 	coin.Parent = bonk.Parent
 	lastCoin[bonk] = coin
-	sinking[coin] = {
-		left = (bonk:GetAttribute("FallDistance") or T.CoinFall) :: number,
-		speed = (bonk:GetAttribute("FallSpeed") or T.CoinFallSpeed) :: number,
-	}
+	sinking[coin] = { left = fall, speed = speed }
 end
 
 -- Siege Cart ----------------------------------------------------------------------------------
