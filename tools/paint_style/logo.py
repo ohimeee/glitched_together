@@ -1,7 +1,6 @@
 """Finishes the 3D title logo (blender_assets/Logo.blend, scene Logo → marketing/logo_3d.png) and places it on art.
 
-The render gets one clean glitch cut through GLITCHED (the top strip shifts sideways, magenta / cyan at the seam)
-and a few short sideways smears off its right edge, the paint filter's language (tools/paint_style/paint.py).
+The render gets a few short sideways smears off the letters' right edges, the paint filter's language (tools/paint_style/paint.py).
 
 Usage:
   python tools/paint_style/logo.py finish                      → marketing/logo_final.png (transparent)
@@ -12,8 +11,6 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 ROOT = r"C:\Users\User\OneDrive\Desktop\Coding\glitched_together\marketing"
-MAGENTA = np.array([255, 43, 214])
-CYAN = np.array([43, 242, 255])
 
 
 def trim(im):
@@ -26,21 +23,7 @@ def finish():
     h, w = a.shape[:2]
     alpha = a[:, :, 3] > 30
     rows = np.nonzero(alpha.any(1))[0]
-    # GLITCHED is the top ~38% of the logo: cut it once a little above its middle
-    cut = int(rows[0] + (rows[-1] - rows[0]) * 0.17)
-    band = max(3, h // 70)
-    shift = w // 45
-    out = a.copy()
-    top = a[: cut].copy()
-    out[: cut] = 0
-    out[: cut, shift:] = top[:, : w - shift]
-    # the seam: a thin magenta line on the shifted top's edge, cyan just under
-    seam = out[cut - band: cut]
-    m = seam[:, :, 3] > 30
-    seam[m, :3] = seam[m, :3] * 0.3 + MAGENTA * 0.7
-    under = out[cut: cut + band]
-    m2 = under[:, :, 3] > 30
-    under[m2, :3] = under[m2, :3] * 0.4 + CYAN * 0.6
+    out = a.copy()  # no cut through GLITCHED (user: remove the full-width seam line)
     # a few sideways smears from the letters' right edges (fading, the painting's glitch drags)
     rng = np.random.default_rng(11)
     ys = np.nonzero(out[:, :, 3].max(1) > 200)[0]

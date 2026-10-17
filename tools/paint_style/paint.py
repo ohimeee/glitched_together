@@ -38,9 +38,13 @@ def kuwahara(img, r):
     return best_m
 
 
-def paint(src, seed, strokes, out_w):
+def paint(src, seed, strokes, out_w, punch=1.0):
+    from PIL import ImageEnhance
     rng = np.random.default_rng(seed)
     im = src.convert("RGB")
+    if punch != 1.0:  # the references are bold: push contrast + colour before painting
+        im = ImageEnhance.Contrast(im).enhance(1 + (punch - 1) * 0.8)
+        im = ImageEnhance.Color(im).enhance(punch)
     im = im.resize((out_w, round(im.height * out_w / im.width)), Image.LANCZOS)
     a = np.asarray(im).astype(np.float64)
     h, w = a.shape[:2]
@@ -119,6 +123,7 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--strokes", type=int, default=26000)
     ap.add_argument("--width", type=int, default=1920)
+    ap.add_argument("--punch", type=float, default=1.0)
     o = ap.parse_args()
-    paint(Image.open(o.src), o.seed, o.strokes, o.width).save(o.dst)
+    paint(Image.open(o.src), o.seed, o.strokes, o.width, o.punch).save(o.dst)
     print("saved", o.dst)
