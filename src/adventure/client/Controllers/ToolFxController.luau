@@ -388,7 +388,7 @@ local function sounds(kind: string, p: Player, target: Instance?)
 	elseif kind == "Released" then
 		Audio.play("Unfreeze", part)
 	elseif kind == "PullStart" then
-		Audio.play("GrappleShoot", hand) -- no second sound: the pulley rustle read as leaves (user, Oct 17)
+		Audio.play("Pull", part) -- only the pulley: the rope whip read as leaves on a pull (user, Oct 17)
 	elseif kind == "GrappleStart" then
 		Audio.play("GrappleShoot", hand)
 		task.delay(0.1, function() -- the rope tip lands (rope())
