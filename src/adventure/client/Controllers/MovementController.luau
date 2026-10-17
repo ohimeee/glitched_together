@@ -19,6 +19,7 @@ local MoveAnim = require(script.Parent.MoveAnimController)
 
 local player = Players.LocalPlayer
 local groundPoundEvent = Net.event("GroundPound")
+local grindingEvent = Net.event("Grinding") -- player attributes set here never reach the server
 
 local MovementController = {}
 
@@ -369,6 +370,7 @@ local function onCharacter(character: Model)
 		end
 		local _, z = railPoint(rail, root.Position)
 		grind = { rail = rail, dir = dir, z = z }
+		grindingEvent:FireServer(true) -- the server's void check leaves riders alone (rails aren't safe ground)
 		pounding = false
 		cling = nil
 		humanoid.PlatformStand = true
@@ -381,6 +383,11 @@ local function onCharacter(character: Model)
 			return
 		end
 		grind = nil
+		task.delay(1.5, function() -- a hop to the next rail keeps it; a real fall clears it after the hop window
+			if not grind then
+				grindingEvent:FireServer(false)
+			end
+		end)
 		humanoid.PlatformStand = false
 		humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
 		local v = g.rail.CFrame.LookVector * g.dir * Tuning.GrindSpeed
@@ -864,6 +871,7 @@ local function onCharacter(character: Model)
 	}
 
 	player.CharacterRemoving:Once(function()
+		grindingEvent:FireServer(false)
 		stopSwing(false)
 		current = nil
 		trove:Clean()

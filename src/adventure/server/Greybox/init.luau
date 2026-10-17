@@ -1411,8 +1411,17 @@ local function buildPixelPlains(world: Model)
 	})
 	-- six separate winding rail pieces (~380 studs of grinding) with a jump between each (It Takes Two: rails break
 	-- off, you hop and re-catch the next one or fall). Each gap starts 16 studs ahead along the previous piece's exit
-	-- direction and 4 lower (the tested hop); laid out with a heading/turn/drop script so every hop lines up
-	railPath("RailA", {
+	-- direction and 4 lower (the tested hop); laid out with a heading/turn/drop script so every hop lines up.
+	-- The Glitch wall follows the same line (user, Oct 17: "it should follow the rail path"): every rail point in order.
+	local wallStart = Vector3.new(0, 60, 692) -- 64 studs behind the start: ~2 s after the warm-up
+	local chasePath = { wallStart, Vector3.new(0, 62, 756) }
+	local function chaseRail(name: string, points: { Vector3 }, hang: boolean?)
+		for _, point in points do
+			table.insert(chasePath, point)
+		end
+		railPath(name, points, hang)
+	end
+	chaseRail("RailA", {
 		Vector3.new(0.0, 62.5, 770.0),
 		Vector3.new(0.0, 62.0, 786.0),
 		Vector3.new(-6.8, 61.0, 800.5),
@@ -1420,14 +1429,14 @@ local function buildPixelPlains(world: Model)
 		Vector3.new(-31.3, 59.0, 821.1),
 		Vector3.new(-36.7, 58.0, 836.1),
 	})
-	railPath("RailB", {
+	chaseRail("RailB", {
 		Vector3.new(-41.5, 54.0, 851.4),
 		Vector3.new(-45.7, 53.5, 864.7),
 		Vector3.new(-42.6, 52.5, 878.4),
 		Vector3.new(-33.1, 51.5, 888.7),
 		Vector3.new(-23.7, 50.5, 899.0),
 	}, true) -- hangs on chains from side arms
-	railPath("RailC", {
+	chaseRail("RailC", {
 		Vector3.new(-12.8, 46.5, 910.8),
 		Vector3.new(-4.2, 45.5, 924.2),
 		Vector3.new(-4.8, 44.5, 940.2),
@@ -1435,13 +1444,13 @@ local function buildPixelPlains(world: Model)
 		Vector3.new(-24.3, 42.5, 965.7),
 		Vector3.new(-27.7, 41.5, 981.3),
 	})
-	railPath("RailD", {
+	chaseRail("RailD", {
 		Vector3.new(-30.5, 37.5, 997.0),
 		Vector3.new(-29.3, 37.0, 1011.0),
 		Vector3.new(-23.4, 36.5, 1023.7),
 		Vector3.new(-17.5, 36.0, 1036.4),
 	}, true) -- hangs on chains from side arms
-	railPath("RailE", {
+	chaseRail("RailE", {
 		Vector3.new(-10.8, 32.0, 1050.9),
 		Vector3.new(-8.0, 31.0, 1066.7),
 		Vector3.new(-13.5, 30.0, 1081.7),
@@ -1449,7 +1458,7 @@ local function buildPixelPlains(world: Model)
 		Vector3.new(-23.0, 28.0, 1111.5),
 		Vector3.new(-17.5, 27.5, 1126.5),
 	})
-	railPath("RailF", {
+	chaseRail("RailF", {
 		Vector3.new(-11.5, 23.5, 1141.3),
 		Vector3.new(-4.0, 23.0, 1153.2),
 		Vector3.new(2.4, 22.5, 1165.6),
@@ -1462,16 +1471,31 @@ local function buildPixelPlains(world: Model)
 	})
 	trigger.CanQuery = false
 	trigger.CanTouch = false
-	local wallStart = Vector3.new(0, 60, 692) -- 64 studs behind the start: ~2 s after the warm-up (speed 30 since Oct 17)
-	local glitchWall = block(P, Vector3.new(80, 80, 4), CFrame.lookAt(wallStart, wallStart + Vector3.zAxis), {
+	local wallCf = CFrame.lookAt(wallStart, wallStart + Vector3.zAxis)
+	local pathLength = 0
+	for i = 2, #chasePath do
+		pathLength += (chasePath[i] - chasePath[i - 1]).Magnitude
+	end
+	local glitchWall = block(P, Vector3.new(80, 80, 4), wallCf, {
 		name = "GlitchWall",
 		color = GLITCH,
 		material = NEON,
 		transparency = 0.35,
 		collide = false,
 		tags = { "GlitchWall" },
-		attrs = { Speed = 30, Distance = 487 }, -- 30 (user, Oct 17: "a bit faster"; was 27), still ends at z 1179
+		-- Speed along the path (grinding is 40); Distance = the whole path, so it ends where the last rail does
+		attrs = { Speed = Tuning.Contraptions.ChaseSpeed, Distance = pathLength },
 	})
+	-- the path as offsets from the wall's start (they move with the section when it's placed): ContraptionService
+	local pathFolder = Instance.new("Folder")
+	pathFolder.Name = "Path"
+	for i, point in chasePath do
+		local value = Instance.new("Vector3Value")
+		value.Name = tostring(i)
+		value.Value = wallCf:PointToObjectSpace(point)
+		value.Parent = pathFolder
+	end
+	pathFolder.Parent = glitchWall
 	glitchWall.CanQuery = false
 	glitchWall.CanTouch = false
 	local triggerLink = Instance.new("ObjectValue")

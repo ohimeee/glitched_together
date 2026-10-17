@@ -343,6 +343,7 @@ local function trackSafeGround()
 			if
 				s.safe
 				and not s.falling
+				and not p:GetAttribute("Grinding") -- rails run far below the last safe ground (Glitch Chase)
 				and humanoid.FloorMaterial == Enum.Material.Air
 				and root.Position.Y < s.safe.Position.Y - Tuning.VoidDrop
 			then
@@ -447,6 +448,11 @@ function HealthService.Init()
 
 	-- It Takes Two respawn, every world: each mash press while Downed takes MashStep off the timer
 	-- (capped per press so an autoclicker can't skip it). MashCount lets the partner's meter pulse with it.
+	-- the client says when it rides a grind rail (plus a short hop window): the void check skips riders
+	Net.event("Grinding").OnServerEvent:Connect(function(p: Player, on: any)
+		p:SetAttribute("Grinding", if on == true then true else nil)
+	end)
+
 	mashEvent.OnServerEvent:Connect(function(p: Player)
 		local s = states[p]
 		local now = os.clock()

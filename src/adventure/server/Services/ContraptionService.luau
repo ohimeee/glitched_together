@@ -511,8 +511,25 @@ type Chase = {
 	running: boolean,
 	cooldown: number,
 	goAt: number,
+	path: { Vector3 }?, -- world points the wall follows (its "Path" folder), else straight along its LookVector
 }
 local chases: { [BasePart]: Chase } = {}
+
+-- Where a path-following wall stands after `travelled` studs, facing along the path (level).
+local function alongPath(path: { Vector3 }, travelled: number): CFrame
+	local left = travelled
+	for i = 2, #path do
+		local a, b = path[i - 1], path[i]
+		local leg = (b - a).Magnitude
+		if left <= leg or i == #path then
+			local flatDir = (b - a) * Vector3.new(1, 0, 1)
+			local at = a:Lerp(b, if leg > 0 then math.clamp(left / leg, 0, 1) else 1)
+			return CFrame.lookAt(at, at + (if flatDir.Magnitude > 0.01 then flatDir.Unit else Vector3.zAxis))
+		end
+		left -= leg
+	end
+	return CFrame.new(path[#path])
+end
 
 local function resetChase(c: Chase)
 	c.running = false
@@ -566,7 +583,7 @@ local function stepChase(c: Chase, dt: number)
 	if c.travelled < distance and not frozen(wall) then
 		local move = math.min(((wall:GetAttribute("Speed") or T.ChaseSpeed) :: number) * dt, distance - c.travelled)
 		c.travelled += move
-		wall.CFrame = c.start + c.start.LookVector * c.travelled
+		wall.CFrame = if c.path then alongPath(c.path, c.travelled) else c.start + c.start.LookVector * c.travelled
 	end
 	-- anyone the front face reaches (a body's depth in front of it, or behind it, within its width/height) is caught
 	local front = wall.CFrame * CFrame.new(0, 0, -wall.Size.Z / 2)
@@ -877,7 +894,20 @@ function ContraptionService.Init()
 				end
 			end)
 			local link = inst:FindFirstChild("Trigger") :: ObjectValue?
+			local folder = inst:FindFirstChild("Path")
+			local path: { Vector3 }? = nil
+			if folder then
+				local points = {}
+				for i = 1, #folder:GetChildren() do
+					local value = folder:FindFirstChild(tostring(i)) :: Vector3Value?
+					if value then
+						table.insert(points, inst.CFrame:PointToWorldSpace(value.Value))
+					end
+				end
+				path = points
+			end
 			chases[inst] = {
+				path = path,
 				wall = inst,
 				trigger = link and link.Value :: BasePart?,
 				start = inst.CFrame,

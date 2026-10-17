@@ -212,7 +212,7 @@ return {
 		DropSpeed = 4,
 		DropAccel = 14,
 		DropMaxSpeed = 70,
-		ChaseSpeed = 30, -- Glitch Chase wall; grinding is 40, so the duo stays ahead if they keep moving
+		ChaseSpeed = 34, -- Glitch Chase wall along the rail path (since Oct 17); grinding is 40, so keep moving
 		ChaseRetryDelay = 2,
 		ChaseWarmup = 1.5, -- seconds between the duo stepping onto the start and the wall moving
 		ChaseTouch = 1.5, -- studs in front of the Glitch wall's face that already count as caught (a body's half-depth)

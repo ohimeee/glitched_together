@@ -21,6 +21,7 @@ for _, name in
 		"Launch",
 		"GameOver",
 		"RespawnMash",
+		"Grinding",
 		"CameraShake",
 		"LevelUp",
 		"LevelPick",
