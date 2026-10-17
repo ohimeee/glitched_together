@@ -87,3 +87,45 @@ Run this in **Edit mode** (not during Play) so the next Play starts normally:
 ```lua
 for _, a in { "DebugWorld", "DebugCheckpoint", "DebugBossPhase", "DebugDevice", "DebugRole" } do workspace:SetAttribute(a, nil) end
 ```
+
+---
+
+# Play the real game on your phone
+
+The Studio phone view is only a preview. To feel the real touch controls, publish the game privately and open it in the Roblox app.
+
+## 1. Publish (on the PC, once)
+
+1. In Studio, make sure **Play is stopped** (Edit mode) and Adventure.rbxl is the open place.
+2. **File → Publish to Roblox As...**
+   - First time: **Create new experience**. Name it e.g. `Glitched Together (test)`, Creator = you. Click **Create**.
+   - Later times: just **File → Publish to Roblox** (Alt+P): it updates the same experience.
+3. **Home → Game Settings**:
+   - **Basic Info → Devices:** tick **Phone** and **Tablet** (and Computer). Save.
+   - **Permissions → Playability:** leave it **Private** (only you can join). Save.
+   - **Security:** turn on **Enable Studio Access to API Services** (saves need it). Save.
+
+## 2. Play on the phone
+
+1. Install the **Roblox** app and log in with the **same account** as Studio.
+2. Open your experience:
+   - In the app: **Profile → Creations**, tap `Glitched Together (test)`, then **Play**,
+   - or on the PC open the experience page on roblox.com, copy the link and open it on the phone.
+3. The game starts at the Prologue (the Debug commands only work in Studio).
+
+## 3. What to check (write notes as you go)
+
+- Buttons: easy to reach with the right thumb? Nothing too close or off the screen?
+- Joystick (left thumb) + a button held at the same time (e.g. move while blocking as Miko).
+- Text size: hints, signs and HUD readable?
+- Castle: auto-aim on enemies, drag the METEOR / RALLY button to aim.
+- Frame rate: does it stutter anywhere?
+
+## 4. After changing code
+
+Rojo syncs code into Studio, but the phone runs the **published** version: publish again (**Alt+P**), then on the phone leave the game and join again.
+
+## Notes
+
+- 2 players: the second player needs their own account, and you add them under **Game Settings → Permissions** (Collaborators / friends) or set the game to Friends.
+- The lobby → adventure teleport only works once both places are published in the same experience and their ids are in `src/shared/Config/Places.luau` (LAUNCH.md). For a phone test, publishing Adventure.rbxl alone is enough.
