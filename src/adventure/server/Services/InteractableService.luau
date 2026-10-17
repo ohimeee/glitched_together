@@ -279,6 +279,39 @@ local function onTop(part: BasePart, pos: Vector3, slack: number): boolean
 		and localPos.Y <= half.Y + 6
 end
 
+-- A pounded pad visibly reacts (user, Oct 17: "it must show that the pad springed"): the part's skin + inlay (its
+-- anchored children) run through `steps` = { {y offset, seconds, easing?} } and settle home. The collider stays put.
+local function bump(part: BasePart, steps: { { any } })
+	if part:GetAttribute("Bumping") then
+		return
+	end
+	local pieces: { [BasePart]: CFrame } = {}
+	for _, d in part:GetDescendants() do
+		if d:IsA("BasePart") and d.Anchored then
+			pieces[d] = d.CFrame
+		end
+	end
+	part:SetAttribute("Bumping", true)
+	task.spawn(function()
+		for _, step in steps do
+			local info = TweenInfo.new(step[2], step[3] or Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			for piece, home in pieces do
+				if piece.Parent then
+					TweenService:Create(piece, info, { CFrame = home + Vector3.new(0, step[1], 0) }):Play()
+				end
+			end
+			task.wait(step[2])
+		end
+		for piece, home in pieces do
+			piece.CFrame = home
+		end
+		part:SetAttribute("Bumping", nil)
+	end)
+end
+
+local SPRING = { { -0.4, 0.06 }, { 0.9, 0.09 }, { 0, 0.4, Enum.EasingStyle.Bounce } } -- squash, spring, wobble home
+local PRESS = { { -0.35, 0.07 }, { 0, 0.25, Enum.EasingStyle.Back } } -- push button: in, then back out
+
 local poundTimes: { [Instance]: { [Player]: number } } = {}
 -- Warp pipes (obstacles.md "Warp Pipe Swap"): two `WarpPipe` parts with the same Group, one each side of a wall;
 -- both players ground-pound their own pipe within DuoPoundWindow and they swap places.
@@ -355,6 +388,8 @@ local function onGroundPound(p: Player, pos: Vector3)
 	-- Bounce Pad: launches the OTHER player standing on it.
 	for _, pad in CollectionService:GetTagged("BouncePad") do
 		if pad:IsA("BasePart") and pad:IsDescendantOf(workspace) and onTop(pad, pos, 1) then
+			bump(pad, SPRING)
+			Audio.play("BouncePad", pad, 0.8)
 			for _, other in DuoService.Players() do
 				local otherRoot = other ~= p and other.Character and other.Character:FindFirstChild("HumanoidRootPart")
 				if otherRoot and onTop(pad, (otherRoot :: BasePart).Position, 1) then
@@ -370,7 +405,11 @@ local function onGroundPound(p: Player, pos: Vector3)
 			local link = button:FindFirstChild("Vent") :: ObjectValue?
 			local vent = link and link.Value
 			if vent then
-				vent:SetAttribute("Direction", -((vent:GetAttribute("Direction") or 1) :: number))
+				local dir = -((vent:GetAttribute("Direction") or 1) :: number)
+				vent:SetAttribute("Direction", dir)
+				button:SetAttribute("Active", dir > 0) -- its inlay: green while the fan blows up
+				bump(button, PRESS)
+				Audio.play("PlateDown", button)
 				progress:Fire("VentFlipped", vent)
 			end
 		end

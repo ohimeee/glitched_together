@@ -2,6 +2,8 @@
 -- plate, riveted rim, four pitched blades under a grille) and white air streaks show which way it blows. The
 -- blades spin on each client (FanController, tag "FanBlades"), forward while the vent lifts and backward while it
 -- pushes down; the streaks swap ends with it. Nothing here collides or blocks aim rays.
+local TweenService = game:GetService("TweenService")
+
 local STEEL = Color3.fromHex("#8A8F99")
 local DARK = Color3.fromHex("#2E3036")
 local SPIN = 9 -- blade speed, radians per second
@@ -116,12 +118,33 @@ return function(vent: BasePart, params: RaycastParams)
 	local up = streaks(low, Enum.NormalId.Top, speed, life)
 	local down = streaks(high, Enum.NormalId.Bottom, speed, life)
 	vent.Transparency = math.max(vent.Transparency, 0.93) -- a faint column; the streaks show the air
-	local function refresh()
+	local column = vent.Transparency
+	local flips = 0
+	local function refresh(flipped: boolean?)
 		local dir = (vent:GetAttribute("Direction") or 1) :: number
 		up.Enabled = dir > 0
 		down.Enabled = dir < 0
 		blades:SetAttribute("Speed", SPIN * dir)
+		if not flipped then
+			return
+		end
+		-- the flip has to read (user, Oct 17: "no animation that the wind changes"): a gust of streaks the new way,
+		-- the air column flashes, and the blades race for a moment before settling
+		flips += 1
+		local mine = flips
+		local gust = if dir > 0 then up else down
+		gust:Emit(40)
+		blades:SetAttribute("Speed", SPIN * dir * 4)
+		vent.Transparency = 0.55
+		TweenService:Create(vent, TweenInfo.new(0.8), { Transparency = column }):Play()
+		task.delay(0.9, function()
+			if flips == mine then
+				blades:SetAttribute("Speed", SPIN * dir)
+			end
+		end)
 	end
-	vent:GetAttributeChangedSignal("Direction"):Connect(refresh)
+	vent:GetAttributeChangedSignal("Direction"):Connect(function()
+		refresh(true)
+	end)
 	refresh()
 end
