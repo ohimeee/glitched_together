@@ -287,7 +287,17 @@ local function buildHint()
 	end)
 
 	local shownAt = 0
+	-- never over a cutscene (a stuck-timer hint fired as the W3 boss intro started sat on top of its letterbox)
+	Players.LocalPlayer:GetAttributeChangedSignal("InCutscene"):Connect(function()
+		if Players.LocalPlayer:GetAttribute("InCutscene") then
+			shownAt = 0
+			bubble.Visible = false
+		end
+	end)
 	Net.event("Hint").OnClientEvent:Connect(function(line: string)
+		if Players.LocalPlayer:GetAttribute("InCutscene") then
+			return
+		end
 		local stamp = os.clock()
 		shownAt = stamp
 		label.Text = line
