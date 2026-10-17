@@ -409,6 +409,28 @@ function TouchController.Init()
 			local px = math.floor(icon.AbsoluteSize.X)
 			table.insert(lines, `[diag] {name} vis {entry.button.Visible} loaded {icon.IsLoaded} {fetch} {px}px ..{id}`)
 		end
+		-- upload-path check: Studio MCP uploads ("Assistant_*") vs Studio importer images ("image"); counts by status
+		local samples = {
+			MCP = { 100311078346030, 100676855591730, 102235581488980, 103524685353613, 104229021377242 },
+			Import = { 100041832780715, 100488548637171, 100885623527464, 102012553599365, 102454777643168 },
+		}
+		for group, ids in samples do
+			local probes = {}
+			for _, id in ids do
+				local probe = Instance.new("ImageLabel")
+				probe.Image = `rbxassetid://{id}`
+				table.insert(probes, probe)
+			end
+			local counts: { [string]: number } = {}
+			ContentProvider:PreloadAsync(probes, function(_, status)
+				counts[status.Name] = (counts[status.Name] or 0) + 1
+			end)
+			local parts = {}
+			for status, n in counts do
+				table.insert(parts, `{status} {n}`)
+			end
+			table.insert(lines, `[diag] {group} images: {table.concat(parts, ", ")}`)
+		end
 		for _, text in lines do
 			print(text)
 			local channels = game:GetService("TextChatService"):FindFirstChild("TextChannels")
