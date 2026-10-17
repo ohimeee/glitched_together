@@ -2,6 +2,12 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 33rd session (Oct 17-18, 2026): published game on a real phone
+
+- **Missing images on the phone:** not account/permissions/moderation (all 521 ids owned by buldak0555, Approved). `/diag` (admin chat command, `Services/AdminCommands` + TouchController) showed the Oct 17 uploads (touch icons, loading cards) as `Failure` on the phone while Studio/PC loaded them; overnight they turned `Success`. Icons are now one image each (no sprite sheet) and fall back to their word if a fetch fails.
+- **Admin chat commands** for the published game: `/world pp 28`, `/cp`, `/kai`, `/miko`, `/swap`, `/phase`, `/ult`, `/diag` (owner + `Config/Admins`; `Player.Chatted`; Debug* attribute listeners no longer Studio-only). command.md has the table.
+- **Phone fixes:** cutscene bars / loading card / Layer Shift wipe `ScreenInsets.None` (black edges past the notch), tap anywhere to skip, FIRE drag steers auto-fire, WALL drag + line marker, cooldown covers on touch buttons (server `Cooldown<use>` attr), Kai's PASTE drag (untested in play).
+
 ## 32nd session (Oct 17, 2026): heavy crates, grapple on F + grab-by-nearness
 
 - **Heavy crates (user: players shouldn't push the box with their bodies):** server `AbilitiesServer/GrappleLine` `heavy()` gives every unanchored `Pullable` named `Crate` density `Tuning.GrappleLine.CrateDensity` (100, max) + friction 1 and server network ownership (re-applied after each pull and on reparent). The Pixel Plains crate skin's edge mesh (`PP_Prop_Crate_Edge`) is now steel `Metal #5E646B` so it reads heavy. Verified in Play: all 4 PP crates density 100, owner = server, edge Metal. The walk-into-it shove test couldn't run (character frozen after the debug jump): user to feel-test.

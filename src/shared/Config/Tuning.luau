@@ -63,6 +63,7 @@ return {
 		UltDeadZone = 14, -- px: less than this is a tap (auto-aim)
 		FireReach = 40, -- studs: dragging FIRE steers the auto-fire toward a point this far at full drag
 		WallReach = 30, -- studs: drag WALL, let go to place it there (server caps the wall at 40)
+		PasteDrag = 18, -- studs: dragging PASTE a full UltDragPx slides the ghost this far from its crosshair spot
 		TopDownZoom = 0.75, -- × the castle camera's distance on touch (phones: the duo read too small)
 	},
 	-- Low-end devices (client PerfController): phones/tablets or the graphics slider at or under LowQualityLevel

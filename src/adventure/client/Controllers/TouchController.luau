@@ -20,6 +20,7 @@ local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Input = require(script.Parent.Parent.Input)
+local Aim = require(script.Parent.Parent.Aim)
 local TopDownAim = require(script.Parent.Parent.TopDownAim)
 
 local player = Players.LocalPlayer
@@ -279,7 +280,13 @@ end
 -- (a tap = in place).
 -- Drag-to-aim on a touch button (Brawl Stars): `aim()` gives (reach, ring radius) for the current kit, or nil when
 -- this button doesn't drag right now; `done(cast)` runs on let go (cast = false when the button hid mid-drag).
-local function bindDrag(entry: Button, aim: () -> (number?, number?, boolean?), done: (cast: boolean) -> ())
+-- `move` (optional) gets the finger offset instead of TopDownAim (third-person tools: PASTE).
+local function bindDrag(
+	entry: Button,
+	aim: () -> (number?, number?, boolean?),
+	done: (cast: boolean) -> (),
+	move: ((offset: Vector2) -> ())?
+)
 	local held: InputObject? = nil
 	local start = Vector2.zero
 	local function finish(cast: boolean)
@@ -297,14 +304,22 @@ local function bindDrag(entry: Button, aim: () -> (number?, number?, boolean?), 
 		end
 		held = input
 		start = Vector2.new(input.Position.X, input.Position.Y)
-		TopDownAim.Drag(Vector2.zero, reach, radius, line)
+		if move then
+			move(Vector2.zero)
+		else
+			TopDownAim.Drag(Vector2.zero, reach, radius, line)
+		end
 	end)
 	UserInputService.TouchMoved:Connect(function(input)
 		if input ~= held then
 			return
 		end
 		local offset = Vector2.new(input.Position.X, input.Position.Y) - start
-		TopDownAim.Drag(offset)
+		if move then
+			move(offset)
+		else
+			TopDownAim.Drag(offset)
+		end
 		local px = entry.button.AbsoluteSize.X
 		local knob = if offset.Magnitude > 0 then offset.Unit * math.min(offset.Magnitude, px * 0.45) else offset
 		entry.icon.Position = UDim2.new(0.5, knob.X, 0.5, knob.Y)
@@ -343,6 +358,19 @@ local function bindUltDrag(entry: Button)
 end
 
 local function bindToolDrags()
+	-- Kai's PASTE (Glitched Core): hold shows the ghost, drag slides it, let go pastes (CopyPaste reads Aim.drag)
+	bindDrag(buttons.Tool2, function()
+		if player:GetAttribute("Kit") == "CopyPaste" then
+			return 1, nil, nil
+		end
+		return nil, nil, nil
+	end, function(cast)
+		if not cast then
+			Aim.SetDrag(nil)
+		end -- on a real let go CopyPaste reads the offset at its release, then clears it
+	end, function(offset)
+		Aim.SetDrag(offset)
+	end)
 	bindDrag(buttons.Tool1, function()
 		if fireMage() then
 			return Tuning.Touch.FireReach, 1.5, false

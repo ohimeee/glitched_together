@@ -86,6 +86,24 @@ function CopyPaste:Start()
 			local feet = root.Position.Y - 3
 			pos = Vector3.new(root.Position.X, feet - size.Y / 2, root.Position.Z) + flatDir.Unit * reach
 		end
+		-- touch: dragging the PASTE button slides the spot across the floor, camera-relative (screen up = away)
+		local drag = Aim.drag()
+		if drag and drag.Magnitude > Tuning.Touch.UltDeadZone then
+			local cam = workspace.CurrentCamera.CFrame
+			local look = Vector3.new(cam.LookVector.X, 0, cam.LookVector.Z).Unit
+			local right = Vector3.new(cam.RightVector.X, 0, cam.RightVector.Z).Unit
+			local amount = math.min(1, drag.Magnitude / Tuning.Touch.UltDragPx) * Tuning.Touch.PasteDrag
+			pos += (right * drag.X - look * drag.Y).Unit * amount
+			-- land on what's under the new spot (a slope, a step); over the void it stays level
+			local params = RaycastParams.new()
+			params.FilterDescendantsInstances = { player.Character :: Instance, ghost }
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			local size = copiedSize :: Vector3
+			local down = workspace:Raycast(pos + Vector3.new(0, 12, 0), Vector3.new(0, -24, 0), params)
+			if down then
+				pos = Vector3.new(pos.X, down.Position.Y + size.Y / 2, pos.Z)
+			end
+		end
 		if (pos - root.Position).Magnitude > T.PasteRange then
 			return nil
 		end
@@ -107,6 +125,9 @@ function CopyPaste:Start()
 	trove:Add(tool2.Pressed:Connect(function()
 		previewing = copiedSize ~= nil
 	end))
+	trove:Add(function()
+		Aim.SetDrag(nil)
+	end)
 	trove:Add(tool2.Released:Connect(function()
 		if not previewing then
 			return
@@ -114,6 +135,7 @@ function CopyPaste:Start()
 		previewing = false
 		ghost.Transparency = 1
 		local cf = pasteCFrame()
+		Aim.SetDrag(nil)
 		if cf then
 			lastCf = cf
 			MoveAnim.Aim()

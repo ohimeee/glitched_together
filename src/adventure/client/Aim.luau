@@ -114,4 +114,13 @@ function Aim.best(
 	return best
 end
 
+-- Touch drag on a held tool button (PASTE): finger offset in screen px from the press, nil = none
+local drag: Vector2? = nil
+function Aim.SetDrag(offset: Vector2?)
+	drag = offset
+end
+function Aim.drag(): Vector2?
+	return drag
+end
+
 return Aim
