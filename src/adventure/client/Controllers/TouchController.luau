@@ -28,34 +28,33 @@ local INK = Color3.fromRGB(24, 26, 40)
 local WHITE = Color3.new(1, 1, 1) -- rings + badges (Arsenal-style, user reference)
 local TOOL_CONTEXTS = { "W1Tools", "CastleTools", "W3Tools" }
 
--- icon sheet: 8 x 8 cells of 128 px, white icons (tools/ui/touch_icons.js -> textures/ui/touch_icons.png)
-local ICON_SHEET = "rbxassetid://124834076029614"
-local ICON_CELL = 128
-local ICON: { [string]: number } = {
-	Dash = 0,
-	Blink = 1,
-	Charge = 2,
-	Pound = 3,
-	Grab = 4,
-	Freeze = 5,
-	Release = 6,
-	Grapple = 7,
-	Pull = 8,
-	Fire = 9,
-	Wall = 10,
-	Sword = 11,
-	Block = 12,
-	Copy = 13,
-	Paste = 14,
-	Shift = 15,
-	PullOut = 16,
-	Ignite = 17,
-	Rotate = 18,
-	Meteor = 19,
-	Rally = 20,
-	Ping = 21,
-	Peek = 22,
-	Skip = 23,
+-- one 128 px white icon per image (cells of tools/ui/touch_icons.js -> textures/ui/touch_icons.png). Not a sprite
+-- sheet + ImageRectOffset: the 1024 px sheet showed blank buttons on a real phone (Oct 17, published test).
+local ICON: { [string]: string } = {
+	Dash = "rbxassetid://129855379396466",
+	Blink = "rbxassetid://85378013547834",
+	Charge = "rbxassetid://128884989172941",
+	Pound = "rbxassetid://103293551589754",
+	Grab = "rbxassetid://134355715190127",
+	Freeze = "rbxassetid://127732944365423",
+	Release = "rbxassetid://76013034027883",
+	Grapple = "rbxassetid://134355715190127", -- same art as Grab
+	Pull = "rbxassetid://97314025279661",
+	Fire = "rbxassetid://128417590995307",
+	Wall = "rbxassetid://110550751590185",
+	Sword = "rbxassetid://78711004576914",
+	Block = "rbxassetid://116616288451443",
+	Copy = "rbxassetid://130995614037295",
+	Paste = "rbxassetid://95522685100659",
+	Shift = "rbxassetid://81540484048773",
+	PullOut = "rbxassetid://85456769289659",
+	Ignite = "rbxassetid://110866917171495",
+	Rotate = "rbxassetid://137199471516320",
+	Meteor = "rbxassetid://126488098368427",
+	Rally = "rbxassetid://109378563236768",
+	Ping = "rbxassetid://71889071729482",
+	Peek = "rbxassetid://132709227837164",
+	Skip = "rbxassetid://73280159524845",
 }
 
 -- per kit: { Tool1, Tool2, Dash? } as { caption, icon }
@@ -86,8 +85,7 @@ local buttons: { [string]: Button } = {}
 local noJump = false
 
 local function setIcon(entry: Button, key: string)
-	local index = ICON[key] or 0
-	entry.icon.ImageRectOffset = Vector2.new(index % 8, index // 8) * ICON_CELL
+	entry.icon.Image = ICON[key] or ICON.Dash
 end
 
 local function make(name: string, text: string, iconKey: string, small: boolean?): Button
@@ -114,8 +112,6 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	icon.Size = UDim2.fromScale(0.58, 0.58)
 	icon.BackgroundTransparency = 1
 	icon.ImageTransparency = Tuning.Touch.Icon
-	icon.Image = ICON_SHEET
-	icon.ImageRectSize = Vector2.new(ICON_CELL, ICON_CELL)
 	icon.Parent = b
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
