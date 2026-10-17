@@ -26,7 +26,7 @@ Status: **PLAN** (decided Oct 12, 2026, 26th session). Nothing here is built yet
 
 **Icon (512 × 512):** Kai (orange) and Miko (teal) back to back, split down the middle by a magenta glitch tear, the 👾 Glitch peeking through. Made in Blender from the game's own models (same pipeline as the loading paintings), bold silhouette that reads at small size, no small text.
 
-**Thumbnails (1920 × 1080, up to 10):** reuse the Blender loading paintings (one per world), plus 2–3 boss shots (Crusher King throne hall, Hollow Dragon in the Shattered Cathedral, The Unfinished). Each gets the title logo and a one-line hook ("2 PLAYERS. 2 POWERS. 1 UNFINISHED GAME."). Order: the co-op hook first, then worlds, then bosses.
+**Thumbnails (1920 × 1080, up to 10):** first = the user's cover art (`marketing/glitched_together_thumbnail.png`, made by `tools/make_thumbnail.py`; done Oct 17). Then reuse the Blender loading paintings (one per world), plus 2–3 boss shots (Crusher King throne hall, Hollow Dragon in the Shattered Cathedral, The Unfinished). Each gets the title logo and a one-line hook ("2 PLAYERS. 2 POWERS. 1 UNFINISHED GAME."). Order: the co-op hook first, then worlds, then bosses.
 
 **Title logo:** "GLITCHED TOGETHER" wordmark with a glitch split, needed for the thumbnails, the loading screens and the trailer.
 

@@ -3650,24 +3650,25 @@ local function buildEpilogue(world: Model)
 			collide = false,
 		}
 	)
+	-- gold trophies of what the duo built (ArtService/Epilogue EP_Trophy*; sizes = the skins' design boxes), fronts to SAVE
 	for i, piece in
 		{
-			{ Vector3.new(4, 10, 4), nil },
-			{ Vector3.new(10, 6, 3), nil },
-			{ Vector3.new(8, 3, 8), nil },
-			{ Vector3.new(5, 5, 5), Enum.PartType.Ball },
-			{ Vector3.new(2, 9, 2), nil },
-			{ Vector3.new(12, 1.5, 5), nil },
+			{ "EP_TrophyTower", Vector3.new(3.7, 10, 3.7) }, -- Starfall Castle
+			{ "EP_TrophyArch", Vector3.new(7.4, 6.22, 2.6) }, -- the Prologue stage
+			{ "EP_TrophySteps", Vector3.new(6.8, 4.64, 6.8) }, -- Pixel Plains
+			{ "EP_TrophyOrb", Vector3.new(3.46, 5.47, 3.2) }, -- the Glitched Core
+			{ "EP_TrophyColumn", Vector3.new(2.6, 8.6, 2.6) },
+			{ "EP_TrophyBridge", Vector3.new(10.4, 2.62, 3) },
 		}
 	do
 		local a = (i - 1) / 6 * math.pi * 2 + math.pi / 6
-		local size = piece[1] :: Vector3
+		local size = piece[2] :: Vector3
 		local at = hill + Vector3.new(math.sin(a), 0, math.cos(a)) * 11 + Vector3.new(0, size.Y / 2, 0) -- tight round SAVE: at 16 one hid the support board (user)
 		block(world, size, CFrame.lookAt(at, hill + Vector3.new(0, size.Y / 2, 0)), {
 			name = "FinishedPiece",
 			color = GOLD,
 			material = Enum.Material.Metal, -- polished brass, not toy plastic
-			shape = piece[2],
+			attrs = { Skin = piece[1] },
 		})
 	end
 	prop("SavePoint", Vector3.new(5.8, 5.5, 1.6), 9, hill.Y, 146)

@@ -17,6 +17,38 @@ local function mesh(id: string, tex: string, size: Vector3): MeshAssets.Skin
 	}
 end
 
+-- a gold trophy of a world the duo built, on a dark stone plinth (tools/epilogue_trophies/kit.py): the six
+-- FinishedPiece parts round the SAVE button. Offsets: each mesh's centre height inside the trophy's design box.
+local GOLD = Color3.fromRGB(255, 196, 92)
+local function trophy(
+	baseId: string,
+	baseSize: Vector3,
+	baseY: number,
+	goldId: string,
+	goldSize: Vector3,
+	goldY: number
+): MeshAssets.Skin
+	return {
+		Design = v(math.max(baseSize.X, goldSize.X), baseSize.Y + goldSize.Y, math.max(baseSize.Z, goldSize.Z)),
+		Meshes = {
+			Base = {
+				Id = "rbxassetid://" .. baseId,
+				Offset = v(0, baseY, 0),
+				Size = baseSize,
+				Material = Enum.Material.Slate,
+				Color = Color3.fromRGB(58, 56, 62),
+			},
+			Gold = {
+				Id = "rbxassetid://" .. goldId,
+				Offset = v(0, goldY, 0),
+				Size = goldSize,
+				Material = Enum.Material.Foil, -- polished gold: Metal read flat ochre under the night light
+				Color = GOLD,
+			},
+		},
+	}
+end
+
 local Skins: { [string]: MeshAssets.Skin } = {
 	EP_Oak = mesh("rbxassetid://118165198699872", "rbxassetid://74321373417956", v(14, 16.29, 13.94)),
 	EP_Spruce = mesh("rbxassetid://107813368427557", "rbxassetid://82758336099154", v(8.84, 12.92, 9)),
@@ -53,6 +85,19 @@ local Skins: { [string]: MeshAssets.Skin } = {
 			},
 		},
 	},
+	EP_TrophyTower = trophy(
+		"135463924812876",
+		v(3.7, 0.55, 3.7),
+		-4.725,
+		"132243089525236",
+		v(3.42, 9.45, 3.42),
+		0.275
+	),
+	EP_TrophyArch = trophy("135842975606025", v(7.4, 0.5, 2.6), -2.863, "73570804697428", v(5.9, 5.72, 1.6), 0.253),
+	EP_TrophySteps = trophy("83613479412118", v(6.8, 0.5, 6.8), -2.075, "130964041918644", v(5.98, 4.14, 5.98), 0.255),
+	EP_TrophyOrb = trophy("113278490569250", v(3.2, 0.5, 3.2), -2.485, "111936453847835", v(3.462, 4.971, 2.3), 0.25),
+	EP_TrophyColumn = trophy("106811255048930", v(2.6, 0.5, 2.6), -4.05, "132087762124605", v(2.1, 8.1, 2.1), 0.25),
+	EP_TrophyBridge = trophy("88820497787418", v(10.4, 0.4, 3), -1.11, "88646620171498", v(9.631, 2.22, 2.4), 0.2),
 	EP_Cliff = mesh("rbxassetid://73624780658541", "rbxassetid://123147321610898", v(6, 6.63, 6)),
 }
 
