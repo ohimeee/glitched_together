@@ -568,6 +568,56 @@ function TouchController.Init()
 			end
 			table.insert(lines, `[diag] {group} images: {table.concat(parts, ", ")}`)
 		end
+		-- mesh colors (phone showed uncolored meshes): fetch status of the MeshIds / TextureIDs / SurfaceAppearance
+		-- maps round the player, plus memory; a failed TextureID leaves a MeshPart in its plain Color
+		local root = Players.LocalPlayer.Character
+			and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local here = if root then root.Position else Vector3.zero
+		local meshCounts, texCounts, mapCounts = {}, {}, {}
+		local failed: { string } = {}
+		local nMesh, nVariant = 0, 0
+		local function tally(counts, content: string)
+			if content == "" then
+				return
+			end
+			local status = ContentProvider:GetAssetFetchStatus(content).Name
+			counts[status] = (counts[status] or 0) + 1
+			if status == "Failure" and #failed < 4 and not table.find(failed, content) then
+				table.insert(failed, content)
+			end
+		end
+		for _, d in workspace:GetDescendants() do
+			if d:IsA("MeshPart") and (d.Position - here).Magnitude < 200 then
+				nMesh += 1
+				tally(meshCounts, d.MeshId)
+				tally(texCounts, d.TextureID)
+				if d.MaterialVariant ~= "" then
+					nVariant += 1
+				end
+				local sa = d:FindFirstChildOfClass("SurfaceAppearance")
+				if sa then
+					tally(mapCounts, sa.ColorMap)
+				end
+			end
+		end
+		local function join(counts)
+			local parts = {}
+			for status, n in counts do
+				table.insert(parts, `{status} {n}`)
+			end
+			return if #parts > 0 then table.concat(parts, ", ") else "none"
+		end
+		local Stats = game:GetService("Stats")
+		table.insert(
+			lines,
+			`[diag] meshes <200: {nMesh} (variant {nVariant}) mem {math.floor(Stats:GetTotalMemoryUsageMb())} MB`
+		)
+		table.insert(lines, `[diag] MeshId: {join(meshCounts)}`)
+		table.insert(lines, `[diag] TextureID: {join(texCounts)}`)
+		table.insert(lines, `[diag] SA ColorMap: {join(mapCounts)}`)
+		for _, content in failed do
+			table.insert(lines, `[diag] failed {content}`)
+		end
 		for _, text in lines do
 			print(text)
 			local channels = game:GetService("TextChatService"):FindFirstChild("TextChannels")
