@@ -594,7 +594,8 @@ local function buildPixelPlains(world: Model)
 	-- freeze (the jump-over gauntlet)
 	local function blob(x: number, top: number, z: number, patrol: number, opts: { [string]: any }?)
 		local o = opts or {}
-		block(P, Vector3.new(4, 3, 4), CFrame.new(x, top + 1.5, z), {
+		-- turned to face the player running in (+z): the skin faced away (user, Oct 17)
+		block(P, Vector3.new(4, 3, 4), CFrame.new(x, top + 1.5, z) * CFrame.Angles(0, math.pi, 0), {
 			name = "GlitchBlob",
 			color = GLITCH,
 			material = NEON,

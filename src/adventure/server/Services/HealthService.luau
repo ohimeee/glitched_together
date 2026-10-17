@@ -27,6 +27,7 @@ type State = {
 
 local states: { [Player]: State } = {}
 local useHP = false -- castle uses an HP bar instead of hearts
+local heartRegen = true -- false in Tuning.NoHeartRegen worlds: lost hearts only come back with a respawn
 local gameOverRunning = false
 
 local gameOverEvent = Net.event("GameOver")
@@ -138,6 +139,7 @@ end
 
 function HealthService.SetMode(worldName: string)
 	useHP = worldName == "StarfallCastle"
+	heartRegen = not Tuning.NoHeartRegen[worldName]
 	for _, p in DuoService.Players() do
 		HealthService.Restore(p, maxHealth(p))
 	end
@@ -163,7 +165,8 @@ function HealthService.Revive(p: Player)
 	p:SetAttribute("RespawnAt", nil)
 	p:SetAttribute("RespawnTotal", nil)
 	setGhost(p, false)
-	HealthService.Restore(p, if useHP then Tuning.ReviveHP else 1)
+	-- no-regen worlds: going down and mashing back is the only way to refill, so it refills all of them
+	HealthService.Restore(p, if useHP then Tuning.ReviveHP elseif heartRegen then 1 else maxHealth(p))
 	state(p).invulnUntil = os.clock() + Tuning.HitInvuln * 2
 	-- Split sections keep each player's progress (playtest Oct 1: respawning next to the partner skipped Kai's
 	-- trial); no safe spot yet = the checkpoint.
@@ -387,7 +390,8 @@ local function regenLoop()
 					p:SetAttribute("Health", math.min(max, health + Tuning.HpRegen.PerSecond))
 				end
 			elseif
-				not p:GetAttribute("Downed")
+				heartRegen
+				and not p:GetAttribute("Downed")
 				and health < Tuning.Hearts
 				and now - s.lastHit >= Tuning.HeartRegenEvery
 			then

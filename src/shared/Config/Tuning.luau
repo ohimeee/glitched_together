@@ -143,6 +143,8 @@ return {
 	-- Health
 	Hearts = 3,
 	HeartRegenEvery = 5,
+	-- hearts never regenerate here (user, Oct 17): only going down and mashing back refills them (all of them)
+	NoHeartRegen = { PixelPlains = true, GlitchedCore = true },
 	HpRegen = { Delay = 4, PerSecond = 5 }, -- castle HP: s without a hit before it refills, then HP per second
 	HitInvuln = 1,
 	SpawnInvuln = 2.5, -- s of safety after a respawn or a game-over reload (user, Oct 4: respawning into boss slams)
