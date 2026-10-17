@@ -24,6 +24,9 @@ local HUDController = {}
 -- Hearts keep one round font in every world (the ♥ glyph is missing from the pixel/code fonts).
 local HEART_FONT = Enum.Font.FredokaOne
 local HEART_FULL = Color3.fromRGB(255, 95, 162) -- Pip pink: health, not a gameplay color
+local HEART_SIZE = Vector2.new(52, 60) -- user, Oct 17: bigger (was 34 x 40)
+local HEART_CHIP = 74 -- the chip's height round them
+local HURT = Color3.fromRGB(255, 40, 70)
 local HINT_CPS = 45 -- Pip's typewriter speed, characters per second
 
 -- {Action} tokens name the key of the device you play on (Util/Glyphs: LMB / RT / TOOL 1 ...)
@@ -69,7 +72,7 @@ local function buildHealth()
 		Name = "Health",
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 20, 1, -20),
-		Size = UDim2.fromOffset(170, 52),
+		Size = UDim2.fromOffset(170, HEART_CHIP),
 		ZIndex = 2,
 	}, gui)
 	UiSkin.Panel(chip)
@@ -110,7 +113,7 @@ local function buildHealth()
 		if kind == "HP" then
 			hearts.Visible = false
 			hpBack.Visible = true
-			chip.Size = UDim2.fromOffset(220, 52)
+			chip.Size = UDim2.fromOffset(220, HEART_CHIP)
 			hpFill.Size = UDim2.fromScale(math.clamp(health / math.max(max, 1), 0, 1), 1)
 			hpFill.BackgroundColor3 = roleColor(player)
 			hpLabel.Text = `HP {math.floor(health)} / {max}`
@@ -118,18 +121,19 @@ local function buildHealth()
 		end
 		hearts.Visible = true
 		hpBack.Visible = false
-		chip.Size = UDim2.fromOffset(24 + max * 38, 52)
+		chip.Size = UDim2.fromOffset(24 + max * (HEART_SIZE.X + 4), HEART_CHIP)
 		for i = 1, math.max(max, #heartLabels) do
 			local h = heartLabels[i]
 			if not h and i <= max then
 				h = new("TextLabel", {
-					Size = UDim2.fromOffset(34, 40),
+					Size = UDim2.fromOffset(HEART_SIZE.X, HEART_SIZE.Y),
 					BackgroundTransparency = 1,
 					Font = HEART_FONT,
 					TextScaled = true,
 					Text = "♥",
 					ZIndex = 3,
 				}, hearts)
+				new("UIScale", {}, h)
 				heartLabels[i] = h
 			end
 			if h then
@@ -144,13 +148,93 @@ local function buildHealth()
 	end
 	UiSkin.OnTheme(refresh)
 
-	-- a quick bump when you lose a heart
+	-- Losing a heart has to be noticed (user, Oct 17: "players hardly notice it"): the chip shakes, each lost heart pops
+	-- white and drains, a "-1" floats off it, the screen edges flash red and the character flashes red.
+	local edges = new("Frame", {
+		Name = "HurtEdges",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ZIndex = 1,
+		Visible = false,
+	}, gui)
+	-- top, bottom, left, right bands: solid red at the screen edge, fading toward the middle
+	for _, side in { { 0, 0, 1, 0.18, 90 }, { 0, 0.82, 1, 0.18, -90 }, { 0, 0, 0.12, 1, 0 }, { 0.88, 0, 0.12, 1, 180 } } do
+		local f = new("Frame", {
+			Position = UDim2.fromScale(side[1], side[2]),
+			Size = UDim2.fromScale(side[3], side[4]),
+			BackgroundColor3 = HURT,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 1,
+		}, edges)
+		new("UIGradient", { Rotation = side[5], Transparency = NumberSequence.new(0.35, 1) }, f)
+	end
+	local function flashEdges()
+		edges.Visible = true
+		for _, f in edges:GetChildren() do
+			(f :: Frame).BackgroundTransparency = 0
+			TweenService:Create(f, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+				BackgroundTransparency = 1,
+			}):Play()
+		end
+		task.delay(0.65, function()
+			edges.Visible = false
+		end)
+	end
+	local function flashCharacter()
+		local character = player.Character
+		if not character then
+			return
+		end
+		local hl = Instance.new("Highlight")
+		hl.FillColor = HURT
+		hl.OutlineColor = HURT
+		hl.FillTransparency = 0.35
+		hl.DepthMode = Enum.HighlightDepthMode.Occluded
+		hl.Parent = character
+		TweenService:Create(hl, TweenInfo.new(0.5), { FillTransparency = 1, OutlineTransparency = 1 }):Play()
+		task.delay(0.55, hl.Destroy, hl)
+	end
+	local function popHeart(h: TextLabel)
+		local scale = h:FindFirstChildOfClass("UIScale") :: UIScale
+		h.TextColor3 = Color3.new(1, 1, 1)
+		h.TextTransparency = 0
+		scale.Scale = 1.7
+		TweenService:Create(scale, TweenInfo.new(0.45, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		task.delay(0.12, refresh) -- then it drains to the empty color
+		local fit = UiFit.scale(gui) -- the HUD is UiFit-scaled: screen pixels / fit = its own pixels
+		local at = (h.AbsolutePosition - gui.AbsolutePosition + Vector2.new(h.AbsoluteSize.X / 2, 0)) / fit
+		local minus = new("TextLabel", {
+			AnchorPoint = Vector2.new(0.5, 1),
+			Position = UDim2.fromOffset(at.X, at.Y),
+			Size = UDim2.fromOffset(60, 40),
+			BackgroundTransparency = 1,
+			Font = HEART_FONT,
+			Text = "-1",
+			TextScaled = true,
+			TextColor3 = HURT,
+			ZIndex = 6,
+		}, gui)
+		new("UIStroke", { Thickness = 2.5, Color = Color3.new(1, 1, 1) }, minus)
+		TweenService:Create(minus, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = minus.Position - UDim2.fromOffset(0, 50),
+			TextTransparency = 1,
+		}):Play()
+		task.delay(0.95, minus.Destroy, minus)
+	end
 	local last = (player:GetAttribute("Health") or 0) :: number
 	player:GetAttributeChangedSignal("Health"):Connect(function()
 		local now = (player:GetAttribute("Health") or 0) :: number
 		if now < last then
-			chip.Rotation = -4
-			TweenService:Create(chip, TweenInfo.new(0.35, Enum.EasingStyle.Elastic), { Rotation = 0 }):Play()
+			chip.Rotation = -8
+			TweenService:Create(chip, TweenInfo.new(0.5, Enum.EasingStyle.Elastic), { Rotation = 0 }):Play()
+			if player:GetAttribute("HealthKind") ~= "HP" then
+				for i = math.max(1, math.floor(now) + 1), math.min(math.floor(last), #heartLabels) do
+					popHeart(heartLabels[i])
+				end
+			end
+			flashEdges()
+			flashCharacter()
 		end
 		last = now
 	end)

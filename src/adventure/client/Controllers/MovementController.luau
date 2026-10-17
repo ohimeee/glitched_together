@@ -736,7 +736,12 @@ local function onCharacter(character: Model)
 			speed = 0 -- level-up picker pauses the duo
 		end
 		humanoid.WalkSpeed = speed
-		humanoid.JumpHeight = if player:GetAttribute("NoJump") or blocked() then 0 else Tuning.JumpHeight
+		-- downed: Space is the respawn mash (ReviveController), never a jump (user, Oct 17)
+		humanoid.JumpHeight = if player:GetAttribute("NoJump")
+				or blocked()
+				or player:GetAttribute("Downed")
+			then 0
+			else Tuning.JumpHeight
 
 		-- looping move animations follow the state
 		local hide = blocked() or player:GetAttribute("Downed") == true
