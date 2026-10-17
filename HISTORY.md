@@ -2,6 +2,10 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 29th session (Oct 17, 2026)
+
+- **Corridor grass tint (next step 8):** data check in Play (DebugWorld PixelPlains): all 264 visible `PPGrass` parts carry `VOXEL_TINT` (214, 222, 204), 0 plain green unskinned parts left, `FirebarRun.FireCorridor` dressed (`GrassBlock`: PPDirt body + grass cap). Closed; the look is left to the user's next Pixel Plains run.
+
 ## 28th session (Oct 17, 2026, AFK)
 
 - **Epilogue moon (next step 7b, "a bit dim against its halo"):** `E_Moon` strength 1.1 → 1.55 (`moon_material` in `tools/epilogue_sky/sky.py`) and the world-shader moon halo 0.25 → 0.18; `EpilogueSky.blend` saved, `EP_Sky2_Lf.png` re-rendered (1024², 128 samples, 82 s), uploaded (PreloadAsync Success), id in `Worlds.luau`. Checked by a side-by-side crop of old vs new render: moon brighter, maria still visible, halo softer. Seen in Play later this session (screenshot toward the castle: maria visible, softer halo).

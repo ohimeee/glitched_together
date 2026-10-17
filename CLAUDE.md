@@ -81,7 +81,7 @@
 5. **Epilogue look (re-skinned Oct 11, realistic; screenshots in Play Oct 17):** user to see it in play (walk, lantern light, meteors). Optional: post-credits Pip in an unfinished zone.
 6. **BACK TO LOBBY exit (built Oct 11):** the lobby teleport itself is untested (needs 2 players + published place ids; Studio only warns). The credits cursor fix (`FreeCursor`, `wantsLock`, YES `Modal`) still needs one fresh run through the real credits.
 7. Hollow Dragon (Oct 17, user to judge in the next fight): new scale knots (`DragonScale`, glow while open) and `RearZoom` against wing-tip clipping.
-8. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
+8. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
 9. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
 
 ## History (moved Oct 8, 2026)
