@@ -32,7 +32,7 @@ local HINT_CPS = 45 -- Pip's typewriter speed, characters per second
 -- {Action} tokens name the key of the device you play on (Util/Glyphs: LMB / RT / TOOL 1 ...)
 local TOOL_TEXT: { [string]: { any } } = {
 	PauseBeam = { "PAUSE BEAM", { "Tool1", "Freeze" }, { "Tool2", "Release" } },
-	GrappleLine = { "GRAPPLE LINE", { "Tool1", "Swing" }, { "Tool2", "Pull" } },
+	GrappleLine = { "GRAPPLE LINE", { "Tool1", "Swing   or {Swing}" }, { "Tool2", "Pull" } },
 	FireMage = { "FIRE MAGE", { "Tool1", "Fireball   {Ignite} Ignite" }, { "Tool2", "Flame Wall   {Dash} Blink" } },
 	ShieldKnight = { "SHIELD KNIGHT", { "Tool1", "Sword" }, { "Tool2", "Block   {Dash} Charge" } },
 	CopyPaste = { "COPY / PASTE", { "Tool1", "Copy" }, { "Tool2", "Paste   {Rotate} Rotate" } },

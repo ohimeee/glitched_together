@@ -1134,9 +1134,9 @@ local function buildPixelPlains(world: Model)
 		tags = { "Dropper" },
 	})
 	dropper.CanQuery = false
-	lift("F2", Vector3.new(8, 1, 60), -10, 42, 551, 20, "Bridge")
+	lift("FL1", Vector3.new(8, 1, 60), -10, 42, 551, 20, "Bridge") -- not "F2": FirebarRun owns that group (groups are world-wide)
 	grass(Vector3.new(30, 4, 30), 0, 62, 596, "DropperFar")
-	pullLever("F2", 8, 66, 588)
+	pullLever("FL1", 8, 66, 588)
 	checkpoint(P, nextOrder(), 0, 62, 600, W, {
 		"Miko: pull the crate onto the plate. Kai: freeze the sliding door while it's open.",
 		"The crate holds the inner gate; the door needs Kai's freeze.",
