@@ -297,6 +297,7 @@ local function stepBreath(self: any, dt: number)
 			setScales(self, true)
 			pose(self, self.base, self.yaw, 1)
 			self.target.pitch = T.Rear -- it rears back, wings up, drawing breath
+			workspace:SetAttribute("TopDownZoom", T.Zoom * T.RearZoom) -- raised wings kept clipping the top edge
 			aimAt(self, b.target)
 			Audio.play("GlitchCrackle", self.head.Position, 2)
 		end
@@ -340,6 +341,7 @@ local function stepBreath(self: any, dt: number)
 		end
 		if b.t <= 0 then
 			b.state, b.t = "Wait", T.BreathEvery
+			workspace:SetAttribute("TopDownZoom", T.Zoom)
 			clearBreath(self)
 			setScales(self, false)
 			pose(self, self.base, 0, 0)
@@ -880,6 +882,7 @@ Boss.Phases = {
 		Exit = function(self)
 			self.onHit = nil
 			clearBreath(self)
+			workspace:SetAttribute("TopDownZoom", T.Zoom) -- if the phase ended mid-breath
 			setScales(self, false)
 			pose(self, self.home, 0, 0, true)
 		end,

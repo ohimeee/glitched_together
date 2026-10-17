@@ -55,7 +55,7 @@
 - **27th session:** Epilogue gold trophies (6 Blender meshes, Open Cloud), throne floor sign turns with the camera, grapple swing ends on kit change, new store thumbnail from the user's cover art (`marketing/`).
 - **26th session:** The Unfinished intro motion, Powder Hall +36 with swivelling crossbows + visible arrows + dimmer spark, end-credits tip jar, Epilogue Favorite/Support boards, [E] Teleport on the Epilogue portal (details in HISTORY.md).
 - **25th session:** It Takes Two mash respawn (every world), Hollow Dragon retune, bigger ultimates + camera shake, **Hollow Dragon hall "Shattered Cathedral"** (Blender kit, Open Cloud upload), **drone-flight boss intros** with boss music + live Dragon/King, 3 s respawn immunity in boss fights (details in HISTORY.md). Git clean, all pushed.
-- **Studio state at handoff:** Edit mode, Rojo plugin connected (twin `DragonHall` module in Edit = live-sync duplicate). Blender open with the `DragonHall` scene (kit in `tools/dragon_hall/kit.py`). `DebugWorld` attrs cleared.
+- **Studio state at handoff:** Edit mode, Rojo plugin connected. Blender open with the `DragonHall` scene (kit in `tools/dragon_hall/kit.py`). `DebugWorld` attrs cleared.
 - **2P testing tool:** user starts Test → Clients and Servers (2 players); I find the server window with `list_roblox_studios` + `get_studio_state` (focused = Server), teleport with `PivotTo`, emulate Miko's block by setting `Blocking` on the server + playing `MoveAnims.Ids.Block` on her client. Ask before moving their characters.
 
 ## Next steps (in order)
@@ -74,11 +74,11 @@
 1. **Movement animations (22nd session, built):** 15 keyframed R15 clips (`Config/MoveAnims.luau`, `MoveAnimController`, hooked in `MovementController`). User verified double jump, slide, crouch. Vent ride (flip + float) added; dash cut to 10 studs / 0.16 s (user). Uploaded (Open Cloud ids in `MoveAnims.Ids`). Left: user feel check of dash, pound (spin/fall/land), sprint, wall cling/jump, ledge assist, swing, grind, hard land.
 2. **User feel tests (user: "playtest later"):** The Unfinished (intro pan + all 4 phases: arm slams + climbing a frozen arm, breath + reflect into the core, ring jumps, the build phase with real Layer Shift pull + Copy/Paste onto slots); Hollow Dragon flight + whole fight; Crusher King throne hall + phase-2 crossing (tune `ThrowTime`/`ThrowArc` or lap height), pounding a resting fist, phase-3 swing; droppers + Coin Bonk steps (`CoinFallSpeed` 9); chase rails (speed 40, hops); reveal pans; swing.
 3. **2-player runs with the user:** the castle + Hollow Dragon are done (Oct 11). Still: Pixel Plains, Glitched Core, The Unfinished (reflected shots into the core, final SAVE double pound), Epilogue.
-4. **Final boss leftovers:** two identical `Bosses.Unfinished` ModuleScripts show in Edit (Rojo live-sync duplicate: reconnect the Rojo plugin); `W3_BossIntro` pan (walkway trigger) built but only data-checked, not watched; per-phase stage props (only the floor surface swaps now).
+4. **Final boss leftovers:** `W3_BossIntro` pan (walkway trigger) built but only data-checked, not watched; per-phase stage props (only the floor surface swaps now).
 5. **Epilogue gold trophies (27th session, built):** user to judge the six trophies round SAVE (`EP_Trophy*` skins, `tools/epilogue_trophies/kit.py`).
 5. **Epilogue look (re-skinned Oct 11, realistic):** user to see it in play (walk, lantern light, meteors: only data-checked, bgshot froze the client view). Optional: post-credits Pip in an unfinished zone.
 6. **BACK TO LOBBY exit (built Oct 11):** the lobby teleport itself is untested (needs 2 players + published place ids; Studio only warns). The credits cursor fix (`FreeCursor`, `wantsLock`, YES `Modal`) still needs one fresh run through the real credits.
-7. Hollow Dragon leftovers: wing tips still clip the top of the screen while it rears for a breath; scale orbs read as embers at its claws.
+7. Hollow Dragon leftovers: scale orbs read as embers at its claws (wing-tip clipping fixed Oct 17: `RearZoom`, user to judge in the next fight).
 8. Smaller open items: obstacles.md leftovers (Scroll Lock, Balance Scale, Shelf Shove, Echo Lure); a decor cloud crosses the WindmillHill reveal shot; corridor grass tint; Layer Shift cloak ghost question for the user; sound volumes by ear with the user.
 9. User's calls: Kai/Miko outfits; monetization plan (no pay-to-win; check DevEx rules first).
 
