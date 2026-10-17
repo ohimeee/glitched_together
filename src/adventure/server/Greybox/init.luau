@@ -3864,11 +3864,12 @@ local function buildEpilogue(world: Model)
 		prompt.Parent = board
 	end
 
-	-- the Supporter Wall (user, Oct 18: "special and nice art"): an arched "hall of stars" board past the SUPPORT one
+	-- the Supporter Wall (user, Oct 18: "special and nice art"): an arched "hall of stars" board on the hilltop
 	-- (ArtService EP_SupporterWall), the polaroid podium of everyone who tipped on its plank board (Util/Supporters;
 	-- same list as the lobby corkboard and the credits' special thanks), two lantern glows on its iron arms
 	local WALL = 0.85
-	local wallBoard = prop("EP_SupporterWall", Vector3.new(17.83, 23.85, 3.05) * WALL, 31, hill.Y, 146, 60)
+	-- right flank of the hilltop (x 21, z 171: between the trophy arch and the cliff edge), facing the SAVE ring
+	local wallBoard = prop("EP_SupporterWall", Vector3.new(17.83, 23.85, 3.05) * WALL, 21, hill.Y, 171, 90)
 	wallBoard.CanCollide = true
 	-- the plank board's face, from the kit: centre 7.7 up, just in front of the planks (front = -Z)
 	local face = block(

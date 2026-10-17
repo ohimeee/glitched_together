@@ -377,11 +377,11 @@ function Supporters.Wall(
 	gui.Face = face
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = o.PixelsPerStud or 20
-	gui.LightInfluence = 0.6
+	gui.LightInfluence = 1 -- lit by the scene only: self-lit white paper glowed in the night (user)
 	gui.Parent = part
 	local font = o.Font or Enum.Font.PermanentMarker
 	local ink = o.Ink or Color3.fromRGB(40, 32, 28)
-	local paper = o.Paper or Color3.fromRGB(246, 240, 226)
+	local paper = o.Paper or Color3.fromRGB(226, 216, 196)
 
 	local head = Instance.new("TextLabel")
 	head.Size = UDim2.fromScale(1, 0.12)

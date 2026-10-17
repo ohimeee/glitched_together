@@ -107,7 +107,7 @@ for i, s in SLIPS do
 	gui.Face = Enum.NormalId.Front
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = 20
-	gui.LightInfluence = 0.6
+	gui.LightInfluence = 1
 	gui.Parent = slip
 	local text = Instance.new("TextLabel")
 	text.Size = UDim2.fromScale(1, 1)
@@ -186,7 +186,7 @@ local tagGui = Instance.new("SurfaceGui")
 tagGui.Face = Enum.NormalId.Back -- faces the ring (-Z)
 tagGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 tagGui.PixelsPerStud = 40
-tagGui.LightInfluence = 0.6
+tagGui.LightInfluence = 1
 tagGui.Parent = tag
 local tagText = Instance.new("TextLabel")
 tagText.Size = UDim2.fromScale(1, 1)
