@@ -52,7 +52,7 @@ local Sfx: { [string]: Def } = {
 	GrappleShoot = { Id = pse(9118720738), Volume = 0.45, Pitch = 1.2, PitchVar = 0.05 }, -- rope whip burst
 	GrappleHook = { Id = pse(9116653976), Volume = 0.45, Pitch = 1.3, PitchVar = 0.06 }, -- metal clank on the anchor
 	GrappleRelease = { Id = pse(9118723089), Volume = 0.3, Pitch = 1.2 },
-	Pull = { Id = pse(9118718610), Volume = 0.45, Pitch = 1.1 }, -- rope through a pulley
+	Pull = { Id = pse(9118718610), Volume = 0.9, Pitch = 1.1 }, -- rope through a pulley
 
 	-- World 3 tools
 	CopyScan = { Id = pse(9118777437), Volume = 0.45 }, -- clean scanner beep
