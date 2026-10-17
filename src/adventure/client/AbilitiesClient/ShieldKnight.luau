@@ -102,7 +102,8 @@ function ShieldKnight:Start()
 		MoveAnim.Set("Block", false)
 		toolUse:FireServer(2, nil, false)
 	end))
-	trove:Add(Input.action("CastleTools", "Ultimate").Pressed:Connect(function()
+	-- touch ULT button (TouchController → TopDownAim.ReleaseUlt): Rally is round Miko, so the point is unused
+	trove:Add(TopDownAim.UltCast:Connect(function()
 		if not busy() then
 			rally(true)
 		end

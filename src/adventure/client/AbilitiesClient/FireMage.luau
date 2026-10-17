@@ -112,10 +112,10 @@ function FireMage:Start()
 
 	local hand = 1 -- auto-fire throws with alternating hands
 	local lastWall, lastIgnite = -math.huge, -math.huge -- the cast animation only plays when the server will cast
-	local function meteor(force: boolean?): boolean
+	local function meteor(force: boolean?, at: Vector3?): boolean
 		if (force or fire:IsDown() and wall:IsDown()) and ultimateReady() then
 			MoveAnim.Play("CastMeteor")
-			toolUse:FireServer(4, nil, TopDownAim.point())
+			toolUse:FireServer(4, nil, at or TopDownAim.point())
 			return true
 		end
 		return false
@@ -160,9 +160,10 @@ function FireMage:Start()
 			toolUse:FireServer(3, target, TopDownAim.point())
 		end
 	end))
-	trove:Add(Input.action("CastleTools", "Ultimate").Pressed:Connect(function()
+	-- touch ULT button: drag to aim, let go to cast (TouchController → TopDownAim.ReleaseUlt)
+	trove:Add(TopDownAim.UltCast:Connect(function(point: Vector3)
 		if not busy() then
-			meteor(true)
+			meteor(true, point)
 		end
 	end))
 	trove:Add(Input.action("BaseContext", "Dash").Pressed:Connect(function()

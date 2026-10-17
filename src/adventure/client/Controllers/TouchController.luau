@@ -12,11 +12,13 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Input = require(script.Parent.Parent.Input)
+local TopDownAim = require(script.Parent.Parent.TopDownAim)
 
 local player = Players.LocalPlayer
 
@@ -226,6 +228,54 @@ local function layout()
 	buttons.Skip.button.Position = UDim2.fromOffset(view.X - small * 0.9, top)
 end
 
+-- ULT (castle): Meteor drags to aim (Brawl Stars-style; the icon follows the finger, the floor ring shows the
+-- blast), let go to cast; a tap casts at the auto-aim point. Rally is round Miko: it casts on press.
+local function bindUltDrag(entry: Button)
+	local held: InputObject? = nil
+	local start = Vector2.zero
+	local function finish(cast: boolean)
+		held = nil
+		entry.icon.Position = UDim2.fromScale(0.5, 0.5)
+		if cast then
+			TopDownAim.ReleaseUlt()
+		else
+			TopDownAim.Drag(nil)
+		end
+	end
+	entry.button.InputBegan:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.Touch or held then
+			return
+		end
+		if player:GetAttribute("Kit") ~= "FireMage" then
+			TopDownAim.ReleaseUlt()
+			return
+		end
+		held = input
+		start = Vector2.new(input.Position.X, input.Position.Y)
+		TopDownAim.Drag(Vector2.zero)
+	end)
+	UserInputService.TouchMoved:Connect(function(input)
+		if input ~= held then
+			return
+		end
+		local offset = Vector2.new(input.Position.X, input.Position.Y) - start
+		TopDownAim.Drag(offset)
+		local px = entry.button.AbsoluteSize.X
+		local knob = if offset.Magnitude > 0 then offset.Unit * math.min(offset.Magnitude, px * 0.45) else offset
+		entry.icon.Position = UDim2.new(0.5, knob.X, 0.5, knob.Y)
+	end)
+	UserInputService.TouchEnded:Connect(function(input)
+		if input == held then
+			finish(entry.button.Visible)
+		end
+	end)
+	entry.button:GetPropertyChangedSignal("Visible"):Connect(function()
+		if held and not entry.button.Visible then
+			finish(false) -- downed / cutscene mid-drag
+		end
+	end)
+end
+
 local function place(entry: Button, ring: number, angle: number)
 	entry.ring, entry.angle = ring, angle
 end
@@ -311,7 +361,7 @@ function TouchController.Init()
 		Input.bindButton(ctx, "Tool2", buttons.Tool2.button)
 	end
 	Input.bindButton("CastleTools", "Ignite", buttons.Ignite.button)
-	Input.bindButton("CastleTools", "Ultimate", buttons.Ultimate.button)
+	bindUltDrag(buttons.Ultimate)
 	Input.bindButton("W3Tools", "Rotate", buttons.Rotate.button)
 	Input.bindButton("MenuContext", "Skip", buttons.Skip.button)
 
