@@ -152,6 +152,8 @@ function TopDownAim.Start(color: Color3)
 		current = compute(root)
 		local point = current :: Vector3
 		reticle.CFrame = CFrame.new(point.X, root.Position.Y - 2.9, point.Z) * CFrame.Angles(0, 0, math.rad(90))
+		-- phones auto-aim, so the floor dot only looked like a stray marker (user): mouse/stick aim keeps it
+		reticle.Transparency = if Glyphs.device() == "Touch" then 1 else 0.35
 		if player:GetAttribute("Downed") or player:GetAttribute("Picking") then
 			hum.AutoRotate = true
 			return
