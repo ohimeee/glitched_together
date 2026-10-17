@@ -47,7 +47,8 @@ local function register(inst: Instance)
 		return
 	end
 	root.Anchored = true
-	enemies[inst] = { inst = inst, root = root, origin = root.CFrame, t = 0 }
+	-- Phase (radians): where on its patrol it starts, so a row of blobs doesn't move in lockstep
+	enemies[inst] = { inst = inst, root = root, origin = root.CFrame, t = inst:GetAttribute("Phase") or 0 }
 	for _, part in (if inst:IsA("Model") then inst:GetDescendants() else { root }) :: { Instance } do
 		if part:IsA("BasePart") then
 			part.Touched:Connect(function(hit)

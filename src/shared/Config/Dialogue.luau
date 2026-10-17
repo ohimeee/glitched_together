@@ -47,7 +47,7 @@ local Cutscenes: { [string]: { Line } } = {
 		{ Speaker = "Pip", Text = "The Coin Factory. Belts, crushers and timed doors. Classic you two." },
 	},
 	Reveal_CoinPress = {
-		{ Speaker = "Pip", Text = "The Coin Press. Pull the crate through and mind the stompy bits!" },
+		{ Speaker = "Pip", Text = "The Coin Press. Hop the blobs, pull the crate through and mind the stompy bits!" },
 	},
 	Reveal_FirebarRun = {
 		{ Speaker = "Pip", Text = "Fire bars! Kai, the freeze is yours. Miko, keep moving!" },

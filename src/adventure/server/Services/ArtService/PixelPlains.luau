@@ -1011,10 +1011,10 @@ local Decor: { { any } } = {
 	{ "Cloud", CFrame.new(-40, 60, 60), 2.2, "CloudTower" },
 	{ "Cloud", CFrame.new(45, 80, 150) * CFrame.Angles(0, math.rad(-15), 0), 2.4, "CloudTower" },
 	{ "Flowers", CFrame.new(10, 43.8, 200) * CFrame.Angles(0, math.rad(40), 0), 1.2, "CloudTower" },
-	-- Coin Press: the vault is stacked with coin blocks
-	{ "CoinBlock", CFrame.new(-10, 8, 200) * CFrame.Angles(0, math.rad(10), 0), 1.5, "CoinPress" },
-	{ "CoinBlock", CFrame.new(10, 8, 200) * CFrame.Angles(0, math.rad(-10), 0), 1.5, "CoinPress" },
-	{ "CoinBlock", CFrame.new(0, 14, 202), 2, "CoinPress" },
+	-- Coin Press: the vault is stacked with coin blocks (z +60 since the Oct 17 blob gauntlet)
+	{ "CoinBlock", CFrame.new(-10, 8, 260) * CFrame.Angles(0, math.rad(10), 0), 1.5, "CoinPress" },
+	{ "CoinBlock", CFrame.new(10, 8, 260) * CFrame.Angles(0, math.rad(-10), 0), 1.5, "CoinPress" },
+	{ "CoinBlock", CFrame.new(0, 14, 262), 2, "CoinPress" },
 	{ "Cloud", CFrame.new(40, 40, 110), 2, "CoinPress" },
 }
 -- mix the tree / bush variants through the hand-placed decor

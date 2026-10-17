@@ -590,13 +590,16 @@ local function buildPixelPlains(world: Model)
 			attrs = { Speed = speed },
 		})
 	end
-	local function blob(x: number, top: number, z: number, patrol: number)
+	-- opts: speed (EnemyService sine patrol: top speed = speed / 2), phase (radians), solid = true for blobs Kai can't
+	-- freeze (the jump-over gauntlet)
+	local function blob(x: number, top: number, z: number, patrol: number, opts: { [string]: any }?)
+		local o = opts or {}
 		block(P, Vector3.new(4, 3, 4), CFrame.new(x, top + 1.5, z), {
 			name = "GlitchBlob",
 			color = GLITCH,
 			material = NEON,
-			tags = { "Enemy", "Freezable" },
-			attrs = { Type = "GlitchBlob", PatrolDistance = patrol, Speed = 5 },
+			tags = if o.solid then { "Enemy" } else { "Enemy", "Freezable" },
+			attrs = { Type = "GlitchBlob", PatrolDistance = patrol, Speed = o.speed or 5, Phase = o.phase },
 		})
 	end
 	-- a grind rail through `points` (rail centres): a Catmull-Rom curve cut into ~5-stud straight segments, each
@@ -1179,43 +1182,45 @@ local function buildPixelPlains(world: Model)
 	plate("S3", 9, 62, 738)
 	gate(P, "S3", Vector3.new(30, 20, 2), CFrame.new(0, 72, 746))
 
-	-- 1-3 continued: COIN PRESS. The twist: Glitch blobs pace a yard (Kai freezes one to slip past, frozen ones
-	-- can't hurt), then the coin press: four crushers over a lane. Miko pulls the crate through in hops while Kai
-	-- freezes the crusher above it; the crate on the plate opens the vault.
-	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 220))
+	-- 1-3 continued: COIN PRESS. The twist: a gauntlet of fast Glitch blobs to jump (no freezing these), then the coin
+	-- press: four crushers over a lane. Miko pulls the crate through in hops while Kai freezes the crusher above it; the
+	-- crate on the plate opens the vault.
+	section("CoinPress", Vector3.zero, Vector3.new(0, 0, 280))
 	grass(Vector3.new(14, 4, 15), 0, 0, 7.5, "PressPath")
 	checkpoint(P, nextOrder(), 0, 0, 6, W, {
-		"Kai: freeze a Glitch blob to slip past it. Frozen blobs can't hurt you.",
-		"Don't touch the magenta blobs!",
+		"Jump the Glitch blobs! They're too fast to freeze.",
+		"Don't touch the magenta blobs: time your jumps.",
 	})
 	sign(P, "COIN PRESS", CFrame.new(0, 9, 14), Vector3.new(14, 3, 0.4))
-	grass(Vector3.new(24, 4, 60), 0, 0, 45, "BlobYard") -- z 15..75
+	-- the blob gauntlet (user, Oct 17: freezing slow blobs was useless): a long yard of fast blobs Kai CAN'T freeze,
+	-- pacing across in staggered rows; you jump them one after another (blob 3 high, jump 7.5)
+	grass(Vector3.new(24, 4, 120), 0, 0, 75, "BlobYard") -- z 15..135
 	for _, x in { -13, 13 } do
-		dirtWall(Vector3.new(2, 22, 60), x, 22, 45)
+		dirtWall(Vector3.new(2, 22, 120), x, 22, 75)
 	end
-	blob(0, 0, 30, 18)
-	blob(0, 0, 47, 18)
-	blob(0, 0, 64, 18)
-	grass(Vector3.new(14, 4, 100), 0, 0, 125, "PressLane") -- z 75..175
+	for i = 0, 11 do
+		blob(0, 0, 24 + i * 9.5, 18, { speed = Tuning.GauntletBlobSpeed, phase = i * 1.3, solid = true })
+	end
+	grass(Vector3.new(14, 4, 100), 0, 0, 185, "PressLane") -- z 135..235
 	for _, x in { -8, 8 } do
-		dirtWall(Vector3.new(2, 22, 100), x, 22, 125)
+		dirtWall(Vector3.new(2, 22, 100), x, 22, 185)
 	end
 	-- roof just above the crushers' top position: no riding a head up and walking the tops (playtest Oct 1)
-	block(P, Vector3.new(16, 2, 100), CFrame.new(0, 22.5, 125), {
+	block(P, Vector3.new(16, 2, 100), CFrame.new(0, 22.5, 185), {
 		name = "FactoryRoof",
 		color = METAL,
 		material = Enum.Material.Metal,
 	})
-	checkpoint(P, nextOrder(), 0, 0, 80, W, {
+	checkpoint(P, nextOrder(), 0, 0, 140, W, {
 		"Miko: pull the crate along the lane. Kai: freeze the crusher above it!",
 		"The crate has to reach the plate at the end.",
 	})
 	-- 22 apart (12-stud gaps between the 10-deep heads): room for the crate plus one pull between two hits
 	-- (playtest Oct 1: 4-stud gaps were too tight)
-	for i, z in { 95, 117, 139, 161 } do
+	for i, z in { 155, 177, 199, 221 } do
 		crusher(0, z, 0, { Period = 1.3, Offset = (i - 1) * 0.33 })
 	end
-	block(P, Vector3.new(4, 4, 4), CFrame.new(0, 2, 82), {
+	block(P, Vector3.new(4, 4, 4), CFrame.new(0, 2, 142), {
 		name = "Crate",
 		color = WOOD,
 		material = Enum.Material.WoodPlanks,
@@ -1223,12 +1228,12 @@ local function buildPixelPlains(world: Model)
 		tags = { "Pullable", "Respawn" },
 		attrs = { Mass = 20 },
 	})
-	plate("D1", 0, 0, 170, nil, true)
-	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 176))
-	grass(Vector3.new(30, 4, 30), 0, 0, 192, "CoinVault") -- z 177..207
-	checkpoint(P, nextOrder(), 0, 0, 188, W)
-	sign(P, "COIN VAULT", CFrame.new(0, 10, 206), Vector3.new(14, 3, 0.4))
-	grass(Vector3.new(14, 4, 13), 0, 0, 213.5, "VaultExit")
+	plate("D1", 0, 0, 230, nil, true)
+	gate(P, "D1", Vector3.new(14, 20, 2), CFrame.new(0, 10, 236))
+	grass(Vector3.new(30, 4, 30), 0, 0, 252, "CoinVault") -- z 237..267
+	checkpoint(P, nextOrder(), 0, 0, 248, W)
+	sign(P, "COIN VAULT", CFrame.new(0, 10, 266), Vector3.new(14, 3, 0.4))
+	grass(Vector3.new(14, 4, 13), 0, 0, 273.5, "VaultExit")
 
 	-- 1-3 continued: FIRE BAR RUN (obstacles.md 2.2 Firebar Spin: operator and runner). Four red fire bars spin
 	-- down a corridor that only Miko reaches (a 56-stud grapple chasm). Each bar is 16 tall (no jumping it) and
