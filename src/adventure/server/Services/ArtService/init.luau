@@ -325,6 +325,22 @@ function ArtService.Apply(part: BasePart, skinName: string): boolean
 	return true
 end
 
+-- Starts downloading skins in the background (a later Apply then doesn't wait), e.g. another world's props.
+function ArtService.Warm(skinNames: { string })
+	for _, name in skinNames do
+		local skin = Skins[name]
+		if skin and skin.Meshes and loaded[name] == nil and not inflight[name] then
+			task.spawn(templatesFor, name)
+		end
+	end
+end
+
+-- A skin's design size (studs), or nil if there's no such skin.
+function ArtService.DesignOf(skinName: string): Vector3?
+	local skin = Skins[skinName]
+	return skin and skin.Design
+end
+
 local function placeDecor(world: Instance, skinName: string, cf: CFrame, scale: number)
 	local skin = Skins[skinName]
 	if not skin then

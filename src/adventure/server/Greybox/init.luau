@@ -1791,6 +1791,64 @@ local function buildGlitchedCore(world: Model)
 				rail.CanQuery = false
 			end
 		end
+		-- the stage set (Bosses/UnfinishedSet): wagons round the rim, each on a truss arm bolted under the disc, carry
+		-- the props of the world whose rules are on. Below and outside the rail: scenery only, nobody stands there.
+		local stageSet = Instance.new("Folder")
+		stageSet.Name = "StageSet"
+		stageSet.Parent = P
+		local TU = Tuning.Unfinished
+		local TRUSS = 3.1
+		local deckTop = -7 -- under the floor, so it never reads as walkable; deck on the arm, a post up to the disc
+		local armTop = deckTop - 1.5
+		local armIn, armOut = R - 6, TU.SetRadius + TU.SetWagon / 2 - 1
+		local i = 0
+		for _, deg in TU.SetAngles do
+			for _, side in { 1, -1 } do
+				i += 1
+				local a = math.rad(deg) * side
+				local dir = Vector3.new(math.sin(a), 0, math.cos(a))
+				local wagon = Instance.new("Model")
+				wagon.Name = "SetWagon"
+				wagon:SetAttribute("Index", i)
+				wagon.Parent = stageSet
+				local at = C + dir * TU.SetRadius + Vector3.new(0, deckTop - 0.75, 0)
+				block(
+					wagon,
+					Vector3.new(TU.SetWagon, 1.5, TU.SetWagon),
+					CFrame.lookAt(at, Vector3.new(C.X, at.Y, C.Z)),
+					{
+						name = "Deck",
+						collide = false,
+					}
+				).CanQuery =
+					false
+				-- three truss segments end to end, radial, under the disc rim and the deck
+				local segs = 3
+				local len = (armOut - armIn) / segs
+				for k = 0, segs - 1 do
+					local mid = C + dir * (armIn + len * (k + 0.5)) + Vector3.new(0, armTop - TRUSS / 2, 0)
+					block(
+						wagon,
+						Vector3.new(3.08, len, TRUSS),
+						CFrame.lookAt(mid, mid + dir) * CFrame.Angles(math.rad(90), 0, 0),
+						{
+							name = "SetArm",
+							collide = false,
+							attrs = { Skin = "PR_Truss" },
+						}
+					).CanQuery =
+						false
+				end
+				-- the hanger: a short upright segment from the arm's inner end to the disc's underside (y -4)
+				local postAt = C + dir * (armIn + 1.6) + Vector3.new(0, (armTop + -4) / 2, 0)
+				block(wagon, Vector3.new(3.08, -4 - armTop, TRUSS), CFrame.lookAt(postAt, postAt + dir), {
+					name = "SetArm",
+					collide = false,
+					attrs = { Skin = "PR_Truss" },
+				}).CanQuery =
+					false
+			end
+		end
 		checkpoint(P, nextOrder(), 0, 0, 32, W, {
 			"Kai: freeze a falling arm. Miko: climb on and pound its crystal.",
 			"It changes the rules every phase. Use the tools it gives you.",

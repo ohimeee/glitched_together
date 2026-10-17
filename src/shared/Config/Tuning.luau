@@ -484,8 +484,7 @@ return {
 		SaveRise = 2.5,
 		-- stage set: wagons on truss arms round the rim carry the props of the world whose rules are on
 		SetRadius = 66, -- wagon centres from the stage centre (the Code Layer pieces float at 55)
-		SetWagon = 14, -- wagon width/depth
-		SetDrop = 6, -- wagon tops this far under the stage floor
+		SetWagon = 14, -- wagon width/depth (each sits on a truss arm bolted under the stage disc)
 		SetAngles = { 45, 80, 115, 145 }, -- degrees from the golem (+Z), mirrored left and right
 		SetSwap = 0.7, -- s, props sink into the wagon / rise out of it
 		SetStagger = 0.07, -- s between wagons

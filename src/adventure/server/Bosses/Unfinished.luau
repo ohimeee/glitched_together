@@ -29,6 +29,7 @@ local HealthService = require(Services.HealthService)
 local InteractableService = require(Services.InteractableService)
 local MoverService = require(Services.MoverService)
 local WorldService = require(Services.WorldService)
+local UnfinishedSet = require(script.Parent.UnfinishedSet)
 
 local T = Tuning.Unfinished
 local SLOTS = 6
@@ -128,6 +129,7 @@ local LOOKS = {
 local function wipe(self: any, look: string?)
 	local l = look and LOOKS[look] or self.coreLook
 	self.stage.Material, self.stage.MaterialVariant, self.stage.Color = l[1], l[2], l[3]
+	UnfinishedSet.Show(self.set, look or "GlitchedCore") -- the wagons round the rim change worlds too
 	local disc = fxPart(
 		self,
 		"StaticWipe",
@@ -518,6 +520,7 @@ local function fillSlot(self: any, slot: BasePart)
 	slot.CanCollide = true
 	slot.CanQuery = true
 	CombatFx.Burst(slot.Position, { { "Stars", 16, 2, GOLD } }, GOLD, 10)
+	UnfinishedSet.Gild(self.set, slot.Position)
 	Audio.play("Checkpoint", slot.Position, 1.5)
 	self.calm.FillTransparency = 1 - 0.5 * (self.filledCount / SLOTS) -- it warms to gold, slot by slot
 end
@@ -580,6 +583,9 @@ function Boss.Setup(self: any, world: Instance)
 	self.fx = Instance.new("Folder")
 	self.fx.Name = "BossFx"
 	self.fx.Parent = world
+	self.set = UnfinishedSet.Find(world)
+	UnfinishedSet.Warm() -- the other worlds' props, before their phases need them
+	UnfinishedSet.Show(self.set, "GlitchedCore", true)
 
 	self.center = Vector3.new(stage.Position.X, stage.Position.Y + stage.Size.X / 2, stage.Position.Z)
 	self.floorTop = self.center.Y
@@ -662,6 +668,9 @@ function Boss.Cleanup(self: any)
 	if self.stage.Parent then
 		self.stage.Material, self.stage.MaterialVariant, self.stage.Color = table.unpack(self.coreLook)
 	end
+	if not self.finished then
+		UnfinishedSet.Show(self.set, "GlitchedCore", true, true) -- a stop mid-fight: back to the Core, no gold
+	end
 	clearRings(self)
 	clearBreath(self)
 	if self.fx then
@@ -691,6 +700,8 @@ function Boss.Intro(world: Instance, shots: { any }): () -> ()
 	if not golem then
 		return function() end
 	end
+	UnfinishedSet.Show(UnfinishedSet.Find(world), "GlitchedCore", true) -- the set wagons dressed for the drone shots
+	UnfinishedSet.Warm()
 	local saved: { [BasePart]: CFrame } = {}
 	for _, d in golem:GetDescendants() do
 		if d:IsA("BasePart") and d.Anchored then
@@ -972,6 +983,7 @@ Boss.Phases = {
 			setHealth(self)
 			clearRings(self)
 			WorldService.ForceKit(nil)
+			UnfinishedSet.GildAll(self.set)
 			-- it becomes the finished level: gold all over, then gone into light
 			local at = self.golem:GetPivot().Position + Vector3.new(0, 30, 0)
 			Audio.play("GlitchCrackle", at, 2)
