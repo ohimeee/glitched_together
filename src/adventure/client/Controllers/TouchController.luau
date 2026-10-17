@@ -197,7 +197,9 @@ local function layout()
 	local size = math.clamp(jumpSize * 0.9, Tuning.Touch.Button, Tuning.Touch.Button * 1.5)
 	local small = math.clamp(size * 0.75, Tuning.Touch.Small, Tuning.Touch.Small * 1.5)
 	local gap = size * 0.16
-	local radius = { jumpSize / 2 + gap + size / 2 }
+	-- inner ring: clear of the jump button, and wide enough that buttons 45° apart don't touch (phones: the small
+	-- jump button left DASH / POUND / GRAB overlapping)
+	local radius = { math.max(jumpSize / 2 + gap + size / 2, (size + gap) / (2 * math.sin(math.rad(22.5)))) }
 	radius[2] = radius[1] + size + gap
 	local view = gui.AbsoluteSize
 	local edge = Tuning.Touch.Edge
