@@ -309,6 +309,7 @@ rayParams.FilterType = Enum.RaycastFilterType.Exclude
 local UNSAFE = {
 	"Mover",
 	"KillZone",
+	"GrindRail", -- a fall on the rails puts you back on the ground before them (user, Oct 17: "reset at the top")
 	"Freezable",
 	"Pullable",
 	"Hazard",
