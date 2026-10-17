@@ -6,16 +6,15 @@
 -- PING / PEEK sit small at the top right, SKIP shows during cutscenes; downed = tap anywhere (ReviveController).
 -- Buttons bind to the same Input actions as keys, so holds (block, auto-fire, crouch) work the same.
 -- Look (user Oct 17: "search for references for other games in roblox for their mobile buttons ui"; DevForum "The
--- Correct Way to Design Mobile Buttons", Arsenal, BedWars): Roblox-style dark translucent circles with a white icon
--- and a small caption, built off the jump button's two size presets; the main tool button is bigger (BedWars' sword).
+-- Correct Way to Design Mobile Buttons", Arsenal, BedWars): see-through circles with a thin white ring and a white
+-- icon only (user: "remove the word ... make it like transparent like this", Arsenal's look), built off the jump
+-- button's two size presets; the main tool button is bigger (BedWars' sword). Captions stay as hidden labels.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
-local Palette = require(ReplicatedStorage.Shared.Config.Palette)
-local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Input = require(script.Parent.Parent.Input)
 
@@ -24,6 +23,7 @@ local player = Players.LocalPlayer
 local TouchController = {}
 
 local INK = Color3.fromRGB(24, 26, 40)
+local WHITE = Color3.new(1, 1, 1) -- rings + badges (Arsenal-style, user reference)
 local TOOL_CONTEXTS = { "W1Tools", "CastleTools", "W3Tools" }
 
 -- icon sheet: 8 x 8 cells of 128 px, white icons (tools/ui/touch_icons.js -> textures/ui/touch_icons.png)
@@ -90,7 +90,7 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	b.Name = name
 	b.AnchorPoint = Vector2.new(0.5, 0.5)
 	b.BackgroundColor3 = INK
-	b.BackgroundTransparency = 0.35
+	b.BackgroundTransparency = Tuning.Touch.Fill
 	b.AutoButtonColor = false
 	b.Text = ""
 	b.Visible = false
@@ -98,16 +98,17 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	Instance.new("UICorner", b).CornerRadius = UDim.new(0.5, 0)
 	local rim = Instance.new("UIStroke")
 	rim.Name = "Rim"
-	rim.Color = Palette.Neutral
+	rim.Color = WHITE
 	rim.Thickness = 2
-	rim.Transparency = 0.2
+	rim.Transparency = Tuning.Touch.Rim
 	rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	rim.Parent = b
 	local icon = Instance.new("ImageLabel")
 	icon.AnchorPoint = Vector2.new(0.5, 0.5)
-	icon.Position = UDim2.fromScale(0.5, 0.42)
-	icon.Size = UDim2.fromScale(0.52, 0.52)
+	icon.Position = UDim2.fromScale(0.5, 0.5)
+	icon.Size = UDim2.fromScale(0.58, 0.58)
 	icon.BackgroundTransparency = 1
+	icon.ImageTransparency = Tuning.Touch.Icon
 	icon.Image = ICON_SHEET
 	icon.ImageRectSize = Vector2.new(ICON_CELL, ICON_CELL)
 	icon.Parent = b
@@ -120,19 +121,20 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	label.TextScaled = true
 	label.TextColor3 = Color3.fromRGB(240, 240, 232)
 	label.Text = text
+	label.Visible = false -- icon only (user); the caption still names the button for code and checks
 	label.Parent = b
 	local press = Instance.new("UIScale")
 	press.Parent = b
 	b.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch then
 			press.Scale = 0.9
-			b.BackgroundTransparency = 0.15
+			b.BackgroundTransparency = Tuning.Touch.FillPressed
 		end
 	end)
 	b.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch then
 			press.Scale = 1
-			b.BackgroundTransparency = 0.35
+			b.BackgroundTransparency = Tuning.Touch.Fill
 		end
 	end)
 	local entry: Button = { button = b, label = label, icon = icon, small = small }
@@ -146,7 +148,8 @@ local function badge(entry: Button, text: string)
 	t.AnchorPoint = Vector2.new(0.5, 0.5)
 	t.Position = UDim2.fromScale(0.86, 0.14)
 	t.Size = UDim2.fromScale(0.28, 0.28)
-	t.BackgroundColor3 = Palette.Neutral
+	t.BackgroundColor3 = WHITE
+	t.BackgroundTransparency = 0.3
 	t.TextColor3 = INK
 	t.Font = Enum.Font.GothamBlack
 	t.TextScaled = true
@@ -204,11 +207,6 @@ local function place(entry: Button, ring: number, angle: number)
 	entry.ring, entry.angle = ring, angle
 end
 
-local function roleColor(): Color3
-	local info = (Roles :: any)[player:GetAttribute("Role") or ""]
-	return if info then info.Color else Palette.Neutral
-end
-
 local function refresh()
 	local touch = Glyphs.device() == "Touch"
 	local cutscene = player:GetAttribute("InCutscene") == true or Input.isEnabled("MenuContext")
@@ -233,10 +231,6 @@ local function refresh()
 		buttons.Tool1.label.Text, buttons.Tool2.label.Text = labels[1][1], labels[2][1]
 		setIcon(buttons.Tool1, labels[1][2])
 		setIcon(buttons.Tool2, labels[2][2])
-	end
-	local tint = roleColor()
-	for _, name in { "Tool1", "Tool2", "Ultimate" } do
-		(buttons[name].button :: any).Rim.Color = tint
 	end
 	buttons.Ignite.button.Visible = play and kit == "FireMage"
 	buttons.Rotate.button.Visible = play and kit == "CopyPaste"
