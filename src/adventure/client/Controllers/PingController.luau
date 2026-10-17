@@ -18,7 +18,21 @@ local PingController = {}
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
+-- each player's live markers, oldest first: a new ping past Tuning.PingMax removes that player's oldest
+local live: { [Player]: { Instance } } = {}
+
 local function marker(from: Player, pos: Vector3)
+	local list = live[from] or {}
+	live[from] = list
+	for i = #list, 1, -1 do
+		if not list[i].Parent then
+			table.remove(list, i) -- expired (Debris)
+		end
+	end
+	while #list >= Tuning.PingMax do
+		table.remove(list, 1):Destroy()
+	end
+
 	local info = (Roles :: any)[from:GetAttribute("Role") or "Kai"]
 	local anchor = Instance.new("Part")
 	anchor.Name = "PingMarker"
@@ -59,6 +73,7 @@ local function marker(from: Player, pos: Vector3)
 	beam.Position = pos + Vector3.new(0, 3, 0)
 	beam.Parent = anchor
 
+	table.insert(list, anchor)
 	Debris:AddItem(anchor, Tuning.PingLife)
 end
 
@@ -74,6 +89,9 @@ function PingController.Init()
 
 	pingEvent.OnClientEvent:Connect(function(from: Player, pos: Vector3)
 		marker(from, pos)
+	end)
+	Players.PlayerRemoving:Connect(function(p)
+		live[p] = nil
 	end)
 end
 
