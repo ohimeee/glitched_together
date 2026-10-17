@@ -68,7 +68,7 @@ def add_haze(material, color, start=600, end=12000, strength=0.8):
 
 def moon_material(mat, tint=(1.0, 0.95, 0.86), strength=1.0):
     """A moon that reads as a moon, not a flat disc (Oct 17): Generated-coord maria + craters + fine noise, warm tint,
-    limb darkening (Layer Weight Facing is 1 at grazing). Keep strength ~1: higher blows out to a white disc."""
+    limb darkening (Layer Weight Facing is 1 at grazing). Keep strength ~1-1.6 (Epilogue 1.55 with a soft halo): much higher blows out to a white disc."""
     mat.use_nodes = True
     nt = mat.node_tree
     nt.nodes.clear()

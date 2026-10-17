@@ -84,7 +84,7 @@ moonside = math_node("MULTIPLY", maprange(md.outputs["Value"], 0.3, 1.0), mapran
 sky = mix_rgb(math_node("MULTIPLY", moonside, None, vb=0.45), sky, lin("E8B48A"))
 # moon halo
 halo = math_node("POWER", maprange(md.outputs["Value"], 0.965, 1.0), None, vb=3.0)
-sky = mix_rgb(math_node("MULTIPLY", halo, None, vb=0.25), sky, lin("B8C8F0"), "ADD")
+sky = mix_rgb(math_node("MULTIPLY", halo, None, vb=0.18), sky, lin("B8C8F0"), "ADD")
 
 # Milky Way: soft band around a great circle, cloudy, with dark dust lanes and a warm core
 mwd = N("ShaderNodeVectorMath"); mwd.operation = "DOT_PRODUCT"; mwd.inputs[1].default_value = MW_N
@@ -142,7 +142,7 @@ for p in moon.data.polygons:
     p.use_smooth = True
 mm = bpy.data.materials.get("E_Moon") or bpy.data.materials.new("E_Moon")
 exec(open(r"C:\Users\User\OneDrive\Desktop\Coding\glitched_together\tools\blender_sky.py").read())
-moon_material(mm, tint=(1.0, 0.97, 0.92), strength=1.1)  # maria + craters + limb darkening (was a flat white disc)
+moon_material(mm, tint=(1.0, 0.97, 0.92), strength=1.55)  # maria + craters + limb darkening (was a flat white disc)
 moon.data.materials.append(mm)
 moon.visible_shadow = False
 moon.visible_glossy = True

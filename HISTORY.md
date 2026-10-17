@@ -2,6 +2,10 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 28th session (Oct 17, 2026, AFK)
+
+- **Epilogue moon (next step 7b, "a bit dim against its halo"):** `E_Moon` strength 1.1 → 1.55 (`moon_material` in `tools/epilogue_sky/sky.py`) and the world-shader moon halo 0.25 → 0.18; `EpilogueSky.blend` saved, `EP_Sky2_Lf.png` re-rendered (1024², 128 samples, 82 s), uploaded (PreloadAsync Success), id in `Worlds.luau`. Checked by a side-by-side crop of old vs new render: moon brighter, maria still visible, halo softer. Not yet seen in Play.
+
 ## 27th session (Oct 17, 2026): Epilogue gold trophies, store thumbnail
 
 - **Epilogue gold trophies (next step 5, user pick Oct 12):** the six `FinishedPiece` grey-box gold shapes round the SAVE button became trophies of what the duo built, each a polished-gold mesh on a dark slate plinth: Starfall Castle tower (crenellations, cone roof, pennant), Prologue stage arch (voussoirs + keystone), Pixel Plains voxel pyramid with a ? block, Glitched Core orb on a stand with a tilted ring, fluted column, little arched bridge. Blender kit `tools/epilogue_trophies/kit.py` (front -Y = toward SAVE), 12 glbs uploaded by `tools/mesh/upload_model.py`, skins `EP_Trophy*` in `ArtService/Epilogue.luau` (`trophy()` helper), Greybox pieces carry `Skin` attrs and the skins' design sizes (same ring radius 11 and order). Gold = `Foil` (Metal read flat ochre under the night light). Verified in Play (DebugWorld Epilogue): all six skinned, bottoms on the hilltop (y 6), one screenshot from the path top: readable, boards still clear.
