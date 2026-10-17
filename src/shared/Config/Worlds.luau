@@ -142,7 +142,7 @@ local ByName: { [string]: World } = {
 			-- out snowy mountains, a lake, villages, Milky Way; rendered from 700 up so the valley reads far below, with valley
 			-- mist (blender_assets/PixelPlainsSky.blend, scene CastleSky, collection DnSet)
 			Skybox = {
-				Bk = "rbxassetid://76482591344110",
+				Bk = "rbxassetid://126555993972868", -- SC_Sky8_Bk: real moon (maria, limb darkening, soft glow)
 				Ft = "rbxassetid://129799494219118",
 				Lf = "rbxassetid://76374802988677",
 				Rt = "rbxassetid://111055250742013",
