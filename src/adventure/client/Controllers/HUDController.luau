@@ -469,7 +469,10 @@ local function buildXpAndUltimate()
 		-- touch: the right corner belongs to the buttons, so the meter sits over the XP bar
 		local touch = Glyphs.device() == "Touch"
 		ultBack.AnchorPoint = if touch then Vector2.new(0.5, 1) else Vector2.new(1, 1)
-		ultBack.Position = if touch then UDim2.new(0.5, 0, 1, -66) else UDim2.new(1, -20, 1, -150)
+		ultBack.Position = if touch then UDim2.new(0.5, 0, 1, -86) else UDim2.new(1, -20, 1, -150)
+		-- touch: its name sits to the bar's left, clear of the LV line under it
+		ultLabel.AnchorPoint = if touch then Vector2.new(1, 0.5) else Vector2.new(1, 1)
+		ultLabel.Position = if touch then UDim2.new(0, -10, 0.5, 0) else UDim2.new(1, 0, 0, -6)
 		local xp = (player:GetAttribute("XP") or 0) :: number
 		local level = (player:GetAttribute("Level") or 1) :: number
 		local levels = Tuning.XpLevels

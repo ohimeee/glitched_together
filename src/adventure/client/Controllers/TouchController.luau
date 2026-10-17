@@ -73,12 +73,15 @@ type Button = {
 	badge: TextLabel?,
 	ring: number?,
 	angle: number?,
+	topDown: { number }?, -- { ring, angle } with no jump button (castle); DASH sits in the jump button's spot
 	small: boolean?,
 	big: boolean?,
 }
 
 local gui: ScreenGui
 local buttons: { [string]: Button } = {}
+-- top-down (castle) has no jump: DASH takes the jump button's spot and the tools close in (Button.topDown)
+local noJump = false
 
 local function setIcon(entry: Button, key: string)
 	local index = ICON[key] or 0
@@ -194,17 +197,28 @@ local function layout()
 	local gap = size * 0.16
 	local radius = { jumpSize / 2 + gap + size / 2 }
 	radius[2] = radius[1] + size + gap
+	local view = gui.AbsoluteSize
+	local edge = Tuning.Touch.Edge
 	for _, entry in buttons do
 		local px = if entry.small then small elseif entry.big then size * Tuning.Touch.BigScale else size
 		entry.button.Size = UDim2.fromOffset(px, px)
 		if entry.ring and entry.angle then
-			local a = math.rad(entry.angle)
-			local r = radius[entry.ring] + (px - size) / 2 -- a bigger button steps outward, clear of the inner ring
-			local p = center + Vector2.new(math.cos(a) * r, -math.sin(a) * r)
+			local p = center
+			local spot = if noJump then entry.topDown else { entry.ring, entry.angle }
+			if spot then
+				local ring = spot[1]
+				local a = math.rad(spot[2])
+				local r = radius[ring] + (px - size) / 2 -- a bigger button steps outward, clear of the inner ring
+				p = center + Vector2.new(math.cos(a) * r, -math.sin(a) * r)
+			end
+			-- never past the screen's edge (a big button low on the outer ring sank off a phone's bottom)
+			p = Vector2.new(
+				math.clamp(p.X, px / 2 + edge, view.X - px / 2 - edge),
+				math.clamp(p.Y, px / 2 + edge, view.Y - px / 2 - edge)
+			)
 			entry.button.Position = UDim2.fromOffset(p.X, p.Y)
 		end
 	end
-	local view = gui.AbsoluteSize
 	-- top right, in a row under the top bar (clear of the rings); SKIP takes the same corner in cutscenes
 	local top = GuiService:GetGuiInset().Y + small * 0.75
 	buttons.Ping.button.Position = UDim2.fromOffset(view.X - small * 0.75, top)
@@ -249,6 +263,10 @@ local function refresh()
 	buttons.Ping.button.Visible = play
 	buttons.Peek.button.Visible = play
 	buttons.Skip.button.Visible = touch and cutscene and not downed
+	if noJump ~= topDown then
+		noJump = topDown
+		layout()
+	end
 end
 
 function TouchController.Init()
@@ -266,14 +284,19 @@ function TouchController.Init()
 	tool1.big = true -- the main action, like BedWars' sword
 	badge(tool1, "1")
 	place(tool1, 2, 185)
+	tool1.topDown = { 1, 180 }
 	local tool2 = make("Tool2", "TOOL 2", "Release")
 	badge(tool2, "2")
 	place(tool2, 2, 152)
+	tool2.topDown = { 1, 118 }
 	local ignite = make("Ignite", "IGNITE", "Ignite")
 	caption(ignite)
 	place(ignite, 2, 120)
+	ignite.topDown = { 2, 150 }
 	place(make("Rotate", "ROTATE", "Rotate"), 2, 120)
-	place(make("Ultimate", "ULT", "Meteor"), 2, 92)
+	local ult = make("Ultimate", "ULT", "Meteor")
+	place(ult, 2, 92)
+	ult.topDown = { 2, 105 }
 	make("Ping", "PING", "Ping", true)
 	make("Peek", "PEEK", "Peek", true)
 	make("Skip", "SKIP", "Skip", true)

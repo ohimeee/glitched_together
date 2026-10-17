@@ -12,6 +12,7 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Input = require(script.Parent.Parent.Input)
 local MovementController = require(script.Parent.MovementController)
@@ -184,7 +185,11 @@ local function modeStep(dt: number)
 			mid = mid:Lerp(Vector3.new(focus.X, mid.Y, focus.Z), w)
 		end
 		-- a boss hall can pull the view back (workspace TopDownZoom, set by the Hollow Dragon fight)
-		local zoom = math.clamp(1 + spread / 60, 1, 1.6) * ((workspace:GetAttribute("TopDownZoom") or 1) :: number)
+		local hallZoom = workspace:GetAttribute("TopDownZoom") :: number?
+		local zoom = math.clamp(1 + spread / 60, 1, 1.6) * (hallZoom or 1)
+		if not hallZoom and Glyphs.device() == "Touch" then
+			zoom *= Tuning.Touch.TopDownZoom -- phones sit closer (boss halls keep their own framing)
+		end
 		-- ...and look from the other side (workspace TopDownFlip): the boss at the far end fills the top of the screen
 		local back = (if workspace:GetAttribute("TopDownFlip") then -BACK else BACK)
 			* (workspace:GetAttribute("TopDownBack") or 1) :: number -- flatter angle: a tall boss stays in frame

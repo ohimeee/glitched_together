@@ -57,6 +57,8 @@ return {
 		Icon = 0.1, -- icon transparency
 		AimRange = 60, -- studs: castle auto-aim picks the nearest enemy within this, in front of you
 		AimCone = 75, -- degrees either side of your facing/move direction it looks
+		Edge = 6, -- px every touch button keeps from the screen edge
+		TopDownZoom = 0.75, -- × the castle camera's distance on touch (phones: the duo read too small)
 	},
 	-- Low-end devices (client PerfController): phones/tablets or the graphics slider at or under LowQualityLevel
 	Perf = {
