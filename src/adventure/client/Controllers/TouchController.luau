@@ -9,6 +9,7 @@
 -- Correct Way to Design Mobile Buttons", Arsenal, BedWars): see-through circles with a thin white ring and a white
 -- icon only (user: "remove the word ... make it like transparent like this", Arsenal's look), built off the jump
 -- button's two size presets; the main tool button is bigger (BedWars' sword). Captions stay as hidden labels.
+local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -78,6 +79,7 @@ type Button = {
 	topDown: { number }?, -- { ring, angle } with no jump button (castle); DASH sits in the jump button's spot
 	small: boolean?,
 	big: boolean?,
+	captioned: boolean?, -- the word shows under the icon (caption)
 }
 
 local gui: ScreenGui
@@ -85,8 +87,24 @@ local buttons: { [string]: Button } = {}
 -- top-down (castle) has no jump: DASH takes the jump button's spot and the tools close in (Button.topDown)
 local noJump = false
 
+-- An icon that fails to download shows the button's word instead, never an empty ring: phones got new uploads hours
+-- after PC (Oct 17: every icon "Failure" on a phone, "Success" in Studio and on PC).
 local function setIcon(entry: Button, key: string)
-	entry.icon.Image = ICON[key] or ICON.Dash
+	local image = ICON[key] or ICON.Dash
+	entry.icon.Image = image
+	task.spawn(function()
+		local ok = true
+		ContentProvider:PreloadAsync({ entry.icon }, function(_, status)
+			ok = status == Enum.AssetFetchStatus.Success
+		end)
+		if entry.icon.Image ~= image or entry.captioned then
+			return -- changed meanwhile, or the word already shows under the icon
+		end
+		entry.icon.Visible = ok
+		entry.label.Position = UDim2.fromScale(0.5, 0.5)
+		entry.label.Size = UDim2.fromScale(0.8, 0.26)
+		entry.label.Visible = not ok
+	end)
 end
 
 local function make(name: string, text: string, iconKey: string, small: boolean?): Button
@@ -168,6 +186,7 @@ local function caption(entry: Button)
 	entry.label.Position = UDim2.fromScale(0.5, 0.76)
 	entry.label.Size = UDim2.fromScale(0.72, 0.2)
 	entry.label.Visible = true
+	entry.captioned = true
 end
 
 -- Roblox's jump button: centre + size in screen pixels (its layout rule when it isn't built yet)
@@ -397,7 +416,6 @@ function TouchController.Init()
 
 	-- /diag (admin): report how the touch icons loaded on this device, in chat + the console (phones have no Studio)
 	Net.event("AdminDiag").OnClientEvent:Connect(function()
-		local ContentProvider = game:GetService("ContentProvider")
 		local StarterGui = game:GetService("StarterGui")
 		local lines = {
 			`[diag] device {Glyphs.device()} quality {UserSettings().GameSettings.SavedQualityLevel.Name} queue {ContentProvider.RequestQueueSize}`,
