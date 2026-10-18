@@ -17,7 +17,7 @@ return {
 	},
 	-- game passes (Creator Dashboard > Monetization > Passes), looks only (Config/Supporters)
 	Passes = {
-		Aura = { Id = 0, Robux = 99 }, -- TODO: pass "Glowing Aura"
-		Tag = { Id = 0, Robux = 49 }, -- TODO: pass "Name Tag Color"
+		Aura = { Id = 2036931847, Robux = 99 }, -- pass "Glowing Aura"
+		Tag = { Id = 2040021635, Robux = 49 }, -- pass "Name Tag Color"
 	},
 }
