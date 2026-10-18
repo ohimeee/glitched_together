@@ -36,9 +36,23 @@ def user_ids(names):
 
 
 def roles():
-    r = requests.get(f"{CLOUD}/roles", headers=H, params={"maxPageSize": 20}, timeout=15)
-    r.raise_for_status()
-    return r.json()["groupRoles"]
+    out, token = [], ""
+    while True:
+        params = {"maxPageSize": 20}
+        if token:
+            params["pageToken"] = token
+        r = requests.get(f"{CLOUD}/roles", headers=H, params=params, timeout=15)
+        r.raise_for_status()
+        j = r.json()
+        out += j.get("groupRoles", [])
+        token = j.get("nextPageToken") or ""
+        if not token:
+            return out
+
+
+def role(path):
+    r = requests.get(f"https://apis.roblox.com/cloud/v2/{path}", headers=H, timeout=15)
+    return r.json() if r.ok else {}
 
 
 def membership(uid):
@@ -80,7 +94,7 @@ def main():
         if not m:
             print(f"{real}: NOT in the community yet: ask them to join first")
             continue
-        cur = by_path.get(m["role"], {})
+        cur = by_path.get(m["role"]) or role(m["role"])
         if cur.get("rank", 0) >= tester["rank"]:
             print(f"{real}: already {cur.get('displayName')} (can play)")
             continue
