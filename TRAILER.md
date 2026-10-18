@@ -168,6 +168,8 @@ Still to record:
 Flow: viewers see the trailer → join the community + apply as a pair on the form → the owner checks they joined, gives both the **Beta Tester** role (rank 10) → the game lets them in (`Config/Beta`, `Util/BetaGate`; everyone else is kicked with the beta note).
 
 - Community: https://www.roblox.com/communities/129463626
+- TikTok: https://www.tiktok.com/@nightowl.interactive (bio has the form link as text; clickable Website field unlocks in the app / Business account)
+- Posted Oct 19: the 9:16 chiptune cut as a YouTube Short ("2 friends. 2 powers. 1 unfinished game") + on TikTok.
 - YouTube: https://www.youtube.com/@NightOwlInteractiveStudio (studio account nightowlinteractive.studio@gmail.com; banner + profile in `marketing/social/`)
 - Form ("Night Owl Interactive: Playtesters Wanted", owned by hi.me1052006@gmail.com): https://forms.gle/VvvVmpakSBST1FqZ7
 
