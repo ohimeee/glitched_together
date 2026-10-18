@@ -9,7 +9,7 @@ local Supporters = require(ReplicatedStorage.Shared.Util.Supporters)
 local TipJar = require(ReplicatedStorage.Shared.Util.TipJar)
 
 local X0 = -160 -- the left wall (LobbyRoom)
-local CENTER = Vector3.new(X0 + 1, 12, -20)
+local CENTER = Vector3.new(X0 + 1, 24, -20) -- raised 12 (user, Oct 18: higher)
 local W, H = 72, 46 -- studs (the bedroom is doll scale: ~1 m wide)
 local rgb = Color3.fromRGB
 
@@ -88,7 +88,7 @@ task.spawn(function()
 		f:Destroy()
 	end
 end)
-Supporters.Wall(cork, Enum.NormalId.Front, { PixelsPerStud = 14 })
+Supporters.Wall(cork, Enum.NormalId.Front, { PixelsPerStud = 14, TitleGlow = 0.6 })
 
 -- the pass slips: small paper notes pinned along the bottom edge
 local SLIPS = {
@@ -122,7 +122,7 @@ for i, s in SLIPS do
 	prompt.ObjectText = "Supporter Wall"
 	prompt.HoldDuration = 0
 	prompt.RequiresLineOfSight = false
-	prompt.MaxActivationDistance = 22
+	prompt.MaxActivationDistance = 34 -- from the toy-chest lid up to the raised board
 	prompt.Parent = slip
 	prompt.Triggered:Connect(function(player)
 		Supporters.Cycle(player, s[1] :: any)
@@ -131,9 +131,10 @@ end
 
 folder.Parent = workspace:WaitForChild("Lobby", 30) or workspace
 
--- the tip jar (user, Oct 18: tips in the lobby too): a glass jar of gold coins on the desk's front-right corner with a
--- paper label; [E] opens the tip panel (client TipJar.client, Util/TipPanel)
-local JAR = Vector3.new(84, 0, -50) -- desk top is y 0
+-- the tip jar (user, Oct 18: tips in the lobby too): a glass jar of gold coins with a paper label, on the desk right
+-- beside the GLITCHED TOGETHER chalkboard sign (user, Oct 18; sign: x 0, z -14.7, 20 wide), label toward the spawn;
+-- [E] opens the tip panel (client TipJar.client, Util/TipPanel)
+local JAR = Vector3.new(15, 0, -16) -- desk top is y 0 (sign collider ends at x 10, the capsule ring starts at x 35)
 local jar =
 	part("TipJar", Vector3.new(7, 6, 6), CFrame.new(JAR + Vector3.new(0, 3.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), {
 		Shape = Enum.PartType.Cylinder,

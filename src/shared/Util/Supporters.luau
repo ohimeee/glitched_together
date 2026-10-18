@@ -369,7 +369,14 @@ local MEDALS = {
 function Supporters.Wall(
 	part: BasePart,
 	face: Enum.NormalId,
-	opts: { Title: string?, PixelsPerStud: number?, Font: Enum.Font?, Ink: Color3?, Paper: Color3? }?
+	opts: {
+		Title: string?,
+		PixelsPerStud: number?,
+		Font: Enum.Font?,
+		Ink: Color3?,
+		Paper: Color3?,
+		TitleGlow: number?, -- the title on its own self-lit layer at this Brightness (the cards stay scene-lit)
+	}?
 )
 	local o = opts or {}
 	local gui = Instance.new("SurfaceGui")
@@ -392,6 +399,22 @@ function Supporters.Wall(
 	head.TextStrokeTransparency = 0.4
 	head.Text = o.Title or "★ THANK YOU, SUPPORTERS ★"
 	head.Parent = gui
+	if o.TitleGlow then
+		local glowGui = Instance.new("SurfaceGui")
+		glowGui.Name = "SupporterTitle"
+		glowGui.Face = face
+		glowGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		glowGui.PixelsPerStud = gui.PixelsPerStud
+		glowGui.LightInfluence = 0
+		glowGui.Brightness = o.TitleGlow
+		glowGui.Parent = part
+		head.Parent = glowGui
+		local halo = Instance.new("UIStroke") -- a soft gold rim round the letters
+		halo.Color = MEDALS[1]
+		halo.Transparency = 0.55
+		halo.Thickness = 3
+		halo.Parent = head
+	end
 
 	local board = Instance.new("Frame")
 	board.Position = UDim2.fromScale(0, 0.13)
