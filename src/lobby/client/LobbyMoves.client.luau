@@ -1,6 +1,7 @@
 -- Double jump + dash in the lobby (user, Oct 18), with the adventure's numbers, sounds and clips (MovementController:
 -- Tuning.DoubleJumpVelocity, DashDistance / DashTime, one air dash, GroundDashCooldown). Keys: jump again in the air
 -- (SPACE / A / the touch jump button), dash = SHIFT / B / a DASH touch button. Off while frozen in a capsule.
+local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
@@ -142,7 +143,9 @@ local function hook(character: Model)
 	return dash
 end
 
--- DASH touch button, above the jump button (phones / tablets)
+-- DASH touch button, left of Roblox's jump button like the adventure's ring (TouchController: Dash at 180°), same icon
+-- (falls back to the word if the image fails to load: new uploads reach phones late)
+local DASH_ICON = "rbxassetid://129855379396466"
 local dashNow: (() -> ())? = nil
 local function touchButton()
 	if not UserInputService.TouchEnabled then
@@ -154,30 +157,75 @@ local function touchButton()
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local b = Instance.new("TextButton")
 	b.Name = "Dash"
-	b.AnchorPoint = Vector2.new(1, 1)
-	b.Position = UDim2.new(1, -24, 1, -170)
+	b.AnchorPoint = Vector2.new(0.5, 0.5)
+	b.Position = UDim2.new(1, -170, 1, -60)
 	b.Size = UDim2.fromOffset(64, 64)
 	b.BackgroundColor3 = Color3.new(0, 0, 0)
-	b.BackgroundTransparency = 0.55
-	b.Text = "DASH"
-	b.TextColor3 = Color3.new(1, 1, 1)
-	b.Font = Enum.Font.FredokaOne
-	b.TextSize = 16
+	b.BackgroundTransparency = 0.6
+	b.Text = ""
 	b.AutoButtonColor = true
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(1, 0)
 	corner.Parent = b
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Color3.new(1, 1, 1)
-	stroke.Transparency = 0.4
+	stroke.Transparency = 0.45
 	stroke.Thickness = 2
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = b
+	local icon = Instance.new("ImageLabel")
+	icon.AnchorPoint = Vector2.new(0.5, 0.5)
+	icon.Position = UDim2.fromScale(0.5, 0.5)
+	icon.Size = UDim2.fromScale(0.58, 0.58)
+	icon.BackgroundTransparency = 1
+	icon.Image = DASH_ICON
+	icon.ImageTransparency = 0.1
+	icon.Parent = b
+	local word = Instance.new("TextLabel")
+	word.AnchorPoint = Vector2.new(0.5, 0.5)
+	word.Position = UDim2.fromScale(0.5, 0.5)
+	word.Size = UDim2.fromScale(0.8, 0.28)
+	word.BackgroundTransparency = 1
+	word.Font = Enum.Font.GothamBlack
+	word.TextScaled = true
+	word.TextColor3 = Color3.fromRGB(240, 240, 232)
+	word.Text = "DASH"
+	word.Visible = false
+	word.Parent = b
 	b.Parent = gui
+	task.spawn(function()
+		local ok = true
+		ContentProvider:PreloadAsync({ icon }, function(_, status)
+			ok = status == Enum.AssetFetchStatus.Success
+		end)
+		icon.Visible = ok
+		word.Visible = not ok
+	end)
 	b.Activated:Connect(function()
 		if dashNow then
 			dashNow()
 		end
+	end)
+	-- follow the jump button (its spot and size change with the screen)
+	task.spawn(function()
+		local touchGui = player.PlayerGui:WaitForChild("TouchGui", 30)
+		local frame = touchGui and touchGui:WaitForChild("TouchControlFrame", 10)
+		local jump = frame and frame:WaitForChild("JumpButton", 10) :: GuiObject?
+		if not jump then
+			return
+		end
+		local function follow()
+			local size = jump.AbsoluteSize.X * 0.8
+			local centre = jump.AbsolutePosition + jump.AbsoluteSize / 2
+			local inset = gui.AbsolutePosition -- ScreenGui offset under the top bar
+			b.Size = UDim2.fromOffset(size, size)
+			b.Position = UDim2.fromOffset(centre.X - jump.AbsoluteSize.X * 1.05 - inset.X, centre.Y - inset.Y)
+			b.Visible = jump.Visible
+		end
+		follow()
+		jump:GetPropertyChangedSignal("AbsolutePosition"):Connect(follow)
+		jump:GetPropertyChangedSignal("AbsoluteSize"):Connect(follow)
+		jump:GetPropertyChangedSignal("Visible"):Connect(follow)
 	end)
 end
 
