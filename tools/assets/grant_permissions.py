@@ -6,6 +6,7 @@ images (textures, decals, UI) don't.
 
 python tools/assets/grant_permissions.py          scan src/ for asset ids, look up owners, grant (batches of 50)
 python tools/assets/grant_permissions.py --dry    only list what would be granted
+python tools/assets/grant_permissions.py --cached reuse owned_ids.json from the last scan
 
 Needs ROBLOX_API_KEY in .env with the "asset-permissions:write" scope (Creator Hub → Credentials → the key →
 add API System "Asset Permissions"), owned by the asset owner (buldak0555).
@@ -49,18 +50,22 @@ def owner_of(aid: str):
 
 def main():
     dry = "--dry" in sys.argv
-    ids = scan_ids()
-    print(f"{len(ids)} candidate ids in src/")
-    mine = []
-    for i, aid in enumerate(ids):
-        name, typ = owner_of(aid)
-        if name == OWNER:
-            mine.append(aid)
-        if i % 50 == 49:
-            print(f"  looked up {i + 1}/{len(ids)}, {len(mine)} owned by {OWNER}")
-        time.sleep(0.25)
+    cache = ROOT / "tools" / "assets" / "owned_ids.json"
+    if "--cached" in sys.argv and cache.exists():
+        mine = json.loads(cache.read_text())
+    else:
+        ids = scan_ids()
+        print(f"{len(ids)} candidate ids in src/")
+        mine = []
+        for i, aid in enumerate(ids):
+            name, typ = owner_of(aid)
+            if name == OWNER:
+                mine.append(aid)
+            if i % 50 == 49:
+                print(f"  looked up {i + 1}/{len(ids)}, {len(mine)} owned by {OWNER}")
+            time.sleep(0.25)
+        cache.write_text(json.dumps(mine, indent=0))
     print(f"{len(mine)} assets owned by {OWNER}")
-    (ROOT / "tools" / "assets" / "owned_ids.json").write_text(json.dumps(mine, indent=0))
     if dry:
         return
     key = api_key()
@@ -68,13 +73,14 @@ def main():
     for start in range(0, len(mine), 50):
         batch = mine[start : start + 50]
         body = {
-            "subject": {"subjectType": "Universe", "subjectId": UNIVERSE},
+            "subjectType": "Universe",
+            "subjectId": UNIVERSE,
             "action": "Use",
-            "requests": [{"assetId": a} for a in batch],
+            "requests": [{"assetId": int(a)} for a in batch],
         }
         r = requests.patch(
             "https://apis.roblox.com/asset-permissions-api/v1/assets/permissions",
-            headers={"x-api-key": key, "Content-Type": "application/json"},
+            headers={"x-api-key": key, "Content-Type": "application/json-patch+json"},
             data=json.dumps(body),
             timeout=30,
         )
@@ -82,8 +88,8 @@ def main():
             print("batch failed", r.status_code, r.text[:300])
             continue
         res = r.json()
-        failed = res.get("errors") or res.get("failedAssets") or []
-        ok += len(batch) - len(failed)
+        failed = res.get("errors") or []
+        ok += len(res.get("successAssetIds") or [])
         if failed:
             print("  some failed:", json.dumps(failed)[:300])
     print(f"granted Use to universe {UNIVERSE}: {ok}/{len(mine)}")
