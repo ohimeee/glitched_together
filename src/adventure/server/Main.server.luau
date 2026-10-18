@@ -38,6 +38,7 @@ do
 	Net.event(name)
 end
 Net.event("CamSync", true)
+require(ReplicatedStorage.Shared.Util.BetaGate).Init() -- closed beta: testers only (Config/Beta)
 require(ReplicatedStorage.Shared.Util.Settings).InitServer() -- per-player settings (creates its remotes)
 
 local CollisionService = require(Services.CollisionService)
