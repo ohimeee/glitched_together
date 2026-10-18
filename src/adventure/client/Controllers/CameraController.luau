@@ -43,6 +43,7 @@ local distance = C.Distance
 local shoulder = 0 -- 0..1, eased in while a tool is held (the crosshair sits beside the body, not on it)
 local stick = Vector2.zero
 local wasFollow = false
+local cursorFree = false -- middle mouse button toggles a free cursor (user, Oct 19: reach the BUG? button on PC)
 local relockAt = 0 -- when the cursor last re-locked: the first mouse deltas after that are the cursor jumping to center
 local camParams = RaycastParams.new()
 camParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -137,13 +138,14 @@ local function followStep(dt: number, root: BasePart?)
 end
 
 -- The cursor is locked (mouse-look) in Follow mode unless a menu/cutscene needs it (MenuContext, or a screen like the
--- credits card that sets the player's FreeCursor attribute) or Alt is held.
+-- credits card that sets the player's FreeCursor attribute), Alt is held or the middle mouse button freed it.
 local function wantsLock(m: string): boolean
 	return m == "Follow"
 		and override == nil
 		and not Input.isEnabled("MenuContext")
 		and not player:GetAttribute("FreeCursor")
 		and not UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt)
+		and not cursorFree
 		and UserInputService.MouseEnabled
 end
 
@@ -273,6 +275,11 @@ end
 
 function CameraController.Init()
 	local minPitch, maxPitch = math.rad(C.PitchMin), math.rad(C.PitchMax)
+	UserInputService.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton3 then
+			cursorFree = not cursorFree
+		end
+	end)
 	UserInputService.InputChanged:Connect(function(input, processed)
 		local t = input.UserInputType
 		if t == Enum.UserInputType.MouseMovement then

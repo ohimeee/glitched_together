@@ -263,6 +263,7 @@ function BugReports.InitClient()
 	local busy = false
 	local function open(text: string?)
 		panel.Visible = true
+		player:SetAttribute("FreeCursor", true) -- adventure CameraController unlocks the mouse
 		status.Text = ""
 		if text then
 			box.Text = text
@@ -271,6 +272,7 @@ function BugReports.InitClient()
 	end
 	local function close()
 		panel.Visible = false
+		player:SetAttribute("FreeCursor", nil)
 		box:ReleaseFocus()
 	end
 	local function submit()
@@ -328,6 +330,28 @@ function BugReports.InitClient()
 				open()
 			end
 		end)
+		-- PC in the adventure: the mouse is locked for the camera; say how to free it (CameraController)
+		local UserInputService = game:GetService("UserInputService")
+		if UserInputService.MouseEnabled and not UserInputService.TouchEnabled then
+			local tip = Instance.new("TextLabel")
+			tip.AnchorPoint = Vector2.new(1, 0)
+			tip.Position = UDim2.new(1, -72, 0, 50)
+			tip.Size = UDim2.fromOffset(150, 18)
+			tip.BackgroundTransparency = 1
+			tip.Font = Enum.Font.GothamMedium
+			tip.TextSize = 13
+			tip.TextXAlignment = Enum.TextXAlignment.Right
+			tip.TextColor3 = Color3.fromRGB(230, 232, 245)
+			tip.TextStrokeTransparency = 0.5
+			tip.Text = "middle-click: free mouse"
+			tip.Parent = gui
+			-- adventure only (workspace World arrives after the client starts; the lobby's mouse is free anyway)
+			local function show()
+				tip.Visible = workspace:GetAttribute("World") ~= nil
+			end
+			workspace:GetAttributeChangedSignal("World"):Connect(show)
+			show()
+		end
 	end
 end
 
