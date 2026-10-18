@@ -53,6 +53,7 @@ end
 -- settings menu (gear, top right): gameplay input sinks while it's up (MenuContext; left alone if a cutscene owns it)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ownedMenu = false
+require(ReplicatedStorage.Shared.Util.BugReports).InitClient() -- BUG? button + /bug (beta)
 require(ReplicatedStorage.Shared.Util.SettingsMenu).Init({
 	editLayout = require(Controllers.TouchController).EditLayout,
 	onOpen = function()

@@ -49,6 +49,7 @@ end
 
 -- settings menu (gear in the top bar's right corner; the same saved settings as the game)
 require(ReplicatedStorage.Shared.Util.SettingsMenu).Init({ camera = false })
+require(ReplicatedStorage.Shared.Util.BugReports).InitClient() -- BUG? button + /bug (beta)
 
 local invite = button("INVITE A FRIEND", Palette.Prologue.Pink, 0)
 invite.Activated:Connect(function()

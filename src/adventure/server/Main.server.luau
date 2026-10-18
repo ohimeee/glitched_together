@@ -87,6 +87,9 @@ EncounterService.Init()
 BossService.Init()
 ArtService.Init()
 require(Services.Badges).Init() -- worlds, bosses, game finished
+require(ReplicatedStorage.Shared.Util.BugReports).InitServer(function()
+	return { checkpoint = CheckpointService.Current() }
+end) -- beta bug reports (tools/beta/bugs.py)
 require(Services.AdminCommands).Init() -- /world, /cp, /role, /phase, /ult for admins (published-game tests)
 
 -- Hints reset on any progress.
