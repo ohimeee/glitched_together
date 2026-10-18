@@ -115,8 +115,15 @@ Still to record:
   x.mp4 --format h264`; `render-frame ... --out f.png` to check frames; `mcp` = MCP server.
 - Tested Oct 18: a 3 s 1080p title comp rendered in 2.3 s. Alpha software (crash risk); fallback editor: DaVinci
   Resolve (free, user installs).
-- Plan for the edit: one JSX script that imports the takes, trims each shot by timestamp, cuts on the music beats,
-  adds the three cards + end card, renders 16:9 and a 9:16 crop.
+- **The edit (38th, draft built):** `tools/trailer/edit.jsx` (shot list = `SHOTS` [take, source s, length, card]) +
+  `tools/trailer/cards.py` (Luckiest Guy cards, navy extrusion + white sticker outline like the logo). Build:
+  `python tools/trailer/cards.py`, `effectcraft-cli script tools/trailer/edit.jsx --empty` → `edit/trailer.ecproj`,
+  then `render --project edit/trailer.ecproj --comp Trailer16x9|Trailer9x16 --out x.mp4 --format h264`. 31 s: hook
+  duo → TWO PLAYERS (PP flyover, islands, blob lane, rails) → THREE WORLDS (castle, Core) → ONE UNFINISHED GAME
+  (King, Dragon, The Unfinished, trophies) → logo + PLAY WITH A FRIEND + ON ROBLOX. 9:16 = the 16:9 cut as a band
+  over a blown-up dark copy. Each shot pushes in 5 %; framing auto-zooms past the Roblox buttons.
+- Draft is silent: no cleared music yet. Swap gameplay clips into `SHOTS` once recorded (TWO POWERS card then).
+- Some takes have black bars inside the video (OBS crop off): `CONTENT` in edit.jsx lists their real picture size.
 
 ## 6. Gotchas met while recording (Oct 18)
 
