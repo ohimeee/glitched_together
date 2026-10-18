@@ -293,15 +293,22 @@ local function buildTools()
 	local key1, use1 = keyRow(card, 1)
 	local key2, use2 = keyRow(card, 2)
 
-	local crosshair = text({
+	-- one crosshair look in every world: the Glitched Core's (Code font, light grey, dark rim; user, Oct 19), not the
+	-- world's UI font (Pixel Plains' Arcade "+" read badly)
+	local crosshair = new("TextLabel", {
 		Name = "Crosshair",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(28, 28),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.Code,
 		Text = "+",
 		TextScaled = true,
+		TextColor3 = Color3.fromRGB(222, 225, 232),
+		TextStrokeColor3 = Color3.fromRGB(20, 21, 24),
+		TextStrokeTransparency = 0,
 		Visible = false,
-	}, gui, "Float")
+	}, gui)
 
 	local function refresh()
 		local kit = player:GetAttribute("Kit")
