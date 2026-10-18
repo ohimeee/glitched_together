@@ -122,7 +122,13 @@ Still to record:
   duo → TWO PLAYERS (PP flyover, islands, blob lane, rails) → THREE WORLDS (castle, Core) → ONE UNFINISHED GAME
   (King, Dragon, The Unfinished, trophies) → logo + PLAY WITH A FRIEND + ON ROBLOX. 9:16 = the 16:9 cut as a band
   over a blown-up dark copy. Each shot pushes in 5 %; framing auto-zooms past the Roblox buttons.
-- Draft is silent: no cleared music yet. Swap gameplay clips into `SHOTS` once recorded (TWO POWERS card then).
+- **Music + voice (38th):** first cut on "Time Flies_32Sec" (tape-echo) with the Kokoro voice (`am_michael`, user's pick
+  from processed samples; raw Kokoro sounded "lousy, no impact" → `voice.py` FX chain). Then 4 music variants
+  (`tools/trailer/variants.py`: beat grid + drop from the audio, same shots, end-line voice only).
+  **User picked the chiptune version** ("Pixel Art Game Soundtrack Chiptune", echoes_of_lumen; song window from
+  ~50.3 s, drop at 59.4 s, 112 BPM, 2.14 s shots, 34.4 s): `edit/trailer_chiptune.mp4` + `trailer_chiptune_9x16.mp4`.
+  Still open: where the voice goes (end only now; intro lines were questioned by the user), gameplay clips.
+- (superseded) Draft was silent before the music pass. Swap gameplay clips into `SHOTS` once recorded (TWO POWERS card then).
 - Some takes have black bars inside the video (OBS crop off): `CONTENT` in edit.jsx lists their real picture size.
 
 ## 6. Gotchas met while recording (Oct 18)
