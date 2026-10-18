@@ -80,14 +80,6 @@ local PROPS: { [string]: Prop } = {
 		Yaw = 15,
 		Solid = true,
 	},
-	Sneakers = { -- kicked off by the bed
-		Id = "rbxassetid://110025490841078",
-		Tex = "rbxassetid://108606592099967",
-		Size = v(13.5, 5.5, 13.2),
-		At = v(-74, -50, -104),
-		Yaw = 35,
-		Solid = true,
-	},
 	Backpack = { -- dropped against the desk drawers after school
 		Id = "rbxassetid://94015730973191",
 		Tex = "rbxassetid://111877754706453",
