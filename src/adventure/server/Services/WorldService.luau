@@ -13,6 +13,7 @@ local Places = require(ReplicatedStorage.Shared.Config.Places)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local DuoService = require(script.Parent.DuoService)
 local SaveService = require(script.Parent.SaveService)
+local Badges = require(script.Parent.Badges)
 local CheckpointService = require(script.Parent.CheckpointService)
 local Greybox = require(script.Parent.Parent.Greybox)
 local ArtService = require(script.Parent.ArtService)
@@ -292,6 +293,7 @@ function WorldService.Advance()
 		advancing = false
 		return
 	end
+	Badges.World(WorldService.Current) -- the world just finished
 	SaveService.Unlock(nextWorld)
 	SaveService.Set({ world = nextWorld, checkpoint = 0 })
 	task.spawn(SaveService.Flush)

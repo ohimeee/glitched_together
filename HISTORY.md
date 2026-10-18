@@ -2,6 +2,14 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 40th session (Oct 19, 2026): badges, pass icons, store setup
+
+- **Badges (LAUNCH.md §4):** `src/shared/Config/Badges.luau` (Worlds / Bosses / Finished ids, 0 = skipped) + `src/adventure/server/Services/Badges.luau` (awards to `DuoService.Players()`, pcall per player). Hooks: `WorldService.Advance` awards the world just left (Prologue, PixelPlains, StarfallCastle, GlitchedCore; Epilogue has none), `BossService.Finished` (CrusherKing / HollowDragon / Unfinished), `ContinueYes` (game finished). StyLua clean; not run in Play (ids still 0).
+- **Badge icons:** `tools/paint_style/badges.py` crops the loading cards, `paint_king.png` and two trailer frames (`marketing/badges/src_dragon.png` from take 19-59-19, `src_unfinished.png` from 20-02-12) into round 512 icons with the speed-paint filter; silver ring = world, gold = boss / finished. Prologue = NEW GAME button crop (title text didn't fit a circle).
+- **Pass icons:** `tools/paint_style/pass_icons.py` → `marketing/passes/pass_aura.png` (blocky avatar in a gold glow + sparkles) and `pass_tag.png` (★ VIP tag + the 6 tag colors); colors from `Config/Supporters`, no teal/magenta.
+- Store setup advice to the user: dev products under the game → Monetization; managed (regional) pricing off so the tip panel's exact prices and Supporter totals hold; product image = Night Owl owl emblem.
+- Re-ran `tools/assets/grant_permissions.py` (grapple pistol mesh 79322467316659 share access).
+
 ## 39th session (Oct 18-19, 2026): trailer cursor fix, max-graphics retake, publish checks
 
 - **Cursor in the 16:9 cut:** a white arrow sat mid-frame in the 3 early 1888-wide takes (19-27-30, 19-28-29, 19-31-00) = Roblox's in-game cursor (OBS cursor capture was already off; trailer mode hides it since). First tried painting it out (`tools/trailer/decursor.py`, ffmpeg delogo → `GlitchedTrailer/clean/`, `CLEAN` map in edit.jsx); user: "its bad, recapture" → retaken.

@@ -85,6 +85,7 @@ CombatService.Init()
 EncounterService.Init()
 BossService.Init()
 ArtService.Init()
+require(Services.Badges).Init() -- worlds, bosses, game finished
 require(Services.AdminCommands).Init() -- /world, /cp, /role, /phase, /ult for admins (published-game tests)
 
 -- Hints reset on any progress.
@@ -173,6 +174,7 @@ Net.event("ContinueYes").OnServerEvent:Connect(function()
 	if WorldService.Current ~= "Epilogue" or not world then
 		return
 	end
+	require(Services.Badges).Finished()
 	for _, part in world:GetDescendants() do
 		if not (part:IsA("BasePart") and part:GetAttribute("AfterYes")) then
 			continue
