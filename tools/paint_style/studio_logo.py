@@ -62,7 +62,7 @@ def twinkle(d, x, y, r, a):
     d.ellipse([x - k * 1.6, y - k * 1.6, x + k * 1.6, y + k * 1.6], fill=(255, 250, 236, a))
 
 
-def sky(w, h, cx, cy, seed, horizon=None, halo=0.55):
+def sky(w, h, cx, cy, seed, horizon=None, halo=0.55, clouds=0.47, stars=1.0):
     """a richer night: vertical gradient (indigo top → violet-blue low), clouds lit near the moon, a starry band,
     a halo round (cx, cy), vignette; with horizon = y of the far hills, two hill ridges + a pine treeline"""
     rng = np.random.default_rng(seed)
@@ -81,20 +81,20 @@ def sky(w, h, cx, cy, seed, horizon=None, halo=0.55):
     a = a + np.array([70, 64, 120]) * band * noise(w, h, seed + 1, U / 6)[..., None] * 0.45
     # clouds: noise thresholded into soft wisps, brighter near the moon
     n = noise(w, h, seed + 2, U / 3, 5)
-    cl = np.clip((n - 0.47) * 3.2, 0, 1)[..., None]
+    cl = np.clip((n - clouds) * 3.2, 0, 1)[..., None]
     lit = np.exp(-(r / (R * 1.4)) ** 2)
     a = a * (1 - cl * 0.55) + (np.array([60, 58, 112]) + np.array([150, 130, 140]) * lit) * cl * 0.55
     im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGBA")
     dr = ImageDraw.Draw(im)
     # stars: denser in the band, none behind thick cloud
-    for _ in range(int(w * h / 2500)):
+    for _ in range(int(w * h / 2500 * stars)):
         sx, sy = rng.uniform(0, w), rng.uniform(0, h * (0.8 if horizon else 1.0))
         bi, ci = int(min(h - 1, sy)), int(min(w - 1, sx))
-        if cl[bi, ci, 0] > 0.4 or rng.random() > 0.25 + band[bi, ci, 0] * 0.9:
+        if cl[bi, ci, 0] > 0.4 or rng.random() > (0.25 + band[bi, ci, 0] * 0.9) * stars:
             continue
         rr = rng.choice([0.6, 0.8, 1.0, 1.3, 1.8]) * U / 1440
         dr.ellipse([sx - rr, sy - rr, sx + rr, sy + rr], fill=(255, 242, 220, int(rng.integers(50, 210))))
-    for _ in range(max(3, int(U / 300))):
+    for _ in range(max(3, int(U / 300 * stars))):
         sx, sy = rng.uniform(0, w), rng.uniform(0, h * 0.6)
         if np.hypot(sx - cx, sy - cy) < R * 0.9:
             continue
@@ -142,7 +142,7 @@ def main():
 
     # emblem: symbol only (it reads at 150 px; a wordmark wouldn't)
     S = 1024
-    bg = sky(S, S, S / 2, S * 0.48, 3, halo=0.18)
+    bg = sky(S, S, S / 2, S * 0.48, 3, halo=0.18, clouds=0.6, stars=2.6)
     s = fit(sym, h=int(S * 0.74))
     pos = ((S - s.width) // 2, int(S * 0.5 - s.height * 0.52))
     bg = glow(bg, s, pos, strength=200, blur=0.06)
