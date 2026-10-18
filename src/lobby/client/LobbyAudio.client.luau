@@ -1,5 +1,8 @@
--- Lobby music + room ambience (Config/Sounds Lobby entries), faded in on join, and the toy train's whistle now
--- and then. One-shots (bed squeak, capsule clicks) are played where they happen: BedBounce, Capsules.
+-- Lobby music + room ambience (Config/Sounds Lobby entries), faded in on join, the toy train's whistle now and
+-- then, and UI sounds for every lobby button (hover + click) and [E] prompt. Other one-shots (bed squeak, capsule
+-- clicks) are played where they happen: BedBounce, Capsules.
+local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
@@ -7,7 +10,7 @@ local TweenService = game:GetService("TweenService")
 local Sounds = require(ReplicatedStorage.Shared.Config.Sounds)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
-local WHISTLE_GAP = NumberRange.new(25, 45) -- seconds between train whistles
+local WHISTLE_GAP = NumberRange.new(12, 25) -- seconds between train whistles
 
 for name, volume in Sounds.Groups do
 	Audio.group(name).Volume = volume
@@ -33,9 +36,39 @@ task.spawn(function()
 	if not train then
 		return
 	end
+	Audio.play("TrainRoll", train) -- looped, lives on the train
 	local rng = Random.new()
+	task.wait(3) -- first toot soon after joining
+	Audio.play("TrainWhistle", train)
 	while train.Parent do
 		task.wait(rng:NextNumber(WHISTLE_GAP.Min, WHISTLE_GAP.Max))
 		Audio.play("TrainWhistle", train)
 	end
+end)
+
+-- every button in any lobby screen (HUD, save-file menu, tip jar), now and later
+local function hookButton(b: Instance)
+	if not b:IsA("GuiButton") then
+		return
+	end
+	b.MouseEnter:Connect(function()
+		Audio.play("Hover")
+	end)
+	b.Activated:Connect(function()
+		Audio.play("Click")
+	end)
+end
+
+local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+for _, d in playerGui:GetDescendants() do
+	hookButton(d)
+end
+playerGui.DescendantAdded:Connect(hookButton)
+
+-- supporter slips, the tip jar
+ProximityPromptService.PromptShown:Connect(function()
+	Audio.play("Hover")
+end)
+ProximityPromptService.PromptTriggered:Connect(function()
+	Audio.play("Select")
 end)

@@ -136,6 +136,7 @@ local Sfx: { [string]: Def } = {
 		PitchVar = 0.08,
 	},
 	TrainWhistle = { Ids = { pse(9120223070), pse(9120222876) }, Volume = 0.35, Range = 80 }, -- wooden toy whistle
+	TrainRoll = { Id = pse(9120228107), Volume = 0.25, Pitch = 1.15, Range = 50, Looped = true }, -- toy wood wagon rolling
 	CapsuleIn = { Id = pse(9125921369), Volume = 0.45, Pitch = 1.1 }, -- latch click as a seat is taken
 	LockTick = { Id = "rbxassetid://10128760939", Volume = 0.35, Range = 40 }, -- countdown second
 	LockIn = { Id = pse(9119816546), Volume = 0.5, Range = 60 }, -- multi-tone wind-up as the pair is sent
