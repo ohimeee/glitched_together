@@ -9,3 +9,4 @@ Third-party assets used in Glitched Together (commercial-safe licenses only).
 
 - **Music:** "Adventure Time - Time Flies_32Sec" by tape-echo (https://pixabay.com/music/orchestral-adventure-time-time-flies-32sec-567718/), Pixabay Content License.
 - **Voiceover:** generated with Kokoro TTS (hexgrad/Kokoro-82M, Apache-2.0), voice am_michael, processed.
+- **Alternate trailer music (Pixabay Content License):** "Pixel Art Game Soundtrack Chiptune" by echoes_of_lumen; "Game - Game Music" by ARPMedia; "Cartoon - Cartoons Animation" by andriih; "Cinematic Trailer - Cinematic Trailer Music" by JonasBlakewood.

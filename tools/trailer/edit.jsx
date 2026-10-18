@@ -13,14 +13,28 @@ var FPS = 30;
 // Cuts sit on its bars from the drop on; the intro cuts sit on beats (9.10 - 6 / 12 beats).
 // the soundtrack = the music + the Kokoro voiceover, premixed with ducking by tools/trailer/voice.py mix
 var MUSIC = EDIT + "trailer_audio.wav";
-var BAR = 1.95;
+var BAR = 1.95; // one shot per bar after the drop
 var DROP = 9.1;
+var CUT1 = 3.24, CUT2 = 6.17; // intro cuts, on beats before the drop
+var END_LEN = 3.8;
+var SAY = 30.3; // "Play it with a friend." (voice.py LINES): the PLAY WITH A FRIEND card pops with it
+var PROJECT = "trailer";
+// tools/trailer/variants.py prepends `var VARIANT = {...}` to cut the same shots to another song
+if (typeof VARIANT !== "undefined") {
+	MUSIC = VARIANT.audio;
+	BAR = VARIANT.shot;
+	CUT1 = VARIANT.cut1;
+	CUT2 = VARIANT.cut2;
+	END_LEN = VARIANT.endLen;
+	SAY = VARIANT.say;
+	PROJECT = VARIANT.name;
+}
 
 // [take, source second, length s, card?]  hard cuts in this order
 var SHOTS = [
-	["2026-10-18 19-28-29", 0.0, 3.24], // hook: Kai + Miko by the trial signs (quiet intro)
-	["2026-10-18 19-27-30", 1.0, 2.93], // Pixel Plains drone flyover (build)
-	["2026-10-18 19-28-29", 50.0, DROP - 6.17], // grind rails rising into the drop
+	["2026-10-18 19-28-29", 0.0, CUT1], // hook: Kai + Miko by the trial signs (quiet intro)
+	["2026-10-18 19-27-30", 1.0, CUT2 - CUT1], // Pixel Plains drone flyover (build)
+	["2026-10-18 19-28-29", 50.0, DROP - CUT2], // grind rails rising into the drop
 	["2026-10-18 19-31-00", 7.5, BAR, "two_players"], // DROP: coin press lane, blobs
 	["2026-10-18 19-28-29", 22.0, BAR], // floating islands
 	["2026-10-18 19-53-29", 0.0, BAR, "three_worlds"], // Starfall Castle under the moon
@@ -32,7 +46,7 @@ var SHOTS = [
 	["2026-10-18 20-02-12", 33.5, BAR], // The Unfinished
 	["2026-10-18 20-03-52", 22.5, BAR], // Epilogue gold trophies
 ];
-var END = ["2026-10-18 20-03-52", 1.0, 3.8]; // end card over the lantern path: logo on the bar at 28.60, music fades out
+var END = ["2026-10-18 20-03-52", 1.0, END_LEN]; // end card over the lantern path: logo on the bar at 28.60, music fades out
 
 // Roblox's menu buttons sit in the top-left of every take (x < BTN_X, y < BTN_Y): the framing must leave them out
 var BTN_X = 180, BTN_Y = 75, PUSH = 1.05; // PUSH: slow push-in over each shot
@@ -146,9 +160,8 @@ lt.property("Scale").setValueAtTime(endAt + 9 / FPS, [66, 66]);
 lt.property("Scale").setValueAtTime(LEN, [70, 70]);
 lt.property("Opacity").setValueAtTime(endAt, 0);
 lt.property("Opacity").setValueAtTime(endAt + 3 / FPS, 100);
-var BEAT = BAR / 4;
-// PLAY WITH A FRIEND pops as the voice says it (voice.py LINES: 30.3 s), ON ROBLOX a beat later
-var SAY = 30.3;
+var BEAT = typeof VARIANT !== "undefined" ? VARIANT.beat : BAR / 4;
+// PLAY WITH A FRIEND pops as the voice says it (SAY), ON ROBLOX a beat later
 placeCard("play_friend", SAY, LEN - SAY + 0.01, 800);
 placeCard("on_roblox", SAY + BEAT, LEN - SAY - BEAT + 0.01, 940);
 
@@ -168,5 +181,5 @@ var fg = tall.layers.add(comp);
 fg.property("Transform").property("Position").setValue([540, 960]);
 fg.property("Transform").property("Scale").setValue([56.25, 56.25]);
 
-app.project.save(new File(EDIT + "trailer.ecproj"));
+app.project.save(new File(EDIT + PROJECT + ".ecproj"));
 writeLn("trailer " + LEN + " s, " + SHOTS.length + " shots + end card");
