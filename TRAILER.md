@@ -162,3 +162,25 @@ Still to record:
   PastePast can't be done solo (Miko must pull the crate out of the Code Layer first): Kai's solo copy source is the
   PlankBlock in MissingTextures (stand on KaiLedge). `TopDownZoom` 0.55 brings the castle camera closer but rooms
   override it after a while. OBS StartRecord right after a stop returns 500: retry after ~1.5 s.
+
+## 8. Posting + closed beta (Oct 19, 2026)
+
+Flow: viewers see the trailer → join the community + apply as a pair on the form → the owner checks they joined, gives both the **Beta Tester** role (rank 10) → the game lets them in (`Config/Beta`, `Util/BetaGate`; everyone else is kicked with the beta note).
+
+- Community: https://www.roblox.com/communities/129463626
+- Form ("Night Owl Interactive: Playtesters Wanted", owned by hi.me1052006@gmail.com): https://forms.gle/VvvVmpakSBST1FqZ7
+
+**Description:**
+> **Glitched Together** 👾 a 2-player co-op story adventure on Roblox.
+> Two best friends made a game as kids and never finished it. Now it has pulled them inside.
+>
+> 🧪 **CLOSED BETA, playtesters wanted!**
+> 1️⃣ Join our community: https://www.roblox.com/communities/129463626
+> 2️⃣ Apply (with a friend, or we'll pair you): https://forms.gle/VvvVmpakSBST1FqZ7
+> Picked testers get the Beta Tester role and a message on Roblox, then you can play!
+>
+> Made by Night Owl Interactive 🦉
+
+**Pinned comment:** Want to play before everyone else? 🧪 Join the community → https://www.roblox.com/communities/129463626 then apply → https://forms.gle/VvvVmpakSBST1FqZ7 Bring a friend, it's 2-player!
+
+**TikTok caption** (links in bio): 2-player co-op adventure on Roblox 👾 closed beta open! Link in bio to apply 🧪 #roblox #robloxdev #coop #indiegame
