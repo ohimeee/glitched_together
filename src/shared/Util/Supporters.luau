@@ -526,7 +526,10 @@ function Supporters.Wall(
 			empty.TextScaled = true
 			empty.TextColor3 = paper
 			empty.TextStrokeTransparency = 0.5
-			empty.Text = "No supporters yet.\nSupport us at the end of the story\nand your photo goes up here!"
+			-- where to tip from here (user, Oct 19: the lobby board pointed at the story's end, not the desk jar)
+			empty.Text = if workspace:GetAttribute("World") == nil
+				then "No supporters yet.\nDrop a tip in the jar on the desk\nand your photo goes up here!"
+				else "No supporters yet.\nTip at the SUPPORT board\nand your photo goes up here!"
 			empty.Parent = board
 			return
 		end
