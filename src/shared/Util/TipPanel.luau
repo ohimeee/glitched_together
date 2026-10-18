@@ -281,17 +281,38 @@ function TipPanel.Open(): ScreenGui?
 		back:Disconnect()
 	end)
 	local panel = TipPanel.Panel(gui, { centred = true })
+	-- close: a round dark button on the panel's corner with an X drawn from two bars (the "✕" character didn't
+	-- render in the lobby's font, so the jar had no visible way out; user, Oct 19)
 	local close = Instance.new("TextButton")
-	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, -8, 0, 8)
-	close.Size = UDim2.fromOffset(32, 32)
-	close.BackgroundTransparency = 1
-	close.Font = THEME.TitleFont
-	close.TextSize = 24
-	close.TextColor3 = THEME.SubInk
-	close.Text = "✕"
+	close.Name = "Close"
+	close.AnchorPoint = Vector2.new(0.5, 0.5)
+	close.Position = UDim2.new(1, -6, 0, 6)
+	close.Size = UDim2.fromOffset(40, 40)
+	close.BackgroundColor3 = Color3.fromRGB(22, 24, 44)
+	close.Text = ""
+	close.AutoButtonColor = true
 	close.Modal = true -- frees the cursor even in first person
+	close.ZIndex = 10
 	close.Parent = panel
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = close
+	local rim = Instance.new("UIStroke")
+	rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	rim.Color = Color3.new(1, 1, 1)
+	rim.Thickness = 2
+	rim.Parent = close
+	for _, angle in { 45, -45 } do
+		local bar = Instance.new("Frame")
+		bar.AnchorPoint = Vector2.new(0.5, 0.5)
+		bar.Position = UDim2.fromScale(0.5, 0.5)
+		bar.Size = UDim2.new(0.55, 0, 0, 4)
+		bar.Rotation = angle
+		bar.BackgroundColor3 = Color3.new(1, 1, 1)
+		bar.BorderSizePixel = 0
+		bar.ZIndex = 11
+		bar.Parent = close
+	end
 	close.Activated:Connect(function()
 		gui:Destroy()
 	end)

@@ -98,6 +98,15 @@ return {
 	},
 
 	-- Follow camera (CameraController): mouse-look, cursor locked, crosshair = screen center
+	-- the lobby's orbit camera (lobby/client/LobbyCamera): Camera's sensitivities + pitch limits, its own distances
+	LobbyCamera = {
+		Distance = 14,
+		MinDistance = 4,
+		MaxDistance = 32,
+		ZoomStep = 2, -- studs per wheel notch
+		PivotHeight = 1.6,
+		FOV = 70,
+	},
 	Camera = {
 		Shake = { Rate = 18, Roll = 1.2, Near = 25, Far = 110 }, -- noise Hz, degrees of roll per stud, falloff studs
 		MouseSensitivity = 0.0035, -- radians per pixel
