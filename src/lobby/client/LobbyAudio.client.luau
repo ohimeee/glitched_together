@@ -12,15 +12,14 @@ local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local WHISTLE_GAP = NumberRange.new(12, 25) -- seconds between train whistles
 
-for name, volume in Sounds.Groups do
-	Audio.group(name).Volume = volume
-end
+Audio.UseSettings() -- group volumes × the player's sliders
 
 local function loop(def: Sounds.Def?, group: string)
 	if not def then
 		return
 	end
 	local s = Audio.make(def, "Lobby" .. group)
+	s.SoundGroup = Audio.group(group) -- Music / Ambience (defs carry no Group: it fell into SFX, so its slider missed it)
 	s.Looped = true
 	s.Volume = 0
 	s.Parent = SoundService

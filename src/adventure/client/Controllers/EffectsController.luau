@@ -7,12 +7,56 @@ local RunService = game:GetService("RunService")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local EffectsController = {}
 
 local FROZEN_BLUE = Color3.fromRGB(190, 225, 255) -- the pause ripple, not an owner color
 
 local frozenGuis: { [Instance]: TextLabel } = {}
+
+-- Colorblind icons (settings menu ColorblindIcons, art-direction §6 "the color is never the only signal"): a shape
+-- over every owner target, Kai's ▲ / Miko's ● (the same shapes as their role tags), so orange vs teal never matters.
+local icons: { [BillboardGui]: boolean } = {}
+
+local function iconsOn(): boolean
+	return Settings.Get("ColorblindIcons") == true and not Players.LocalPlayer:GetAttribute("InCutscene")
+end
+
+local function ownerIcon(inst: Instance, kai: boolean)
+	if inst:FindFirstChild("OwnerIcon") then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "OwnerIcon"
+	gui.Size = UDim2.new(1.8, 14, 1.8, 14) -- studs + a few px so it still reads far away
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 1, 0)
+	gui.LightInfluence = 0
+	gui.MaxDistance = 140
+	gui.Enabled = iconsOn()
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBlack
+	label.TextScaled = true
+	label.Text = if kai then "▲" else "●"
+	label.TextColor3 = Color3.new(1, 1, 1) -- white shape on a dark outline: readable for every kind of colorblindness
+	label.TextStrokeColor3 = Color3.fromRGB(20, 20, 30)
+	label.TextStrokeTransparency = 0
+	label.Parent = gui
+	gui.Parent = inst
+	icons[gui] = true
+	gui.Destroying:Once(function()
+		icons[gui] = nil
+	end)
+end
+
+local function dropIcon(inst: Instance)
+	local gui = inst:FindFirstChild("OwnerIcon")
+	if gui then
+		gui:Destroy()
+	end
+end
 
 local function adorneePart(inst: Instance): BasePart?
 	if inst:IsA("BasePart") then
@@ -75,6 +119,7 @@ local function onFreezable(inst: Instance)
 		sel.Visible = not Players.LocalPlayer:GetAttribute("InCutscene")
 		sel.Parent = inst
 	end
+	ownerIcon(inst, true)
 end
 
 local function outline(tag: string, color: Color3)
@@ -88,11 +133,13 @@ local function outline(tag: string, color: Color3)
 		hl.OutlineColor = color
 		hl.DepthMode = Enum.HighlightDepthMode.Occluded
 		hl.Parent = inst
+		ownerIcon(inst, color == Palette.Kai)
 	end, function(inst)
 		local hl = inst:FindFirstChild(tag .. "Look")
 		if hl then
 			hl:Destroy() -- the tag can come and go (the Crusher King's crown is Pullable only while he's frozen)
 		end
+		dropIcon(inst)
 	end)
 end
 
@@ -102,7 +149,20 @@ function EffectsController.Init()
 		if frame then
 			frame:Destroy() -- e.g. boss floor tiles: Freezable only while they fall
 		end
+		dropIcon(inst)
 	end)
+	local function refreshIcons()
+		local on = iconsOn()
+		for gui in icons do
+			gui.Enabled = on
+		end
+	end
+	Settings.Changed:Connect(function(key)
+		if key == "ColorblindIcons" then
+			refreshIcons()
+		end
+	end)
+	Players.LocalPlayer:GetAttributeChangedSignal("InCutscene"):Connect(refreshIcons)
 	-- cutscenes are cinematic: the orange frames hide (user saw them round the final boss's arms in its intro)
 	Players.LocalPlayer:GetAttributeChangedSignal("InCutscene"):Connect(function()
 		local show = not Players.LocalPlayer:GetAttribute("InCutscene")

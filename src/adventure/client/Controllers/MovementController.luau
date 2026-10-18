@@ -14,6 +14,7 @@ local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 local Input = require(script.Parent.Parent.Input)
 local MoveAnim = require(script.Parent.MoveAnimController)
 
@@ -621,8 +622,15 @@ local function onCharacter(character: Model)
 	end))
 
 	-- Sprint toggle and Swing grab --------------------------------------------------------
-	trove:Add(Input.action("BaseContext", "Sprint").Pressed:Connect(function()
-		sprinting = not sprinting
+	-- settings menu SprintMode: Toggle (press on / off) or Hold (sprint while held)
+	local sprintAction = Input.action("BaseContext", "Sprint")
+	trove:Add(sprintAction.Pressed:Connect(function()
+		sprinting = if Settings.Get("SprintMode") == "Hold" then true else not sprinting
+	end))
+	trove:Add(sprintAction.Released:Connect(function()
+		if Settings.Get("SprintMode") == "Hold" then
+			sprinting = false
+		end
 	end))
 
 	trove:Add(Input.action("BaseContext", "Swing").Pressed:Connect(function()

@@ -4,6 +4,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
+local Keys = require(ReplicatedStorage.Shared.Config.Keys)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
+
 type Binding = Enum.KeyCode
 type ActionSpec = { name: string, keys: { Binding } }
 type ContextSpec = { name: string, priority: number, sink: boolean, enabled: boolean, actions: { ActionSpec } }
@@ -85,6 +88,12 @@ Input.UsingActionSystem = false
 local actions: { [string]: { [string]: Action } } = {}
 local contextEnabled: { [string]: boolean } = {}
 local contextInstances: { [string]: Instance } = {}
+-- the keyboard binding of each action (the first key in its spec), so the settings menu can rebind it
+local keyboardBinding: { [string]: { [string]: any } } = {}
+
+local function isKeyboard(key: Binding): boolean
+	return not key.Name:find("^Button") and not key.Name:find("^DPad") and not key.Name:find("^Thumbstick")
+end
 
 -- Input Action System path --------------------------------------------------------------
 
@@ -113,6 +122,10 @@ local function buildActionSystem(): boolean
 					local b = Instance.new("InputBinding") :: any
 					b.KeyCode = key
 					b.Parent = act
+					if isKeyboard(key) and not (keyboardBinding[spec.name] and keyboardBinding[spec.name][a.name]) then
+						keyboardBinding[spec.name] = keyboardBinding[spec.name] or {}
+						keyboardBinding[spec.name][a.name] = b
+					end
 				end
 				actions[spec.name][a.name] = {
 					Pressed = act.Pressed,
@@ -129,6 +142,7 @@ local function buildActionSystem(): boolean
 		warn("[Input] Input Action System unavailable, using fallback:", err)
 		table.clear(actions)
 		table.clear(contextInstances)
+		table.clear(keyboardBinding)
 	end
 	return ok
 end
@@ -166,6 +180,10 @@ local function buildFallback()
 			}
 			for _, key in a.keys do
 				fa.keys[key] = true
+				if isKeyboard(key) and not (keyboardBinding[spec.name] and keyboardBinding[spec.name][a.name]) then
+					keyboardBinding[spec.name] = keyboardBinding[spec.name] or {}
+					keyboardBinding[spec.name][a.name] = { fallback = fa, key = key }
+				end
 			end
 			fallback[spec.name][a.name] = fa
 			actions[spec.name][a.name] = {
@@ -205,11 +223,36 @@ end
 
 -- Public API ---------------------------------------------------------------------------
 
+-- Settings menu key binds (Config/Keys): swaps each rebindable action's keyboard key, in every context that has it.
+function Input.ApplyBinds(binds: { [string]: any }?)
+	for _, bind in Keys.Rebindable do
+		local code = Keys.For(bind.action, binds)
+		if code then
+			for _, ctx in keyboardBinding do
+				local b = ctx[bind.action]
+				if b and b.fallback then
+					b.fallback.keys[b.key] = nil
+					b.key = code
+					b.fallback.keys[code] = true
+				elseif b then
+					b.KeyCode = code
+				end
+			end
+		end
+	end
+end
+
 function Input.Init()
 	Input.UsingActionSystem = buildActionSystem()
 	if not Input.UsingActionSystem then
 		buildFallback()
 	end
+	Input.ApplyBinds(Settings.Get("KeyBinds"))
+	Settings.Changed:Connect(function(key, value)
+		if key == "KeyBinds" then
+			Input.ApplyBinds(value)
+		end
+	end)
 end
 
 function Input.action(context: string, name: string): Action

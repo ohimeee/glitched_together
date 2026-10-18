@@ -16,6 +16,7 @@ local Aim = require(script.Parent.Parent.Aim)
 local CardReveal = require(script.Parent.Parent.CardReveal)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local player = Players.LocalPlayer
 
@@ -381,8 +382,8 @@ local function buildHint()
 		end
 	end)
 	Net.event("Hint").OnClientEvent:Connect(function(line: string)
-		if Players.LocalPlayer:GetAttribute("InCutscene") then
-			return
+		if Players.LocalPlayer:GetAttribute("InCutscene") or not Settings.Get("PipHints") then
+			return -- cutscene, or Pip hints turned off in the settings menu
 		end
 		local stamp = os.clock()
 		shownAt = stamp
@@ -403,7 +404,7 @@ local function buildHint()
 				if shown % 3 == 1 then
 					Audio.play("PipBleep") -- Pip talks in bleeps (design.md §8)
 				end
-				task.wait(1 / HINT_CPS)
+				task.wait(1 / (HINT_CPS * (Settings.Get("TextSpeed") :: number)))
 			end
 			label.MaxVisibleGraphemes = -1
 		end)

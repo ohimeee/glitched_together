@@ -6,11 +6,46 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
 local PartnerController = {}
+
+-- settings menu PartnerOutline: Always (through walls) / Hidden (only while behind something) / Off
+local outlines: { [Highlight]: boolean } = {}
+local function styleOutline(h: Highlight)
+	local mode = Settings.Get("PartnerOutline")
+	h.Enabled = if mode == "Hidden" then h:GetAttribute("Behind") == true else mode ~= "Off"
+end
+
+-- Hidden mode: a few times a second, is anything between the camera and the partner?
+local function watchBehind()
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local nextCheck = 0
+	RunService.Heartbeat:Connect(function()
+		if Settings.Get("PartnerOutline") ~= "Hidden" or os.clock() < nextCheck then
+			return
+		end
+		nextCheck = os.clock() + 0.15
+		for h in outlines do
+			local character = h.Adornee :: Model?
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root then
+				params.FilterDescendantsInstances = { character :: Model, player.Character :: any }
+				local from = camera.CFrame.Position
+				local hit = workspace:Raycast(from, root.Position - from, params)
+				local behind = hit ~= nil and hit.Instance.Transparency < 0.9
+				if h:GetAttribute("Behind") ~= behind then
+					h:SetAttribute("Behind", behind)
+					styleOutline(h)
+				end
+			end
+		end
+	end)
+end
 
 local function partner(): Player?
 	local myRole = player:GetAttribute("Role")
@@ -41,6 +76,13 @@ local function decorate(p: Player, character: Model)
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Adornee = character
 	highlight.Parent = character
+	if isPartner then
+		outlines[highlight] = true
+		styleOutline(highlight)
+		highlight.Destroying:Once(function()
+			outlines[highlight] = nil
+		end)
+	end
 
 	local head = character:WaitForChild("Head", 5)
 	if head and isPartner then
@@ -136,6 +178,14 @@ function PartnerController.Init()
 	end
 	Players.PlayerAdded:Connect(hook)
 	buildArrow()
+	watchBehind()
+	Settings.Changed:Connect(function(key)
+		if key == "PartnerOutline" then
+			for h in outlines do
+				styleOutline(h)
+			end
+		end
+	end)
 end
 
 function PartnerController.Partner(): Player?

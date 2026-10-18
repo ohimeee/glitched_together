@@ -19,6 +19,7 @@ local GuiService = game:GetService("GuiService")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 local Input = require(script.Parent.Parent.Input)
 local Aim = require(script.Parent.Parent.Aim)
 local TopDownAim = require(script.Parent.Parent.TopDownAim)
@@ -87,12 +88,18 @@ type Button = {
 	topDown: { number }?, -- { ring, angle } with no jump button (castle); DASH sits in the jump button's spot
 	small: boolean?,
 	big: boolean?,
+	basePx: number?, -- size before the player's layout override
 	captioned: boolean?, -- the word shows under the icon (caption)
 	shade: Frame?, -- cooldown cover + seconds left
 }
 
 local gui: ScreenGui
 local buttons: { [string]: Button } = {}
+
+-- settings menu TouchOpacity: × how solid the fill / ring / icon are (1 = the Arsenal look)
+local function solid(t: number): number
+	return math.clamp(1 - (1 - t) * (Settings.Get("TouchOpacity") :: number), 0, 0.97)
+end
 -- top-down (castle) has no jump: DASH takes the jump button's spot and the tools close in (Button.topDown)
 local noJump = false
 
@@ -121,7 +128,7 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	b.Name = name
 	b.AnchorPoint = Vector2.new(0.5, 0.5)
 	b.BackgroundColor3 = INK
-	b.BackgroundTransparency = Tuning.Touch.Fill
+	b.BackgroundTransparency = solid(Tuning.Touch.Fill)
 	b.AutoButtonColor = false
 	b.Text = ""
 	b.Visible = false
@@ -131,7 +138,7 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	rim.Name = "Rim"
 	rim.Color = WHITE
 	rim.Thickness = 2
-	rim.Transparency = Tuning.Touch.Rim
+	rim.Transparency = solid(Tuning.Touch.Rim)
 	rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	rim.Parent = b
 	local icon = Instance.new("ImageLabel")
@@ -139,7 +146,7 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	icon.Position = UDim2.fromScale(0.5, 0.5)
 	icon.Size = UDim2.fromScale(0.58, 0.58)
 	icon.BackgroundTransparency = 1
-	icon.ImageTransparency = Tuning.Touch.Icon
+	icon.ImageTransparency = solid(Tuning.Touch.Icon)
 	icon.Parent = b
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -157,13 +164,13 @@ local function make(name: string, text: string, iconKey: string, small: boolean?
 	b.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch then
 			press.Scale = 0.9
-			b.BackgroundTransparency = Tuning.Touch.FillPressed
+			b.BackgroundTransparency = solid(Tuning.Touch.FillPressed)
 		end
 	end)
 	b.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch then
 			press.Scale = 1
-			b.BackgroundTransparency = Tuning.Touch.Fill
+			b.BackgroundTransparency = solid(Tuning.Touch.Fill)
 		end
 	end)
 	local shade = Instance.new("Frame")
@@ -251,6 +258,7 @@ local function layout()
 	for _, entry in buttons do
 		local px = if entry.small then small elseif entry.big then size * Tuning.Touch.BigScale else size
 		entry.button.Size = UDim2.fromOffset(px, px)
+		entry.basePx = px
 		if entry.ring and entry.angle then
 			local p = center
 			local spot = if noJump then entry.topDown else { entry.ring, entry.angle }
@@ -273,6 +281,283 @@ local function layout()
 	buttons.Ping.button.Position = UDim2.fromOffset(view.X - small * 0.75, top)
 	buttons.Peek.button.Position = UDim2.fromOffset(view.X - small * 2, top)
 	buttons.Skip.button.Position = UDim2.fromOffset(view.X - small * 0.9, top)
+
+	-- the player's own layout (settings menu → EDIT BUTTONS): screen-fraction centre + size ×; the castle (no jump
+	-- button) keeps its own set ("<name>@Top")
+	local custom = Settings.Get("TouchLayout") :: { [string]: any }
+	for name, entry in buttons do
+		local o = custom[name .. (if noJump then "@Top" else "")]
+		if type(o) == "table" and type(o.x) == "number" and type(o.y) == "number" then
+			local px = (entry.basePx or size) * math.clamp(tonumber(o.s) or 1, 0.5, 2)
+			entry.button.Size = UDim2.fromOffset(px, px)
+			entry.button.Position = UDim2.fromOffset(
+				math.clamp(o.x * view.X, px / 2 + edge, view.X - px / 2 - edge),
+				math.clamp(o.y * view.Y, px / 2 + edge, view.Y - px / 2 - edge)
+			)
+		end
+	end
+end
+
+local function restyle()
+	for _, entry in buttons do
+		entry.button.BackgroundTransparency = solid(Tuning.Touch.Fill)
+		local rim = entry.button:FindFirstChild("Rim") :: UIStroke?
+		if rim then
+			rim.Transparency = solid(Tuning.Touch.Rim)
+		end
+		entry.icon.ImageTransparency = solid(Tuning.Touch.Icon)
+	end
+end
+
+-- Layout editor (settings menu → EDIT BUTTONS): the real buttons hide and unbound copies stand in their places;
+-- drag a copy to move it, tap it to pick it, − / + resize the picked one, CLEARER / SOLIDER for all, RESET, SAVE.
+-- Mouse works too (Studio checks). Saves Settings.TouchLayout; layout() applies it.
+local editing = false
+local refresh: () -> ()
+
+local function editLayout(onDone: (() -> ())?)
+	if editing then
+		return
+	end
+	editing = true
+	refresh() -- hides the real buttons
+	local view = gui.AbsoluteSize
+	local suffix = if noJump then "@Top" else ""
+	local work = Settings.Get("TouchLayout") :: { [string]: any }
+
+	local layer = Instance.new("Frame")
+	layer.Name = "LayoutEditor"
+	layer.Size = UDim2.fromScale(1, 1)
+	layer.BackgroundColor3 = Color3.new(0, 0, 0)
+	layer.BackgroundTransparency = 0.45
+	layer.ZIndex = 10
+	layer.Parent = gui
+
+	-- the buttons this mode shows in play (plus the castle / core extras the kit has)
+	local kit = player:GetAttribute("Kit") :: string?
+	local names = { "Dash", "Ping", "Peek" }
+	if not noJump then
+		table.insert(names, "Pound")
+		table.insert(names, "Grab")
+	end
+	if kit and KIT_LABELS[kit] then
+		table.insert(names, "Tool1")
+		table.insert(names, "Tool2")
+	end
+	if kit == "FireMage" then
+		table.insert(names, "Ignite")
+	end
+	if kit == "CopyPaste" then
+		table.insert(names, "Rotate")
+	end
+	if kit == "FireMage" or kit == "ShieldKnight" then
+		table.insert(names, "Ultimate")
+	end
+
+	local copies: { [string]: GuiObject } = {}
+	local picked: string? = nil
+	local function mark()
+		for name, c in copies do
+			local rim = c:FindFirstChild("Rim") :: UIStroke?
+			if rim then
+				rim.Color = if name == picked then Color3.fromRGB(255, 210, 63) else WHITE
+				rim.Thickness = if name == picked then 4 else 2
+			end
+		end
+	end
+	local function save(name: string)
+		local c = copies[name]
+		local entry = buttons[name]
+		local at = c.AbsolutePosition + c.AbsoluteSize / 2
+		work[name .. suffix] = {
+			x = math.floor(at.X / view.X * 1000) / 1000,
+			y = math.floor(at.Y / view.Y * 1000) / 1000,
+			s = math.floor(c.AbsoluteSize.X / (entry.basePx or c.AbsoluteSize.X) * 100) / 100,
+		}
+	end
+
+	local dragInput: InputObject? = nil
+	local dragName: string? = nil
+	local dragOffset = Vector2.zero
+	for _, name in names do
+		local entry = buttons[name]
+		local c = entry.button:Clone()
+		c.Visible = true
+		c.ZIndex = 11
+		for _, d in c:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex = 12
+			end
+		end
+		local shade = c:FindFirstChild("Cooldown")
+		if shade then
+			shade:Destroy()
+		end
+		c.Parent = layer
+		copies[name] = c
+		c.InputBegan:Connect(function(input)
+			local t = input.UserInputType
+			if (t == Enum.UserInputType.Touch or t == Enum.UserInputType.MouseButton1) and not dragInput then
+				picked = name
+				mark()
+				local at = c.AbsolutePosition + c.AbsoluteSize / 2
+				dragInput, dragName = input, name
+				dragOffset = at - Vector2.new(input.Position.X, input.Position.Y)
+			end
+		end)
+	end
+	local function isDrag(input: InputObject): boolean
+		local d = dragInput
+		if not d then
+			return false
+		end
+		return input == d
+			or (
+				input.UserInputType == Enum.UserInputType.MouseMovement
+				and d.UserInputType == Enum.UserInputType.MouseButton1
+			)
+	end
+	local moveConn = UserInputService.InputChanged:Connect(function(input)
+		local name = dragName
+		if not (name and isDrag(input)) then
+			return
+		end
+		local c = copies[name]
+		local px = c.AbsoluteSize.X
+		local edge = Tuning.Touch.Edge
+		local p = Vector2.new(input.Position.X, input.Position.Y) + dragOffset
+		p = Vector2.new(
+			math.clamp(p.X, px / 2 + edge, view.X - px / 2 - edge),
+			math.clamp(p.Y, px / 2 + edge, view.Y - px / 2 - edge)
+		)
+		c.Position = UDim2.fromOffset(p.X, p.Y)
+	end)
+	local endConn = UserInputService.InputEnded:Connect(function(input)
+		local d = dragInput
+		if
+			d
+			and (
+				input == d
+				or (input.UserInputType == Enum.UserInputType.MouseButton1 and d.UserInputType == input.UserInputType)
+			)
+		then
+			save(dragName :: string)
+			dragInput, dragName = nil, nil
+		end
+	end)
+
+	-- tool bar (top centre)
+	local bar = Instance.new("Frame")
+	bar.AnchorPoint = Vector2.new(0.5, 0)
+	bar.Position = UDim2.new(0.5, 0, 0, GuiService:GetGuiInset().Y + 8)
+	bar.Size = UDim2.fromOffset(math.min(view.X - 24, 640), 46)
+	bar.BackgroundTransparency = 1
+	bar.ZIndex = 13
+	bar.Parent = layer
+	local list = Instance.new("UIListLayout")
+	list.FillDirection = Enum.FillDirection.Horizontal
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Padding = UDim.new(0, 6)
+	list.Parent = bar
+	local order = 0
+	local function tool(text: string, width: number, fn: () -> ())
+		order += 1
+		local b = Instance.new("TextButton")
+		b.LayoutOrder = order
+		b.Size = UDim2.fromOffset(width, 46)
+		b.BackgroundColor3 = INK
+		b.BackgroundTransparency = 0.15
+		b.TextColor3 = WHITE
+		b.Font = Enum.Font.GothamBlack
+		b.TextScaled = true
+		b.Text = text
+		b.ZIndex = 14
+		b.Parent = bar
+		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 8), UDim.new(0, 8)
+		pad.PaddingTop, pad.PaddingBottom = UDim.new(0, 10), UDim.new(0, 10)
+		pad.Parent = b
+		b.Activated:Connect(fn)
+	end
+	local function resize(k: number)
+		local name = picked
+		if not name then
+			return
+		end
+		local c = copies[name]
+		local base = buttons[name].basePx or c.AbsoluteSize.X
+		local s = math.clamp(math.floor((c.AbsoluteSize.X / base + k) * 10 + 0.5) / 10, 0.5, 2)
+		c.Size = UDim2.fromOffset(base * s, base * s)
+		task.defer(save, name)
+	end
+	local function close(keep: boolean)
+		moveConn:Disconnect()
+		endConn:Disconnect()
+		layer:Destroy()
+		editing = false
+		if keep then
+			Settings.Set("TouchLayout", work)
+		end
+		layout()
+		refresh()
+		if onDone then
+			onDone()
+		end
+	end
+	tool("-", 46, function()
+		resize(-0.1)
+	end)
+	tool("+", 46, function()
+		resize(0.1)
+	end)
+	tool("CLEARER", 104, function()
+		Settings.Set("TouchOpacity", (Settings.Get("TouchOpacity") :: number) - 0.15)
+	end)
+	tool("SOLIDER", 104, function()
+		Settings.Set("TouchOpacity", (Settings.Get("TouchOpacity") :: number) + 0.15)
+	end)
+	tool("RESET", 96, function()
+		for _, name in names do
+			work[name .. suffix] = nil
+		end
+		close(true)
+	end)
+	tool("SAVE", 90, function()
+		close(true)
+	end)
+	local hint = Instance.new("TextLabel")
+	hint.AnchorPoint = Vector2.new(0.5, 0)
+	hint.Position = UDim2.new(0.5, 0, 0, GuiService:GetGuiInset().Y + 60)
+	hint.Size = UDim2.fromOffset(math.min(view.X - 24, 560), 24)
+	hint.BackgroundTransparency = 1
+	hint.TextColor3 = WHITE
+	hint.Font = Enum.Font.GothamBold
+	hint.TextScaled = true
+	hint.Text = (if noJump then "Castle layout: " else "") .. "drag a button to move it, tap it then − / + to resize"
+	hint.ZIndex = 13
+	hint.Parent = layer
+	-- opacity changes show on the copies at once
+	local opConn = Settings.Changed:Connect(function(key)
+		if key == "TouchOpacity" then
+			for _, c in copies do
+				c.BackgroundTransparency = solid(Tuning.Touch.Fill)
+				local rim = c:FindFirstChild("Rim") :: UIStroke?
+				if rim then
+					rim.Transparency = solid(Tuning.Touch.Rim)
+				end
+			end
+		end
+	end)
+	layer.Destroying:Once(function()
+		opConn:Disconnect()
+	end)
+end
+
+TouchController.EditLayout = editLayout
+function TouchController.Editing(): boolean
+	return editing
 end
 
 -- ULT (castle): Meteor drags to aim (Brawl Stars-style; the icon follows the finger, the floor ring shows the
@@ -397,8 +682,8 @@ local function place(entry: Button, ring: number, angle: number)
 	entry.ring, entry.angle = ring, angle
 end
 
-local function refresh()
-	local touch = Glyphs.device() == "Touch"
+function refresh()
+	local touch = Glyphs.device() == "Touch" and not editing
 	local cutscene = player:GetAttribute("InCutscene") == true or Input.isEnabled("MenuContext")
 	local downed = player:GetAttribute("Downed") == true
 	local play = touch and not cutscene and not downed
@@ -498,6 +783,13 @@ function TouchController.Init()
 	end)
 
 	Glyphs.Changed:Connect(refresh)
+	Settings.Changed:Connect(function(key)
+		if key == "TouchLayout" and not editing then
+			layout()
+		elseif key == "TouchOpacity" then
+			restyle()
+		end
+	end)
 	for _, attr in { "Kit", "CameraMode", "Ultimate", "InCutscene", "Downed", "Role" } do
 		player:GetAttributeChangedSignal(attr):Connect(refresh)
 	end

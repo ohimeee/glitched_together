@@ -7,6 +7,7 @@ local Debris = game:GetService("Debris")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 local Input = require(script.Parent.Parent.Input)
 
 local player = Players.LocalPlayer
@@ -46,7 +47,8 @@ local function marker(from: Player, pos: Vector3)
 	anchor.Parent = workspace
 
 	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(Tuning.PingIcon, Tuning.PingIcon) -- small, no name (user: too big)
+	local px = Tuning.PingIcon * (Settings.Get("PingSize") :: number) -- settings menu size ×
+	gui.Size = UDim2.fromOffset(px, px) -- small, no name (user: too big)
 	gui.AlwaysOnTop = true
 	gui.LightInfluence = 0
 	gui.StudsOffset = Vector3.new(0, 1.5, 0)

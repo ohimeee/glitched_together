@@ -47,6 +47,9 @@ local function button(text: string, color: Color3, index: number): TextButton
 	return b
 end
 
+-- settings menu (gear in the top bar's right corner; the same saved settings as the game)
+require(ReplicatedStorage.Shared.Util.SettingsMenu).Init({ camera = false })
+
 local invite = button("INVITE A FRIEND", Palette.Prologue.Pink, 0)
 invite.Activated:Connect(function()
 	local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, player)

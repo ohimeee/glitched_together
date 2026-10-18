@@ -14,6 +14,7 @@ local Trove = require(ReplicatedStorage.Shared.Util.Trove)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 
 local player = Players.LocalPlayer
@@ -57,8 +58,10 @@ end
 
 local function autoAim(root: BasePart): Vector3
 	local ahead = heading(root)
-	local cosCone = math.cos(math.rad(Tuning.Touch.AimCone))
-	local best, bestDist = nil, Tuning.Touch.AimRange
+	-- settings menu aim assist: × cone and range; 0 = straight ahead only
+	local assist = Settings.Get("AutoAim") :: number
+	local cosCone = math.cos(math.rad(math.min(Tuning.Touch.AimCone * assist, 179)))
+	local best, bestDist = nil, Tuning.Touch.AimRange * math.min(assist, 1.25)
 	for _, enemy in CollectionService:GetTagged("Enemy") do
 		if
 			enemy:IsDescendantOf(workspace)

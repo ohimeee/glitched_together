@@ -9,6 +9,8 @@ local UserInputService = game:GetService("UserInputService")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local MoveAnims = require(ReplicatedStorage.Shared.Config.MoveAnims)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
+local Keys = require(ReplicatedStorage.Shared.Config.Keys)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local MIN_AIR = 0.12 -- seconds after take-off before a jump press counts as the double jump
 
@@ -119,7 +121,7 @@ local function hook(character: Model)
 			local k = input.KeyCode
 			if k == Enum.KeyCode.Space or k == Enum.KeyCode.ButtonA then
 				doubleJump()
-			elseif k == Enum.KeyCode.LeftShift or k == Enum.KeyCode.RightShift or k == Enum.KeyCode.ButtonB then
+			elseif k == Keys.For("Dash", Settings.Get("KeyBinds")) or k == Enum.KeyCode.ButtonB then -- settings menu key
 				dash()
 			end
 		end),

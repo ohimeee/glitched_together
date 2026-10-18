@@ -12,6 +12,7 @@ local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -93,6 +94,9 @@ function PipController.Init()
 		local glow = pip:FindFirstChildWhichIsA("PointLight", true)
 		local hintUntil, spinStart = 0, -math.huge
 		Net.event("Hint").OnClientEvent:Connect(function()
+			if not Settings.Get("PipHints") then
+				return
+			end
 			hintUntil = os.clock() + T.HintTime
 			spinStart = os.clock()
 			local role = (Roles :: any)[player:GetAttribute("Role") or ""]

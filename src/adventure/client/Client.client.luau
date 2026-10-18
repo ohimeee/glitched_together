@@ -48,3 +48,22 @@ for _, name in order do
 		end
 	end
 end
+
+-- settings menu (gear, top right): gameplay input sinks while it's up (MenuContext; left alone if a cutscene owns it)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ownedMenu = false
+require(ReplicatedStorage.Shared.Util.SettingsMenu).Init({
+	editLayout = require(Controllers.TouchController).EditLayout,
+	onOpen = function()
+		if not Input.isEnabled("MenuContext") then
+			ownedMenu = true
+			Input.setEnabled("MenuContext", true)
+		end
+	end,
+	onClose = function()
+		if ownedMenu then
+			ownedMenu = false
+			Input.setEnabled("MenuContext", false)
+		end
+	end,
+})

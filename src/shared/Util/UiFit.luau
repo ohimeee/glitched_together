@@ -7,10 +7,11 @@ local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local UiFit = {}
 
-local function factor(): number
+local function fitted(): number
 	local camera = workspace.CurrentCamera
 	local view = if camera then camera.ViewportSize else Tuning.UiFit.Design
 	local design = Tuning.UiFit.Design
@@ -19,6 +20,11 @@ local function factor(): number
 		return math.clamp(k * Tuning.UiFit.TvBoost, 1, Tuning.UiFit.Max)
 	end
 	return math.clamp(k, Tuning.UiFit.Min, 1) -- PC/phone: shrink to fit, never blow up
+end
+
+-- × the settings menu's text size (the only way the UI grows past its design size on PC / phone)
+local function factor(): number
+	return fitted() * (Settings.Get("TextScale") :: number)
 end
 
 function UiFit.attach(gui: ScreenGui): UIScale
@@ -41,6 +47,11 @@ function UiFit.attach(gui: ScreenGui): UIScale
 	end
 	hook()
 	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(hook)
+	Settings.Changed:Connect(function(key)
+		if key == "TextScale" then
+			s.Scale = factor()
+		end
+	end)
 	return s
 end
 

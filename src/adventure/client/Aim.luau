@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Tags = require(ReplicatedStorage.Shared.Util.Tags)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -96,7 +97,12 @@ function Aim.best(
 	end
 
 	local ray = Aim.centerRay()
-	local cosCone = math.cos(math.rad(coneDegrees))
+	-- the settings menu's aim assist scales every lock-on cone (0 = only what the crosshair is on)
+	local assist = Settings.Get("AutoAim") :: number
+	if assist <= 0 then
+		return nil
+	end
+	local cosCone = math.cos(math.rad(math.min(coneDegrees * assist, 89)))
 	local best, bestDot = nil, cosCone
 	for _, tag in tags do
 		for _, inst in CollectionService:GetTagged(tag) do

@@ -2,6 +2,15 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 37th session (Oct 18, 2026): settings menu (committed from the working tree)
+
+- **Settings menu, both places** (TO_PLAN "Settings menu"): gear top right (gamepad View/Back), tabs AUDIO / CAMERA / CONTROLS / CO-OP / ACCESS, rebuilt in the world's UiTheme (`shared/Util/SettingsMenu`). Values in `shared/Util/Settings` (DataStore `PlayerSettings`, key `s_<userId>`, server clamps against `SPECS`, saves every 20 s + on leave; adventure `Main` + lobby `PlayerSettings.server` call `InitServer`).
+- Hooks: `Audio.UseSettings` (group volumes × sliders), CameraController (sensitivity per device, invert Y, FOV offset), MovementController `SprintMode` Toggle/Hold, Aim/TopDownAim `AutoAim` ×, PartnerController `PartnerOutline` Always/Hidden (raycast behind walls)/Off, PingController `PingSize`, EffectsController colorblind shape icons (Kai ▲ / Miko ●), UiFit `TextScale`, CutsceneController `TextSpeed`, PipController `PipHints`.
+- **Keyboard rebinds:** `Config/Keys` (rebindable actions + reserved keys), `Input.ApplyBinds` swaps the keyboard binding in every context, Glyphs names the rebound key, lobby LobbyMoves reads Dash. Gamepad/touch stay fixed.
+- **Touch layout editor** (`TouchController.EditLayout`, settings → EDIT BUTTONS): drag copies, − / + size, CLEARER / SOLIDER (`TouchOpacity`), RESET, SAVE → `Settings.TouchLayout`.
+- Lobby lighting brighter (user: "a bit brighter"): Brightness 0.95, EnvDiffuse 0.6, ambients up (`Config/Worlds` Lobby).
+- StyLua clean; not yet checked in Studio play.
+
 ## 36th session (Oct 18, 2026): lobby/adventure mix-up, lobby audio
 
 - **Lobby place had the adventure synced into it** (found in Studio, user confirmed that version was published): ServerScriptService `Lobby` + `Server`, StarterPlayerScripts `LobbyClient` + `Client`, 16 adventure MaterialVariants, StreamingEnabled on, EnableMouseLockOption off. Cause: the Rojo plugin connected on 34872 (adventure) inside the Lobby place. Place ids / project files were fine. My scripted cleanup was blocked by auto mode: user to delete `Server`, `Client`, non-`Lobby*` materials, turn mouse lock back on, reconnect Rojo on 34873, republish.

@@ -75,9 +75,7 @@ local function setDuck(to: number)
 end
 
 function AudioController.Init()
-	for name, volume in Sounds.Groups do
-		Audio.group(name).Volume = volume
-	end
+	Audio.UseSettings() -- group volumes × the player's sliders
 	workspace:GetAttributeChangedSignal("World"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("BossFight"):Connect(refresh)
 	workspace:GetAttributeChangedSignal("BossMusic"):Connect(refresh)

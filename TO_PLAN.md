@@ -11,7 +11,7 @@ Open decisions that aren't planned yet (Oct 12, 2026, 26th session). Launch and 
 ## Controls and options
 
 - [x] **Devices:** PC + mobile + console (decided, see [LAUNCH.md §3](LAUNCH.md)). Still to plan in detail: the mobile on-screen buttons and touch aiming, and the console pass.
-- [ ] **Settings menu:** volume, camera sensitivity, maybe a colorblind check (the owner colors teal / orange / magenta carry gameplay meaning).
+- [x] **Settings menu:** built Oct 18 (37th session, HISTORY.md): audio, camera, controls + key rebinds, co-op, accessibility (colorblind icons, text size/speed), touch layout editor.
 
 ## Money
 

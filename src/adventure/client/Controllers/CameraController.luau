@@ -14,6 +14,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 local Input = require(script.Parent.Parent.Input)
 local MovementController = require(script.Parent.MovementController)
 
@@ -22,6 +23,17 @@ local camera = workspace.CurrentCamera
 local C = Tuning.Camera
 
 local CameraController = {}
+
+-- the player's settings menu: sensitivity × per device, invert Y (-1), FOV offset in degrees
+local function sens(key: string): number
+	return Settings.Get(key) :: number
+end
+local function invert(): number
+	return if Settings.Get("InvertY") then -1 else 1
+end
+local function followFov(): number
+	return C.FOV + (Settings.Get("FovOffset") :: number)
+end
 
 local HEIGHT, BACK = 55, 30
 
@@ -83,8 +95,9 @@ local function followStep(dt: number, root: BasePart?)
 		yaw = math.atan2(-look.X, -look.Z)
 		wasFollow = true
 	end
-	yaw -= stick.X * C.StickSpeed * dt
-	pitch = math.clamp(pitch + stick.Y * C.StickSpeed * dt, math.rad(C.PitchMin), math.rad(C.PitchMax))
+	local stickSpeed = C.StickSpeed * sens("GamepadSensitivity")
+	yaw -= stick.X * stickSpeed * dt
+	pitch = math.clamp(pitch + stick.Y * stickSpeed * invert() * dt, math.rad(C.PitchMin), math.rad(C.PitchMax))
 	if not root then
 		return
 	end
@@ -119,7 +132,7 @@ local function followStep(dt: number, root: BasePart?)
 	camera.Focus = CFrame.new(pivot)
 	-- a little wider while swinging fast
 	local speed = if MovementController.IsSwinging() then root.AssemblyLinearVelocity.Magnitude else 0
-	local fov = C.FOV + math.clamp(speed / Tuning.SwingMaxSpeed, 0, 1) * C.SwingFovBoost
+	local fov = followFov() + math.clamp(speed / Tuning.SwingMaxSpeed, 0, 1) * C.SwingFovBoost
 	camera.FieldOfView += (fov - camera.FieldOfView) * math.min(1, dt * 4)
 end
 
@@ -240,7 +253,7 @@ end
 function applyMode()
 	mode = (player:GetAttribute("CameraMode") or "Follow") :: string
 	if mode == "Follow" then
-		camera.FieldOfView = C.FOV
+		camera.FieldOfView = followFov()
 	else
 		camera.FieldOfView = 60
 	end
@@ -264,14 +277,16 @@ function CameraController.Init()
 		local t = input.UserInputType
 		if t == Enum.UserInputType.MouseMovement then
 			if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter and os.clock() - relockAt > 0.25 then
-				yaw -= input.Delta.X * C.MouseSensitivity
-				pitch = math.clamp(pitch - input.Delta.Y * C.MouseSensitivity, minPitch, maxPitch)
+				local k = C.MouseSensitivity * sens("MouseSensitivity")
+				yaw -= input.Delta.X * k
+				pitch = math.clamp(pitch - input.Delta.Y * k * invert(), minPitch, maxPitch)
 			end
 		elseif t == Enum.UserInputType.MouseWheel and not processed then
 			distance = math.clamp(distance - input.Position.Z * 2, C.MinDistance, C.MaxDistance)
 		elseif t == Enum.UserInputType.Touch and not processed then
-			yaw -= input.Delta.X * C.TouchSensitivity
-			pitch = math.clamp(pitch - input.Delta.Y * C.TouchSensitivity, minPitch, maxPitch)
+			local k = C.TouchSensitivity * sens("TouchSensitivity")
+			yaw -= input.Delta.X * k
+			pitch = math.clamp(pitch - input.Delta.Y * k * invert(), minPitch, maxPitch)
 		elseif input.KeyCode == Enum.KeyCode.Thumbstick2 then
 			local v = Vector2.new(input.Position.X, input.Position.Y)
 			stick = if v.Magnitude > 0.15 then v else Vector2.zero
@@ -279,6 +294,11 @@ function CameraController.Init()
 	end)
 	player:GetAttributeChangedSignal("CameraMode"):Connect(applyMode)
 	applyMode()
+	Settings.Changed:Connect(function(key)
+		if key == "FovOffset" and override == nil and currentZone == nil then
+			applyMode()
+		end
+	end)
 	-- a shake at a point fades with distance: full inside `near` studs, gone at `far`
 	Net.event("CameraShake").OnClientEvent:Connect(function(pos: Vector3, strength: number, time: number)
 		local root = rootOf(player)

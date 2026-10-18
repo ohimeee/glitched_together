@@ -7,6 +7,11 @@
 -- Touch names are the on-screen button labels (TouchController); DASH is renamed per kit (BLINK, CHARGE: SetTouch).
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Keys = require(ReplicatedStorage.Shared.Config.Keys)
+local isClient = game:GetService("RunService"):IsClient()
+local Settings = if isClient then require(ReplicatedStorage.Shared.Util.Settings) else nil
 
 local Glyphs = {}
 
@@ -81,6 +86,13 @@ if game:GetService("RunService"):IsClient() then
 			changed:Fire(d)
 		end
 	end)
+	if Settings then
+		Settings.Changed:Connect(function(key)
+			if key == "KeyBinds" and current == "Keyboard" then
+				changed:Fire(current) -- every key text re-formats with the new key
+			end
+		end)
+	end
 	UserInputService.LastInputTypeChanged:Connect(function(kind)
 		local d = fromInput(kind)
 		if debugDevice() then
@@ -106,6 +118,13 @@ function Glyphs.key(action: string): string
 		return keys[2]
 	elseif current == "Touch" then
 		return touchNames[action] or keys[3]
+	end
+	-- a key the player rebound in the settings menu (Config/Keys)
+	local binds = Settings and Settings.Get("KeyBinds")
+	local bound = binds and binds[action]
+	if type(bound) == "string" and Keys.Default(action) then
+		local code = Keys.For(action, binds)
+		return if code then Keys.Name(code.Name) else keys[1]
 	end
 	return keys[1]
 end

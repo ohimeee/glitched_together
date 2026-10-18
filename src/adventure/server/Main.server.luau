@@ -36,6 +36,7 @@ do
 	Net.event(name)
 end
 Net.event("CamSync", true)
+require(ReplicatedStorage.Shared.Util.Settings).InitServer() -- per-player settings (creates its remotes)
 
 local CollisionService = require(Services.CollisionService)
 local DuoService = require(Services.DuoService)

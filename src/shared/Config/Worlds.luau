@@ -201,11 +201,11 @@ local ByName: { [string]: World } = {
 			-- warm pools come from the desk lamp, the fairy lights and the hallway door
 			ClockTime = 10.25,
 			Latitude = 80,
-			Brightness = 0.7,
-			EnvDiffuse = 0.5,
+			Brightness = 0.95, -- user (Oct 18): "a bit brighter" (was 0.7)
+			EnvDiffuse = 0.6,
 			EnvSpecular = 0.5,
-			Ambient = rgb(96, 92, 136), -- lower than the other worlds: the lamp, fairy lights and door glow carry the room
-			OutdoorAmbient = rgb(92, 94, 140),
+			Ambient = rgb(116, 112, 158), -- still below the other worlds: the lamp, fairy lights and door glow carry the room
+			OutdoorAmbient = rgb(112, 114, 162),
 			AtmosphereDensity = 0,
 			AtmosphereHaze = 0,
 			AtmosphereColor = rgb(40, 44, 90),

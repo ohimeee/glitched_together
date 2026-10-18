@@ -9,6 +9,7 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local Glyphs = require(ReplicatedStorage.Shared.Util.Glyphs)
+local Settings = require(ReplicatedStorage.Shared.Util.Settings)
 local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Input = require(script.Parent.Parent.Input)
 local CameraController = require(script.Parent.CameraController)
@@ -265,8 +266,10 @@ function CutsceneController.Init()
 				local total = utf8.len(l.Text) or #l.Text
 				local t0 = os.clock()
 				local bleeped = 0
-				while token == myToken and os.clock() - t0 < LINE_TIME do
-					local shown = math.floor((os.clock() - t0) * LINE_CPS)
+				local cps = LINE_CPS * (Settings.Get("TextSpeed") :: number) -- settings menu text speed
+				local lineTime = math.max(LINE_TIME, total / cps + 1.2) -- slow text still finishes and can be read
+				while token == myToken and os.clock() - t0 < lineTime do
+					local shown = math.floor((os.clock() - t0) * cps)
 					line.MaxVisibleGraphemes = if shown >= total then -1 else shown
 					-- Pip talks in bleeps (design.md §8), one every few letters while the text types out
 					if l.Speaker == "Pip" and shown < total and shown - bleeped >= 3 then

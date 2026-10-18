@@ -40,6 +40,27 @@ function Audio.group(name: string): SoundGroup
 	return g :: SoundGroup
 end
 
+-- Client: sets each SoundGroup to its Config/Sounds volume × the player's settings slider, now and on every change
+-- (only this client hears it: a group volume set on a client doesn't replicate).
+local SETTING_FOR = { Music = "MusicVolume", SFX = "SfxVolume", Ambience = "AmbienceVolume", UI = "UiVolume" }
+function Audio.UseSettings()
+	local Settings = require(ReplicatedStorage.Shared.Util.Settings)
+	local function apply(name: string)
+		local key = SETTING_FOR[name]
+		Audio.group(name).Volume = (Sounds.Groups[name] or 1) * (if key then Settings.Get(key) else 1)
+	end
+	for name in Sounds.Groups do
+		apply(name)
+	end
+	Settings.Changed:Connect(function(key)
+		for name, k in SETTING_FOR do
+			if k == key then
+				apply(name)
+			end
+		end
+	end)
+end
+
 -- A Sound for a def, not yet parented or playing (music/ambience use this for fades).
 function Audio.make(def: Sounds.Def, name: string?): Sound
 	local s = Instance.new("Sound")
