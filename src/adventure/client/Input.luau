@@ -230,12 +230,14 @@ function Input.ApplyBinds(binds: { [string]: any }?)
 		if code then
 			for _, ctx in keyboardBinding do
 				local b = ctx[bind.action]
-				if b and b.fallback then
+				-- an InputBinding instance (Input Action System) or a fallback table; indexing a missing field
+				-- of an Instance throws, so check the type first
+				if typeof(b) == "Instance" then
+					b.KeyCode = code
+				elseif b and b.fallback then
 					b.fallback.keys[b.key] = nil
 					b.key = code
 					b.fallback.keys[code] = true
-				elseif b then
-					b.KeyCode = code
 				end
 			end
 		end
