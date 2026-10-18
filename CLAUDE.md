@@ -80,6 +80,7 @@
 
 ## Next steps (in order)
 
+0000e. **37th session: trailer tool untested** (command.md "Trailer recording"): in the published Adventure place check `/trailer` (all UI gone incl. chat/prompts/tags), fly cam + path playback, `/puppet miko` (badge + held items, idle), `/ghost rec` → `/ghost play` sync. Then record shots with the user (OBS) per the 30 s plan in HISTORY 37th, edit in EffectCraft.
 0000d. **37th session: FIND A PARTNER untested** (HISTORY 37th): Studio lobby Test → 2 clients: both press it → "MATCHED! (STUDIO)", wish chips, cancel, button spot vs touch thumbstick/jump. Live: two accounts in two lobby servers → both land in one Adventure with the right roles. Consider a higher lobby max players (more same-server matches).
 0000c. **37th session (Oct 18): settings menu untested in Play** (HISTORY 37th): open the gear in both places, check sliders/toggles take effect, key rebind (+ Glyphs names), touch EDIT BUTTONS in the device emulator, settings survive a lobby → adventure teleport.
 0000b. **36th session (Oct 18): publish the Lobby** (Alt+P from the open published place, pick "[2 PLAYER] Glitched Together 👾"): the live lobby still runs the mixed copy (adventure `Server`/`Client` scripts build the Prologue inside it) until then. Studio's copy is clean (only `Lobby` + `LobbyClient`, 11 `Lobby*` materials). User to judge in play: ladder climb (emulated to the top), DASH button spot on a phone, title glow, owl/balloon look. When the Adventure place is next open: Collaborative Editing off + no `Lobby`/`LobbyClient` in it.

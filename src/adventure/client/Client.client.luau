@@ -35,6 +35,7 @@ local order = {
 	"AudioController",
 	"AmbientController",
 	"MeteorController",
+	"TrailerController", -- admin /trailer recording mode
 }
 
 for _, name in order do

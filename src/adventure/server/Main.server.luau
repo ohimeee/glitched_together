@@ -31,6 +31,8 @@ for _, name in
 		"SupportThanks",
 		"SupporterHide",
 		"AdminDiag",
+		"Trailer",
+		"TrailerGhost",
 	}
 do
 	Net.event(name)

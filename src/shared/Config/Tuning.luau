@@ -295,6 +295,21 @@ return {
 		AuraRate = 6, -- sparkles / s
 		AuraLight = 0.6, -- PointLight brightness (subtle-lighting)
 	},
+	-- admin trailer recording mode (Services/Trailer + client TrailerController)
+	Trailer = {
+		PuppetOffset = 6, -- studs to the caller's right where /puppet appears
+		PuppetIdle = "rbxassetid://507766388", -- Roblox's R15 idle, looped while the puppet only stands
+		GhostRate = 20, -- samples / s of a ghost recording (playback interpolates)
+		GhostMax = 60, -- s: longest ghost take
+		GhostChunk = 100, -- samples per remote message
+		Countdown = 3, -- s before a ghost take starts
+		FlySpeed = 24, -- studs / s of the fly camera (Shift × FlyFast, scroll scales it)
+		FlyFast = 4,
+		LookSpeed = 0.25, -- degrees per mouse pixel (right button held)
+		FovMin = 20,
+		FovMax = 100,
+		PathTime = 6, -- s a camera path takes by default ([ / ] change it)
+	},
 	-- lobby FIND A PARTNER (lobby/server/Matchmaking): one queue across every lobby server (MemoryStore)
 	Matchmaking = {
 		Poll = 2, -- s between queue reads while someone in this server is searching

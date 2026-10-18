@@ -552,8 +552,13 @@ end
 
 local badgeTemplates: { [string]: MeshPart }? = nil
 
-local function giveBadge(p: Player)
-	local character = p.Character
+-- `p` = a Player, or a trailer puppet Model (Services/Trailer) that carries its own Role / Kit attributes
+local function charOf(p: Instance): Model?
+	return if p:IsA("Player") then p.Character else p :: Model
+end
+
+local function giveBadge(p: Instance)
+	local character = charOf(p)
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local emblemName = (Badges.Emblem :: any)[p:GetAttribute("Role") or ""]
 	if not (character and humanoid and badgeTemplates) then
@@ -641,8 +646,8 @@ local function heldTemplate(item: ToolFx.HeldItem): MeshPart?
 	return if cached then cached else nil
 end
 
-local function giveHeld(p: Player)
-	local character = p.Character
+local function giveHeld(p: Instance)
+	local character = charOf(p)
 	if not character then
 		return
 	end
@@ -657,7 +662,7 @@ local function giveHeld(p: Player)
 		local template = heldTemplate(item)
 		if
 			not (hand and hand:IsA("BasePart") and template)
-			or p.Character ~= character
+			or charOf(p) ~= character
 			or p:GetAttribute("Kit") ~= kit
 		then
 			continue
@@ -770,6 +775,12 @@ end
 -- Init ---------------------------------------------------------------------------------------------
 
 ArtService.DressExit = dressExit
+
+-- Trailer puppet (Services/Trailer): role badge + the held items of its Kit attribute, like a player's
+function ArtService.DressPuppet(model: Model)
+	giveBadge(model)
+	giveHeld(model)
+end
 
 function ArtService.Init()
 	for _, p in Players:GetPlayers() do

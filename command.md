@@ -145,3 +145,19 @@ Rojo syncs code into Studio, but the phone runs the **published** version: publi
 
 - 2 players: the second player needs their own account, and you add them under **Game Settings → Permissions** (Collaborators / friends) or set the game to Friends.
 - The lobby → adventure teleport only works once both places are published in the same experience and their ids are in `src/shared/Config/Places.luau` (LAUNCH.md). For a phone test, publishing Adventure.rbxl alone is enough.
+
+## Trailer recording (admin chat, published Adventure place; record with OBS)
+
+| Chat / key | What |
+| --- | --- |
+| `/trailer` | trailer mode on/off: no UI at all (End also leaves, U shows the UI again for a moment) |
+| V | fly camera (WASD, E up, Q down, Shift fast, scroll = speed, hold right mouse = look, Z / X = lens) |
+| 1-9, K, J, Delete | camera path slot, add the camera as a point, drop the last point, clear the slot |
+| P, [ / ] | play / stop the slot's path (smooth, eased ends; out of fly mode you play live meanwhile), path time -1 / +1 s |
+| O | print the slot's points to the output |
+| H | hide / show your own character |
+| `/puppet kai\|miko [userId]` | stand-in for the other character beside you (badge + held kit); `/puppet here`, `/puppet clip <MoveAnims name\|idle>`, `/puppet off` |
+| G or `/ghost rec [s]` | record your own moves (3 s countdown) |
+| `/ghost play` / `loop` / `stop` | the puppet replays that take while you play the other character live |
+
+Two-player shot alone: `/miko`, G and play Miko's part, `/kai`, `/puppet miko`, `/ghost play`, play Kai's part (camera path with P).

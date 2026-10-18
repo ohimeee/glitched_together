@@ -3,6 +3,7 @@
 -- attributes, so only these commands and Studio can drive them. Allowed: Config/Admins + the experience owner.
 --   /world <name> [checkpoint]   /cp <checkpoint>   /kai   /miko   /swap (= /role [Kai|Miko])   /phase <n>   /ult   /diag
 --   /supporter [aura|tag]   (no arg = a fake 10 R$ tip, Studio only; aura / tag = toggle a fake game pass)
+--   /trailer   /puppet kai|miko [userId] | here | clip <name> | off   /ghost rec [s] | play | loop | stop  (Services/Trailer)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
@@ -10,6 +11,7 @@ local Admins = require(ReplicatedStorage.Shared.Config.Admins)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Supporters = require(ReplicatedStorage.Shared.Util.Supporters)
+local Trailer = require(script.Parent.Trailer)
 
 local AdminCommands = {}
 
@@ -90,6 +92,15 @@ local handlers: { [string]: (args: { string }, player: Player) -> () } = {
 	supporter = function(args, player)
 		Supporters.Fake(player, (args[1] or "tip"):lower())
 	end,
+	trailer = function(args, player)
+		Trailer.Command("trailer", args, player)
+	end,
+	puppet = function(args, player)
+		Trailer.Command("puppet", args, player)
+	end,
+	ghost = function(args, player)
+		Trailer.Command("ghost", args, player)
+	end,
 	ult = function()
 		for _, p in Players:GetPlayers() do
 			p:SetAttribute("Ultimate", 1)
@@ -136,6 +147,7 @@ local function adminArrival(player: Player)
 end
 
 function AdminCommands.Init()
+	Trailer.Init(allowed)
 	local function watch(player: Player)
 		adminArrival(player)
 		player.Chatted:Connect(function(message)
