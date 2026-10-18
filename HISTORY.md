@@ -9,6 +9,7 @@ Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUD
 - **Pass icons:** `tools/paint_style/pass_icons.py` → `marketing/passes/pass_aura.png` (blocky avatar in a gold glow + sparkles) and `pass_tag.png` (★ VIP tag + the 6 tag colors); colors from `Config/Supporters`, no teal/magenta.
 - Store setup advice to the user: dev products under the game → Monetization; managed (regional) pricing off so the tip panel's exact prices and Supporter totals hold; product image = Night Owl owl emblem.
 - Re-ran `tools/assets/grant_permissions.py` (grapple pistol mesh 79322467316659 share access).
+- Ids filled: 8 Support products + Aura/Tag passes (`Config/Products`), 5 badges (`Config/Badges`; Core, Unfinished, Finished wait for the next free-badge day). Supporter tag `TagHeight` 3.7 → 1.8 (user: too high). Both places checked clean + synced in Studio, then published by the user.
 
 ## 39th session (Oct 18-19, 2026): trailer cursor fix, max-graphics retake, publish checks
 
