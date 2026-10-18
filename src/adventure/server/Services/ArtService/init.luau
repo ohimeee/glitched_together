@@ -283,6 +283,9 @@ local function moves(part: BasePart): boolean
 		or CollectionService:HasTag(part, "Freezable") -- e.g. coin steps sink by CFrame
 		or CollectionService:HasTag(part, "Copyable") -- pastes are clones moved by CFrame
 		or CollectionService:HasTag(part, "Enemy") -- CombatService moves enemies by CFrame
+		-- a part carried by an enemy (the Shield Guard's shield): CombatService moves it with the guard, so its skin
+		-- must be welded too (an anchored skin stayed on the floor where the guard was built)
+		or (part.Parent ~= nil and part.Parent:IsA("BasePart") and CollectionService:HasTag(part.Parent, "Enemy"))
 		or CollectionService:HasTag(part, "Station") -- StationService turns cranks by CFrame
 		or CollectionService:HasTag(part, "DuoGate") -- InteractableService tweens gates and lifts
 		or CollectionService:HasTag(part, "Crumble") -- boss floor tiles shake and fall
