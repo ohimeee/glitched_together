@@ -129,9 +129,8 @@ local Sfx: { [string]: Def } = {
 	PipChirp = { Id = pse(9118272977), Volume = 0.3, Group = "UI" }, -- kalimba beep-borp when a hint pops
 
 	-- Lobby (doll-sized bedroom)
-	-- bed spring squeak (these are quiet files: peak ~130 vs the bounce pad's ~360, so the volume runs high)
-	BedBounce = { Ids = { pse(9113389774), pse(9113389545) }, Volume = 1.2, Pitch = 1.1, PitchVar = 0.08 },
-	BedBoing = { Id = pse(12222124), Volume = 0.35, Pitch = 1.15, PitchVar = 0.06 }, -- RBLX spring boing under it
+	-- RBLX spring boing on each bounce (the squeak "oi oi oi" was removed and this made 40% quieter: user, Oct 18)
+	BedBoing = { Id = pse(12222124), Volume = 0.21, Pitch = 1.15, PitchVar = 0.06 },
 	TrainWhistle = { Ids = { pse(9120223070), pse(9120222876) }, Volume = 0.35, Range = 80 }, -- wooden toy whistle
 	TrainRoll = { Id = pse(9120228107), Volume = 0.25, Pitch = 1.15, Range = 50, Looped = true }, -- toy wood wagon rolling
 	CapsuleIn = { Id = pse(9125921369), Volume = 0.45, Pitch = 1.1 }, -- latch click as a seat is taken

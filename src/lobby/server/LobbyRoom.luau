@@ -235,6 +235,10 @@ local function windowSet()
 		Transparency = 0.85,
 		Color = rgb(190, 205, 255),
 	}))
+	-- the glass is decoration: this invisible slab fills the whole opening (wall-thick, so a dash can't tunnel it)
+	-- so nobody jumps or dashes out of the window (user, Oct 18)
+	local block = part("WindowBlock", v(w, h, 4), CFrame.new(cx, cy, z + 2), { Transparency = 1 })
+	block.CanQuery = false
 	-- curtains: gathered panels of soft fabric on a brass rod, a few staggered folds each
 	deco(
 		part(

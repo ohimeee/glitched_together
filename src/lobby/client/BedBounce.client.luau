@@ -32,7 +32,6 @@ local function hook(character: Model)
 			local vel = root.AssemblyLinearVelocity
 			root.AssemblyLinearVelocity = Vector3.new(vel.X, up, vel.Z)
 			local loud = if held then 1.2 else 1
-			Audio.play("BedBounce", root, loud)
 			Audio.play("BedBoing", root, loud)
 		end
 	end)
