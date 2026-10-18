@@ -21,13 +21,13 @@ type Prop = {
 
 local PROPS: { [string]: Prop } = {
 	-- a beige 90s CRT: the screen shows the game's title. Blender kit piece since Oct 18 (tools/lobby_kit/fix_oct18.py,
-	-- lobby palette atlas): the generated one had a domed front the screen panel hung off. glTF upload: +180 yaw.
+	-- lobby palette atlas): the generated one had a domed front the screen panel hung off. (This GLB came in unturned.)
 	Monitor = {
 		Id = "rbxassetid://136806831133697",
 		Tex = "rbxassetid://85641984484582",
 		Size = v(30, 31, 26.65),
 		At = v(64, 0, 40),
-		Yaw = 22 + 180,
+		Yaw = 22,
 		Solid = true,
 	},
 	DeskLamp = { -- anglepoise lamp: the warm pool over the capsules
@@ -209,9 +209,9 @@ local function monitorScreen(monitor: MeshPart, parent: Instance)
 	screen.CanQuery = false
 	screen.CanTouch = false
 	-- in the bezel's 22 x 17 opening (fix_oct18.py: centre 3 above the mesh centre, glass 1.3 behind the bezel front),
-	-- edges tucked 0.2 into its walls; the extra half turn undoes the glTF one so -Z is the screen's front
+	-- edges tucked 0.2 into its walls
 	screen.Size = v(22.4, 17.4, 0.2)
-	screen.CFrame = monitor.CFrame * CFrame.Angles(0, math.pi, 0) * CFrame.new(0, 3, -11.275)
+	screen.CFrame = monitor.CFrame * CFrame.new(0, 3, -11.275)
 	screen.Material = Enum.Material.SmoothPlastic
 	screen.Color = rgb(14, 20, 48)
 	screen.Parent = parent

@@ -33,7 +33,7 @@ local SURFACES: { [string]: Surface } = {
 }
 
 -- name = LK_<Piece>_<Surface> in Blender; Center/Size are Roblox studs (tools/lobby_kit/kit.py report())
-type Piece = { Id: string, Center: Vector3, Size: Vector3, Turn: boolean? } -- Turn: a glTF upload (comes in 180° about Y)
+type Piece = { Id: string, Center: Vector3, Size: Vector3 }
 local PIECES: { [string]: Piece } = {
 	Desk_Oak = { Id = "rbxassetid://85664069443621", Center = v(0, -25, 0), Size = v(200, 50, 130) },
 	Desk_Brass = { Id = "rbxassetid://98735164340818", Center = v(70, -23.125, -62.425), Size = v(7.3, 30.45, 2.05) },
@@ -107,7 +107,6 @@ local PIECES: { [string]: Piece } = {
 		Id = "rbxassetid://96747009765616",
 		Center = v(33.25, -43, -177.75),
 		Size = v(160.5, 14, 94.5),
-		Turn = true,
 	},
 	-- batch 4 (tools/lobby_kit/walls.py): corkboard, peg rail, photo string, paper lantern
 	CorkFrame_Oak = { Id = "rbxassetid://98412143460946", Center = v(-40, 45, -228.8), Size = v(70, 50, 2.4) },
@@ -181,7 +180,6 @@ function LobbyKit.Build(parent: Instance, room: Instance)
 				local p = load(name, piece.Id, piece.Size, surfaceOf(name))
 				if p then
 					p.CFrame = CFrame.new(piece.Center)
-						* (if piece.Turn then CFrame.Angles(0, math.pi, 0) else CFrame.identity)
 					if name == "Lantern_Paper" then -- a small warm pool under the lantern (memory: subtle lights)
 						local glow = Instance.new("PointLight")
 						glow.Color = rgb(255, 196, 140)

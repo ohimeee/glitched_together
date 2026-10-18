@@ -524,15 +524,26 @@ local function bookshelf()
 			)
 		)
 	end
-	-- leans with the rails (the kit's Ladder_Oak too), on the rungs, nearly as wide as the ladder: a straight
-	-- truss beside the slanted ladder felt broken (user, Oct 18)
-	local truss = Instance.new("TrussPart")
-	truss.Name = "LadderClimb"
-	truss.Anchored = true
-	truss.Size = v(2, H + 6, 10)
-	truss.CFrame = CFrame.new(lx + 4, FLOOR_Y + (H + 6) / 2, lz) * CFrame.Angles(0, 0, math.rad(-6))
-	truss.Transparency = 1
-	truss.Parent = folder
+	-- climb: short upright truss pieces stepped along the 6° lean (a TrussPart is at most 2 x 2 across, so five side
+	-- by side cover the width). Roblox climbing only goes straight up, so a leaning truss lost its climber halfway
+	-- (user, Oct 18: "the ladder is broken"); client LadderAssist slides the climber along the lean (attrs below).
+	local LEAN, SEG = math.rad(6), 4
+	local midY = FLOOR_Y + (H + 6) / 2
+	for y0 = FLOOR_Y, FLOOR_Y + H + 2, SEG do
+		local y = y0 + SEG / 2
+		local x = lx + 4 + (y - midY) * math.tan(LEAN)
+		for dz = -4, 4, 2 do
+			local truss = Instance.new("TrussPart")
+			truss.Name = "LadderClimb"
+			truss.Anchored = true
+			truss.Size = v(2, SEG, 2)
+			truss.CFrame = CFrame.new(x, y, lz + dz)
+			truss.Transparency = 1
+			truss.Parent = folder
+		end
+	end
+	folder:SetAttribute("LadderAnchor", v(lx + 4, midY, lz)) -- rung line centre
+	folder:SetAttribute("LadderLean", 6) -- degrees, top toward +X
 end
 
 local function rug()

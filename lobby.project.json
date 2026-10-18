@@ -14,6 +14,9 @@
       }
     },
     "StarterPlayer": {
+      "$properties": {
+        "EnableMouseLockOption": false
+      },
       "StarterPlayerScripts": {
         "LobbyClient": {
           "$path": "src/lobby/client"
