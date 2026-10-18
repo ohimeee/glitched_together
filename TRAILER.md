@@ -1,0 +1,126 @@
+# Trailer plan: Glitched Together
+
+Status (Oct 18, 2026, 37th session): recording tool built and tested, environment footage for Pixel Plains, Glitched
+Core and Starfall Castle recorded. Not done yet: Epilogue + lobby shots, gameplay clips, boss intros, the edit, music.
+
+Goal (user): a trailer so many players notice the game and come to playtest. Post it on TikTok / YouTube Shorts
+(9:16) and YouTube / the Roblox experience page (16:9).
+
+## 1. Where the idea came from (user's references)
+
+- **TikTok the user sent (Oct 18):** https://vt.tiktok.com/ZSg6EkBXd/ (@storyboard.co.th, "2D animation on real footage
+  using Claude + After Effects"). Split screen: plain travel footage underneath, the same shot with hand-drawn 2D
+  characters and doodles on top. Their pipeline: Claude (prompts), Magnific/GPT (images), Seedance (AI video), Suno
+  (music), Illustrator (vectors), After Effects + CapCut (edit).
+  - **User's decision:** no doodles for now ("no need for doodle later"). Record the scenes, the environments and a bit
+    of gameplay. Doodle overlays (Kai/Miko's childhood drawings over real gameplay) stay an idea for later.
+  - **Editor:** the user wants the open-source **EffectCraft** instead of After Effects (installed, see §5).
+- **Roblox dev tips the user shared (TikTok @bennettbenito, "ROBLOX TIPS #3", screenshots Oct 18)**, saved in memory
+  `retention-tips`:
+  1. The game must be understandable without reading: arrows, colors, icons show where to go / what to do.
+  2. The first 30 seconds matter most; 90% of players leave within 5 minutes.
+  3. Thumbnails (and trailers) must match the real gameplay: high CTR from a misleading image hurts the game; QPTR
+     (qualified play-through rate) matters most.
+  - Rule from tip 3: **the trailer is real in-game footage only** (no AI-generated gameplay, no fake scenes).
+
+## 2. Research: what popular Roblox trailers do (watched Oct 18)
+
+| Trailer | YouTube | Notes |
+| --- | --- | --- |
+| DOORS Extended Trailer (5.5M views) | https://youtu.be/p7NKqVJzH4E | slow dark push-ins down corridors, door "0013" hook, logo + date end card |
+| DOORS Hotel+ Update (4.3M) | https://youtu.be/IlVShjKur0I | one-word cards between shots ("THE… HAVE… CHANGED"), long holds |
+| RIVALS Ranked Official (4.8M) | https://youtu.be/RZqg9_snViY | low hero angles on the character, one mechanic per shot (scope, sword, dodge), logo + PLAY NOW |
+| Pressure Trailer | https://youtu.be/VvM0-IcOxlY | dark mood, quick monster glimpses |
+| Grow a Garden Spotlight (Roblox official) | https://youtu.be/ER5c9YOyCoA | logo in frame 1, ~1.9 s shots, comedy faces, top-down time-lapse |
+
+What they all share:
+1. ~30 s long; the last 3–5 s are an end card (logo + PLAY NOW / date).
+2. 100% real in-game footage shot with a free cinematic camera, HUD/UI hidden.
+3. Shots of 2–4 s (Grow a Garden ~1.9 s, DOORS ~4–5 s for mood), cut on the music beats.
+4. One idea per shot: one mechanic, one place, or one character reaction.
+5. Character close-ups with emotion sell it.
+6. Almost no text (DOORS: 3 one-word cards).
+7. A hook in the first 1.5 s.
+
+## 3. Our 30 s trailer (plan)
+
+| Time | Shot |
+| --- | --- |
+| 0–2 s | HOOK: Kai + Miko side by side, low angle (hero shot by the trial signs), glitch tear behind them |
+| 2–6 s | card **TWO PLAYERS** → Pixel Plains flyover / islands → a co-op moment (grapple + freeze beam on a crusher) |
+| 6–11 s | card **TWO POWERS** → castle wide (gatehouse at night) → shield reflects a fireball into a skeleton |
+| 11–16 s | Glitched Core flythrough (overview, echo islands) → copy/paste platform bridge |
+| 16–24 s | card **ONE UNFINISHED GAME** → bosses: Crusher King on the throne / slam, Hollow Dragon in the Shattered Cathedral, The Unfinished rising |
+| 24–30 s | Title logo + **PLAY WITH A FRIEND** + Roblox |
+
+- Formats: 16:9 (1920×1080, upscaled from the 1584–1890 px wide captures) and 9:16 (crop; frame the action center).
+- Crop out Roblox's top-left menu buttons in the edit (scripts can't hide them).
+- Music: must be cleared for YouTube/TikTok (the Roblox audio library only covers use inside Roblox): Pixabay Music,
+  YouTube Audio Library, or Suno paid plan. No added roar/sting SFX on boss shots (user rejected them in-game too).
+- Card text style: the game's title logo font (Luckiest Guy, `~/tools/fonts`), owner colors only where they mean
+  Kai (orange) / Miko (teal) / Glitch (magenta).
+
+## 4. Footage recorded so far (`C:\Users\User\Videos\GlitchedTrailer`)
+
+| File | Content | Use |
+| --- | --- | --- |
+| 2026-10-18 19-27-30.mp4 | Pixel Plains drone flyover over the floating islands | keep |
+| 2026-10-18 19-28-29.mp4 | PP batch: duo hero shot (0–7 s), crusher (blocked), windmill bridges, fan, cloud tower, cannon, coin press wall (blocked), grind rails (~50 s), Crusher King on throne with light rays (~58 s) | keep duo, islands, rails, king |
+| 2026-10-18 19-31-00.mp4 | PP batch 2: crusher, coin press lane with blob enemies (~8 s), windmill bridges, fan underside (bad), springs (meh), pipes (blocked) | keep press lane, bridges |
+| 2026-10-18 19-42-35.mp4 | Glitched Core: overview flight, MissingTextures, PastePast, WireMaze, TitleEcho, PlainsEcho, CastleEcho, FinalStage | keep overview + echoes |
+| 2026-10-18 19-53-29.mp4 | Starfall Castle (all textures): gatehouse under the moon, hall, library, cart ride, powder hall, throne hall, Hollow Dragon close | keep (orange aim marker dot visible bottom right in some frames) |
+| 19-25-50, 19-32-35, 19-44-12 | test / shrunk / missing textures | delete |
+
+Still to record:
+- Epilogue (night walk, hilltop, supporter wall, gold trophies) and the lobby bedroom (capsules, train, bed).
+- **Gameplay clips with the user playing** (jumps, grapple swing, freeze beam, castle combat, paste bridge, a boss
+  fight moment). Two-player shots alone: `/miko`, press G and play Miko's part, `/kai`, `/puppet miko`,
+  `/ghost play`, play Kai's part while P flies the camera.
+- Boss intro drone flights (CamPath intros already exist: record them in trailer mode, the Cutscene gui is hidden).
+- A real-looking puppet: `/puppet miko <userId>` with an alt/friend avatar (ask the user; without an id it's a plain
+  body with skin + teal shirt).
+
+## 5. Tools and how to record
+
+**In the game (admin chat, published Adventure place, Rojo 34872 connected):** see command.md "Trailer recording".
+- `/trailer` = trailer mode (no UI, no cursor). End leaves, U shows the UI for a moment.
+- V fly camera (WASD, E/Q, Shift, scroll speed, right mouse look, Z/X lens); 1–9 path slot, K add point, J drop,
+  Delete clear, P play/stop (camera holds the last frame), `[` `]` path time, O print points, H hide own character,
+  G ghost take. `/puppet kai|miko [userId]`, `/puppet clip <name>`, `/ghost rec|play|loop|stop`.
+- Code: client `src/adventure/client/Controllers/TrailerController.luau`, server `Services/Trailer.luau`,
+  numbers `Tuning.Trailer`.
+- **Scripted shots (what I used):** from execute_luau on the Server: build keys `{ cf = CFrame.lookAt(pos, look),
+  fov = n }`, `player:RequestStreamAroundAsync` each point first (StreamingEnabled), then
+  `ReplicatedStorage.Net.Trailer:FireClient(player, "Path", { slot, keys, time, play = true })`. Batch: hold the
+  first key 1 s, then fly, `task.wait(time + 0.3)`. Section bounds: `workspace.World[Section]:GetBoundingBox()`
+  (PP / Core); castle rooms are parts named Gatehouse, Hall, LibraryHall, TorchHall, CartDock, PowderHall,
+  ThroneHall, HollowDragon (z 0 → 1650). Chat commands typed with the MCP keyboard tool need a short pause
+  before Return.
+
+**OBS (recording):** OBS 32 at `C:\Program Files\obs-studio`, runs in the tray, obs-websocket on 4455 (password in
+`%APPDATA%\obs-studio\plugin_config\obs-websocket\config.json`).
+- `python tools/trailer/obsctl.py setup | shot out.png | crop L T R B | start | stop` (pip `obsws-python`).
+- Profile **Trailer** (x264; NVENC fails to start on this laptop), scene **Trailer** = window capture of
+  "Adventure - Roblox Studio" (class Qt5159QWindowIcon), 60 fps, mp4.
+- After every Studio restart re-measure the viewport: `shot`, find the blue viewport border, `crop L T R B`
+  (Explorer closed + ribbon collapsed: 3 85 26 72 → 1890×864; Explorer open: 4 93 332 64 → 1584×864).
+- Check takes: `ffmpeg -vf fps=1/2,scale=320:-1` → contact sheet.
+
+**EffectCraft 0.11.1 (the editor, user-installed):** `"C:\Program Files\EffectCraft\effectcraft-cli.exe"`.
+- `script file.jsx --empty` runs After Effects-style JSX (app.project, addComp, layers, addText, addSolid,
+  property().setValueAtTime, `app.project.save(new File("x.ecproj"))`); `render --project x.ecproj --comp C --out
+  x.mp4 --format h264`; `render-frame ... --out f.png` to check frames; `mcp` = MCP server.
+- Tested Oct 18: a 3 s 1080p title comp rendered in 2.3 s. Alpha software (crash risk); fallback editor: DaVinci
+  Resolve (free, user installs).
+- Plan for the edit: one JSX script that imports the takes, trims each shot by timestamp, cuts on the music beats,
+  adds the three cards + end card, renders 16:9 and a 9:16 crop.
+
+## 6. Gotchas met while recording (Oct 18)
+
+- **Assets not loading:** the experience moved into the Night Owl Interactive group; images uploaded under
+  buldak0555 failed. Fixed with `python tools/assets/grant_permissions.py` (747 granted). Studio caches a failed
+  fetch for the whole process: restart Studio after granting before you judge.
+- Stale `Lobby` / `LobbyClient` scripts + 11 `Lobby*` materials are in the published Adventure place until it is
+  republished: remove them in Studio every time it opens (they build the lobby inside the adventure).
+- The castle's orange aim ground marker shows in trailer frames: hide it in trailer mode (to do).
+- OBS profile switches reset the capture transform (scale 0.8): run `crop` again after any profile change.
