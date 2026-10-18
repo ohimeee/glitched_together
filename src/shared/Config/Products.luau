@@ -6,14 +6,14 @@ return {
 	-- one product per price: Roblox can't charge a typed amount, so the "other amount" box picks the closest one.
 	-- Quick = a button of its own in the tip jar.
 	Support = {
-		{ Id = 0, Robux = 5 }, -- TODO: product "Support: 5"
-		{ Id = 0, Robux = 10, Quick = true }, -- TODO: product "Support: 10"
-		{ Id = 0, Robux = 25 }, -- TODO: product "Support: 25"
-		{ Id = 0, Robux = 50, Quick = true }, -- TODO: product "Support: 50"
-		{ Id = 0, Robux = 100, Quick = true }, -- TODO: product "Support: 100"
-		{ Id = 0, Robux = 250 }, -- TODO: product "Support: 250"
-		{ Id = 0, Robux = 500 }, -- TODO: product "Support: 500"
-		{ Id = 0, Robux = 1000 }, -- TODO: product "Support: 1000"
+		{ Id = 3719606066, Robux = 5 }, -- product "Support: 5"
+		{ Id = 3719606297, Robux = 10, Quick = true }, -- product "Support: 10"
+		{ Id = 3719606469, Robux = 25 }, -- product "Support: 25"
+		{ Id = 3719606594, Robux = 50, Quick = true }, -- product "Support: 50"
+		{ Id = 3719606685, Robux = 100, Quick = true }, -- product "Support: 100"
+		{ Id = 3719606828, Robux = 250 }, -- product "Support: 250"
+		{ Id = 3719606941, Robux = 500 }, -- product "Support: 500"
+		{ Id = 3719607042, Robux = 1000 }, -- product "Support: 1000"
 	},
 	-- game passes (Creator Dashboard > Monetization > Passes), looks only (Config/Supporters)
 	Passes = {
