@@ -4,15 +4,15 @@
 return {
 	-- leaving a world (WorldService.Advance), by world name
 	Worlds = {
-		Prologue = 0, -- TODO: badge "The Title Screen" (badge_prologue.png)
-		PixelPlains = 0, -- TODO: badge "Pixel Plains" (badge_pixel_plains.png)
-		StarfallCastle = 0, -- TODO: badge "Starfall Castle" (badge_starfall_castle.png)
+		Prologue = 1576512310218932, -- badge "The Title Screen" (badge_prologue.png)
+		PixelPlains = 4016027219599332, -- badge "Pixel Plains" (badge_pixel_plains.png)
+		StarfallCastle = 1089297389944119, -- badge "Starfall Castle" (badge_starfall_castle.png)
 		GlitchedCore = 0, -- TODO: badge "The Glitched Core" (badge_glitched_core.png)
 	},
 	-- a boss beaten (BossService.Finished), by boss name
 	Bosses = {
-		CrusherKing = 0, -- TODO: badge "Crusher King" (badge_crusher_king.png)
-		HollowDragon = 0, -- TODO: badge "Hollow Dragon" (badge_hollow_dragon.png)
+		CrusherKing = 1049996413689457, -- badge "Crusher King" (badge_crusher_king.png)
+		HollowDragon = 2123905406430315, -- badge "Hollow Dragon" (badge_hollow_dragon.png)
 		Unfinished = 0, -- TODO: badge "The Unfinished" (badge_the_unfinished.png)
 	},
 	-- CONTINUE? YES at the end of the credits
