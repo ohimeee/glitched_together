@@ -38,15 +38,33 @@ Plays in the **lobby place** on the first join of a session; any key / click / t
 - Studio name: **Night Owl Interactive** (Roblox community 129463626, created Oct 18) (user, Oct 18; "Night Owl Studios" and close spellings were taken on Roblox; community creation costs Robux). Emblem + cover + splash lockup: `marketing/studio/` (Blender `blender_assets/StudioLogo.blend` concept 2 "the moon is the owl" → `tools/paint_style/studio_logo.py`).
 - Between worlds the painted loading cards are used instead (CLAUDE.md plan).
 
-## 2. Maturity & compliance questionnaire (draft answers, check in Creator Hub)
+## 2. Maturity & compliance questionnaire (done Oct 18, 2026: label **Mild**)
 
-- Violence: fantasy / cartoon only (sword, fireballs, shield bash against skeletons, slimes and bosses), no blood, no gore, no realistic weapons. Characters "go down" and respawn by button mashing.
-- Fear: mild (glitch static, a dragon, a giant golem); no jump scares.
-- Romance, crude humor, alcohol, drugs, gambling: none.
-- Paid random items (loot boxes): none.
-- Social: Roblox text chat; voice chat off unless we decide otherwise.
-- Purchases: developer products for optional tips only, nothing gameplay-related (no pay-to-win).
-- Expected label: **Mild** (fantasy violence). Confirm when filling it in.
+Filled in on Creator Hub (Content rating) Oct 18. Preview: **Mild**, descriptor **Violence (Repeated/Mild)**, non-compliant regions none, no age restriction. Answers (with why, checked against the code):
+
+| Question | Answer | Why |
+| --- | --- | --- |
+| Violence | **Yes: Mild, Repeated** | Cartoon fantasy combat (sword, fireballs, shield bash, Meteor; skeletons, slimes, 3 bosses), no blood, players "go down" and mash to respawn. Combat is core (castle, bosses, blob gauntlet), so Repeated. |
+| Blood | No | |
+| Fear | No | Mild at most (glitch static, a dragon, a golem), no jump scares. Yes + mildest level would also be fine. |
+| Crude humor | No | |
+| Gambling-related content | No | Coin Bonk random items are free gameplay, no betting. |
+| Strong language | No | No swearing in any game text; keeps Roblox's chat filter. |
+| Romance | No | Kai and Miko are childhood friends. The lobby is their childhood bedroom, but it isn't where the game primarily takes place. |
+| Alcohol | No | Castle kegs are gunpowder (Powder Hall, Ember Fuse); "wine" is only a banner color. |
+| Social hangout | No | Co-op adventure. Keep "hang out" / "chill" wording out of the title and description. |
+| Free-form user creation | No | No drawing, painting, writing or text boxes; PASTE / WALL / pings use the game's own pieces. |
+| Sensitive issues | No | |
+| Cross-experience content | No | No CaptureService; teleports only between our own places. |
+| AI interaction | No | No runtime generative AI; Pip's lines are written. AI used to build the game doesn't count. |
+| Paid random items | No | |
+| Paid item trading | No | Only purchases: end-credits tip jar (`Config/Products`), gives nothing in game. |
+| Media sharing | No | Saved Runs shows save slots + Roblox invites, not gameplay media. |
+| Continuous media feed / autoplay | No | Background music only. |
+
+**Re-do the questionnaire if we add:** player drawing/writing/doodle boards (Free-form → Yes, game becomes **16+**), AI chat (e.g. a Pip powered by AI), paid random items, trading, video, or realistic blood/injury.
+
+Also: voice chat off; tip product ids in `Config/Products.luau` still `0` (create the products before launch).
 
 ## 3. Devices (user pick: PC + mobile + console)
 
