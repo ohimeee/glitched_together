@@ -32,11 +32,11 @@ if (typeof VARIANT !== "undefined") {
 
 // [take, source second, length s, card?]  hard cuts in this order
 var SHOTS = [
-	["2026-10-18 19-28-29", 0.0, CUT1], // hook: Kai + Miko by the trial signs (quiet intro)
-	["2026-10-18 19-27-30", 1.0, CUT2 - CUT1], // Pixel Plains drone flyover (build)
-	["2026-10-18 19-28-29", 50.0, DROP - CUT2], // grind rails rising into the drop
+	["2026-10-18 23-50-07", 15.4, CUT1], // hook: Kai + Miko in front of the trial signs, one low push-in (retake, max graphics)
+	["2026-10-18 23-50-07", 26.3, CUT2 - CUT1], // Pixel Plains drone flyover (build) (retake, max graphics)
+	["2026-10-18 23-50-07", 42.5, DROP - CUT2], // grind rails rising to the Crusher King into the drop (retake, max graphics)
 	["2026-10-18 20-53-24", 37.0, BAR, "two_players"], // DROP: Glitch Chase, grinding with the wall behind (gameplay)
-	["2026-10-18 19-31-00", 7.5, BAR], // coin press lane, blobs
+	["2026-10-18 23-50-07", 55.0, BAR], // coin press lane, blobs (retake, max graphics)
 	["2026-10-18 19-53-29", 0.0, BAR, "three_worlds"], // Starfall Castle under the moon
 	["2026-10-18 20-56-09", 23.0, BAR], // castle room fight: Kai's fireballs (gameplay)
 	["2026-10-18 19-42-35", 18.5, BAR], // Glitched Core

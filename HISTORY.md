@@ -2,6 +2,14 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 39th session (Oct 18-19, 2026): trailer cursor fix, max-graphics retake, publish checks
+
+- **Cursor in the 16:9 cut:** a white arrow sat mid-frame in the 3 early 1888-wide takes (19-27-30, 19-28-29, 19-31-00) = Roblox's in-game cursor (OBS cursor capture was already off; trailer mode hides it since). First tried painting it out (`tools/trailer/decursor.py`, ffmpeg delogo → `GlitchedTrailer/clean/`, `CLEAN` map in edit.jsx); user: "its bad, recapture" → retaken.
+- **Hook jump cut ("flick in first second"):** the old hook take had a camera jump; now one low push-in on Kai + Miko placed in front of the spawn flag (user: "put them in front"), spawn `CheckpointFlag` hidden for the shot, end framing pulled back so Pip stays in.
+- **"Assets not loaded":** every SkyIsland was on the client; Studio's Graphics Quality **Automatic** had cut the draw distance. Fix: Client `settings().Rendering.QualityLevel = Level21` before recording (TRAILER.md §6). Old camera paths recovered from the 37th transcript (`_G.TrailerShots`). Final retake `2026-10-18 23-50-07.mp4` (hook, flyover, rails to the King, blob lane) swapped into `edit.jsx`; chiptune 16:9 + 9:16 re-rendered (old renders kept as `*_cursor.mp4`, `*_cleaned.mp4`). User: the trailer is done.
+- **Publishing:** Adventure checked clean (only `Server`/`Client`, Input crash fix synced, Rojo 34872), user walked through Alt+P. Lobby opened via `-task EditPlace`, checked clean (only `Lobby`/`LobbyClient`, sources match disk) on Rojo 34873, ready for the user's Alt+P.
+- Learned: MCPControl clicks at screen coords missed the Rojo popup (125% DPI); let the user click Studio UI.
+
 ## 38th session (Oct 18, 2026): trailer footage, boss intros
 
 - **Castle aim dot hidden in trailer mode:** TrailerController sets the client-only player attribute `TrailerMode`; `TopDownAim` makes the reticle transparent while it's on.

@@ -64,6 +64,7 @@ What they all share:
 
 | File | Content | Use |
 | --- | --- | --- |
+| 2026-10-18 23-50-07.mp4 | **Retake at max graphics (Level21), no cursor:** hook duo push-in (move 12.6–18.5 s, spawn flag hidden), PP flyover (25.8–33.5), grind rails up to the King (40.5–47.5), coin press blob lane (54.5–60.5) | keep: replaces the 3 cursor takes below in the cut |
 | 2026-10-18 19-27-30.mp4 | Pixel Plains drone flyover over the floating islands | keep |
 | 2026-10-18 19-28-29.mp4 | PP batch: duo hero shot (0–7 s), crusher (blocked), windmill bridges, fan, cloud tower, cannon, coin press wall (blocked), grind rails (~50 s), Crusher King on throne with light rays (~58 s) | keep duo, islands, rails, king |
 | 2026-10-18 19-31-00.mp4 | PP batch 2: crusher, coin press lane with blob enemies (~8 s), windmill bridges, fan underside (bad), springs (meh), pipes (blocked) | keep press lane, bridges |
@@ -148,6 +149,9 @@ Still to record:
   rebuild resets Once), then pivot into it and wait while the player's `InCutscene` is true (~20 s).
 - **A played trailer path holds its last frame over everything, cutscene cameras too:** toggle trailer mode off/on
   (Trailer remote "Toggle" twice) before recording a cutscene after scripted shots.
+- **Far scenery missing (sky islands, distant sections) = Graphics Quality "Automatic" cutting draw distance**, not
+  streaming (Oct 18: every island was on the client, only the old take showed them). Before recording, on the Client:
+  `settings().Rendering.QualityLevel = Enum.QualityLevel.Level21`, then compare a preview frame with an old take.
 - **Mouse cursor in takes:** the 3 early 1888-wide takes (19-27-30, 19-28-29, 19-31-00) caught the resting Windows arrow at
   ~(935, 352). `python tools/trailer/decursor.py` paints it out (ffmpeg delogo) into `GlitchedTrailer/clean/`; edit.jsx
   reads those via `CLEAN`. For new takes: turn off "Capture Cursor" on the OBS window source, or park the mouse off the
