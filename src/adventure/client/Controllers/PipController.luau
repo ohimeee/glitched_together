@@ -1,5 +1,5 @@
--- Pip in the world: floats between the duo facing the camera ("hovers between them", Story Line), and flies
--- to your shoulder when a hint arrives. Its glow takes the color of whoever it talks to (art-direction.md §5):
+-- Pip in the world: hidden in normal play (user, Oct 19: "only appear when needed"); glitches in beside you when
+-- it has something to say (a hint, a cutscene) and glitches out after. While shown it flies to your shoulder. Its glow takes the color of whoever it talks to (art-direction.md §5):
 -- white while floating between you, your role color while it talks to you. Local-only copy of ReplicatedStorage.PipModel (published by ArtService);
 -- if the meshes never load, the hint bubble still works on its own.
 -- Motion (Tuning.Pip): spring follow that overshoots and settles, a lazy figure-8 drift, banking into its
@@ -92,6 +92,17 @@ function PipController.Init()
 		end
 
 		local glow = pip:FindFirstChildWhichIsA("PointLight", true)
+		-- shown only while talking: hint bubble up, or a cutscene; glitch flicker on the way in and out
+		local shown, flickerUntil = false, 0
+		local function setVisible(on: boolean)
+			for _, part in parts do
+				part.LocalTransparencyModifier = if on then 0 else 1
+			end
+			if glow then
+				glow.Enabled = on
+			end
+		end
+		setVisible(false)
 		local hintUntil, spinStart = 0, -math.huge
 		Net.event("Hint").OnClientEvent:Connect(function()
 			if not Settings.Get("PipHints") then
@@ -125,13 +136,30 @@ function PipController.Init()
 			end
 			dt = math.min(dt, 1 / 20) -- keep the spring stable through frame hitches
 			local now = os.clock()
+			local want = now < hintUntil or player:GetAttribute("InCutscene") == true
+			if want ~= shown then
+				shown = want
+				flickerUntil = now + T.GlitchTime
+				if want then
+					pos = nil -- pop in right beside you, no fly-over from far away
+				end
+			end
+			if now < flickerUntil then
+				-- hard on/off snaps while it glitches in or out (art-direction.md §7)
+				setVisible(math.floor(now * 24) % 2 == (if shown then 0 else 1))
+			else
+				setVisible(shown)
+				if not shown then
+					return
+				end
+			end
 			local cam = camera.CFrame
 
 			-- target: anchor + figure-8 in the camera's view plane + bob
 			local w = now * T.DriftSpeed
 			local drift = cam.RightVector * (math.sin(w) * T.DriftRadius)
 				+ Vector3.new(0, math.sin(w * 2) * T.DriftRadius * 0.5 + math.sin(now * T.BobSpeed) * T.BobHeight, 0)
-			local target = anchorTarget(me, now < hintUntil) + drift
+			local target = anchorTarget(me, shown) + drift
 
 			-- spring follow (semi-implicit Euler)
 			if not pos or (target - pos).Magnitude > T.SnapDistance then

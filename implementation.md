@@ -713,7 +713,7 @@ Use `UpdateAsync` (not `SetAsync`) and wrap every call in `pcall` with a retry. 
 ## 11. Cutscenes, Pip, Peek, Ping
 
 - **Cutscenes:** each cutscene is a folder of camera parts named `1`, `2`, `3`… with a `Duration` attribute, plus a dialogue list in a module. `CutsceneService` fires both clients with the id and sets `InCutscene = true` on both players (blocks tools and movement). Clients tween the camera through the parts. Skip only when both players have sent `SkipVote`.
-- **Pip hints:** `HintService` tracks time since the duo's last progress event in the current section (plate pressed, checkpoint, puzzle solved). At 20 s → hint 1, at 45 s → hint 2.
+- **Pip hints (Oct 19):** Pip is hidden in play and glitches in only to talk (hint or cutscene). `HintService` counts seconds without progress *while someone moves* (`Tuning.HintAfter` 90 / 150 s; no idle timer in boss fights) and setbacks per section (`Tuning.HintDeaths` = 3 downs/falls → that player gets the direct hint). Lines live in `Config/Hints`: per world, per checkpoint section, optional `at`/`r` spot (nearest to the player wins), text per role (`Kai` / `Miko`, or `Both`; `Kai2`/`Miko2`/`Both2` = the more direct second hint). Each player only hears their own role's line; a section without entries = no hint.
 - **Partner Peek:** each client sends its camera CFrame on `CamSync` (unreliable, 10 times a second); the server relays it to the partner. While Peek is held, the client smoothly moves its own camera to the partner's latest camera CFrame, and snaps back on release.
 - **Ping:** raycast from the camera through the screen center; send the hit position; the server relays it to the partner; both show a marker for 4 s.
 

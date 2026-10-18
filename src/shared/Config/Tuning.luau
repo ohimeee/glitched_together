@@ -181,7 +181,10 @@ return {
 	PingMax = 3, -- live pings per player; one more removes the oldest
 	PingIcon = 36, -- ping marker size, screen px
 	CamSyncRate = 10,
-	HintAfter = { 20, 45 },
+	HintAfter = { 90, 150 }, -- Pip hints: seconds stuck (someone moving, no progress) before hint 1 / hint 2 (were 20 / 45: user found Pip annoying, Oct 19)
+	HintBossAfter = 45, -- seconds in one boss phase before Pip gives that phase's hint (once per phase)
+	HintDeaths = 3, -- downs / falls in one section before Pip gives that player the direct hint
+	HintMoveStuds = 1.5, -- a player moved more than this in a second = the duo is still trying
 	PartnerWaitTime = 120,
 	SlackRange = 5, -- extra studs allowed in server range checks for lag
 
@@ -609,6 +612,7 @@ return {
 		Height = 6, -- studs above the duo's midpoint
 		Leash = 40, -- partner farther than this: Pip stays with you
 		HintTime = 6, -- seconds Pip hangs at your shoulder after a hint
+		GlitchTime = 0.35, -- seconds of on/off flicker when Pip pops in or out (hidden in normal play)
 		-- spring follow: overshoots a little, then settles (damping ratio ≈ Damping / (2·√Stiffness) ≈ 0.6)
 		Stiffness = 26,
 		Damping = 6,

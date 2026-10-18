@@ -183,13 +183,5 @@ local Cutscenes: { [string]: { Line } } = {
 	},
 }
 
--- Generic Pip nudges when a section has no hand-written hints. Hint 1 nudges; hint 2 points. Never the answer.
-local GenericHints = {
-	{
-		"Two players, two halves of the puzzle. What can YOU see that they can't?",
-		"INSERT HINT HERE. ...Try pinging something with {Ping}!",
-	},
-	{ "Have you tried... talking? I hear it's great.", "Look for something only one of you can use." },
-}
-
-return { Cutscenes = Cutscenes, GenericHints = GenericHints }
+-- Pip hints live in Config/Hints (per section, per role, per spot).
+return { Cutscenes = Cutscenes }

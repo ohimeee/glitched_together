@@ -64,6 +64,7 @@
 
 ## Current status (40th session, Oct 19, 2026)
 
+- **40th session (Oct 19), later:** closed beta gate (`Config/Beta`, Beta Tester role rank 10, `tools/beta/approve.py`), bug reports (`Util/BugReports`, `tools/beta/bugs.py`), middle-click free cursor, Pip revamp (hidden until it talks, role- + spot- + boss-phase-aware hints in `Config/Hints`). **Republish both places** to ship them. Details in HISTORY.
 - **40th session (Oct 19):** badge code + icons, 8 products + 2 passes + 5 badges created, ids filled, supporter tag lowered; **both places published by the user** (clean, Rojo-synced). Details in HISTORY.
 
 - **39th session (Oct 18-19):** trailer finished: cursor found in 3 early takes (Roblox's own in-game cursor, before trailer mode hid it) → retaken; far scenery missing in Studio = Graphics Quality Automatic (force Level21); hook is one push-in now. Adventure + Lobby verified for publishing. Details in HISTORY.
