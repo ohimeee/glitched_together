@@ -2,6 +2,12 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 38th session (Oct 18, 2026): trailer footage, boss intros
+
+- **Castle aim dot hidden in trailer mode:** TrailerController sets the client-only player attribute `TrailerMode`; `TopDownAim` makes the reticle transparent while it's on.
+- **Footage (`~/Videos/GlitchedTrailer`, list in TRAILER.md §4):** Hollow Dragon intro (19-59-19), Crusher King intro (retake 20-06-01: the first take's character fell off the pad and died; user: "retake that crusher king"), The Unfinished intro (20-01-12, 20-02-12: before the retake the idle character kept dying on the running fight's magenta pads), Epilogue path/trophies/supporter wall (20-03-52). Bad takes deleted.
+- Learned: anchor + god-mode the character and re-arm `BossIntroTrigger` (`Once` false, `Played` nil) per take; a held trailer path overrides cutscene cameras (toggle trailer mode off/on). Both in TRAILER.md §6.
+
 ## 37th session (Oct 18, 2026): settings menu (committed from the working tree)
 
 - **Settings menu, both places** (TO_PLAN "Settings menu"): gear top right (gamepad View/Back), tabs AUDIO / CAMERA / CONTROLS / CO-OP / ACCESS, rebuilt in the world's UiTheme (`shared/Util/SettingsMenu`). Values in `shared/Util/Settings` (DataStore `PlayerSettings`, key `s_<userId>`, server clamps against `SPECS`, saves every 20 s + on leave; adventure `Main` + lobby `PlayerSettings.server` call `InitServer`).

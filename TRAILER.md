@@ -1,7 +1,7 @@
 # Trailer plan: Glitched Together
 
-Status (Oct 18, 2026, 37th session): recording tool built and tested, environment footage for Pixel Plains, Glitched
-Core and Starfall Castle recorded. Not done yet: Epilogue + lobby shots, gameplay clips, boss intros, the edit, music.
+Status (Oct 18, 2026, 38th session): environment footage for Pixel Plains, Glitched Core, Starfall Castle, Epilogue
+and all three boss intros recorded. Not done yet: lobby shots, gameplay clips (user plays), the edit, music.
 
 Goal (user): a trailer so many players notice the game and come to playtest. Post it on TikTok / YouTube Shorts
 (9:16) and YouTube / the Roblox experience page (16:9).
@@ -69,14 +69,17 @@ What they all share:
 | 2026-10-18 19-31-00.mp4 | PP batch 2: crusher, coin press lane with blob enemies (~8 s), windmill bridges, fan underside (bad), springs (meh), pipes (blocked) | keep press lane, bridges |
 | 2026-10-18 19-42-35.mp4 | Glitched Core: overview flight, MissingTextures, PastePast, WireMaze, TitleEcho, PlainsEcho, CastleEcho, FinalStage | keep overview + echoes |
 | 2026-10-18 19-53-29.mp4 | Starfall Castle (all textures): gatehouse under the moon, hall, library, cart ride, powder hall, throne hall, Hollow Dragon close | keep (orange aim marker dot visible bottom right in some frames) |
-| 19-25-50, 19-32-35, 19-44-12 | test / shrunk / missing textures | delete |
+| 2026-10-18 19-59-19.mp4 | Hollow Dragon intro (drone flight into the Shattered Cathedral, dragon alive) | keep ~8–26 s |
+| 2026-10-18 20-06-01.mp4 | Crusher King intro (retake: fly-up past the ruins to his face, light rays) | keep ~2–20 s |
+| 2026-10-18 20-01-12.mp4 | The Unfinished intro, take 1 | keep (alt) |
+| 2026-10-18 20-02-12.mp4 | The Unfinished intro, take 2 (golem moves more; 0–20 s = fight running, skip) | keep ~21–40 s |
+| 2026-10-18 20-03-52.mp4 | Epilogue: lantern path push-in, crane over the hilltop, trophy orbit, supporter wall push-in (last high wide = too dark) | keep first 4 shots |
 
 Still to record:
-- Epilogue (night walk, hilltop, supporter wall, gold trophies) and the lobby bedroom (capsules, train, bed).
+- The lobby bedroom (capsules, train, bed): lobby place (Rojo 34873).
 - **Gameplay clips with the user playing** (jumps, grapple swing, freeze beam, castle combat, paste bridge, a boss
   fight moment). Two-player shots alone: `/miko`, press G and play Miko's part, `/kai`, `/puppet miko`,
   `/ghost play`, play Kai's part while P flies the camera.
-- Boss intro drone flights (CamPath intros already exist: record them in trailer mode, the Cutscene gui is hidden).
 - A real-looking puppet: `/puppet miko <userId>` with an alt/friend avatar (ask the user; without an id it's a plain
   body with skin + teal shirt).
 
@@ -122,5 +125,11 @@ Still to record:
   fetch for the whole process: restart Studio after granting before you judge.
 - Stale `Lobby` / `LobbyClient` scripts + 11 `Lobby*` materials are in the published Adventure place until it is
   republished: remove them in Studio every time it opens (they build the lobby inside the adventure).
-- The castle's orange aim ground marker shows in trailer frames: hide it in trailer mode (to do).
+- The castle's orange aim ground marker hides in trailer mode (38th: client-only player attribute `TrailerMode`, read by `TopDownAim`).
+- **Recording a boss intro:** jump with `DebugCheckpoint` + `DebugWorld`, anchor the HumanoidRootPart + god mode
+  (MaxHealth = Health = math.huge: the running boss fight / magenta pads kill an idle character, and a death
+  respawns it mid-take), re-arm the trigger (`BossIntroTrigger:SetAttribute("Once", false)`, `Played` nil; a world
+  rebuild resets Once), then pivot into it and wait while the player's `InCutscene` is true (~20 s).
+- **A played trailer path holds its last frame over everything, cutscene cameras too:** toggle trailer mode off/on
+  (Trailer remote "Toggle" twice) before recording a cutscene after scripted shots.
 - OBS profile switches reset the capture transform (scale 0.8): run `crop` again after any profile change.

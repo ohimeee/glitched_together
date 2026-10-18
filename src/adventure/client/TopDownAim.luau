@@ -223,8 +223,9 @@ function TopDownAim.Start(color: Color3)
 		local aiming = drag ~= nil
 		local width = if aiming then dragRadius * 2 else 2.4
 		reticle.Size = Vector3.new(0.15, width, width)
-		reticle.Transparency = if aiming and not dragLine
-			then 0.55
+		reticle.Transparency = if player:GetAttribute("TrailerMode")
+			then 1
+			elseif aiming and not dragLine then 0.55
 			elseif Glyphs.device() == "Touch" or aiming then 1
 			else 0.35
 		bar.Transparency = if aiming and dragLine then 0.45 else 1

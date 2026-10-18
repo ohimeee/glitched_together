@@ -362,6 +362,8 @@ local function setActive(on: boolean)
 		return
 	end
 	active = on
+	-- client-only flag (never replicates): world markers like the castle aim dot hide on it
+	player:SetAttribute("TrailerMode", on)
 	if on then
 		setUiHidden(true)
 		toast("TRAILER MODE · End = leave · V fly · K point · P play")
