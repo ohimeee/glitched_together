@@ -36,12 +36,33 @@ local function turn(dx: number, dy: number)
 	pitch = math.clamp(pitch - dy * invert(), math.rad(C.PitchMin), math.rad(C.PitchMax))
 end
 
+-- a touch that starts on Roblox's thumbstick moves you, it never turns the camera (beta bug report, Oct 19: "if i
+-- move the joystick the camera moves too"). The thumbstick's frame when we can find it, else the screen's lower-left
+-- (where the dynamic thumbstick appears).
+local function onStick(input: InputObject): boolean
+	local pos = Vector2.new(input.Position.X, input.Position.Y)
+	local touchGui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("TouchGui")
+	if touchGui then
+		for _, name in { "ThumbstickFrame", "DynamicThumbstickFrame" } do
+			local frame = touchGui:FindFirstChild(name, true) :: GuiObject?
+			if frame and frame.Visible then
+				local a, size = frame.AbsolutePosition, frame.AbsoluteSize
+				if pos.X >= a.X and pos.X <= a.X + size.X and pos.Y >= a.Y and pos.Y <= a.Y + size.Y then
+					return true
+				end
+			end
+		end
+	end
+	local view = camera.ViewportSize
+	return pos.X < view.X * 0.4 and pos.Y > view.Y * 0.35
+end
+
 UserInputService.InputBegan:Connect(function(input, processed)
 	local t = input.UserInputType
 	if t == Enum.UserInputType.MouseButton2 and not processed then
 		looking = true
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-	elseif t == Enum.UserInputType.Touch and not processed and not touchLook then
+	elseif t == Enum.UserInputType.Touch and not processed and not touchLook and not onStick(input) then
 		touchLook = input
 	end
 end)
