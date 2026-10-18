@@ -46,8 +46,14 @@ task.spawn(function()
 end)
 
 -- every button in any lobby screen (HUD, save-file menu, tip jar), now and later
+-- (not the movement buttons: Roblox's touch jump / thumbstick (TouchGui) and our DASH (LobbyMoves) are controls, a
+-- click on every jump was noise; user, Oct 19)
 local function hookButton(b: Instance)
 	if not b:IsA("GuiButton") then
+		return
+	end
+	local screen = b:FindFirstAncestorWhichIsA("ScreenGui")
+	if screen and (screen.Name == "TouchGui" or screen.Name == "LobbyMoves") then
 		return
 	end
 	b.MouseEnter:Connect(function()
