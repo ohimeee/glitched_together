@@ -35,7 +35,7 @@ Status: **PLAN** (decided Oct 12, 2026, 26th session). Nothing here is built yet
 Plays in the **lobby place** on the first join of a session; any key / click / tap skips; ~5–6 s total.
 1. **Studio logo (~2.5 s):** the studio name builds itself from small pixels on black, holds, then a quick magenta glitch flicker (ties the studio to the game's theme). Soft sound, no harsh sting (user rejected stings).
 2. **Title (~3 s):** the GLITCHED TOGETHER wordmark splits open along a glitch tear (Kai orange one side, Miko teal the other), then fades into the lobby.
-- Studio name: **Night Owl Interactive** (user, Oct 18; "Night Owl Studios" and close spellings were taken on Roblox; community creation costs Robux). Emblem + cover: `marketing/studio/` (`tools/paint_style/studio.py`: owl in a crescent, painted, glitch pixels off the right tuft).
+- Studio name: **Night Owl Interactive** (user, Oct 18; "Night Owl Studios" and close spellings were taken on Roblox; community creation costs Robux). Emblem + cover + splash lockup: `marketing/studio/` (Blender `blender_assets/StudioLogo.blend` concept 2 "the moon is the owl" → `tools/paint_style/studio_logo.py`).
 - Between worlds the painted loading cards are used instead (CLAUDE.md plan).
 
 ## 2. Maturity & compliance questionnaire (draft answers, check in Creator Hub)
