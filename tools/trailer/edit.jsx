@@ -8,23 +8,31 @@ var DIR = "C:/Users/User/Videos/GlitchedTrailer/";
 var EDIT = DIR + "edit/";
 var FPS = 30;
 
+// Music: "Adventure Time - Time Flies_32Sec" by tape-echo (Pixabay Content License), 32.4 s, 123 BPM
+// (beat 0.488 s, bar 1.95 s): quiet intro to ~4.5 s, build, the drop at 9.10 s, full until ~30.3 s, fade by 31.5 s.
+// Cuts sit on its bars from the drop on; the intro cuts sit on beats (9.10 - 6 / 12 beats).
+// the soundtrack = the music + the Kokoro voiceover, premixed with ducking by tools/trailer/voice.py mix
+var MUSIC = EDIT + "trailer_audio.wav";
+var BAR = 1.95;
+var DROP = 9.1;
+
 // [take, source second, length s, card?]  hard cuts in this order
 var SHOTS = [
-	["2026-10-18 19-28-29", 0.5, 2.0], // hook: Kai + Miko by the trial signs
-	["2026-10-18 19-27-30", 1.0, 2.5, "two_players"], // Pixel Plains drone flyover
-	["2026-10-18 19-28-29", 22.0, 2.0], // floating islands
-	["2026-10-18 19-31-00", 7.5, 2.0], // coin press lane, blobs
-	["2026-10-18 19-28-29", 50.5, 2.0], // grind rails
-	["2026-10-18 19-53-29", 0.0, 2.5, "three_worlds"], // Starfall Castle under the moon
-	["2026-10-18 19-53-29", 9.0, 2.0], // castle yard top-down
-	["2026-10-18 19-42-35", 18.5, 2.0], // Glitched Core
-	["2026-10-18 19-42-35", 44.0, 2.0], // Core: glitch lines
-	["2026-10-18 20-06-01", 13.0, 2.5, "unfinished"], // Crusher King push-in
-	["2026-10-18 19-59-19", 12.5, 2.0], // Hollow Dragon
-	["2026-10-18 20-02-12", 33.5, 2.0], // The Unfinished
-	["2026-10-18 20-03-52", 22.5, 1.5], // Epilogue gold trophies
+	["2026-10-18 19-28-29", 0.0, 3.24], // hook: Kai + Miko by the trial signs (quiet intro)
+	["2026-10-18 19-27-30", 1.0, 2.93], // Pixel Plains drone flyover (build)
+	["2026-10-18 19-28-29", 50.0, DROP - 6.17], // grind rails rising into the drop
+	["2026-10-18 19-31-00", 7.5, BAR, "two_players"], // DROP: coin press lane, blobs
+	["2026-10-18 19-28-29", 22.0, BAR], // floating islands
+	["2026-10-18 19-53-29", 0.0, BAR, "three_worlds"], // Starfall Castle under the moon
+	["2026-10-18 19-53-29", 9.0, BAR], // castle yard top-down
+	["2026-10-18 19-42-35", 18.5, BAR], // Glitched Core
+	["2026-10-18 19-42-35", 44.0, BAR], // Core: glitch lines
+	["2026-10-18 20-06-01", 13.0, BAR, "unfinished"], // Crusher King push-in
+	["2026-10-18 19-59-19", 12.5, BAR], // Hollow Dragon
+	["2026-10-18 20-02-12", 33.5, BAR], // The Unfinished
+	["2026-10-18 20-03-52", 22.5, BAR], // Epilogue gold trophies
 ];
-var END = ["2026-10-18 20-03-52", 1.0, 4.0]; // end card over the lantern path
+var END = ["2026-10-18 20-03-52", 1.0, 3.8]; // end card over the lantern path: logo on the bar at 28.60, music fades out
 
 // Roblox's menu buttons sit in the top-left of every take (x < BTN_X, y < BTN_Y): the framing must leave them out
 var BTN_X = 180, BTN_Y = 75, PUSH = 1.05; // PUSH: slow push-in over each shot
@@ -123,7 +131,8 @@ shade.outPoint = LEN;
 shade.property("Transform").property("Opacity").setValueAtTime(endAt, 0);
 shade.property("Transform").property("Opacity").setValueAtTime(endAt + 0.5, 55);
 
-for (var c = 0; c < cards.length; c++) placeCard(cards[c][0], cards[c][1] + 0.1, cards[c][2] - 0.1, 540);
+// cards land on the cut itself (the drop / the bar)
+for (var c = 0; c < cards.length; c++) placeCard(cards[c][0], cards[c][1], cards[c][2], 540);
 
 // end card: logo drops in, then PLAY WITH A FRIEND, then ON ROBLOX
 var logo = comp.layers.add(still("C:/Users/User/OneDrive/Desktop/Coding/glitched_together/marketing/logo_final.png"));
@@ -137,12 +146,20 @@ lt.property("Scale").setValueAtTime(endAt + 9 / FPS, [66, 66]);
 lt.property("Scale").setValueAtTime(LEN, [70, 70]);
 lt.property("Opacity").setValueAtTime(endAt, 0);
 lt.property("Opacity").setValueAtTime(endAt + 3 / FPS, 100);
-placeCard("play_friend", endAt + 0.7, LEN - endAt - 0.7 + 0.01, 800);
-placeCard("on_roblox", endAt + 1.2, LEN - endAt - 1.2 + 0.01, 940);
+var BEAT = BAR / 4;
+// PLAY WITH A FRIEND pops as the voice says it (voice.py LINES: 30.3 s), ON ROBLOX a beat later
+var SAY = 30.3;
+placeCard("play_friend", SAY, LEN - SAY + 0.01, 800);
+placeCard("on_roblox", SAY + BEAT, LEN - SAY - BEAT + 0.01, 940);
+
+var music = comp.layers.add(app.project.importFile(new ImportOptions(new File(MUSIC))));
+music.startTime = 0;
+
 
 // 9:16: the 16:9 cut as a band in the middle over a blown-up, darkened copy of itself
 var tall = app.project.items.addComp("Trailer9x16", 1080, 1920, 1, LEN, FPS);
 var bg = tall.layers.add(comp);
+try { bg.audioEnabled = false; } catch (e) {} // the music plays once, from the band
 bg.property("Transform").property("Position").setValue([540, 960]);
 bg.property("Transform").property("Scale").setValue([190, 190]);
 var veil = tall.layers.addSolid([0.03, 0.03, 0.08], "Veil", 1080, 1920, 1, LEN);
