@@ -2,6 +2,13 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 35th session (Oct 18, 2026): docs backfill, studio logo, lobby /go
+
+- Backfilled the 34th session's docs (it ran out of tokens): tip jar, supporter wall kit, places, marketing art (entries under the 34th below).
+- Missing phone images: the user suspected Studio's "Enable Mesh / Image APIs" toggle; not the cause (CLAUDE.md gotcha). Game icon = Pip, applied on the store by the user.
+- Studio name: "Night Owl Studios" taken on Roblox → **Night Owl Interactive**, community 129463626 created by the user (description written from popular studio pages: Sonar, Rumble, DuoTale, Chillz). Logo story under the 34th's "Studio logo" entry; backgrounds: night sky with clouds/star band/twinkles/halo, cover hills + pine treeline (`tools/paint_style/studio_logo.py`).
+- **Lobby `/go [world] [cp]`** (user: how to reach a world alone; the capsules need two): `lobby/server/AdminGo.server.luau` reserves an Adventure server and teleports the admin with `{ AdminGo, World, Checkpoint }`; Adventure `AdminCommands.adminArrival` re-checks `Admins.Allowed` (teleport data passes through the client), sets workspace `AdminSolo` (DuoService.WaitForDuo stops waiting) and jumps like `/world`. `Admins.Allowed` moved into `Config/Admins` (shared by both places). StyLua + luau-lsp clean; untested live (needs both places published).
+
 ## 34th session (Oct 18, 2026): supporter wall + cosmetic passes
 
 - `/diag` also reports MeshId / TextureID / SurfaceAppearance fetch status near the player + memory (phone mesh colors).

@@ -127,6 +127,7 @@ Type these in the game chat (works in the published game and in Studio). Only th
 
 | Command | Does |
 |---|---|
+| `/go` or `/go pp 28` | **lobby only:** teleports you alone into a private Adventure server (capsules need two players), optionally straight to a world + checkpoint; no 30 s partner wait |
 | `/world pp 28` | load a world at a checkpoint (names: `prologue`, `pp`, `castle`, `core`, `epi`, or the full name; checkpoint optional = start) |
 | `/cp 7` | reload the current world at checkpoint 7 |
 | `/miko` or `/kai` | change character (solo); `/swap` swaps Kai and Miko with 2 players (`/role miko` works too) |

@@ -160,7 +160,12 @@ function DuoService.WaitForDuo(timeout: number)
 		task.wait(0.1)
 	end
 	local start = os.clock()
-	while not (DuoService.Kai and DuoService.Miko) and os.clock() - start < timeout do
+	-- AdminSolo = an admin came alone via the lobby's /go (AdminCommands): no partner is coming
+	while
+		not (DuoService.Kai and DuoService.Miko)
+		and os.clock() - start < timeout
+		and not workspace:GetAttribute("AdminSolo")
+	do
 		task.wait(0.1)
 	end
 end

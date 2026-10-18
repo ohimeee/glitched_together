@@ -25,12 +25,7 @@ local ALIAS = {
 	ep = "Epilogue",
 }
 
-local function allowed(userId: number): boolean
-	if game.CreatorType == Enum.CreatorType.User and userId == game.CreatorId then
-		return true
-	end
-	return table.find(Admins.Ids, userId) ~= nil
-end
+local allowed = Admins.Allowed
 
 local function worldName(text: string): string?
 	local low = text:lower()
@@ -120,8 +115,29 @@ local function onChat(player: Player, message: string)
 	end
 end
 
+-- Lobby /go (lobby/server/AdminGo): an admin arrives alone in a reserved server with { AdminGo, World, Checkpoint }.
+-- Teleport data passes through the client, so it only counts for an admin. Sets workspace AdminSolo (DuoService skips
+-- the 30 s partner wait) and jumps like /world (Main picks a DebugWorld set before the first load up too).
+local function adminArrival(player: Player)
+	if not allowed(player.UserId) then
+		return
+	end
+	local data = player:GetJoinData().TeleportData
+	if type(data) ~= "table" or data.AdminGo ~= true then
+		return
+	end
+	workspace:SetAttribute("AdminSolo", true)
+	local world = type(data.World) == "string" and worldName(data.World)
+	if world then
+		jump(world, tonumber(data.Checkpoint) or 0)
+	elseif data.World then
+		warn(`[Admin] /go: no world "{data.World}"; starting from the save`)
+	end
+end
+
 function AdminCommands.Init()
 	local function watch(player: Player)
+		adminArrival(player)
 		player.Chatted:Connect(function(message)
 			onChat(player, message)
 		end)
