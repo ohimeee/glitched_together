@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Kits = require(ReplicatedStorage.Shared.Config.Kits)
+local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local MoveAnims = require(ReplicatedStorage.Shared.Config.MoveAnims)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
@@ -116,7 +117,12 @@ local function spawn(player: Player, role: "Kai" | "Miko", userId: number?)
 		if userId then
 			return Players:CreateHumanoidModelFromUserId(userId)
 		end
-		return Players:CreateHumanoidModelFromDescription(Instance.new("HumanoidDescription"), Enum.HumanoidRigType.R15)
+		-- no avatar given: a blank description is all black, so skin + the role's shirt color + dark trousers
+		local d = Instance.new("HumanoidDescription")
+		d.HeadColor, d.LeftArmColor, d.RightArmColor = T.PuppetSkin, T.PuppetSkin, T.PuppetSkin
+		d.TorsoColor = (Palette :: any)[role]
+		d.LeftLegColor, d.RightLegColor = T.PuppetLegs, T.PuppetLegs
+		return Players:CreateHumanoidModelFromDescription(d, Enum.HumanoidRigType.R15)
 	end)
 	if not ok then
 		warn("[Trailer] puppet avatar failed:", model)

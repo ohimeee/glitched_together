@@ -299,6 +299,8 @@ return {
 	Trailer = {
 		PuppetOffset = 6, -- studs to the caller's right where /puppet appears
 		PuppetIdle = "rbxassetid://507766388", -- Roblox's R15 idle, looped while the puppet only stands
+		PuppetSkin = Color3.fromRGB(234, 190, 160), -- puppet without a userId: skin, shirt = the role color, trousers
+		PuppetLegs = Color3.fromRGB(40, 44, 70),
 		GhostRate = 20, -- samples / s of a ghost recording (playback interpolates)
 		GhostMax = 60, -- s: longest ghost take
 		GhostChunk = 100, -- samples per remote message

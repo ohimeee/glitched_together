@@ -6,7 +6,8 @@
 --   1-9        camera path slot              K   add the camera here as the slot's next point   J   drop the last
 --   Delete     clear the slot                [ / ]  path time -1 s / +1 s
 --   P          play the slot's path (or stop): a smooth constant-speed flight, eased at both ends. Out of fly mode
---              you keep playing the character live while the camera flies the path.
+--              you keep playing the character live while the camera flies the path; at the end the camera holds
+--              the last frame until P / V (clean cut to the next shot).
 --   O          print the slot's points to the output (paste them into a shot list)
 --   H          hide / show your own character (environment shots)
 --   G          ghost take (3 s countdown, G again stops early): /puppet replays it with /ghost play
@@ -34,6 +35,7 @@ local active = false
 local uiHidden = false
 local flying = false
 local playing = false
+local holding = false -- a finished path keeps its last frame (clean cut to the next shot) until P / V / End
 local camCF = CFrame.new()
 local fov = 70
 local yaw, pitch = 0, 0
@@ -133,6 +135,7 @@ local function setUiHidden(on: boolean)
 		table.clear(hiddenGuis)
 		pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.All, true)
 		ProximityPromptService.MaxPromptsVisible = 16
+		UserInputService.MouseIconEnabled = true
 	end
 end
 
@@ -233,6 +236,7 @@ local function playPath()
 	playToken += 1
 	local token = playToken
 	playing = true
+	holding = true
 	local at = sampler(p.keys)
 	camCF, fov = at(0)
 	local start = os.clock()
@@ -254,6 +258,7 @@ end
 local function stopPath()
 	playToken += 1
 	playing = false
+	holding = false
 end
 
 local function syncFlyAngles()
@@ -263,6 +268,7 @@ end
 
 local function setFlying(on: boolean)
 	flying = on
+	holding = false
 	local r = root()
 	if r then
 		r.Anchored = on
@@ -275,7 +281,7 @@ local function setFlying(on: boolean)
 end
 
 local function cameraActive(): boolean
-	return active and (flying or playing)
+	return active and (flying or playing or holding)
 end
 
 local function printPath()
@@ -410,7 +416,7 @@ local KEYS: { [Enum.KeyCode]: () -> () } = {
 		toast(`slot {slot}: {p.time} s`)
 	end,
 	[Enum.KeyCode.P] = function()
-		if playing then
+		if playing or holding then
 			stopPath()
 			if flying then
 				syncFlyAngles()
@@ -447,6 +453,15 @@ function TrailerController.Init()
 			setActive(not active)
 		elseif what == "Record" and active then
 			recordGhost(tonumber(arg) or 15)
+		elseif what == "Path" and active and type(arg) == "table" then
+			-- a scripted shot (server / Studio command bar): { slot, keys = { { cf, fov } }, time, play }
+			slot = tonumber(arg.slot) or slot
+			paths[slot] = { keys = arg.keys or {}, time = tonumber(arg.time) or T.PathTime }
+			if arg.play then
+				playPath()
+			end
+		elseif what == "HideChar" and active then
+			setCharHidden(arg == true)
 		end
 	end)
 
@@ -496,6 +511,9 @@ function TrailerController.Init()
 			return
 		end
 		enforceHidden()
+		if uiHidden then
+			UserInputService.MouseIconEnabled = false -- CameraController's override turns the cursor back on each frame
+		end
 		if flying and not playing then
 			local move = Vector3.zero
 			local k = UserInputService
