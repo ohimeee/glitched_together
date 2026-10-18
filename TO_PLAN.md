@@ -4,7 +4,7 @@ Open decisions that aren't planned yet (Oct 12, 2026, 26th session). Launch and 
 
 ## Players and matchmaking
 
-- [ ] **How partners find each other:** friends only, random queue, invite codes?
+- [x] **How partners find each other:** invite friends + saved runs + capsules, and a cross-server random queue: FIND A PARTNER (built Oct 18, 37th session).
 - [ ] **Saved-runs lobby screen:** what the partner list looks like, and what happens when your saved partner is offline. (`SaveService` already keeps one save per pair, written at every checkpoint.)
 - [ ] **Rules for a partner who quits mid-run.** Today the other player waits 2 minutes (`Tuning.PartnerWaitTime`), then goes to the lobby.
 

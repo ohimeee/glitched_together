@@ -31,19 +31,35 @@ function DuoTeleport.Send(kai: Player, miko: Player, fresh: boolean?): (boolean,
 		return false, "STUDIO"
 	end
 	local ok, err = pcall(function()
-		local accessCode, privateServerId = TeleportService:ReserveServer(Places.Adventure)
-		duoMap:SetAsync(privateServerId, { kai = kai.UserId, miko = miko.UserId, fresh = fresh == true }, DUO_TTL)
-		rejoinMap:SetAsync(tostring(kai.UserId), { code = accessCode, server = privateServerId }, DUO_TTL)
-		rejoinMap:SetAsync(tostring(miko.UserId), { code = accessCode, server = privateServerId }, DUO_TTL)
-
-		local options = Instance.new("TeleportOptions")
-		options.ReservedServerAccessCode = accessCode
-		TeleportService:TeleportAsync(Places.Adventure, { kai, miko }, options)
+		DuoTeleport.Go({ kai, miko }, DuoTeleport.Reserve(kai.UserId, miko.UserId, fresh))
 	end)
 	if not ok then
 		warn("Duo teleport failed:", err)
 	end
 	return ok, if ok then nil else tostring(err)
+end
+
+-- Reserves the duo's Adventure server and writes its Duos / Rejoin records; returns the access code. Throws on
+-- failure. Split from Send so FIND A PARTNER can pair players in two lobby servers: each server then Go()es its own.
+function DuoTeleport.Reserve(kaiId: number, mikoId: number, fresh: boolean?): string
+	assert(storeOk and Places.Adventure ~= 0 and not RunService:IsStudio(), "teleports are off here")
+	local accessCode, privateServerId = TeleportService:ReserveServer(Places.Adventure)
+	duoMap:SetAsync(privateServerId, { kai = kaiId, miko = mikoId, fresh = fresh == true }, DUO_TTL)
+	rejoinMap:SetAsync(tostring(kaiId), { code = accessCode, server = privateServerId }, DUO_TTL)
+	rejoinMap:SetAsync(tostring(mikoId), { code = accessCode, server = privateServerId }, DUO_TTL)
+	return accessCode
+end
+
+-- Teleports players of this server into a reserved server (from Reserve). Throws on failure.
+function DuoTeleport.Go(players: { Player }, accessCode: string)
+	local options = Instance.new("TeleportOptions")
+	options.ReservedServerAccessCode = accessCode
+	TeleportService:TeleportAsync(Places.Adventure, players, options)
+end
+
+-- false where teleports can't run (Studio, no place id, no MemoryStore)
+function DuoTeleport.Live(): boolean
+	return storeOk and Places.Adventure ~= 0 and not RunService:IsStudio()
 end
 
 -- The rejoin entry of a player who dropped out of a duo run (nil = none / unreadable).

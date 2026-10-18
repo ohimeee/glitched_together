@@ -295,6 +295,14 @@ return {
 		AuraRate = 6, -- sparkles / s
 		AuraLight = 0.6, -- PointLight brightness (subtle-lighting)
 	},
+	-- lobby FIND A PARTNER (lobby/server/Matchmaking): one queue across every lobby server (MemoryStore)
+	Matchmaking = {
+		Poll = 2, -- s between queue reads while someone in this server is searching
+		EntryTtl = 45, -- s a queue entry lives without a refresh (a crashed server's searchers drop out)
+		Refresh = 15, -- s between refreshes of our own entries
+		RoleFallback = 20, -- s both must have waited before two KAI (or two MIKO) wishes are paired anyway
+		ClaimTimeout = 20, -- s a claimed entry waits for its match before it frees itself
+	},
 	RoleTag = Vector2.new(3, 0.8), -- studs: the partner's "KAI" / "MIKO" tag (PartnerController)
 	-- castle portcullis gates opening/closing (InteractableService): a clank + shudder, then a slow grind
 	Portcullis = { Shudder = 0.25, ShudderLift = 0.35, Move = 1.2 },

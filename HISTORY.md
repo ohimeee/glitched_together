@@ -10,6 +10,7 @@ Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUD
 - **Touch layout editor** (`TouchController.EditLayout`, settings → EDIT BUTTONS): drag copies, − / + size, CLEARER / SOLIDER (`TouchOpacity`), RESET, SAVE → `Settings.TouchLayout`.
 - Lobby lighting brighter (user: "a bit brighter"): Brightness 0.95, EnvDiffuse 0.6, ambients up (`Config/Worlds` Lobby).
 - StyLua clean; not yet checked in Studio play.
+- **FIND A PARTNER** (user's retention tips: a solo joiner's first 30 s; user picks: lobby + search card, ANY/KAI/MIKO wish): `lobby/server/Matchmaking.server.luau` = one queue across every lobby server (MemoryStore SortedMap `MatchQueue`, key userId, sort = join time, `Tuning.Matchmaking`). The older entry of a pair starts the match: claims both entries (UpdateAsync), `DuoTeleport.Reserve` (split out of `Send`, + `Go` / `Live`), writes the access code into the partner's entry, teleports its own player; the partner's server sends theirs on its next poll. Same-server pairs go in one teleport. KAI+KAI / MIKO+MIKO only after both waited `RoleFallback` (coin flip). Studio/unpublished: matches inside the server, no teleport ("MATCHED! (STUDIO)"). Client `lobby/client/MatchUI.client.luau`: big pulsing green button bottom centre → search card (timer, wish chips, CANCEL) → PARTNER FOUND card. luau-lsp + StyLua clean; untested (Studio closed).
 
 ## 36th session (Oct 18, 2026): lobby/adventure mix-up, lobby audio
 
