@@ -13,7 +13,7 @@ local CENTER = Vector3.new(X0 + 1, 24, -20) -- raised 12 (user, Oct 18: higher)
 local W, H = 72, 46 -- studs (the bedroom is doll scale: ~1 m wide)
 local rgb = Color3.fromRGB
 
-Supporters.Init({ TagHeight = 4.4 }) -- over the lobby's KAI / MIKO role tag
+Supporters.Init() -- same height as the adventure, under the capsule KAI / MIKO role tag
 TipJar.Init()
 
 local folder = Instance.new("Folder")

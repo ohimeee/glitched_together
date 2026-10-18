@@ -291,7 +291,7 @@ return {
 		Refresh = 120, -- s between data store reads
 		StudioPreview = true, -- Studio with no tips yet: fill the walls + credits with placeholder supporters
 		Tag = Vector2.new(3.4, 0.6), -- studs
-		TagHeight = 1.8, -- studs over the head, just under the partner's KAI / MIKO tag (2.6) (user, Oct 19: 3.7 too high)
+		TagHeight = 1.4, -- studs over the head, just under the KAI / MIKO tags (user, Oct 19: 3.7 then 1.8 too high)
 		AuraRate = 6, -- sparkles / s
 		AuraLight = 0.6, -- PointLight brightness (subtle-lighting)
 	},
