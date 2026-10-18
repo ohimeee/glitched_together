@@ -143,7 +143,7 @@ local function hook(character: Model)
 	return dash
 end
 
--- DASH touch button, left of Roblox's jump button like the adventure's ring (TouchController: Dash at 180°), same icon
+-- DASH touch button, north-west of Roblox's jump button (user), the adventure's dash icon
 -- (falls back to the word if the image fails to load: new uploads reach phones late)
 local DASH_ICON = "rbxassetid://129855379396466"
 local dashNow: (() -> ())? = nil
@@ -219,7 +219,9 @@ local function touchButton()
 			local centre = jump.AbsolutePosition + jump.AbsoluteSize / 2
 			local inset = gui.AbsolutePosition -- ScreenGui offset under the top bar
 			b.Size = UDim2.fromOffset(size, size)
-			b.Position = UDim2.fromOffset(centre.X - jump.AbsoluteSize.X * 1.05 - inset.X, centre.Y - inset.Y)
+			-- north-west of the jump button (user, Oct 18)
+			local d = jump.AbsoluteSize.X * 0.78
+			b.Position = UDim2.fromOffset(centre.X - d - inset.X, centre.Y - d - inset.Y)
 			b.Visible = jump.Visible
 		end
 		follow()
