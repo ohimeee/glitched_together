@@ -48,6 +48,8 @@ def keys():
 
 def entry(key):
     r = requests.get(f"{BASE}/entries/entry", headers=H, params={"datastoreName": "BugReports", "entryKey": key}, timeout=20)
+    if r.status_code == 404:  # deleted (listings lag behind deletes)
+        return None
     r.raise_for_status()
     return r.json()
 
@@ -61,6 +63,9 @@ def main():
         return
     for k in todo:
         e = entry(k)
+        if e is None:
+            seen.add(k)
+            continue
         when = time.strftime("%b %d %H:%M", time.localtime(e.get("time", 0)))
         where = f"{e.get('place')} {e.get('world') or ''} cp {e.get('checkpoint', '-')} @ {e.get('pos')}"
         print(f"[{when}] {e.get('user')} ({e.get('device')}, v{e.get('placeVersion')}) {where}")

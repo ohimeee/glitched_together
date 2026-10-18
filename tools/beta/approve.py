@@ -15,6 +15,7 @@ import requests
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 GROUP = "129463626"
 ROLE_NAME = "Beta Tester"
+OWNER_ID = 11657510634  # buldak0555: never re-roled
 CLOUD = f"https://apis.roblox.com/cloud/v2/groups/{GROUP}"
 
 
@@ -90,6 +91,9 @@ def main():
             print(f"{n}: no such Roblox user (check the spelling: username, not display name)")
             continue
         uid, real = ids[n.lower()]
+        if uid == OWNER_ID:
+            print(f"{real}: the owner, always plays (left alone)")
+            continue
         m = membership(uid)
         if not m:
             print(f"{real}: NOT in the community yet: ask them to join first")
