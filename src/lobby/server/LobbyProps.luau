@@ -20,12 +20,14 @@ type Prop = {
 }
 
 local PROPS: { [string]: Prop } = {
-	Monitor = { -- a beige 90s CRT: the screen shows the game's title (the portal into it)
-		Id = "rbxassetid://73373807336016",
-		Tex = "rbxassetid://137708631991572",
-		Size = v(30.9, 33.6, 28.2),
+	-- a beige 90s CRT: the screen shows the game's title. Blender kit piece since Oct 18 (tools/lobby_kit/fix_oct18.py,
+	-- lobby palette atlas): the generated one had a domed front the screen panel hung off. glTF upload: +180 yaw.
+	Monitor = {
+		Id = "rbxassetid://136806831133697",
+		Tex = "rbxassetid://85641984484582",
+		Size = v(30, 31, 26.65),
 		At = v(64, 0, 40),
-		Yaw = 22,
+		Yaw = 22 + 180,
 		Solid = true,
 	},
 	DeskLamp = { -- anglepoise lamp: the warm pool over the capsules
@@ -44,10 +46,12 @@ local PROPS: { [string]: Prop } = {
 		Yaw = 200,
 		Solid = true,
 	},
-	Bunny = { -- Miko's plush, slumped against the lamp
-		Id = "rbxassetid://95030417751335",
-		Tex = "rbxassetid://91629017772694",
-		Size = v(16.8, 15.8, 13.4),
+	-- felt owl plush against the lamp (Night Owl Interactive's owl). Replaced the bunny on Oct 18: the user said it read
+	-- as an It Takes Two toy
+	Owl = {
+		Id = "rbxassetid://111224340763459",
+		Tex = "rbxassetid://125907762193199",
+		Size = v(13.8, 16, 11),
 		At = v(-88, 0, 12),
 		Yaw = -60,
 		Solid = true,
@@ -92,10 +96,12 @@ local PROPS: { [string]: Prop } = {
 		Yaw = 200,
 		Solid = true,
 	},
-	Rocket = { -- on the bookshelf's second shelf
-		Id = "rbxassetid://82945930964129",
-		Tex = "rbxassetid://111356122925546",
-		Size = v(10.4, 16, 10.5),
+	-- painted wooden hot-air balloon on a stand, on the bookshelf's second shelf (replaced the toy rocket, Oct 18:
+	-- also too It Takes Two)
+	Balloon = {
+		Id = "rbxassetid://82873346947082",
+		Tex = "rbxassetid://91607886263640",
+		Size = v(7, 16, 7.1),
 		At = v(131, -24, -142),
 		Yaw = 80,
 	},
@@ -202,8 +208,10 @@ local function monitorScreen(monitor: MeshPart, parent: Instance)
 	screen.CanCollide = false
 	screen.CanQuery = false
 	screen.CanTouch = false
-	screen.Size = v(21.5, 17.4, 0.2)
-	screen.CFrame = monitor.CFrame * CFrame.new(0, 3.2, -14.6) -- in front of the mesh's bulging glass
+	-- in the bezel's 22 x 17 opening (fix_oct18.py: centre 3 above the mesh centre, glass 1.3 behind the bezel front),
+	-- edges tucked 0.2 into its walls; the extra half turn undoes the glTF one so -Z is the screen's front
+	screen.Size = v(22.4, 17.4, 0.2)
+	screen.CFrame = monitor.CFrame * CFrame.Angles(0, math.pi, 0) * CFrame.new(0, 3, -11.275)
 	screen.Material = Enum.Material.SmoothPlastic
 	screen.Color = rgb(14, 20, 48)
 	screen.Parent = parent
@@ -230,7 +238,7 @@ local function monitorScreen(monitor: MeshPart, parent: Instance)
 	title.Font = Enum.Font.PermanentMarker
 	title.TextScaled = true
 	title.TextColor3 = rgb(255, 244, 224)
-	title.Text = "Starfall Kingdom"
+	title.Text = "Starfall Kingdom" -- the game Kai and Miko made on this desk (Story Line)
 	title.Parent = bg
 	local star = Instance.new("TextLabel")
 	star.Size = UDim2.fromScale(0.2, 0.18)

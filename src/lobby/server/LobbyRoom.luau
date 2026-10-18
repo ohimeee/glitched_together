@@ -161,7 +161,9 @@ local function walls()
 	part("WallDoor", v(X1 - X0, H, t), CFrame.new((X0 + X1) / 2, midY, Z0 - t / 2), WALL)
 	-- window wall: four pieces around the opening
 	local zw = Z1 + t / 2
-	part("WallWinL", v(WIN.X + X1, H, t), CFrame.new((X0 - WIN.X) / 2, midY, zw), WALL)
+	-- (was WIN.X + X1 = 240 wide: it ran across the left half of the opening, z-fighting the walls under and over the
+	-- window, user: "blinking", Oct 18)
+	part("WallWinL", v(-WIN.X - X0, H, t), CFrame.new((X0 - WIN.X) / 2, midY, zw), WALL)
 	part("WallWinR", v(X1 - WIN.X, H, t), CFrame.new((X1 + WIN.X) / 2, midY, zw), WALL)
 	part("WallWinB", v(WIN.X * 2, WIN.Y0 - FLOOR_Y, t), CFrame.new(0, (FLOOR_Y + WIN.Y0) / 2, zw), WALL)
 	part("WallWinT", v(WIN.X * 2, CEIL_Y - WIN.Y1, t), CFrame.new(0, (WIN.Y1 + CEIL_Y) / 2, zw), WALL)
@@ -522,23 +524,26 @@ local function bookshelf()
 			)
 		)
 	end
+	-- leans with the rails (the kit's Ladder_Oak too), on the rungs, nearly as wide as the ladder: a straight
+	-- truss beside the slanted ladder felt broken (user, Oct 18)
 	local truss = Instance.new("TrussPart")
 	truss.Name = "LadderClimb"
 	truss.Anchored = true
-	truss.Size = v(2, H, 2)
-	truss.CFrame = CFrame.new(lx + 2.5, FLOOR_Y + H / 2, lz)
+	truss.Size = v(2, H + 6, 10)
+	truss.CFrame = CFrame.new(lx + 4, FLOOR_Y + (H + 6) / 2, lz) * CFrame.Angles(0, 0, math.rad(-6))
 	truss.Transparency = 1
 	truss.Parent = folder
 end
 
 local function rug()
-	local r = part("Rug", v(1.2, 120, 120), CFrame.new(-10, FLOOR_Y + 0.6, -150) * CFrame.Angles(0, 0, math.rad(90)), {
+	-- solid (an invisible collider once the kit's fur mesh loads): players walk on the fur, 0.4 sunk into the pile,
+	-- not on the floor under it (user, Oct 18); 1 stud high so walking onto it needs no jump
+	local r = part("Rug", v(1, 120, 120), CFrame.new(-10, FLOOR_Y + 0.5, -150) * CFrame.Angles(0, 0, math.rad(90)), {
 		Shape = Enum.PartType.Cylinder,
 		Material = Enum.Material.Fabric,
 		MaterialVariant = "LobbyRug",
 		Color = rgb(226, 214, 236),
 	})
-	r.CanCollide = false
 	-- a few toy blocks and a crayon scattered on the rug
 	for i = 1, 6 do
 		toyBlock(v(rng:NextNumber(-50, 30), FLOOR_Y + 1.2, rng:NextNumber(-190, -110)), 7, i + 2)

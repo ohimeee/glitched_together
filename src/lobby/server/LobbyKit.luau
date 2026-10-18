@@ -33,7 +33,7 @@ local SURFACES: { [string]: Surface } = {
 }
 
 -- name = LK_<Piece>_<Surface> in Blender; Center/Size are Roblox studs (tools/lobby_kit/kit.py report())
-type Piece = { Id: string, Center: Vector3, Size: Vector3 }
+type Piece = { Id: string, Center: Vector3, Size: Vector3, Turn: boolean? } -- Turn: a glTF upload (comes in 180° about Y)
 local PIECES: { [string]: Piece } = {
 	Desk_Oak = { Id = "rbxassetid://85664069443621", Center = v(0, -25, 0), Size = v(200, 50, 130) },
 	Desk_Brass = { Id = "rbxassetid://98735164340818", Center = v(70, -23.125, -62.425), Size = v(7.3, 30.45, 2.05) },
@@ -66,7 +66,9 @@ local PIECES: { [string]: Piece } = {
 		Center = v(-77.833, -27.895, -126.728),
 		Size = v(23.936, 44.211, 122.174),
 	},
-	Window_Paint = { Id = "rbxassetid://129379256874528", Center = v(0, 58.35, 71.5), Size = v(176, 110.7, 15) },
+	-- a hair smaller than built: its reveal + sill faces lay exactly on the wall opening's (x ±80, y 12 / 105) and
+	-- flickered (user, Oct 18)
+	Window_Paint = { Id = "rbxassetid://129379256874528", Center = v(0, 58.35, 71.5), Size = v(175.6, 110.3, 14.9) },
 	CurtainRod_Brass = {
 		Id = "rbxassetid://140692382790126",
 		Center = v(0, 117, 69.928),
@@ -100,10 +102,12 @@ local PIECES: { [string]: Piece } = {
 		Center = v(-4.906, 1.19, 4.881),
 		Size = v(152.42, 2.62, 129.137),
 	},
+	-- track = continuous rings since Oct 18 (tools/lobby_kit/fix_oct18.py): the old 64 overlapping boxes shimmered
 	FloorToys_Pal = {
-		Id = "rbxassetid://115349599954419",
-		Center = v(33.252, -43, -177.748),
-		Size = v(160.503, 14, 94.503),
+		Id = "rbxassetid://96747009765616",
+		Center = v(33.25, -43, -177.75),
+		Size = v(160.5, 14, 94.5),
+		Turn = true,
 	},
 	-- batch 4 (tools/lobby_kit/walls.py): corkboard, peg rail, photo string, paper lantern
 	CorkFrame_Oak = { Id = "rbxassetid://98412143460946", Center = v(-40, 45, -228.8), Size = v(70, 50, 2.4) },
@@ -134,7 +138,8 @@ local PIECES: { [string]: Piece } = {
 		Center = v(1.4, 1.306, -23.922),
 		Size = v(14.2, 2.813, 3.757),
 	},
-	Rug_Fur = { Id = "rbxassetid://72045910082061", Center = v(-10, -48.75, -150), Size = v(120, 2.5, 120) },
+	-- flattened from 2.5 high: the collider (LobbyRoom rug) sits 0.4 under its top
+	Rug_Fur = { Id = "rbxassetid://72045910082061", Center = v(-10, -49.3, -150), Size = v(120, 1.4, 120) },
 }
 
 -- A 1-stud ABC block with a raised border on every face; LobbyRoom's ToyBlock parts get one each (scaled, recolored).
@@ -176,6 +181,7 @@ function LobbyKit.Build(parent: Instance, room: Instance)
 				local p = load(name, piece.Id, piece.Size, surfaceOf(name))
 				if p then
 					p.CFrame = CFrame.new(piece.Center)
+						* (if piece.Turn then CFrame.Angles(0, math.pi, 0) else CFrame.identity)
 					if name == "Lantern_Paper" then -- a small warm pool under the lantern (memory: subtle lights)
 						local glow = Instance.new("PointLight")
 						glow.Color = rgb(255, 196, 140)
