@@ -31,7 +31,9 @@ local function hook(character: Model)
 			local up = if held then BOUNCE_JUMP else BOUNCE
 			local vel = root.AssemblyLinearVelocity
 			root.AssemblyLinearVelocity = Vector3.new(vel.X, up, vel.Z)
-			Audio.play("BedBounce", hit.Position, if held then 1.2 else 1)
+			local loud = if held then 1.2 else 1
+			Audio.play("BedBounce", root, loud)
+			Audio.play("BedBoing", root, loud)
 		end
 	end)
 end
