@@ -3,6 +3,9 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local BOUNCE = 46 -- studs/s up on a plain landing
 local BOUNCE_JUMP = 72 -- with jump held
@@ -28,6 +31,7 @@ local function hook(character: Model)
 			local up = if held then BOUNCE_JUMP else BOUNCE
 			local vel = root.AssemblyLinearVelocity
 			root.AssemblyLinearVelocity = Vector3.new(vel.X, up, vel.Z)
+			Audio.play("BedBounce", hit.Position, if held then 1.2 else 1)
 		end
 	end)
 end

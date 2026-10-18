@@ -128,6 +128,18 @@ local Sfx: { [string]: Def } = {
 	PipBleep = { Id = pse(9113880475), Volume = 0.18, Pitch = 1.1, PitchVar = 0.25, Group = "UI" },
 	PipChirp = { Id = pse(9118272977), Volume = 0.3, Group = "UI" }, -- kalimba beep-borp when a hint pops
 
+	-- Lobby (doll-sized bedroom)
+	BedBounce = { -- spring squeak of the trampoline bed
+		Ids = { pse(9113389774), pse(9113389530), pse(9113389545) },
+		Volume = 0.4,
+		Pitch = 1.1,
+		PitchVar = 0.08,
+	},
+	TrainWhistle = { Ids = { pse(9120223070), pse(9120222876) }, Volume = 0.35, Range = 80 }, -- wooden toy whistle
+	CapsuleIn = { Id = pse(9125921369), Volume = 0.45, Pitch = 1.1 }, -- latch click as a seat is taken
+	LockTick = { Id = "rbxassetid://10128760939", Volume = 0.35, Range = 40 }, -- countdown second
+	LockIn = { Id = pse(9119816546), Volume = 0.5, Range = 60 }, -- multi-tone wind-up as the pair is sent
+
 	-- UI (Roblox's UI set)
 	Click = { Id = "rbxassetid://15675059323", Volume = 0.4, Group = "UI" },
 	Hover = { Id = "rbxassetid://10066931761", Volume = 0.2, Group = "UI" },
@@ -138,6 +150,10 @@ local Sfx: { [string]: Def } = {
 
 -- Music per world (design.md §8), all APM. Crossfaded by AudioController on workspace "World".
 local Music: { [string]: Def } = {
+	-- the lobby bedroom at night, cosy but never sad (user, Oct 18): "Playground Stories Underscore B", positive,
+	-- bright chimes over relaxed pizzicato (alternatives: 9046270989 "Playful Penguins C" light bouncy piano,
+	-- 1835327258 "Firefly Nights Main Underscore", 1847723754 "Toy Piano")
+	Lobby = { Id = pse(9046512235), Volume = 0.3 },
 	-- "Music Box Lullaby": quiet and lonely but gentle (user, Oct 1: the solo piano "Nocturnal Loneliness",
 	-- 101684715165177, was too sad)
 	Prologue = { Id = pse(9047785119), Volume = 0.4 },
@@ -157,6 +173,7 @@ local BossMusic: { [string]: Def } = {
 
 -- Quiet background beds under the music.
 local Ambience: { [string]: Def } = {
+	Lobby = { Id = pse(9112764573), Volume = 0.08 }, -- night crickets through the bedroom window
 	Prologue = { Id = pse(9114057128), Volume = 0.15 }, -- light whistly wind
 	PixelPlains = { Id = pse(9119383684), Volume = 0.18 }, -- morning birds
 	StarfallCastle = { Id = pse(9112780462), Volume = 0.15 }, -- torch/fireplace crackle

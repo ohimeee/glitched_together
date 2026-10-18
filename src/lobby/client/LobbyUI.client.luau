@@ -7,6 +7,7 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local Palette = require(ReplicatedStorage.Shared.Config.Palette)
 local UiSkin = require(ReplicatedStorage.Shared.Util.UiSkin)
 local UiFit = require(ReplicatedStorage.Shared.Util.UiFit)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 
 local player = Players.LocalPlayer
 
@@ -40,6 +41,10 @@ local function button(text: string, color: Color3, index: number): TextButton
 	UiSkin.Text(b, "Title", Color3.new(1, 1, 1))
 	b.MouseEnter:Connect(function()
 		b.Rotation = -2
+		Audio.play("Hover")
+	end)
+	b.Activated:Connect(function()
+		Audio.play("Click")
 	end)
 	b.MouseLeave:Connect(function()
 		b.Rotation = 0

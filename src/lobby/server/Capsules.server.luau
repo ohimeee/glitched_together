@@ -12,6 +12,7 @@ local Roles = require(ReplicatedStorage.Shared.Config.Roles)
 local Worlds = require(ReplicatedStorage.Shared.Config.Worlds)
 local Net = require(ReplicatedStorage.Shared.Net)
 local RunIndex = require(ReplicatedStorage.Shared.Util.RunIndex)
+local Audio = require(ReplicatedStorage.Shared.Util.Audio)
 local LobbyBuilder = require(script.Parent.LobbyBuilder)
 local DuoTeleport = require(script.Parent.DuoTeleport)
 
@@ -30,6 +31,7 @@ type Pair = {
 	zones: { kai: BasePart, miko: BasePart },
 	seats: { kai: Player?, miko: Player? },
 	countdown: number?,
+	lastTick: number?, -- the whole second the countdown last ticked on (LockTick sound)
 	sending: boolean,
 	message: string?,
 	messageUntil: number,
@@ -129,6 +131,7 @@ local function refreshSeat(pair: Pair, seat: "kai" | "miko")
 			pair.seats[seat] = p
 			seatedIn[p] = pair
 			setRole(p, if seat == "kai" then "Kai" else "Miko")
+			Audio.play("CapsuleIn", pair.zones[seat])
 			break
 		end
 	end
@@ -165,6 +168,7 @@ local function sendPair(pair: Pair)
 		return
 	end
 	pair.sending = true
+	Audio.play("LockIn", pair.zones.kai.Position:Lerp(pair.zones.miko.Position, 0.5))
 	setFrozen(kai, true)
 	setFrozen(miko, true)
 
@@ -375,9 +379,15 @@ while true do
 				readSave(pair)
 				local changed = pair.seats.kai ~= beforeKai or pair.seats.miko ~= beforeMiko
 				if changed or pair.countdown == nil then
+					pair.lastTick = nil
 					pair.countdown = LOCK_TIME -- someone new stepped in: start (or restart) the 5 s
 				else
 					pair.countdown -= dt
+					local second = math.ceil(pair.countdown)
+					if second ~= pair.lastTick and second > 0 then
+						pair.lastTick = second
+						Audio.play("LockTick", pair.status:FindFirstAncestorWhichIsA("BasePart") or pair.zones.kai)
+					end
 					if pair.countdown <= 0 then
 						task.spawn(sendPair, pair)
 					end

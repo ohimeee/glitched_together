@@ -2,6 +2,11 @@
 
 Older session logs moved out of `CLAUDE.md` on Oct 8, 2026 to save tokens (CLAUDE.md loads into every session and subagent). Newest first. Current status, next steps and the rules still in force are in `CLAUDE.md`.
 
+## 36th session (Oct 18, 2026): lobby/adventure mix-up, lobby audio
+
+- **Lobby place had the adventure synced into it** (found in Studio, user confirmed that version was published): ServerScriptService `Lobby` + `Server`, StarterPlayerScripts `LobbyClient` + `Client`, 16 adventure MaterialVariants, StreamingEnabled on, EnableMouseLockOption off. Cause: the Rojo plugin connected on 34872 (adventure) inside the Lobby place. Place ids / project files were fine. My scripted cleanup was blocked by auto mode: user to delete `Server`, `Client`, non-`Lobby*` materials, turn mouse lock back on, reconnect Rojo on 34873, republish.
+- **Lobby audio** (lobby had none; the bedroom is at night, user: "dont make it sad"): `Config/Sounds` Music.Lobby = APM "Playground Stories Underscore B" (9046512235, alternatives in the comment), Ambience.Lobby = PSE night crickets, Sfx BedBounce (bed spring squeak), TrainWhistle, CapsuleIn (latch), LockTick (each countdown second), LockIn (wind-up as the pair is sent). New `lobby/client/LobbyAudio.client.luau` (music + ambience fade-in, train whistle every 25–45 s); hooks in BedBounce, Capsules (server, replicates), LobbyUI (hover/click). All 10 ids preload `Success` in Studio; not heard yet in play.
+
 ## 35th session (Oct 18, 2026): docs backfill, studio logo, lobby /go
 
 - Backfilled the 34th session's docs (it ran out of tokens): tip jar, supporter wall kit, places, marketing art (entries under the 34th below).
