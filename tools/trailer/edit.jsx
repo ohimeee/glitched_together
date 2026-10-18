@@ -35,16 +35,16 @@ var SHOTS = [
 	["2026-10-18 19-28-29", 0.0, CUT1], // hook: Kai + Miko by the trial signs (quiet intro)
 	["2026-10-18 19-27-30", 1.0, CUT2 - CUT1], // Pixel Plains drone flyover (build)
 	["2026-10-18 19-28-29", 50.0, DROP - CUT2], // grind rails rising into the drop
-	["2026-10-18 19-31-00", 7.5, BAR, "two_players"], // DROP: coin press lane, blobs
-	["2026-10-18 19-28-29", 22.0, BAR], // floating islands
+	["2026-10-18 20-53-24", 37.0, BAR, "two_players"], // DROP: Glitch Chase, grinding with the wall behind (gameplay)
+	["2026-10-18 19-31-00", 7.5, BAR], // coin press lane, blobs
 	["2026-10-18 19-53-29", 0.0, BAR, "three_worlds"], // Starfall Castle under the moon
-	["2026-10-18 19-53-29", 9.0, BAR], // castle yard top-down
+	["2026-10-18 20-56-09", 23.0, BAR], // castle room fight: Kai's fireballs (gameplay)
 	["2026-10-18 19-42-35", 18.5, BAR], // Glitched Core
-	["2026-10-18 19-42-35", 44.0, BAR], // Core: glitch lines
+	["2026-10-18 21-00-10", 8.5, BAR], // Core: Kai copy/pastes plank bridges between glitch walls (gameplay)
 	["2026-10-18 20-06-01", 13.0, BAR, "unfinished"], // Crusher King push-in
+	["2026-10-18 20-53-24", 52.3, BAR], // Crusher King fight: fist slams (gameplay)
 	["2026-10-18 19-59-19", 12.5, BAR], // Hollow Dragon
 	["2026-10-18 20-02-12", 33.5, BAR], // The Unfinished
-	["2026-10-18 20-03-52", 22.5, BAR], // Epilogue gold trophies
 ];
 var END = ["2026-10-18 20-03-52", 1.0, END_LEN]; // end card over the lantern path: logo on the bar at 28.60, music fades out
 
@@ -58,10 +58,14 @@ var CONTENT = {
 	"2026-10-18 19-53-29": [1432, 864],
 };
 
+// takes with the mouse cursor painted out by tools/trailer/decursor.py (read from DIR/clean/)
+var CLEAN = { "2026-10-18 19-27-30": 1, "2026-10-18 19-28-29": 1, "2026-10-18 19-31-00": 1 };
+
 var footage = {};
 function take(name) {
 	if (!footage[name]) {
-		footage[name] = app.project.importFile(new ImportOptions(new File(DIR + name + ".mp4")));
+		var path = DIR + (CLEAN[name] ? "clean/" : "") + name + ".mp4";
+		footage[name] = app.project.importFile(new ImportOptions(new File(path)));
 	}
 	return footage[name];
 }

@@ -73,13 +73,16 @@ What they all share:
 | 2026-10-18 20-06-01.mp4 | Crusher King intro (retake: fly-up past the ruins to his face, light rays) | keep ~2–20 s |
 | 2026-10-18 20-01-12.mp4 | The Unfinished intro, take 1 | keep (alt) |
 | 2026-10-18 20-02-12.mp4 | The Unfinished intro, take 2 (golem moves more; 0–20 s = fight running, skip) | keep ~21–40 s |
+| 2026-10-18 20-53-24.mp4 | **Gameplay (user):** Glitch Chase run on the rails with the wall (27–46 s, wall in shot 38 / 45 s), Crusher King fight start, fist slams (48–58 s); 0–22 s = caught by the wall | keep |
+| 2026-10-18 20-54-50.mp4 | **Gameplay:** castle room fight as Kai, camera far + dark (fire bursts 14–16, 34–38 s) | spare |
+| 2026-10-18 20-56-09.mp4 | **Gameplay:** castle room 2 fight, `TopDownZoom` 0.55 (held ~17 s only), fireballs 23–25 s, flame wall 32–35 s | keep |
+| 2026-10-18 21-00-10.mp4 | **Gameplay:** Kai copy/pastes PlankBlock bridges between magenta glitch walls (MissingTextures, 5–15 s) | keep |
 | 2026-10-18 20-03-52.mp4 | Epilogue: lantern path push-in, crane over the hilltop, trophy orbit, supporter wall push-in (last high wide = too dark) | keep first 4 shots |
 
 Still to record:
 - The lobby bedroom (capsules, train, bed): lobby place (Rojo 34873).
-- **Gameplay clips with the user playing** (jumps, grapple swing, freeze beam, castle combat, paste bridge, a boss
-  fight moment). Two-player shots alone: `/miko`, press G and play Miko's part, `/kai`, `/puppet miko`,
-  `/ghost play`, play Kai's part while P flies the camera.
+- Gameplay recorded Oct 18 (chase, King fist, castle fight, paste bridge). Still wanted: Miko's moves (grapple swing,
+  shield reflect), a 2-player duo moment (puppet/ghost), lobby bedroom.
 - A real-looking puppet: `/puppet miko <userId>` with an alt/friend avatar (ask the user; without an id it's a plain
   body with skin + teal shirt).
 
@@ -145,4 +148,13 @@ Still to record:
   rebuild resets Once), then pivot into it and wait while the player's `InCutscene` is true (~20 s).
 - **A played trailer path holds its last frame over everything, cutscene cameras too:** toggle trailer mode off/on
   (Trailer remote "Toggle" twice) before recording a cutscene after scripted shots.
+- **Mouse cursor in takes:** the 3 early 1888-wide takes (19-27-30, 19-28-29, 19-31-00) caught the resting Windows arrow at
+  ~(935, 352). `python tools/trailer/decursor.py` paints it out (ffmpeg delogo) into `GlitchedTrailer/clean/`; edit.jsx
+  reads those via `CLEAN`. For new takes: turn off "Capture Cursor" on the OBS window source, or park the mouse off the
+  Studio window before `start`.
 - OBS profile switches reset the capture transform (scale 0.8): run `crop` again after any profile change.
+- **Gameplay recording with the user (38th):** trailer mode on (HUD hidden), god mode (`MaxHealth = Health = math.huge`),
+  jump with `DebugRole` + `DebugCheckpoint` + `DebugWorld`, then OBS start; the user plays and says "next".
+  PastePast can't be done solo (Miko must pull the crate out of the Code Layer first): Kai's solo copy source is the
+  PlankBlock in MissingTextures (stand on KaiLedge). `TopDownZoom` 0.55 brings the castle camera closer but rooms
+  override it after a while. OBS StartRecord right after a stop returns 500: retry after ~1.5 s.
