@@ -131,8 +131,8 @@ end
 
 folder.Parent = workspace:WaitForChild("Lobby", 30) or workspace
 
--- the tip jar (user, Oct 18: tips in the lobby too): a glass jar of gold coins with a paper label, on the desk right
--- beside the GLITCHED TOGETHER chalkboard sign (user, Oct 18; sign: x 0, z -14.7, 20 wide), label toward the spawn;
+-- the tip jar (user, Oct 18: tips in the lobby too): a glass jar of gold coins (no label: unreadable, user), on the desk right
+-- beside the GLITCHED TOGETHER chalkboard sign (user, Oct 18; sign: x 0, z -14.7, 20 wide);
 -- [E] opens the tip panel (client TipJar.client, Util/TipPanel)
 local JAR = Vector3.new(15, 0, -16) -- desk top is y 0 (sign collider ends at x 10, the capsule ring starts at x 35)
 local jar =
@@ -173,30 +173,6 @@ for i = 1, 26 do
 		}
 	)
 end
-local tag = part(
-	"JarLabel",
-	Vector3.new(4.2, 2.4, 0.05),
-	CFrame.new(JAR + Vector3.new(0, 3.6, -3.05)) * CFrame.Angles(0, math.pi, 0),
-	{
-		Color = rgb(246, 240, 226),
-		Material = Enum.Material.Fabric,
-		CanCollide = false,
-	}
-)
-local tagGui = Instance.new("SurfaceGui")
-tagGui.Face = Enum.NormalId.Back -- faces the ring (-Z)
-tagGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-tagGui.PixelsPerStud = 40
-tagGui.LightInfluence = 1
-tagGui.Parent = tag
-local tagText = Instance.new("TextLabel")
-tagText.Size = UDim2.fromScale(1, 1)
-tagText.BackgroundTransparency = 1
-tagText.Font = Enum.Font.PermanentMarker
-tagText.TextScaled = true
-tagText.TextColor3 = rgb(60, 46, 36)
-tagText.Text = "TIP JAR ♥\nfor our next game"
-tagText.Parent = tagGui
 local jarPrompt = Instance.new("ProximityPrompt")
 jarPrompt.Name = "SupportPrompt"
 jarPrompt.ActionText = "Support"
